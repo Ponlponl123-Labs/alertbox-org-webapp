@@ -226,8 +226,9 @@ function HowItWorkViewer() {
                   />
                 </Circle>
               </div>
-              <Circle ref={div13Ref}>
-                <ChalkboardTeacherIcon />
+              <Circle ref={div13Ref} className="bg-red-900 text-white relative">
+                <div className="absolute -z-10 animate-ping size-full bg-red-900 rounded-full" />
+                <ChalkboardTeacherIcon weight="fill" />
               </Circle>
             </div>
           </div>

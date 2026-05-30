@@ -8,8 +8,10 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import Image from "next/image";
 import { HandHeartIcon } from "@phosphor-icons/react";
+import { usePathname } from "next/navigation";
 
 const Footer = memo(function Footer() {
+  const pathname = usePathname();
   const lang = useStore(coreStore, (state) => state.lang);
 
   const FOOTER_LINKS = [
@@ -62,35 +64,44 @@ const Footer = memo(function Footer() {
 
   return (
     <>
-      <section className="py-16 p-6 bg-zinc-50 font-sans dark:bg-black flex flex-col items-center justify-center gap-3">
-        <div className="p-6 rounded-3xl flex flex-col gap-3 bg-foreground/5 bg-linear-150 from-rose-950/10 to-rose-700/10 w-full max-w-xl">
-          <h1 className="text-lg font-semibold">
-            <HandHeartIcon className="inline mr-1.5" size={26} weight="fill" />{" "}
-            {lang.data.helpus.title}
-          </h1>
-          <p className="text-xs text-foreground/40">
-            {lang.data.helpus.description}
-          </p>
-          <Link
-            href={"https://buymeacoffee.com/ponlponl123"}
-            target="_blank"
-            className="w-max"
-          >
-            <Button
-              className={"rounded-xl bg-amber-100 hover:bg-amber-50 text-black"}
+      {["/", "/pricing", "/about", "/docs"].includes(pathname) && (
+        <section className="py-16 p-6 bg-zinc-50 font-sans dark:bg-black flex flex-col items-center justify-center gap-3">
+          <div className="p-6 rounded-3xl flex flex-col gap-3 bg-foreground/5 bg-linear-150 from-rose-950/10 to-rose-700/10 w-full max-w-xl">
+            <h1 className="text-lg font-semibold">
+              <HandHeartIcon
+                className="inline mr-1.5"
+                size={26}
+                weight="fill"
+              />{" "}
+              {lang.data.helpus.title}
+            </h1>
+            <p className="text-xs text-foreground/40">
+              {lang.data.helpus.description}
+            </p>
+            <Link
+              href={"https://buymeacoffee.com/ponlponl123"}
+              target="_blank"
+              className="w-max"
             >
-              <Image
-                src={"/buymeacoffee.webp"}
-                width={12}
-                height={12}
-                className="mr-0.5"
-                alt="Buy me a coffee"
-              />
-              {lang.data.helpus.button}
-            </Button>
-          </Link>
-        </div>
-      </section>
+              <Button
+                className={
+                  "rounded-xl bg-amber-100 hover:bg-amber-50 text-black"
+                }
+              >
+                <Image
+                  src={"/buymeacoffee.webp"}
+                  width={12}
+                  height={12}
+                  className="mr-0.5"
+                  alt="Buy me a coffee"
+                />
+                {lang.data.helpus.button}
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
+
       <footer className="w-full min-w-0 flex-1 p-6 flex flex-col items-center relative bg-sidebar">
         <div className="absolute top-0 left-0 -translate-y-full w-full min-w-0 flex-1 bg-linear-0 to-transparent from-sidebar h-12 opacity-60" />
         <div className="min-w-0 w-full max-w-5xl flex gap-6 mx-auto py-6 max-sm:flex-col">
