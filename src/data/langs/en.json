@@ -136,6 +136,11 @@
       }
     }
   },
+  "helpus": {
+    "title": "Keep Alertbox.org Free",
+    "description": "We provide this service with zero platform fees, but running the backend infrastructure costs money. If you find it useful, buying us a coffee helps cover server costs and fuels our motivation to maintain this project for everyone.",
+    "button": "Buy Me a Coffee"
+  },
   "footer": {
     "description": "Alertbox.org is an open-source alert box service featuring custom streamer profiles, zero platform fees, and robust privacy protection. \nPowered by trusted payment gateways like Buy Me a Coffee, Ko-fi, and Stripe.",
     "links": {
@@ -148,7 +153,8 @@
       "common": {
         "title": "Useful Links",
         "docs": "Documentation",
-        "status": "Status"
+        "status": "Status",
+        "donate": "Help us"
       }
     }
   }
