@@ -1,7 +1,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-fredoka);
+  --font-read: var(--font-google-sans);
   --font-mono: var(--font-mono);
   --font-heading: var(--font-mono);
   --color-sidebar-ring: var(--sidebar-ring);

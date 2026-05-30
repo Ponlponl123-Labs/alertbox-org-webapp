@@ -1,5 +1,45 @@
 {
   "key": "en-US",
   "label": "English",
-  "country": "us"
+  "country": "us",
+  "currency": "USD",
+  "currency_symbols": "$",
+  "header": {
+    "links": {
+      "about": "Get to know us",
+      "pricing": "Pricing"
+    },
+    "actions": {
+      "get_started": "Get started"
+    }
+  },
+  "metadata": {
+    "title": "Alertbox.org | Open-Source & Private Donation Alerts",
+    "description": "Alertbox.org is a free, open-source alert box creator for streamers. Enjoy custom profiles, zero platform fees, and total privacy. Powered by Stripe, Ko-fi, and Buy Me a Coffee."
+  },
+  "pages": {
+    "index": {
+      "title": "Stream Freely. Donate Privately.",
+      "description": "The real-time donation alert box built for viewer anonymity. Let your fans support your stream without revealing who they are.",
+      "actions": {
+        "primary": "Create Your Alert Box",
+        "secondary": "How It Works?"
+      },
+      "sections": {
+        "howitworks": {
+          "title": "How it Works?",
+          "description": "Direct, Secure, & Private",
+          "selectors": {
+            "streamer": "For Streamer",
+            "viewer": "For Fans"
+          },
+          "donated": "donated",
+          "test_message": "This is a test message."
+        }
+      }
+    }
+  },
+  "footer": {
+    "description": "Alertbox.org is an open-source alert box service featuring custom streamer profiles, zero platform fees, and robust privacy protection. \nPowered by trusted payment gateways like Buy Me a Coffee, Ko-fi, and Stripe."
+  }
 }

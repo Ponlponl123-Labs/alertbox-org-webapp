@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, JetBrains_Mono } from "next/font/google";
+import {
+  Google_Sans,
+  Fredoka,
+  Geist_Mono,
+  JetBrains_Mono,
+} from "next/font/google";
 import { preload } from "@/consts/theme";
 import { cn } from "@/lib/utils";
 import "@/styles/globals.css";
@@ -11,8 +16,13 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fredokaSans = Fredoka({
+  variable: "--font-fredoka",
+  subsets: ["latin"],
+});
+
+const googleSans = Google_Sans({
+  variable: "--font-google-sans",
   subsets: ["latin"],
 });
 
@@ -37,9 +47,10 @@ export default function RootLayout({
       className={cn(
         "h-full",
         "antialiased",
-        geistSans.variable,
+        googleSans.variable,
+        fredokaSans.variable,
         geistMono.variable,
-        "font-mono",
+        "font-sans",
         jetbrainsMono.variable,
       )}
       suppressHydrationWarning

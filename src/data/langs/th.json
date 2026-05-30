@@ -1,5 +1,45 @@
 {
   "key": "th-TH",
   "label": "ไทย",
-  "country": "th"
+  "country": "th",
+  "currency": "THB",
+  "currency_symbols": "฿",
+  "header": {
+    "links": {
+      "about": "ทำความรู้จักกับเรา",
+      "pricing": "ราคา"
+    },
+    "actions": {
+      "get_started": "เริ่มต้นใช้งาน"
+    }
+  },
+  "metadata": {
+    "title": "Alertbox.org | แจ้งเตือนโดเนท Open-Source ปลอดภัย ไร้ค่าธรรมเนียม",
+    "description": "Alertbox.org บริการสร้าง Alert Box และโปรไฟล์สตรีมเมอร์แบบ Open-Source ปกป้องความเป็นส่วนตัวและไม่มีค่าธรรมเนียมแพลตฟอร์ม รองรับ Buy Me a Coffee, Ko-fi และ Stripe"
+  },
+  "pages": {
+    "index": {
+      "title": "สตรีมอย่างอิสระ โดเนทแบบไม่เปิดเผยตัวตน",
+      "description": "ระบบแจ้งเตือนโดเนทแบบเรียลไทม์ที่ออกแบบมาเพื่อความเป็นส่วนตัวของผู้ชม ให้แฟนๆ สนับสนุนสตรีมของคุณได้โดยไม่ต้องระบุตัวตน",
+      "actions": {
+        "primary": "สร้างกล่องแจ้งเตือน",
+        "secondary": "เราทำได้อย่างไร?"
+      },
+      "sections": {
+        "howitworks": {
+          "title": "เราทำได้อย่างไร?",
+          "description": "ปลอดภัย เป็นส่วนตัว และรับเงินโดยตรง",
+          "selectors": {
+            "streamer": "สำหรับคุณ",
+            "viewer": "สำหรับแฟนๆ ของคุณ"
+          },
+          "donated": "เปย์ให้",
+          "test_message": "นี่คือข้อความทดสอบ"
+        }
+      }
+    }
+  },
+  "footer": {
+    "description": "Alertbox.org คือบริการสร้าง Alert Box แบบ Open-Source พร้อมโปรไฟล์สตรีมเมอร์ เราไม่หักค่าธรรมเนียมแพลตฟอร์มและให้ความสำคัญกับความเป็นส่วนตัวของคุณเป็นอันดับแรก \nขับเคลื่อนโดยผู้ให้บริการชำระเงินชั้นนำ เช่น Buy Me a Coffee, Ko-fi และ Stripe"
+  }
 }
