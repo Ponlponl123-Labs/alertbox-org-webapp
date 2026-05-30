@@ -13,6 +13,7 @@ export interface Language {
   key: languageKeys;
   label: string;
   country: string;
+  flag: string;
   data: typeof enUS;
 }
 
@@ -26,12 +27,14 @@ export const langs: Language[] = [
     key: "th-TH",
     label: "ไทย",
     country: "th",
+    flag: "🇹🇭",
     data: thTH,
   },
   {
     key: "en-US",
     label: "English",
     country: "us",
+    flag: "🇺🇸",
     data: enUS,
   },
 ];
@@ -43,6 +46,7 @@ export default function lang(languageKey: languageKeys): Language {
     key: (selected.key || languageKey) as languageKeys,
     label: selected.label,
     country: selected.country,
+    flag: selected.flag,
     data: selected,
   };
 }

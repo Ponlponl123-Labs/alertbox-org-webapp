@@ -35,6 +35,7 @@ function HowItWorkStreamer() {
   const div13Ref = useRef<HTMLDivElement>(null);
   const div14Ref = useRef<HTMLDivElement>(null);
   const div15Ref = useRef<HTMLDivElement>(null);
+  const div16Ref = useRef<HTMLDivElement>(null);
   const sectionHIW1_content = useRef<HTMLDivElement>(null);
   const sectionHIW1_image = useRef<HTMLDivElement>(null);
   const sectionHIW2_content = useRef<HTMLDivElement>(null);
@@ -57,11 +58,10 @@ function HowItWorkStreamer() {
         >
           <HandCoinsIcon size={48} weight="fill" className="mb-3" />
           <h1 className="font-semibold text-lg mb-3">
-            1. เตรียมช่องทางรับเงิน
+            {lang.data.pages.index.sections.howitworks.steps[0].title}
           </h1>
           <p className="text-foreground/40 text-sm font-read">
-            ตรวจสอบให้แน่ใจว่าคุณมีบัญชีที่พร้อมใช้งาน เช่น Stripe, Ko-fi หรือ
-            Buy Me a Coffee
+            {lang.data.pages.index.sections.howitworks.steps[0].description}
           </p>
         </div>
         <div
@@ -70,11 +70,16 @@ function HowItWorkStreamer() {
         >
           <UserRectangleIcon size={48} weight="fill" className="mb-3" />
           <h1 className="font-semibold text-lg mb-3">
-            2. สร้างบัญชี Alertbox.org
+            {lang.data.pages.index.sections.howitworks.steps[1].title}
           </h1>
           <p className="text-foreground/40 text-sm font-read">
-            สมัครสมาชิกเพื่อรับหน้าโปรไฟล์สตรีมเมอร์ส่วนตัวของคุณ
+            {lang.data.pages.index.sections.howitworks.steps[1].description}
           </p>
+          <Link href={"/app"} className="w-max mt-3">
+            <Button variant="default" className="rounded-xl p-4">
+              {lang.data.header.actions.get_started}
+            </Button>
+          </Link>
         </div>
         <div
           className="py-24 h-screen flex flex-col justify-center"
@@ -82,22 +87,33 @@ function HowItWorkStreamer() {
         >
           <WebhooksLogoIcon size={48} weight="fill" className="mb-3" />
           <h1 className="font-semibold text-lg mb-3">
-            3. เชื่อมต่อด้วย Webhook
+            {lang.data.pages.index.sections.howitworks.steps[2].title}
           </h1>
           <p className="text-foreground/40 text-sm font-read">
-            นำ Webhook ของเราไปใส่ในระบบรับเงิน
-            เพื่อให้เราจับสัญญาณและแสดงแจ้งเตือนเมื่อมีคนโดเนท
+            {lang.data.pages.index.sections.howitworks.steps[2].description}
           </p>
+          <Link href={"/app/connect"} className="w-max mt-3">
+            <Button variant="default" className="rounded-xl p-4">
+              {lang.data.common.connect}
+            </Button>
+          </Link>
         </div>
         <div
           className="py-24 h-screen flex flex-col justify-center"
           ref={sectionHIW4_content}
         >
           <PaintBrushIcon size={48} weight="fill" className="mb-3" />
-          <h1 className="font-semibold text-lg mb-3">4. ปรับแต่ง Alert Box</h1>
+          <h1 className="font-semibold text-lg mb-3">
+            {lang.data.pages.index.sections.howitworks.steps[3].title}
+          </h1>
           <p className="text-foreground/40 text-sm font-read">
-            ออกแบบกล่องแจ้งเตือน สีสัน และรูปแบบให้เข้ากับสไตล์ช่องสตรีมของคุณ
+            {lang.data.pages.index.sections.howitworks.steps[3].description}
           </p>
+          <Link href={"/app/customize"} className="w-max mt-3">
+            <Button variant="default" className="rounded-xl p-4">
+              {lang.data.common.customize}
+            </Button>
+          </Link>
         </div>
         <div
           className="py-24 h-screen flex flex-col justify-center"
@@ -105,25 +121,36 @@ function HowItWorkStreamer() {
         >
           <CodeBlockIcon size={48} weight="fill" className="mb-3" />
           <h1 className="font-semibold text-lg mb-3">
-            5. ใส่ Overlay ในโปรแกรมสตรีม
+            {lang.data.pages.index.sections.howitworks.steps[4].title}
           </h1>
           <p className="text-foreground/40 text-sm font-read">
-            คัดลอก URL ของ Overlay ไปเพิ่มเป็น Browser Source ในโปรแกรมเช่น OBS
+            {lang.data.pages.index.sections.howitworks.steps[4].description}
           </p>
+          <Link href={"/app/customize"} className="w-max mt-3">
+            <Button variant="default" className="rounded-xl p-4">
+              {lang.data.common.overlay_url}
+            </Button>
+          </Link>
         </div>
         <div
           className="py-24 h-screen flex flex-col justify-center"
           ref={sectionHIW6_content}
         >
           <ConfettiIcon size={48} weight="fill" className="mb-3" />
-          <h1 className="font-semibold text-lg mb-3">6. เริ่มสตรีมได้เลย!</h1>
+          <h1 className="font-semibold text-lg mb-3">
+            {lang.data.pages.index.sections.howitworks.steps[5].title}
+          </h1>
           <p className="text-foreground/40 text-sm font-read">
-            เสร็จเรียบร้อย! คุณรับเงินเข้าบัญชีโดยตรง
-            ส่วนเราจัดการแค่หน้าโปรไฟล์และแจ้งเตือนหน้าจอให้คุณ
+            {lang.data.pages.index.sections.howitworks.steps[5].description}
           </p>
+          <Link href={"/app"} className="w-max mt-3">
+            <Button variant="default" className="rounded-xl p-4">
+              {lang.data.common.go_live}
+            </Button>
+          </Link>
         </div>
       </div>
-      <div className="min-w-0 flex-1 relative">
+      <div className="min-w-0 flex-1 relative max-md:hidden">
         <div
           className="w-full h-screen sticky top-0 flex items-center justify-center p-6"
           ref={sectionHIW1_image}
@@ -288,7 +315,7 @@ function HowItWorkStreamer() {
           ref={sectionHIW4_image}
         >
           <div className="flex flex-col gap-1.5 items-center justify-center">
-            <h1 className="flex items-center justify-center gap-1">
+            <h1 className="flex items-center justify-center gap-1 whitespace-nowrap">
               <strong className="text-pink-300">Ponlponl123</strong>
               {lang.data.pages.index.sections.howitworks.donated}
               <strong className="text-pink-300">
@@ -374,7 +401,7 @@ function HowItWorkStreamer() {
                   alt="Alertbox.org"
                 />
               </Circle>
-              <Circle ref={div15Ref} className="p-2 size-14">
+              <Circle ref={div16Ref} className="p-2 size-14">
                 <Image
                   src={"/obs.webp"}
                   width={32}
@@ -424,7 +451,7 @@ function HowItWorkStreamer() {
             duration={3}
             containerRef={sectionHIW6_image}
             fromRef={div2Ref}
-            toRef={div15Ref}
+            toRef={div16Ref}
           />
         </div>
       </div>

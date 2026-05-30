@@ -3,53 +3,54 @@
 import { memo } from "react";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import LanguageSwitcher from "./language-switcher";
 import Link from "next/link";
-
-const FOOTER_LINKS = [
-  {
-    title: "Legal",
-    links: [
-      {
-        name: "Privacy Policy",
-        herf: "https://law.ponlponl123.com/privacy",
-        isExternal: true,
-      },
-      {
-        name: "Terms of Service",
-        herf: "https://law.ponlponl123.com/tos",
-        isExternal: true,
-      },
-      {
-        name: "Additional Terms",
-        herf: "https://law.ponlponl123.com/additionals",
-        isExternal: true,
-      },
-    ],
-  },
-  {
-    title: "Links",
-    links: [
-      {
-        name: "Documentation",
-        herf: "/docs",
-        isExternal: false,
-      },
-      {
-        name: "GitHub",
-        herf: "https://github.com/ponlponl123-labs/alertbox-org",
-        isExternal: true,
-      },
-      {
-        name: "Status",
-        herf: "https://status.alertbox.org",
-        isExternal: true,
-      },
-    ],
-  },
-];
 
 const Footer = memo(function Footer() {
   const lang = useStore(coreStore, (state) => state.lang);
+
+  const FOOTER_LINKS = [
+    {
+      title: lang.data.footer.links.legal.title,
+      links: [
+        {
+          name: lang.data.footer.links.legal.privacy,
+          herf: "https://law.ponlponl123.com/privacy",
+          isExternal: true,
+        },
+        {
+          name: lang.data.footer.links.legal.tos,
+          herf: "https://law.ponlponl123.com/tos",
+          isExternal: true,
+        },
+        {
+          name: lang.data.footer.links.legal.additional,
+          herf: "https://law.ponlponl123.com/additionals",
+          isExternal: true,
+        },
+      ],
+    },
+    {
+      title: lang.data.footer.links.common.title,
+      links: [
+        {
+          name: lang.data.footer.links.common.docs,
+          herf: "/docs",
+          isExternal: false,
+        },
+        {
+          name: "GitHub",
+          herf: "https://github.com/ponlponl123-labs/alertbox-org",
+          isExternal: true,
+        },
+        {
+          name: lang.data.footer.links.common.status,
+          herf: "https://status.alertbox.org",
+          isExternal: true,
+        },
+      ],
+    },
+  ];
 
   return (
     <footer className="w-full min-w-0 flex-1 p-6 flex flex-col items-center relative bg-sidebar">
@@ -58,6 +59,9 @@ const Footer = memo(function Footer() {
         <div className="flex flex-col gap-2 text-foreground/30 flex-1 min-w-0">
           <h1 className="text-xl font-light tracking-wider">Alertbox.org</h1>
           <p className="font-read text-xs">{lang.data.footer.description}</p>
+          <div className="text-foreground">
+            <LanguageSwitcher showLabel={true} />
+          </div>
         </div>
         <div className="flex flex-wrap justify-end max-sm:justify-between md:max-w-2/3 flex-1 min-w-0 gap-6">
           {FOOTER_LINKS.map((v, i) => (

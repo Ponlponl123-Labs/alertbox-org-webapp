@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useStore } from "zustand";
 import { ArrowUpRightIcon, BellRingingIcon } from "@phosphor-icons/react";
 import { Input } from "react-smooth-input";
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import HowItWorkStreamer from "./index/how-it-work-streamer";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ import {
   AccordionItem,
   AccordionPanel,
 } from "@/components/animate-ui/components/headless/accordion";
+import HowItWorkViewer from "./index/how-it-work-viewer";
 
 export default function Home() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -50,8 +51,10 @@ export default function Home() {
           <div />
           <div className="flex gap-6">
             <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-              <h1 className="max-w-xs text-4xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-                {lang.data.pages.index.title}
+              <h1 className="max-w-md text-4xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+                {lang.data.pages.index.title[0]}
+                <br />
+                {lang.data.pages.index.title[1]}
               </h1>
               <p className="max-w-md text-lg max-md:text-sm leading-8 text-zinc-600 dark:text-zinc-400">
                 {lang.data.pages.index.description}
@@ -63,7 +66,7 @@ export default function Home() {
             <Input
               type="text"
               startContent={
-                <span className="text-xs font-read translate-y-0.5 ml-2 relative flex -mr-2.75 text-foreground/40">
+                <span className="text-xs font-baijamjuree translate-y-0.5 ml-2 relative flex -mr-2.75 text-foreground/40">
                   tip-to.me/@
                 </span>
               }
@@ -81,10 +84,10 @@ export default function Home() {
                 </Link>
               }
               fontStyle={{
-                fontFamily: "var(--font-read)",
+                fontFamily: "var(--font-baijamjuree)",
                 fontSize: "12px",
               }}
-              placeholder="your-name"
+              placeholder={lang.data.pages.index.actions.yourname}
               classNames={{
                 base: "h-12 rounded-full backdrop-blur-xs",
                 container: "min-w-0 max-w-106 max-md:min-w-88 flex-1",
@@ -180,7 +183,9 @@ export default function Home() {
                 className="mx-auto"
                 key="HIW-Viewer"
                 layoutId="HIW-Viewer"
-              ></motion.div>
+              >
+                <HowItWorkViewer />
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
@@ -190,109 +195,85 @@ export default function Home() {
           <div className="flex gap-1 w-full max-w-lg my-16 items-center justify-center">
             <div className="flex-1 min-w-0 h-px bg-foreground/40" />
             <div className="py-1 px-3 rounded-full bg-foreground/10 border-2 border-foreground/10 text-xs">
-              สำหรับผู้ที่มีสัญชาติไทย และกำลังอาศัยอยู่ในประเทศไทย
+              {lang.data.pages.index.sections.for_thai_people.separate}
             </div>
             <div className="flex-1 min-w-0 h-px bg-foreground/40" />
           </div>
           <h1 className="text-4xl font-semibold mb-3">
-            หากบริการของเรายังไม่ตอบโจทย์
+            {lang.data.pages.index.sections.for_thai_people.title}
           </h1>
           <p className="text-foreground/40">
-            และ ฉันสามารถยอมรับความเสี่ยงด้านเส้นทางการเงินได้
+            {lang.data.pages.index.sections.for_thai_people.description}
           </p>
 
           <p className="mt-12">
-            เราขอแนะนำให้ท่านลองทำความรู้จักกับ{" "}
-            <Link
-              href={"https://easydonate.app/?ref=alertbox.org"}
-              className="text-blue-500"
-              target="_blank"
-            >
-              EasyDonate
-            </Link>
+            {lang.data.pages.index.sections.for_thai_people.description2
+              .split("%")
+              .map((t, i) =>
+                i === 0 ? (
+                  <React.Fragment key={i}>{t}</React.Fragment>
+                ) : (
+                  <Link
+                    href={"https://easydonate.app/?ref=alertbox.org"}
+                    className="text-blue-500"
+                    target="_blank"
+                    key={i}
+                  >
+                    {t}
+                  </Link>
+                ),
+              )}
           </p>
         </div>
         <Accordion className="w-full max-w-md mt-16 mb-6 bg-muted rounded-2xl overflow-hidden">
-          <AccordionItem>
-            <AccordionButton
-              className={
-                "p-4 hover:no-underline hover:bg-foreground/5 rounded-sm"
-              }
-            >
-              EasyDonate แตกต่างจากเราอย่างไร?
-            </AccordionButton>
-            <AccordionPanel
-              data-default-transition="false"
-              className={"p-4 bg-background/40 rounded-t-xl"}
-            >
-              <div>
-                <p>
-                  EasyDonate
-                  จะแสดงกล่องแจ้งเตือนต่อเมื่อผู้บริจาคอัพโหลดสลิปโอนเงินเพื่อยืนยัน
-                  และเป็นการโอนไปยังบัญชีสตรีมเมอร์โดยตรง
-                </p>
-                <span className="mt-4 block text-xs text-foreground/40">
-                  Alertbox.org:
-                </span>
-                <p className="mt-2 text-xs text-foreground/40">
-                  แต่เราจะแสดงกล่องแจ้งเตือนต่อเมื่อผู้บริจาคได้ทำการซื้อ,
-                  สมัครรายเดือน หรือบริจาค ทันที
-                  โดยผู้ให้บริการช่องทางการชำระเงิน เช่น Stripe, Buy me a
-                  coffee, Ko-Fi จะส่งกิจกรรม Webhook
-                  มาให้เราเพื่อแสดงกล่องแจ้งเตือน
-                </p>
-                <p className="mt-2 text-xs text-foreground/40">
-                  โดยที่วิธีนี้จะสามารถปกปิดข้อมูลส่วนตัวของสตรีมเมอร์ได้โดยที่ผู้บริจาคจะชำระเงินให้กับผู้ให้บริการช่องทางการชำระเงินก่อนที่เงินทั้งหมดจะถูกโอนให้กับสตรีมเมอร์
-                </p>
-              </div>
-            </AccordionPanel>
-          </AccordionItem>
-          <AccordionItem>
-            <AccordionButton
-              className={
-                "p-4 hover:no-underline hover:bg-foreground/5 rounded-sm"
-              }
-            >
-              ค่าบริการ
-            </AccordionButton>
-            <AccordionPanel
-              data-default-transition="false"
-              className={"p-4 bg-background/40 rounded-t-xl"}
-            >
-              <div>
-                <p>
-                  EasyDonate
-                  สำหรับแพ็คเกจฟรีจะอนุญาตให้สามารถแสดงการแจ้งเตือนการบริจาคได้เพียง
-                  10 ครั้ง/เดือน และอาจมีโฆษณาในหน้ารับเงิน
-                  <br />
-                  <br />
-                  โปรดศึกษาเพิ่มเติมเกี่ยวกับ
-                  <Link
-                    href={"https://easydonate.app/plans?ref=alertbox.org"}
-                    target="_blank"
-                    className="text-blue-500"
-                  >
-                    ค่าบริการของ EasyDonate ที่นี่
-                  </Link>
-                </p>
-                <span className="mt-4 block text-xs text-foreground/40">
-                  Alertbox.org:
-                </span>
-                <p className="mt-2 text-xs text-foreground/40">
-                  เราเป็นองค์กรไม่แสวงผลกำไร โดยเราจะไม่เก็บค่าบริการใดๆ
-                  จากแพลตฟอร์มทั้งสิ้น
-                  เว้นแต่ค่าบริการและค่าธรรมเนียมที่เกิดขึ้นจากผู้ให้บริการช่องทางการชำระเงิน
-                  เช่น Stripe, Buy me a coffee, Ko-Fi
-                  ซึ่งทั้งหมดนี้ไม่ได้อยู่ในการควบคุมของเรา
-                </p>
-                <p className="mt-2 text-xs text-foreground/40">
-                  ซึ่งการทำเช่นนี้เราจะสามารถได้รับรายได้เพื่อนำมาบำรุงรักษาและให้บริการ
-                  Alertbox.org และ tip-to.me
-                  ต่อไปได้โดยการบริจาคจากผู้ใช้งานของเราเท่านั้น
-                </p>
-              </div>
-            </AccordionPanel>
-          </AccordionItem>
+          {lang.data.pages.index.sections.for_thai_people.faq.map((qa, i) => (
+            <AccordionItem key={i}>
+              <AccordionButton
+                className={
+                  "p-4 hover:no-underline hover:bg-foreground/5 rounded-sm"
+                }
+              >
+                {qa.q}
+              </AccordionButton>
+              <AccordionPanel
+                data-default-transition="false"
+                className={"p-4 bg-background/40 rounded-t-xl"}
+              >
+                <div>
+                  {qa.a.ezdn.map((a, i) => (
+                    <p key={i}>
+                      {a.split("%").map((t, i) =>
+                        i === 0 ? (
+                          <React.Fragment key={i}>{t}</React.Fragment>
+                        ) : (
+                          <Link
+                            href={
+                              "https://easydonate.app/plans?ref=alertbox.org"
+                            }
+                            className="text-blue-500"
+                            target="_blank"
+                            key={i}
+                          >
+                            {t}
+                          </Link>
+                        ),
+                      )}
+                      {i < qa.a.ezdn.length - 1 && <br />}
+                    </p>
+                  ))}
+                  <span className="mt-4 block text-xs text-foreground/40">
+                    Alertbox.org:
+                  </span>
+                  {qa.a.alertbox_org.map((a, i) => (
+                    <p key={i} className="mt-2 text-xs text-foreground/40">
+                      {a}
+                      {i < qa.a.ezdn.length - 1 && <br />}
+                    </p>
+                  ))}
+                </div>
+              </AccordionPanel>
+            </AccordionItem>
+          ))}
         </Accordion>
         <Link
           href={"https://easydonate.app/?ref=alertbox.org"}
@@ -305,7 +286,8 @@ export default function Home() {
             }
             size={"lg"}
           >
-            ลองดู EasyDonate.app <ArrowUpRightIcon size={16} weight="bold" />
+            {lang.data.pages.index.sections.for_thai_people.ref}{" "}
+            <ArrowUpRightIcon size={16} weight="bold" />
           </Button>
         </Link>
         <div className="flex flex-col font-read text-center gap-2 mb-12">
@@ -313,23 +295,19 @@ export default function Home() {
             DISCLAMER
           </strong>
           <span className="text-foreground/40 text-xs mt-2">
-            เรา AlertBox.org ไม่ได้มีส่วนร่วม หรือความเกี่ยวข้องใดๆกัน
-            และไม่ได้รู้จักกับผู้บริหารของ EasyDonate เป็นการส่วนตัว
+            {lang.data.pages.index.sections.for_thai_people.disclaimer[0]}
           </span>
           <span className="text-foreground/40 text-xs">
-            AlertBox.org เกิดขึ้นมาจากกลุ่มนักพัฒนาเล็กๆ ที่ชื่นชอบ
-            และมีอุดมคติเดียวกันคือ
+            {lang.data.pages.index.sections.for_thai_people.disclaimer[1]}
           </span>
           <strong className="text-foreground/60 text-sm mt-2">
-            &quot;นวัตกรรมที่แท้จริงจะเจริญงอกงามได้เมื่อความรู้เป็นสิ่งที่เข้าถึงได้ฟรี&quot;
+            {lang.data.pages.index.sections.for_thai_people.disclaimer[2]}
           </strong>
           <span className="text-foreground/40 text-xs mt-2">
-            ทั้งนี้ ความตั้งใจของเราในการสร้าง AlertBox.org
-            ของเราไม่ได้เกิดมาเพื่อฆ่าผู้เล่นในตลาด
-            เราเป็นเพียงอีกทางเลือกหนึ่งสำหรับทุกคน
+            {lang.data.pages.index.sections.for_thai_people.disclaimer[3]}
           </span>
           <span className="text-foreground/40 text-xs mt-2">
-            สร้างโดย มนุยษ์ เพื่อ มนุยษ์ เกิดขึ้นบน โลก
+            {lang.data.pages.index.sections.for_thai_people.disclaimer[4]}
           </span>
         </div>
       </section>

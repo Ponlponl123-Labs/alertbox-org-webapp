@@ -2,11 +2,18 @@
   "key": "en-US",
   "label": "English",
   "country": "us",
+  "flag": "🇺🇸",
   "currency": "USD",
   "currency_symbols": "$",
+  "common": {
+    "connect": "Connect",
+    "customize": "Customize",
+    "go_live": "Go Live",
+    "overlay_url": "Get Overlay URL"
+  },
   "header": {
     "links": {
-      "about": "Get to know us",
+      "about": "Good to know",
       "pricing": "Pricing"
     },
     "actions": {
@@ -18,12 +25,21 @@
     "description": "Alertbox.org is a free, open-source alert box creator for streamers. Enjoy custom profiles, zero platform fees, and total privacy. Powered by Stripe, Ko-fi, and Buy Me a Coffee."
   },
   "pages": {
+    "notfound": {
+      "title": "Looks like you're lost.",
+      "description": "The page you requested doesn't exist.",
+      "back": "Go Home"
+    },
     "index": {
-      "title": "Stream Freely. Donate Privately.",
-      "description": "The real-time donation alert box built for viewer anonymity. Let your fans support your stream without revealing who they are.",
+      "title": [
+        "Stream Freely.",
+        "Donate Privately."
+      ],
+      "description": "The real-time donation alert box built for everyone. Let your fans support your stream without revealing who you are.",
       "actions": {
         "primary": "Create Your Alert Box",
-        "secondary": "How It Works?"
+        "secondary": "How It Works?",
+        "yourname": "your-name"
       },
       "sections": {
         "howitworks": {
@@ -34,12 +50,106 @@
             "viewer": "For Fans"
           },
           "donated": "donated",
-          "test_message": "This is a test message."
+          "test_message": "This is a test message.",
+          "steps": [
+            {
+              "title": "1. Prepare Your Payment Gateway",
+              "description": "Ensure you have an active account with a supported provider like Stripe, Ko-fi, or Buy Me a Coffee."
+            },
+            {
+              "title": "2. Create Your Profile",
+              "description": "Sign up on Alertbox.org to generate your custom, privacy-focused streamer profile."
+            },
+            {
+              "title": "3. Connect via Webhook",
+              "description": "Link your payment gateway using our secure webhook so we can trigger alerts when you receive a donation."
+            },
+            {
+              "title": "4. Customize Your Alert Box",
+              "description": "Adjust the design, colors, and layout of your alerts to perfectly match your stream's aesthetic."
+            },
+            {
+              "title": "5. Add Overlay to OBS",
+              "description": "Copy your unique overlay URL and paste it as a Browser Source in your broadcasting software."
+            },
+            {
+              "title": "6. Go Live!",
+              "description": "You are all set. We handle the overlay and profile, while your funds go directly to you."
+            }
+          ],
+          "steps_for_viewer": [
+            {
+              "title": "1. Visit Profile (Optional)",
+              "description": "Go to the streamer's Alertbox.org page or click their direct donation link."
+            },
+            {
+              "title": "2. Make a Donation",
+              "description": "Pay securely through trusted platforms like Stripe, Buy Me a Coffee, or Ko-fi."
+            },
+            {
+              "title": "3. You're on Screen!",
+              "description": "That's it! Your support instantly triggers a live alert on their stream."
+            }
+          ]
+        },
+        "for_thai_people": {
+          "separate": "For Thai citizens currently residing in Thailand",
+          "title": "If our service doesn't meet your needs,",
+          "description": "and you are comfortable with the risks regarding your financial trail,",
+          "description2": "we highly recommend checking out %EasyDonate%.",
+          "faq": [
+            {
+              "q": "How is EasyDonate different from us?",
+              "a": {
+                "ezdn": [
+                  "EasyDonate triggers an alert only when a donor uploads a bank transfer slip for verification, and the funds are transferred directly to the streamer's bank account."
+                ],
+                "alertbox_org": [
+                  "However, we trigger alerts instantly when a donor makes a purchase, subscribes, or donates. Payment gateway providers like Stripe, Buy Me a Coffee, or Ko-fi send us a Webhook event to display the alert in real-time.",
+                  "This method protects the streamer's personal information, as the donor pays the payment gateway provider first before the funds are ultimately transferred to the streamer."
+                ]
+              }
+            },
+            {
+              "q": "Pricing & Fees",
+              "a": {
+                "ezdn": [
+                  "EasyDonate's free tier only allows up to 10 donation alerts per month and may display ads on the donation page.",
+                  "Please learn more about %EasyDonate's pricing here%."
+                ],
+                "alertbox_org": [
+                  "We are a non-profit platform. We charge zero platform fees. The only fees you incur are those deducted directly by your chosen payment gateways (e.g., Stripe, Buy Me a Coffee, Ko-fi), which are entirely out of our control.",
+                  "Because of this, our only source of revenue to maintain and keep Alertbox.org and tip-to.me running is through donations from our users."
+                ]
+              }
+            }
+          ],
+          "ref": "Check out EasyDonate.app",
+          "disclaimer": [
+            "We at AlertBox.org have no affiliation, partnership, or personal relationship with the management of EasyDonate.",
+            "AlertBox.org was created by a small group of passionate developers who share the same ideal:",
+            "\"True innovation flourishes when knowledge is free\"",
+            "Our intention in building AlertBox.org is not to destroy market competitors. We simply want to provide another alternative for everyone.",
+            "Built by humans, for humans, on Earth."
+          ]
         }
       }
     }
   },
   "footer": {
-    "description": "Alertbox.org is an open-source alert box service featuring custom streamer profiles, zero platform fees, and robust privacy protection. \nPowered by trusted payment gateways like Buy Me a Coffee, Ko-fi, and Stripe."
+    "description": "Alertbox.org is an open-source alert box service featuring custom streamer profiles, zero platform fees, and robust privacy protection. \nPowered by trusted payment gateways like Buy Me a Coffee, Ko-fi, and Stripe.",
+    "links": {
+      "legal": {
+        "title": "Legal",
+        "privacy": "Privacy Policy",
+        "tos": "Terms of Service",
+        "additional": "Additional Terms"
+      },
+      "common": {
+        "title": "Useful Links",
+        "docs": "Documentation",
+        "status": "Status"
+      }
+    }
   }
 }

@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import {
-  Google_Sans,
+  Noto_Serif_Thai,
   Fredoka,
   Geist_Mono,
   JetBrains_Mono,
+  Bai_Jamjuree,
 } from "next/font/google";
+import { CountryFlagsPolyfill } from "@/components/CountryFlagsPolyfill";
 import { preload } from "@/consts/theme";
-import { cn } from "@/lib/utils";
-import "@/styles/globals.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import { cn } from "@/lib/utils";
+import "@/styles/globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -21,8 +23,14 @@ const fredokaSans = Fredoka({
   subsets: ["latin"],
 });
 
-const googleSans = Google_Sans({
-  variable: "--font-google-sans",
+const notoSarifThai = Noto_Serif_Thai({
+  variable: "--font-noto-sarif-thai",
+  subsets: ["latin"],
+});
+
+const baiJamJuree = Bai_Jamjuree({
+  variable: "--font-bai-jamjuree",
+  weight: ["200", "300", "400", "500", "600", "700"],
   subsets: ["latin"],
 });
 
@@ -47,9 +55,10 @@ export default function RootLayout({
       className={cn(
         "h-full",
         "antialiased",
-        googleSans.variable,
+        baiJamJuree.variable,
         fredokaSans.variable,
         geistMono.variable,
+        notoSarifThai.variable,
         "font-sans",
         jetbrainsMono.variable,
       )}
@@ -64,6 +73,7 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <CountryFlagsPolyfill />
       </body>
     </html>
   );

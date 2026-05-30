@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import LanguageSwitcher from "./language-switcher";
 
 function Header() {
   const pathname = usePathname();
@@ -22,13 +23,14 @@ function Header() {
       )}
     >
       <div className="flex-1 min-w-0 max-w-5xl mx-auto w-full flex items-center justify-between gap-4">
-        <div>
+        <div className="flex items-center gap-3">
           <Link href={"/"} className="flex items-center gap-2.5">
             <HandHeartIcon size={26} weight="fill" />
             <h1 className="text-lg font-semibold tracking-tight">
               AlertBox.org
             </h1>
           </Link>
+          <LanguageSwitcher />
         </div>
         <div className="flex items-center gap-2">
           <Link href={"/about"}>
