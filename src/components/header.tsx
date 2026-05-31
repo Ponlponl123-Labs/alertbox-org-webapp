@@ -1,66 +1,197 @@
 "use client";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { useStore } from "zustand";
 import { Button } from "./ui/button";
 import ThemeSwitcher from "./theme-switcher";
-import { GithubLogoIcon, HandHeartIcon } from "@phosphor-icons/react";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import LanguageSwitcher from "./language-switcher";
+import {
+  CaretLeftIcon,
+  GithubLogoIcon,
+  HandHeartIcon,
+  ListIcon,
+} from "@phosphor-icons/react";
+import { AnimatePresence, motion } from "motion/react";
+import CurrentUserChip from "./current-user-chip";
+import { useUserContext } from "@/contexts/user";
+
+function Nav({
+  classNames,
+}: {
+  classNames?: {
+    link?: string;
+    button?: string;
+  };
+}) {
+  const lang = useStore(coreStore, (state) => state.lang);
+  const { userInfo } = useUserContext();
+  return (
+    <>
+      <Link href={"/about"}>
+        <Button
+          variant="ghost"
+          size={"sm"}
+          className={cn("rounded-lg p-2 w-full", classNames?.link)}
+        >
+          {lang.data.header.links.about}
+        </Button>
+      </Link>
+      <Link href={"/pricing"}>
+        <Button
+          variant="ghost"
+          size={"sm"}
+          className={cn("rounded-lg p-2 w-full", classNames?.link)}
+        >
+          {lang.data.header.links.pricing}
+        </Button>
+      </Link>
+      <div className="md:hidden my-auto" />
+      <Link
+        href={"https://github.com/Ponlponl123-Labs/alertbox-org"}
+        target="_blank"
+      >
+        <Button
+          variant="secondary"
+          className={cn("rounded-xl p-4 w-full", classNames?.button)}
+        >
+          <GithubLogoIcon size={18} weight="fill" />
+          Github
+        </Button>
+      </Link>
+      {!userInfo && (
+        <Link href={"/app"}>
+          <Button
+            variant="default"
+            className={cn("rounded-xl p-4 w-full", classNames?.button)}
+          >
+            {lang.data.header.actions.get_started}
+          </Button>
+        </Link>
+      )}
+    </>
+  );
+}
 
 function Header() {
   const pathname = usePathname();
-  const lang = useStore(coreStore, (state) => state.lang);
+  const [isNavActive, setIsNavActive] = useState(false);
 
   return (
-    <header
-      className={cn(
-        "h-16 flex items-center justify-between px-4 border-b border-solid absolute top-0 left-0 right-0 z-50",
-        pathname === "/"
-          ? "bg-linear-0 to-white dark:to-black from-transparent border-transparent"
-          : "bg-background/80 backdrop-blur-sm border-border",
-      )}
-    >
-      <div className="flex-1 min-w-0 max-w-5xl mx-auto w-full flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href={"/"} className="flex items-center gap-2.5">
-            <HandHeartIcon size={26} weight="fill" />
-            <h1 className="text-lg font-semibold tracking-tight">
-              AlertBox.org
-            </h1>
-          </Link>
-          <LanguageSwitcher />
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href={"/about"}>
-            <Button variant="ghost" size={"sm"} className="rounded-lg p-2">
-              {lang.data.header.links.about}
-            </Button>
-          </Link>
-          <Link href={"/pricing"}>
-            <Button variant="ghost" size={"sm"} className="rounded-lg p-2">
-              {lang.data.header.links.pricing}
-            </Button>
-          </Link>
-          <Link
-            href={"https://github.com/Ponlponl123-Labs/alertbox-org"}
-            target="_blank"
+    <>
+      <motion.header
+        animate={{
+          height: pathname.startsWith("/app") ? 48 : 64,
+          padding: pathname.startsWith("/app") ? 8 : 16,
+        }}
+        className={cn(
+          "h-16 flex items-center justify-between px-4 absolute top-0 left-0 right-0 z-50",
+          pathname === "/"
+            ? "bg-linear-0 to-white dark:to-black from-transparent border-transparent"
+            : "bg-background/80 backdrop-blur-sm border-border border-b border-solid ",
+        )}
+      >
+        <AnimatePresence>
+          <motion.div
+            animate={{
+              maxWidth: pathname.startsWith("/app") ? "100vw" : 1024,
+            }}
+            className={cn(
+              "flex-1 min-w-0 max-w-5xl mx-auto w-full flex items-center justify-between gap-4",
+              pathname.startsWith("/app") && "max-w-none",
+            )}
+            id="header-main"
           >
-            <Button variant="secondary" className="rounded-xl p-4">
-              <GithubLogoIcon size={18} weight="fill" />
-              Github
-            </Button>
-          </Link>
-          <Link href={"/app"}>
-            <Button variant="default" className="rounded-xl p-4">
-              {lang.data.header.actions.get_started}
-            </Button>
-          </Link>
-          <ThemeSwitcher />
-        </div>
-      </div>
-    </header>
+            <div className="flex items-center gap-3">
+              <AnimatePresence>
+                {pathname.startsWith("/app") && (
+                  <motion.div
+                    id="header-app-back"
+                    layoutId="header-app-back"
+                    exit={{ opacity: 0, marginRight: -24 }}
+                    animate={{ opacity: 1, marginRight: 0 }}
+                    initial={{ opacity: 0, marginRight: -24 }}
+                  >
+                    <Link href={"/"}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-xl"
+                        aria-hidden="true"
+                      >
+                        <CaretLeftIcon
+                          size={16}
+                          weight="bold"
+                          className="size-3"
+                        />
+                      </Button>
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <motion.div className="flex items-center gap-3">
+                <Link
+                  href={pathname.startsWith("/app") ? "/app" : "/"}
+                  className="flex items-center gap-2.5"
+                >
+                  <HandHeartIcon size={26} weight="fill" />
+                  <h1 className="text-lg font-semibold tracking-tight">
+                    AlertBox.org
+                  </h1>
+                </Link>
+                <LanguageSwitcher />
+              </motion.div>
+            </div>
+            <div className="flex items-center gap-2">
+              <AnimatePresence>
+                {!pathname.startsWith("/app") && (
+                  <motion.div
+                    id="header-nav"
+                    exit={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0 }}
+                    className="max-md:hidden flex items-center gap-2"
+                  >
+                    <Nav />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <CurrentUserChip />
+              <ThemeSwitcher />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-xl md:hidden"
+                aria-hidden="true"
+                onClick={() => setIsNavActive((prev) => !prev)}
+              >
+                <ListIcon size={20} weight="bold" />
+              </Button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </motion.header>
+      <AnimatePresence>
+        {isNavActive && (
+          <motion.nav
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            id="header-nav-mobile"
+            className="fixed flex flex-col gap-3 top-0 left-0 size-full bg-background/60 backdrop-blur-3xl z-40 p-6 pt-22 overflow-y-auto"
+          >
+            <Nav
+              classNames={{
+                link: "justify-start p-6",
+                button: "p-6",
+              }}
+            />
+          </motion.nav>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 

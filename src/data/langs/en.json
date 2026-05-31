@@ -18,6 +18,12 @@
     },
     "actions": {
       "get_started": "Get started"
+    },
+    "user_chip": {
+      "links": {
+        "dashboard": "My Dashboard"
+      },
+      "logout": "Logout"
     }
   },
   "metadata": {
@@ -133,6 +139,42 @@
             "Built by humans, for humans, on Earth."
           ]
         }
+      }
+    }
+  },
+  "app": {
+    "login": {
+      "title": "Sign in",
+      "description": "Welcome aboard, Captain!",
+      "disclaimer": "By signing in, you agree to our Terms of Service, Privacy Policy, and additional policies for our services.",
+      "methods": {
+        "discord": "Continue with Discord"
+      },
+      "announcement": {
+        "title": "Please Note",
+        "description": "Google login is currently under development and pending registration. We apologize for the inconvenience; please use Discord to sign in during this time."
+      }
+    },
+    "success": {
+      "title": "All done.",
+      "description": "Action completed successfully.",
+      "button": "Continue"
+    },
+    "failed": {
+      "title": "Oops!",
+      "description": "That didn't work. Let's give it another shot.",
+      "button": "Retry"
+    },
+    "preparing": {
+      "title": "Getting ready...",
+      "description": "Loading your preferences and preparing your dashboard."
+    },
+    "redirect": {
+      "title": "Redirecting...",
+      "description": "We're getting everything ready for you. Please wait a moment.",
+      "manually": {
+        "placeholder": "Redirect not working?",
+        "link": "Click here to proceed manually"
       }
     }
   },

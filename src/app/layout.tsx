@@ -12,6 +12,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { cn } from "@/lib/utils";
 import "@/styles/globals.css";
+import { UserContextProvider } from "@/contexts/user";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -68,12 +69,14 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: preload }} />
       </head>
       <body className="min-h-full flex flex-col">
-        <Header />
-        <main id="app" className="flex-1 min-h-screen flex flex-col">
-          {children}
-        </main>
-        <Footer />
-        <CountryFlagsPolyfill />
+        <UserContextProvider>
+          <Header />
+          <main id="app" className="flex-1 min-h-screen flex flex-col">
+            {children}
+          </main>
+          <Footer />
+          <CountryFlagsPolyfill />
+        </UserContextProvider>
       </body>
     </html>
   );
