@@ -100,10 +100,8 @@ function Header() {
           pathname === "/"
             ? "bg-linear-0 to-white dark:to-black from-transparent border-transparent"
             : "bg-background/80 backdrop-blur-sm border-border border-b border-solid ",
-          pathname.startsWith("/app") && "border-0",
           pathname.startsWith("/app") &&
-            userInfo &&
-            "backdrop-blur-none bg-transparent",
+            "border-0 bg-transparent backdrop-blur-none",
         )}
       >
         <AnimatePresence>
