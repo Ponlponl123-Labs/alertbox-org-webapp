@@ -28,7 +28,7 @@ function LanguageSwitcher({ showLabel = false }: { showLabel?: boolean }) {
           <Button
             className={cn(
               "rounded-lg text-base border-0",
-              !showLabel && "p-1 size-8",
+              !showLabel && "p-1 size-7 not-hover:bg-transparent!",
             )}
             variant="outline"
           />

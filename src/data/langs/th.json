@@ -143,6 +143,21 @@
     }
   },
   "app": {
+    "sidebar": {
+      "links": {
+        "connection": "การเชื่อมต่อ",
+        "profile": "โปรไฟล์ของฉัน",
+        "alertbox": {
+          "title": "กล่องแจ้งเตือน",
+          "donation": "บริจาค",
+          "subscription": "การสมัครสมาชิก",
+          "purchased": "คำสั่งซื้อ"
+        },
+        "account": "บัญชีของฉัน"
+      },
+      "collapse": "ยุบ",
+      "expand": "ขยาย"
+    },
     "login": {
       "title": "เข้าสู่ระบบ",
       "description": "ยินดีต้อนรับ กัปตัน!",

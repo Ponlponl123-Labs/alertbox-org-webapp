@@ -143,6 +143,21 @@
     }
   },
   "app": {
+    "sidebar": {
+      "links": {
+        "connection": "Connections",
+        "profile": "My Profile",
+        "alertbox": {
+          "title": "Alert Box",
+          "donation": "Donations",
+          "subscription": "Subscriptions",
+          "purchased": "Purchases"
+        },
+        "account": "My Account"
+      },
+      "collapse": "Collapse",
+      "expand": "Expand"
+    },
     "login": {
       "title": "Sign in",
       "description": "Welcome aboard, Captain!",

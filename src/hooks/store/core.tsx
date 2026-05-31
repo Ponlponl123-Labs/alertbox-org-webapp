@@ -3,9 +3,10 @@
 import lang, { Language, isValidLanguageKey, languageKeys } from "@/lib/i18n";
 import { createStore } from "zustand";
 
-type CoreStoreState = { lang: Language };
+type CoreStoreState = { lang: Language; isSidebarCollapsed: boolean };
 
 type CoreStoreActions = {
+  setSidebarCollapsed: (state: boolean) => void;
   setLang: (nextLang: languageKeys) => void;
   hydrateLang: () => void;
 };
@@ -16,6 +17,10 @@ const STORAGE_KEY = "alertbox-org-webapp-lang";
 
 export const coreStore = createStore<CoreStore>()((set) => ({
   lang: lang("en-US"),
+  isSidebarCollapsed: false,
+  setSidebarCollapsed: (b) => {
+    set({ isSidebarCollapsed: b });
+  },
   setLang: (nextLang: languageKeys) => {
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY, nextLang);

@@ -77,11 +77,20 @@ function Nav({
 
 function Header() {
   const pathname = usePathname();
+  const { userInfo } = useUserContext();
   const [isNavActive, setIsNavActive] = useState(false);
+  const isSidebarCollapsed = useStore(
+    coreStore,
+    (state) => state.isSidebarCollapsed,
+  );
 
   return (
     <>
       <motion.header
+        initial={{
+          height: pathname.startsWith("/app") ? 48 : 64,
+          padding: pathname.startsWith("/app") ? 8 : 16,
+        }}
         animate={{
           height: pathname.startsWith("/app") ? 48 : 64,
           padding: pathname.startsWith("/app") ? 8 : 16,
@@ -91,10 +100,17 @@ function Header() {
           pathname === "/"
             ? "bg-linear-0 to-white dark:to-black from-transparent border-transparent"
             : "bg-background/80 backdrop-blur-sm border-border border-b border-solid ",
+          pathname.startsWith("/app") && "border-0",
+          pathname.startsWith("/app") &&
+            userInfo &&
+            "backdrop-blur-none bg-transparent",
         )}
       >
         <AnimatePresence>
           <motion.div
+            initial={{
+              maxWidth: pathname.startsWith("/app") ? "100vw" : 1024,
+            }}
             animate={{
               maxWidth: pathname.startsWith("/app") ? "100vw" : 1024,
             }}
@@ -110,15 +126,23 @@ function Header() {
                   <motion.div
                     id="header-app-back"
                     layoutId="header-app-back"
-                    exit={{ opacity: 0, marginRight: -24 }}
-                    animate={{ opacity: 1, marginRight: 0 }}
-                    initial={{ opacity: 0, marginRight: -24 }}
+                    exit={{ opacity: 0, marginRight: -24, marginLeft: 0 }}
+                    animate={{
+                      opacity: 1,
+                      marginRight: isSidebarCollapsed ? 24 : -4,
+                      marginLeft: isSidebarCollapsed ? 8 : 0,
+                    }}
+                    initial={{
+                      opacity: 0,
+                      marginRight: -32,
+                      marginLeft: 0,
+                    }}
                   >
                     <Link href={"/"}>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="rounded-xl"
+                        className="rounded-xl text-foreground/40"
                         aria-hidden="true"
                       >
                         <CaretLeftIcon
@@ -137,11 +161,23 @@ function Header() {
                   className="flex items-center gap-2.5"
                 >
                   <HandHeartIcon size={26} weight="fill" />
-                  <h1 className="text-lg font-semibold tracking-tight">
+                  <motion.h1
+                    initial={{
+                      fontWeight: pathname.startsWith("/app") ? 300 : 600,
+                      opacity: pathname.startsWith("/app") ? 0.6 : 1,
+                    }}
+                    animate={{
+                      fontWeight: pathname.startsWith("/app") ? 300 : 600,
+                      opacity: pathname.startsWith("/app") ? 0.6 : 1,
+                    }}
+                    className="text-lg tracking-tight"
+                  >
                     AlertBox.org
-                  </h1>
+                  </motion.h1>
                 </Link>
-                <LanguageSwitcher />
+                <div className="mt-0.75 -ml-1.5">
+                  <LanguageSwitcher />
+                </div>
               </motion.div>
             </div>
             <div className="flex items-center gap-2">

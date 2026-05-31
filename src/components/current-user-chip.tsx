@@ -44,7 +44,7 @@ function CurrentUserChip() {
             <AvatarFallback>{getFallbackInitial(userInfo.name)}</AvatarFallback>
           </Avatar>
         </div>
-        <span className="text-xs text-foreground/60 mr-1.5">
+        <span className="text-xs text-foreground/60 ml-0.75 mr-1.5">
           {userInfo.displayname}
         </span>
       </PopoverTrigger>
@@ -94,7 +94,7 @@ function CurrentUserChip() {
                 "hover:bg-rose-600/5! hover:text-rose-600",
               )}
               variant="ghost"
-              onClick={() => logout}
+              onClick={() => void logout()}
             >
               <DoorOpenIcon weight="bold" size={16} />
               <span className="text-xs">

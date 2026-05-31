@@ -103,7 +103,9 @@ const Footer = memo(function Footer() {
       )}
 
       <footer className="w-full min-w-0 flex-1 p-6 flex flex-col items-center relative bg-sidebar">
-        <div className="absolute top-0 left-0 -translate-y-full w-full min-w-0 flex-1 bg-linear-0 to-transparent from-sidebar h-12 opacity-60" />
+        {!pathname.startsWith("/app") && (
+          <div className="absolute top-0 left-0 -translate-y-full w-full min-w-0 flex-1 bg-linear-0 to-transparent from-sidebar h-12 opacity-60" />
+        )}
         <div className="min-w-0 w-full max-w-5xl flex gap-6 mx-auto py-6 max-sm:flex-col">
           <div className="flex flex-col gap-2 text-foreground/30 flex-1 min-w-0">
             <h1 className="text-xl font-light tracking-wider">Alertbox.org</h1>

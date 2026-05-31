@@ -69,8 +69,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
         },
       });
 
-      if (r.ok) deleteCookie("USRSS");
-
+      deleteCookie("USRSS");
       window.location.reload();
 
       return r.ok;
