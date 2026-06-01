@@ -20,15 +20,17 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 function CurrentUserChip() {
   const { userInfo, logout } = useUserContext();
   const lang = useStore(coreStore, (state) => state.lang);
+  const pathname = usePathname();
 
   if (!userInfo) return null;
 
   return (
-    <Popover>
+    <Popover key={pathname}>
       <PopoverTrigger
         render={
           <Button

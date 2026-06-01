@@ -1,6 +1,7 @@
 "use client";
 import Connection from "@/components/connection";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Spinner } from "@/components/ui/spinner";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
 import { getFallbackInitial } from "@/lib/utils";
@@ -56,10 +57,8 @@ function Page() {
       </p>
       <div className="w-full flex flex-col min-h-0 mt-6 flex-1 gap-1.5">
         {!connections && (
-          <div className="w-full flex items-center justify-center min-h-0 bg-foreground/5 rounded-4xl flex-1 border-2 border-dashed border-foreground/10">
-            <span className="tracking-wider text-foreground/40">
-              Loading...
-            </span>
+          <div className="w-full flex items-center justify-center min-h-0 bg-foreground/5 rounded-4xl py-6 flex-1 border-2 border-dashed border-foreground/10">
+            <Spinner className="size-6 text-foreground/40 mx-auto my-8" />
           </div>
         )}
         {connections &&
