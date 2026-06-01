@@ -73,7 +73,7 @@ export default function Home() {
               endContent={
                 <Link
                   className="text-xs flex w-max -mr-0.5 h-8 items-center justify-center gap-2 rounded-full bg-foreground px-3 text-background hover:bg-[#383838] dark:hover:bg-[#ccc]"
-                  href="/app"
+                  href="/app/profile"
                 >
                   <BellRingingIcon
                     weight="fill"
