@@ -1,10 +1,20 @@
 export interface User {
   id: string;
+  create_with: string;
+  time: Date;
   name: string;
   displayname: string;
+  uri: string;
   email: string;
   avatar: string | null;
   banner: string | null;
   disabled: Date | null;
   deleted: Date | null;
+}
+
+export interface Connections {
+  stripe: string | null;
+  bmac: string | null;
+  kofi: string | null;
+  ffp: string | null;
 }

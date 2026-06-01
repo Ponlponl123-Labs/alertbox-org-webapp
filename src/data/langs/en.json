@@ -21,7 +21,9 @@
     },
     "user_chip": {
       "links": {
-        "dashboard": "My Dashboard"
+        "dashboard": "My Dashboard",
+        "profile": "My Profile",
+        "account": "Account Settings"
       },
       "logout": "Logout"
     }
@@ -153,7 +155,14 @@
           "subscription": "Subscriptions",
           "purchased": "Purchases"
         },
-        "account": "My Account"
+        "settings": {
+          "title": "Settings",
+          "account": "Account",
+          "security": "Security",
+          "appearance": "Appearance",
+          "alerts": "Alerts",
+          "danger": "Danger Zone"
+        }
       },
       "collapse": "Collapse",
       "expand": "Expand"
@@ -168,6 +177,113 @@
       "announcement": {
         "title": "Please Note",
         "description": "Google login is currently under development and pending registration. We apologize for the inconvenience; please use Discord to sign in during this time."
+      }
+    },
+    "streamer_mode_protection": {
+      "title": "Streamer Mode Protection",
+      "description": "We can't display certain information because you have Streamer Mode enabled. Please disable Streamer Mode to access your dashboard.",
+      "button": "I Understand"
+    },
+    "security": {
+      "title": "Account Security",
+      "description": "Manage your account security settings, such as changing your password, two-factor authentication, and recent login activity to ensure your account is safe and properly protected.",
+      "registered": "Registered On",
+      "last_login": "Last Logged In",
+      "registered_with": "Registered With",
+      "email": {
+        "title": "Linked Email",
+        "description": "This email is used for logging in and for important communications regarding your account. Please ensure this is an active email address you have access to."
+      },
+      "device": {
+        "title": "Active Sessions",
+        "description": "A list of devices logged into your account. If you see an unfamiliar device or location, please change your password immediately and review your account activity.",
+        "unknown": "Unknown",
+        "this": "This Device",
+        "info": {
+          "browser": "Browser",
+          "browser_version": "Browser Version",
+          "browser_type": "Browser Type",
+          "browser_major": "Browser Major",
+          "device_type": "Device Type",
+          "device_model": "Device Model",
+          "device_vendor": "Device Vendor",
+          "os": "Operating System",
+          "os_version": "OS Version",
+          "ip": "IP Address",
+          "location": "Approximate Location",
+          "lat": "Latitude",
+          "lon": "Longitude",
+          "country": "Country",
+          "region": "Region",
+          "city": "City",
+          "postal": "Postal Code",
+          "isp": "ISP",
+          "as": "ASN",
+          "expires": "Expires At",
+          "time": "Login Time",
+          "last_used": "Last Used"
+        },
+        "unknown_device": "Unknown Device",
+        "current_device": "Current Device",
+        "other_device": "Other Devices",
+        "unknown_location": "Unknown Location",
+        "forgot_device": "Don't recognize this device?",
+        "revoke": "Revoke Access",
+        "disable": "End this session",
+        "disabled": "This session has been disabled",
+        "disabled_at": "Session disabled at"
+      }
+    },
+    "connections": {
+      "title": "Payment Integrations",
+      "description": "Connect your preferred gateways. We only listen for webhooks to trigger your alerts—we never touch your money or access your banking details.",
+      "privacy": "Privacy",
+      "payout": "Payout",
+      "providers": {
+        "stripe": {
+          "name": "Stripe",
+          "description": "Enterprise-grade payment gateway for accepting credit/debit cards, Apple Pay, and Google Pay globally.",
+          "privacy": "Highest. Viewers pay on Stripe's secure checkout. Alertbox.org only receives a webhook notification without any of your sensitive banking data.",
+          "payout": "Direct to your bank account based on your Stripe payout schedule."
+        },
+        "kofi": {
+          "name": "Ko-fi",
+          "description": "A popular, zero-fee platform for creators to receive one-time donations and subscriptions.",
+          "privacy": "Strong. Donors interact with your Ko-fi username, keeping your real identity safe. We simply read the alert signal.",
+          "payout": "Instant. Funds go directly to your connected PayPal or Stripe account."
+        },
+        "bmac": {
+          "name": "Buy Me a Coffee",
+          "description": "A fast, friendly way for fans to support your stream with a simple checkout experience.",
+          "privacy": "Strong. Viewers donate on your public creator page. Alertbox.org only processes the notification payload to show the alert.",
+          "payout": "Directly to your bank account via standard Buy Me a Coffee payout methods."
+        },
+        "feelfreepay": {
+          "name": "FeelFreePay",
+          "description": "Seamless payment gateway optimized for quick and easy local transactions and QR codes.",
+          "privacy": "High. Alertbox.org only listens for the successful transaction signal to trigger your alert without accessing your financial data.",
+          "payout": "Funds collected from donors are processed and can be withdrawn to your registered bank account on a weekly basis."
+        }
+      },
+      "placeholder": "Webhook Secret Here",
+      "howto": "How to connect?",
+      "update": "Update",
+      "soon": "Coming Soon",
+      "status": {
+        "notconnected": "Not Connected",
+        "connect": "Connect",
+        "connected": "Connected",
+        "disconnect": "Disconnect"
+      }
+    },
+    "danger": {
+      "title": "Danger Zone",
+      "description": "This is where you'll find settings that could have a significant impact on your account. Please proceed with caution and make sure you understand the consequences of your actions before proceeding.",
+      "delete_account": {
+        "title": "Delete My Account",
+        "description": "This action is irreversible and will remove all data associated with your account from our system, including your streamer profile and all settings. Please consider carefully before proceeding.",
+        "cancel": "Cancel",
+        "delete": "Delete My Account"
       }
     },
     "success": {

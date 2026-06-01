@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react", "lucide-react"],
   },
+  images: {
+    remotePatterns: [new URL("https://cdn.discordapp.com/**")],
+  },
   async rewrites() {
     return [
       {

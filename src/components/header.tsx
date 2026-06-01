@@ -83,6 +83,14 @@ function Header() {
     coreStore,
     (state) => state.isSidebarCollapsed,
   );
+  const isSidebarHiddenOnMobile = useStore(
+    coreStore,
+    (state) => state.isSidebarHiddenOnMobile,
+  );
+  const setSidebarHiddenOnMobile = useStore(
+    coreStore,
+    (state) => state.setSidebarHiddenOnMobile,
+  );
 
   return (
     <>
@@ -136,7 +144,7 @@ function Header() {
                       marginLeft: 0,
                     }}
                   >
-                    <Link href={"/"}>
+                    <Link href={"/"} className="max-md:hidden">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -150,6 +158,17 @@ function Header() {
                         />
                       </Button>
                     </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-xl md:hidden text-foreground/40"
+                      aria-hidden="true"
+                      onClick={() =>
+                        setSidebarHiddenOnMobile(!isSidebarHiddenOnMobile)
+                      }
+                    >
+                      <ListIcon size={16} weight="bold" className="size-3" />
+                    </Button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -197,7 +216,10 @@ function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-xl md:hidden"
+                className={cn(
+                  "rounded-xl md:hidden",
+                  pathname.startsWith("/app") && "hidden",
+                )}
                 aria-hidden="true"
                 onClick={() => setIsNavActive((prev) => !prev)}
               >

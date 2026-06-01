@@ -8,13 +8,17 @@ import {
   BellRingingIcon,
   CaretDownIcon,
   ChartLineIcon,
+  GearSixIcon,
   HandWavingIcon,
   HeartIcon,
-  PersonArmsSpreadIcon,
+  PaletteIcon,
   PlugsIcon,
+  ShieldCheckIcon,
   SidebarSimpleIcon,
   StorefrontIcon,
+  UserGearIcon,
   UserIcon,
+  WarningOctagonIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -31,6 +35,10 @@ function AppSidebar() {
     coreStore,
     (state) => state.isSidebarCollapsed,
   );
+  const isSidebarHiddenOnMobile = useStore(
+    coreStore,
+    (state) => state.isSidebarHiddenOnMobile,
+  );
   const setSidebarCollapsed = useStore(
     coreStore,
     (state) => state.setSidebarCollapsed,
@@ -46,6 +54,8 @@ function AppSidebar() {
         className={cn(
           "sticky top-0 h-screen z-40 w-58 p-3 pt-14 bg-sidebar flex flex-col text-foreground gap-1",
           isSidebarCollapsed && "w-16",
+          "max-md:fixed",
+          isSidebarHiddenOnMobile && "max-md:-translate-x-full",
         )}
       >
         {[
@@ -73,24 +83,40 @@ function AppSidebar() {
               {
                 text: lang.data.app.sidebar.links.alertbox.donation,
                 icon: <HeartIcon weight="bold" size={16} />,
-                href: "/app/profile",
+                href: "/app/alertbox/tip",
               },
               {
                 text: lang.data.app.sidebar.links.alertbox.subscription,
                 icon: <HandWavingIcon weight="bold" size={16} />,
-                href: "/app/profile",
+                href: "/app/alertbox/membership",
               },
               {
                 text: lang.data.app.sidebar.links.alertbox.purchased,
                 icon: <StorefrontIcon weight="bold" size={16} />,
-                href: "/app/connections",
+                href: "/app/alertbox/purchased",
               },
             ],
           },
           {
-            text: lang.data.app.sidebar.links.account,
-            icon: <PersonArmsSpreadIcon weight="bold" size={16} />,
-            href: "/app/account",
+            text: lang.data.app.sidebar.links.settings.title,
+            icon: <GearSixIcon weight="bold" size={16} />,
+            links: [
+              {
+                text: lang.data.app.sidebar.links.settings.account,
+                icon: <UserGearIcon weight="bold" size={16} />,
+                href: "/app/account",
+              },
+              {
+                text: lang.data.app.sidebar.links.settings.security,
+                icon: <ShieldCheckIcon weight="bold" size={16} />,
+                href: "/app/account/security",
+              },
+              {
+                text: lang.data.app.sidebar.links.settings.danger,
+                icon: <WarningOctagonIcon weight="bold" size={16} />,
+                href: "/app/account/danger",
+              },
+            ],
           },
         ].map((l, i) =>
           !l?.href ? (

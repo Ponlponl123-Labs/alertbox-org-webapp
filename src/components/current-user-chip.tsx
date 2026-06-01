@@ -7,24 +7,25 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "./ui/popover";
-import { cn } from "@/lib/utils";
+import { cn, getFallbackInitial } from "@/lib/utils";
 import { useStore } from "zustand";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { coreStore } from "@/hooks/store/core";
-import { ChartLineIcon, DoorOpenIcon } from "@phosphor-icons/react";
+import {
+  ChartLineIcon,
+  DoorOpenIcon,
+  UserGearIcon,
+  UserRectangleIcon,
+} from "@phosphor-icons/react";
 import Link from "next/link";
+import Image from "next/image";
 
 function CurrentUserChip() {
   const { userInfo, logout } = useUserContext();
   const lang = useStore(coreStore, (state) => state.lang);
 
   if (!userInfo) return null;
-
-  const getFallbackInitial = (name: string) => {
-    const match = name.match(/\p{L}/u);
-    return (match?.[0] ?? name[0] ?? "").toUpperCase();
-  };
 
   return (
     <Popover>
@@ -48,14 +49,36 @@ function CurrentUserChip() {
           {userInfo.displayname}
         </span>
       </PopoverTrigger>
-      <PopoverContent className={"w-42 rounded-2xl p-1"}>
-        <PopoverHeader>
+      <PopoverContent className={"w-42 rounded-2xl p-1 relative"}>
+        {userInfo?.banner && (
+          <>
+            <Image
+              src={userInfo?.banner}
+              alt="Banner"
+              className="w-full blur-lg aspect-video top-0 left-0 pointer-events-none object-cover absolute rounded-2xl z-0 opacity-30"
+              width={720}
+              height={288}
+            />
+            <div className="absolute inset-0 bg-linear-to-t from-white/50 dark:from-black/50 to-transparent z-5 rounded-2xl" />
+          </>
+        )}
+        <PopoverHeader className="z-10">
           <PopoverTitle
-            className={
-              "text-foreground/40 text-xs my-1 bg-background mt-0 p-2.5 rounded-xl bg-linear-150 to-rose-900/20 from-transparent"
-            }
+            className={cn(
+              "text-foreground/40 text-xs my-1 bg-background mt-0 p-2.5 rounded-xl bg-linear-150 to-rose-900/20 from-transparent relative",
+              userInfo?.banner && "to-transparent",
+            )}
           >
-            <div className="flex items-center gap-1.75 w-full">
+            {userInfo?.banner && (
+              <Image
+                src={userInfo?.banner}
+                alt="Banner"
+                className="size-full top-0 left-0 pointer-events-none object-cover absolute rounded-xl z-0 mask-linear-160 mask-linear-from-0% mask-linear-to-100%"
+                width={720}
+                height={288}
+              />
+            )}
+            <div className="flex items-center gap-1.75 w-full z-10 relative">
               <Avatar size="sm">
                 {userInfo.avatar && <AvatarImage src={userInfo.avatar} />}
                 <AvatarFallback>
@@ -66,7 +89,9 @@ function CurrentUserChip() {
                 {userInfo.displayname}
               </span>
             </div>
-            <span className="text-[10px] mt-1.5 block">@{userInfo.name}</span>
+            <span className="text-[10px] mt-1.5 block z-10 relative">
+              @{userInfo.name}
+            </span>
           </PopoverTitle>
           <div className="flex flex-col gap-px p-1.5 pt-0 -mt-0.5">
             {[
@@ -74,6 +99,16 @@ function CurrentUserChip() {
                 text: lang.data.header.user_chip.links.dashboard,
                 href: "/app",
                 icon: <ChartLineIcon weight="fill" size={16} />,
+              },
+              {
+                text: lang.data.header.user_chip.links.profile,
+                href: userInfo.uri ? "/@" + userInfo.uri : "/app/profile",
+                icon: <UserRectangleIcon weight="fill" size={16} />,
+              },
+              {
+                text: lang.data.header.user_chip.links.account,
+                href: "/app/account",
+                icon: <UserGearIcon weight="fill" size={16} />,
               },
             ].map((l, i) => (
               <Link key={i} href={l.href}>
