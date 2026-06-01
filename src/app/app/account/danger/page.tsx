@@ -24,7 +24,7 @@ import { useStore } from "zustand";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
-  const { userInfo } = useUserContext();
+  const { userInfo, logout } = useUserContext();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -37,6 +37,7 @@ function Page() {
         Authorization: "Bearer " + accessToken,
       },
     });
+    if (r.status === 401) return logout();
     if (r.ok) {
       window.location.href = "/";
     }

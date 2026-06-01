@@ -28,6 +28,7 @@ import {
   AccordionItem,
   AccordionPanel,
 } from "./animate-ui/components/headless/accordion";
+import { useEffect } from "react";
 
 function AppSidebar() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -39,11 +40,19 @@ function AppSidebar() {
     coreStore,
     (state) => state.isSidebarHiddenOnMobile,
   );
+  const setSidebarHiddenOnMobile = useStore(
+    coreStore,
+    (state) => state.setSidebarHiddenOnMobile,
+  );
   const setSidebarCollapsed = useStore(
     coreStore,
     (state) => state.setSidebarCollapsed,
   );
   const pathname = usePathname();
+
+  useEffect(() => {
+    setSidebarHiddenOnMobile(true);
+  }, [pathname, setSidebarHiddenOnMobile]);
 
   return (
     <AnimatePresence>

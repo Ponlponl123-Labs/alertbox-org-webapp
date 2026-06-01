@@ -12,7 +12,7 @@ import { useStore } from "zustand";
 function Page() {
   const [connections, setConnections] = useState<Connections | null>(null);
   const lang = useStore(coreStore, (state) => state.lang);
-  const { userInfo } = useUserContext();
+  const { userInfo, logout } = useUserContext();
   const isFetched = useRef(false);
 
   useEffect(() => {
@@ -24,11 +24,17 @@ function Page() {
         Authorization: "Bearer " + atob(token || ""),
       },
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 401) {
+          logout();
+          return null;
+        }
+        return res.json();
+      })
       .then((data) => {
         setConnections(data);
       });
-  }, [userInfo]);
+  }, [logout, userInfo]);
 
   return (
     <div className="min-h-0 flex-1 w-full flex flex-col pb-8">

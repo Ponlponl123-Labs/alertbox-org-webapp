@@ -13,6 +13,7 @@ import Footer from "@/components/footer";
 import { cn } from "@/lib/utils";
 import "@/styles/globals.css";
 import { UserContextProvider } from "@/contexts/user";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -70,12 +71,14 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <UserContextProvider>
-          <Header />
-          <main id="app" className="flex-1 min-h-screen flex flex-col">
-            {children}
-          </main>
-          <Footer />
-          <CountryFlagsPolyfill />
+          <TooltipProvider>
+            <Header />
+            <main id="app" className="flex-1 min-h-screen flex flex-col">
+              {children}
+            </main>
+            <Footer />
+            <CountryFlagsPolyfill />
+          </TooltipProvider>
         </UserContextProvider>
       </body>
     </html>

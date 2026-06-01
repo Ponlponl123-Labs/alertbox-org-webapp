@@ -18,6 +18,7 @@
         "next": "16.2.6",
         "react": "19.2.4",
         "react-dom": "19.2.4",
+        "react-resizable-panels": "^4.11.2",
         "react-smooth-input": "^0.1.3-a",
         "shadcn": "^4.8.3",
         "tailwind-merge": "^3.6.0",
@@ -1121,6 +1122,8 @@
     "react-dom": ["react-dom@19.2.4", "", { "dependencies": { "scheduler": "^0.27.0" }, "peerDependencies": { "react": "^19.2.4" } }, "sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ=="],
 
     "react-is": ["react-is@16.13.1", "", {}, "sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ=="],
+
+    "react-resizable-panels": ["react-resizable-panels@4.11.2", "", { "peerDependencies": { "react": "^18.0.0 || ^19.0.0", "react-dom": "^18.0.0 || ^19.0.0" } }, "sha512-+kfFbDZ8mygc7g0vxOcDzCVGuwiIUOnILqPoUHo6/uP+Mmyx6HzZU+kj1aOPDlktXuobYbr6BtQekvJwHRX4Eg=="],
 
     "react-smooth-input": ["react-smooth-input@0.1.3-a", "", { "dependencies": { "clsx": "^2.1.1", "motion": "^12.26.2", "tailwind-merge": "^3.4.0" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }, "sha512-CSj56AkBWcjHiqr5oYkIvqFDZ/cCFq58DAePNa1KaxViCW9t0h/ps8ZHOLK0PcCaCk9BE+Y5ODLDUgeEXfur3g=="],
 

@@ -199,6 +199,7 @@
         "description": "A list of devices logged into your account. If you see an unfamiliar device or location, please change your password immediately and review your account activity.",
         "unknown": "Unknown",
         "this": "This Device",
+        "unselected_map": "Please select the device to view map",
         "info": {
           "browser": "Browser",
           "browser_version": "Browser Version",
@@ -209,6 +210,7 @@
           "device_vendor": "Device Vendor",
           "os": "Operating System",
           "os_version": "OS Version",
+          "cpu_architecture": "CPU architecture",
           "ip": "IP Address",
           "location": "Approximate Location",
           "lat": "Latitude",
@@ -223,15 +225,19 @@
           "time": "Login Time",
           "last_used": "Last Used"
         },
+        "manage": {
+          "title": "Manage this",
+          "forgot_device": "Don't recognize this device?",
+          "revoke": "Revoke Access",
+          "cant_selfrevoke": "Self-access cannot be revoked.",
+          "disable": "End this session",
+          "disabled": "This session has been disabled",
+          "disabled_at": "Session disabled at"
+        },
         "unknown_device": "Unknown Device",
         "current_device": "Current Device",
         "other_device": "Other Devices",
-        "unknown_location": "Unknown Location",
-        "forgot_device": "Don't recognize this device?",
-        "revoke": "Revoke Access",
-        "disable": "End this session",
-        "disabled": "This session has been disabled",
-        "disabled_at": "Session disabled at"
+        "unknown_location": "Unknown Location"
       }
     },
     "connections": {
