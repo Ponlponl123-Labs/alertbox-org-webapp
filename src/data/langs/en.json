@@ -234,6 +234,10 @@
           "disabled": "This session has been disabled",
           "disabled_at": "Session disabled at"
         },
+        "errors": {
+          "cant_load_devices": "Unable to load active devices. Please try again later.",
+          "cant_revoke_session": "Failed to revoke this session. Please try again."
+        },
         "unknown_device": "Unknown Device",
         "current_device": "Current Device",
         "other_device": "Other Devices",

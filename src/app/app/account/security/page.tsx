@@ -37,7 +37,6 @@ function Page() {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [failed, setFailed] = useState<string | null>(null);
   const { userInfo, logout } = useUserContext();
   const isFetched = useRef(false);
 
@@ -53,7 +52,6 @@ function Page() {
     });
     if (r.status === 401) return logout();
     if (!r.ok) {
-      setFailed("true");
       setIsRevoking(false);
       return;
     }
@@ -79,7 +77,6 @@ function Page() {
       });
       if (r.status === 401) return logout();
       if (!r.ok) {
-        setFailed("true");
         setIsLoading(false);
         return;
       }
