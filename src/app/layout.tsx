@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import "@/styles/globals.css";
 import { UserContextProvider } from "@/contexts/user";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -70,6 +71,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: preload }} />
       </head>
       <body className="min-h-full flex flex-col">
+        <Toaster />
         <UserContextProvider>
           <TooltipProvider>
             <Header />

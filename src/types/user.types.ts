@@ -5,6 +5,8 @@ export interface User {
   name: string;
   displayname: string;
   uri: string;
+  uri_cooldown: Date | null;
+  published: Date | null;
   email: string;
   avatar: string | null;
   banner: string | null;

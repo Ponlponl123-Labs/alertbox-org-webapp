@@ -15,17 +15,23 @@ export interface UserContext {
   userInfo: User | null;
   login: (code: string) => Promise<boolean>;
   logout: () => void;
+  patchUserInfo: (patch: Partial<User>) => void;
 }
 
 const userContext = createContext<UserContext>({
   userInfo: null,
   login: async () => false,
   logout: () => {},
+  patchUserInfo: () => {},
 });
 
 export const UserContextProvider = ({ children }: { children: ReactNode }) => {
   const [userInfo, setUserInfo] = useState<UserContext["userInfo"]>(null);
   const fetched = useRef(false);
+
+  const patchUserInfo = useCallback((patch: Partial<User>) => {
+    setUserInfo((prev) => (prev ? { ...prev, ...patch } : null));
+  }, []);
 
   const login = useCallback(async (code: string): Promise<boolean> => {
     try {
@@ -100,7 +106,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <userContext.Provider value={{ userInfo, login, logout }}>
+    <userContext.Provider value={{ userInfo, login, logout, patchUserInfo }}>
       {children}
     </userContext.Provider>
   );

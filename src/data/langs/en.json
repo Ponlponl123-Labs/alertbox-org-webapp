@@ -189,18 +189,38 @@
       "title": "My Dashboard"
     },
     "profile": {
-      "title": "My Profile"
+      "title": "My Profile",
+      "get_started": {
+        "title": "Claim Your Profile URL",
+        "description": "Choose a unique username for your donation page. This will be the link you share with your fans.",
+        "input_placeholder": "yourname",
+        "regis": "Claim URL",
+        "invalid_format": "Invalid format. Please use only letters, numbers, and underscores.",
+        "already_taken": "This username is already taken. Please choose another one.",
+        "reset_in": "You will be able to change your profile link after {time}.",
+        "change": "Change Profile URL"
+      },
+      "my_uri": "My Profile Link",
+      "manage": {
+        "title": "Manage",
+        "publish": "Publish now",
+        "unpublish": "Unpublish"
+      },
+      "live": {
+        "onair": "Your Profile Page is Live!",
+        "prepairing": "Your Profile Page is Hidden"
+      }
     },
     "alertbox": {
-      "title": "กล่องแจ้งเตือน",
+      "title": "Alertbox",
       "donation": {
-        "title": "กล่องแจ้งเตือนการบริจาค"
+        "title": "Tip"
       },
       "subscription": {
-        "title": "กล่องแจ้งเตือนการสมัครสมาชิก"
+        "title": "Membership"
       },
       "purchased": {
-        "title": "กล่องแจ้งเตือนคืนนี้"
+        "title": "Purchased"
       }
     },
     "security": {

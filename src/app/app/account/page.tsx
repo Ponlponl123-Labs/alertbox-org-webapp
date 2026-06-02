@@ -13,13 +13,15 @@ function Page() {
   return (
     <div className="min-h-0 flex-1 w-full flex flex-col pb-8">
       {userInfo?.banner && (
-        <Image
-          src={userInfo?.banner}
-          alt="Banner"
-          className="w-full h-96 object-cover absolute inset-0 rounded-b-full blur-3xl pointer-events-none z-0 opacity-30"
-          width={720}
-          height={288}
-        />
+        <div className="mask-b-to-100% mask-b-from-30% opacity-40 -translate-y-32 w-full h-96 absolute pointer-events-none top-0 left-0">
+          <Image
+            src={userInfo?.banner}
+            alt="Banner"
+            className="size-full object-cover inset-0 rounded-b-full blur-3xl z-0 saturate-150 contrast-150"
+            width={720}
+            height={288}
+          />
+        </div>
       )}
       <div>
         <div className="w-full h-48 rounded-4xl bg-foreground/5 overflow-hidden">
