@@ -12,7 +12,9 @@
   * {
     @apply border-border outline-ring/50;
   }
-  *:not([data-default-transition="false"]) {
+  *:not([data-default-transition="false"])
+    *:not([data-default-transition="false"]),
+  [data-default-transition="true"] {
     transition: 0.16s cubic-bezier(0.165, 0.84, 0.44, 1);
   }
   p {

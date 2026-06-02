@@ -6,24 +6,12 @@ import { getFallbackInitial } from "@/lib/utils";
 import { ReactNode } from "react";
 import { useStore } from "zustand";
 import RegisURIPage from "./renew/page";
-import Image from "next/image";
 
 function ProfileLayout({ children }: { children: ReactNode }) {
   const { userInfo } = useUserContext();
   const lang = useStore(coreStore, (state) => state.lang);
   return (
     <div className="min-h-0 flex-1 w-full flex flex-col pb-8">
-      {userInfo?.uri && userInfo?.banner && (
-        <div className="mask-b-to-100% mask-b-from-30% opacity-40 -translate-y-32 w-full h-96 absolute pointer-events-none top-0 left-0">
-          <Image
-            src={userInfo?.banner}
-            alt="Banner"
-            className="size-full object-cover inset-0 rounded-b-full blur-3xl z-0 saturate-150 contrast-150"
-            width={720}
-            height={288}
-          />
-        </div>
-      )}
       {userInfo && (
         <div className="flex gap-1.75 items-center z-10 relative">
           <Avatar size="sm">

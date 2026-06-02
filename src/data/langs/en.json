@@ -188,6 +188,28 @@
     "dashboard": {
       "title": "My Dashboard"
     },
+    "account": {
+      "title": "Account Settings",
+      "display_name": "Display Name",
+      "display_name_placeholder": "Your awesome display name",
+      "bio": "About Me",
+      "bio_description": "Share a little bit about yourself, your stream, or what you do.",
+      "bio_placeholder": "Tell the world about yourself...",
+      "save": "Save Settings",
+      "success": "Account settings updated!",
+      "error": "Failed to update settings",
+      "fatal": "An error occurred",
+      "change_banner": "Change Banner",
+      "change_avatar": "Change Avatar",
+      "crop_avatar": "Crop Avatar",
+      "crop_banner": "Crop Banner",
+      "crop_apply": "Apply Crop",
+      "crop_cancel": "Cancel",
+      "zoom": "Zoom",
+      "edit_display_name": "Edit Display Name",
+      "display_name_dialog_title": "Change Display Name",
+      "display_name_dialog_description": "This is how your name will appear to others on the platform."
+    },
     "profile": {
       "title": "My Profile",
       "get_started": {
@@ -286,6 +308,10 @@
     "connections": {
       "title": "Payment Integrations",
       "description": "Connect your preferred gateways. We only listen for webhooks to trigger your alerts—we never touch your money or access your banking details.",
+      "tabs": {
+        "payment": "Payment Integrations",
+        "trigger": "Chain Trigger"
+      },
       "privacy": "Privacy",
       "payout": "Payout",
       "providers": {
@@ -312,6 +338,36 @@
           "description": "Seamless payment gateway optimized for quick and easy local transactions and QR codes.",
           "privacy": "High. Alertbox.org only listens for the successful transaction signal to trigger your alert without accessing your financial data.",
           "payout": "Funds collected from donors are processed and can be withdrawn to your registered bank account on a weekly basis."
+        },
+        "youtube": {
+          "name": "YouTube",
+          "description": "Receive alerts for new subscribers, channel memberships, and Super Chats.",
+          "privacy": "Strong. We only monitor for new events. We never access your private channel data or personal information.",
+          "payout": "N/A (Handled by YouTube/Google)"
+        },
+        "facebook": {
+          "name": "Facebook",
+          "description": "Get real-time alerts for new followers, stars, and supporters on your Facebook Gaming page.",
+          "privacy": "High. Alertbox.org only listens for event notifications. Your account remains private and secure.",
+          "payout": "N/A (Handled by Meta/Facebook)"
+        },
+        "twitch": {
+          "name": "Twitch",
+          "description": "Connect your Twitch channel for alerts on new followers, subscriptions, and bits.",
+          "privacy": "Strong. We only read the stream event signals. Your Twitch account security is never compromised.",
+          "payout": "N/A (Handled by Twitch/Amazon)"
+        },
+        "patreon": {
+          "name": "Patreon",
+          "description": "Automate your alerts for new patrons and membership tier updates.",
+          "privacy": "High. We only receive notification of new support. We do not have access to your patron lists or payment details.",
+          "payout": "N/A (Handled by Patreon)"
+        },
+        "streamlabs": {
+          "name": "Streamlabs",
+          "description": "Forward your donation alerts to Streamlabs to trigger their widgets and integrations.",
+          "privacy": "Strong. We only send the alert payload to your Streamlabs socket token. Your account remains secure.",
+          "payout": "N/A (Alert Forwarding)"
         }
       },
       "placeholder": "Webhook Secret Here",

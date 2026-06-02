@@ -10,6 +10,7 @@ export interface User {
   email: string;
   avatar: string | null;
   banner: string | null;
+  bio: string | null;
   disabled: Date | null;
   deleted: Date | null;
 }
@@ -19,6 +20,11 @@ export interface Connections {
   bmac: string | null;
   kofi: string | null;
   ffp: string | null;
+  youtube: string | null;
+  facebook: string | null;
+  twitch: string | null;
+  patreon: string | null;
+  streamlabs: string | null;
 }
 
 export interface Device {

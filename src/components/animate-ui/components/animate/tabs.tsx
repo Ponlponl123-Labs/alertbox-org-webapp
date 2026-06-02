@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 
 import {
   Tabs as TabsPrimitive,
@@ -13,15 +13,15 @@ import {
   type TabsTriggerProps as TabsTriggerPrimitiveProps,
   type TabsContentProps as TabsContentPrimitiveProps,
   type TabsContentsProps as TabsContentsPrimitiveProps,
-} from '@/components/animate-ui/primitives/animate/tabs';
-import { cn } from '@/lib/utils';
+} from "@/components/animate-ui/primitives/animate/tabs";
+import { cn } from "@/lib/utils";
 
 type TabsProps = TabsPrimitiveProps;
 
 function Tabs({ className, ...props }: TabsProps) {
   return (
     <TabsPrimitive
-      className={cn('flex flex-col gap-2', className)}
+      className={cn("flex flex-col gap-2", className)}
       {...props}
     />
   );
@@ -31,10 +31,10 @@ type TabsListProps = TabsListPrimitiveProps;
 
 function TabsList({ className, ...props }: TabsListProps) {
   return (
-    <TabsHighlightPrimitive className="absolute z-0 inset-0 border border-transparent rounded-md bg-background dark:border-input dark:bg-input/30 shadow-sm">
+    <TabsHighlightPrimitive className="absolute z-0 inset-0 rounded-xl bg-card shadow-sm">
       <TabsListPrimitive
         className={cn(
-          'bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]',
+          "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-xl p-0.75",
           className,
         )}
         {...props}
@@ -70,7 +70,7 @@ type TabsContentProps = TabsContentPrimitiveProps;
 function TabsContent({ className, ...props }: TabsContentProps) {
   return (
     <TabsContentPrimitive
-      className={cn('outline-none', className)}
+      className={cn("outline-none", className)}
       {...props}
     />
   );

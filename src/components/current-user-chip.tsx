@@ -57,7 +57,7 @@ function CurrentUserChip() {
             <Image
               src={userInfo?.banner}
               alt="Banner"
-              className="w-full blur-lg aspect-video top-0 left-0 pointer-events-none object-cover absolute rounded-2xl z-0 opacity-30"
+              className="w-full blur-lg aspect-video top-0 left-0 pointer-events-none object-cover absolute rounded-2xl z-0 opacity-30 select-none"
               width={720}
               height={288}
             />
@@ -72,13 +72,15 @@ function CurrentUserChip() {
             )}
           >
             {userInfo?.banner && (
-              <Image
-                src={userInfo?.banner}
-                alt="Banner"
-                className="size-full top-0 left-0 pointer-events-none object-cover absolute rounded-xl z-0 mask-linear-160 mask-linear-from-0% mask-linear-to-100%"
-                width={720}
-                height={288}
-              />
+              <div className="size-full top-0 left-0 pointer-events-none absolute overflow-hidden rounded-xl">
+                <Image
+                  src={userInfo?.banner}
+                  alt="Banner"
+                  className="size-full top-0 left-0 pointer-events-none object-cover absolute z-0 mask-linear-160 mask-linear-from-10% mask-linear-to-92% blur-[1px] select-none"
+                  width={720}
+                  height={288}
+                />
+              </div>
             )}
             <div className="flex items-center gap-1.75 w-full z-10 relative">
               <Avatar size="sm">

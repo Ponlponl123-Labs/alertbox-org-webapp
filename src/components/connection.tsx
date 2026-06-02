@@ -1,6 +1,5 @@
 "use client";
-import Image from "next/image";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, ReactNode, SetStateAction, useState } from "react";
 import { useStore } from "zustand";
 import { Button } from "./ui/button";
 import { coreStore } from "@/hooks/store/core";
@@ -14,7 +13,7 @@ import Link from "next/link";
 
 function Connection({
   api_endpoint,
-  img,
+  icon,
   name,
   description,
   privacy,
@@ -27,11 +26,11 @@ function Connection({
   setConnections,
 }: {
   api_endpoint: string;
-  img: string;
+  icon: ReactNode;
   name: string;
   description: string;
-  privacy: string;
-  payout: string;
+  privacy?: string;
+  payout?: string;
   isConnected: boolean;
   secret: string | null;
   skey: string;
@@ -89,33 +88,38 @@ function Connection({
 
   return (
     <div className="w-full bg-card p-4 rounded-2xl group">
-      <div className="flex flex-col gap-1.5">
-        <Image src={img} width={32} height={32} alt={name} />
+      <div className="flex flex-col size-full min-w-0 min-h-0 flex-1 gap-1.5">
+        {icon}
         <div className="flex flex-col">
           <h1 className="text-lg font-semibold">{name}</h1>
         </div>
         <p className="text-foreground/40 text-xs">{description}</p>
-        <div className="flex">
-          <div className="h-auto w-1 rounded-full bg-foreground/10" />
-          <div className="flex flex-col p-2.25 gap-1.5">
-            <span className="text-foreground/60 font-semibold text-sm">
-              <LockKeyIcon weight="fill" className="inline mr-1.5" />
-              {lang.data.app.connections.privacy}
-            </span>
-            <p className="text-foreground/40 text-xs">{privacy}</p>
+        {privacy && (
+          <div className="flex">
+            <div className="h-auto w-1 rounded-full bg-foreground/10" />
+            <div className="flex flex-col flex-1 min-w-0 p-2.25 gap-1.5">
+              <span className="text-foreground/60 font-semibold text-sm">
+                <LockKeyIcon weight="fill" className="inline mr-1.5" />
+                {lang.data.app.connections.privacy}
+              </span>
+              <p className="text-foreground/40 text-xs">{privacy}</p>
+            </div>
           </div>
-        </div>
-        <div className="flex">
-          <div className="h-auto w-1 rounded-full bg-foreground/10" />
-          <div className="flex flex-col p-2.25 gap-1.5">
-            <span className="text-foreground/60 font-semibold text-sm">
-              <BankIcon weight="fill" className="inline mr-1.5" />
-              {lang.data.app.connections.payout}
-            </span>
-            <p className="text-foreground/40 text-xs">{payout}</p>
+        )}
+        {payout && (
+          <div className="flex">
+            <div className="h-auto w-1 rounded-full bg-foreground/10" />
+            <div className="flex flex-col flex-1 min-w-0 p-2.25 gap-1.5">
+              <span className="text-foreground/60 font-semibold text-sm">
+                <BankIcon weight="fill" className="inline mr-1.5" />
+                {lang.data.app.connections.payout}
+              </span>
+              <p className="text-foreground/40 text-xs">{payout}</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-1.5 w-full flex-1 min-w-0 mt-1.5 max-sm:flex-col">
+        )}
+
+        <div className="flex items-center gap-1.5 w-full pt-1.5 max-sm:flex-col mt-auto relative">
           {soon ? (
             <Button
               variant="outline"

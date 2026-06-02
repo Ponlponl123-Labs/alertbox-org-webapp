@@ -85,20 +85,25 @@ function Page() {
               />
             </Link>
           </span>
-          <span className="tracking-wider text-xs mt-1.5 text-foreground/40">
-            {userInfo?.uri_cooldown &&
-              lang.data.app.profile.get_started.reset_in.replace(
-                "{time}",
-                new Date(userInfo?.uri_cooldown).toLocaleDateString(lang.key, {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                }),
-              )}
-          </span>
+          {isUriCooldown && (
+            <span className="tracking-wider text-xs mt-1.5 text-foreground/40">
+              {userInfo?.uri_cooldown &&
+                lang.data.app.profile.get_started.reset_in.replace(
+                  "{time}",
+                  new Date(userInfo?.uri_cooldown).toLocaleDateString(
+                    lang.key,
+                    {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    },
+                  ),
+                )}
+            </span>
+          )}
         </div>
         <div>
           <Link
