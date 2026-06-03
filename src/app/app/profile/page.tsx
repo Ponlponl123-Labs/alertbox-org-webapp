@@ -15,20 +15,88 @@ import {
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { allowed_chars } from "@/consts/regex";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
 import { cn } from "@/lib/utils";
-import { ArrowUpRightIcon, SparkleIcon } from "@phosphor-icons/react";
+import {
+  ArrowUpRightIcon,
+  SlidersHorizontalIcon,
+  SparkleIcon,
+} from "@phosphor-icons/react";
 import { getCookie } from "cookies-next";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "react-smooth-input";
 import { useStore } from "zustand";
+import { toast } from "sonner";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo, patchUserInfo } = useUserContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingSocials, setIsSavingSocials] = useState(false);
+
+  const [socials, setSocials] = useState({
+    social_twitchtv: userInfo?.social_twitchtv || "",
+    social_youtube: userInfo?.social_youtube || "",
+    social_twitter: userInfo?.social_twitter || "",
+    social_facebook: userInfo?.social_facebook || "",
+    social_reddit: userInfo?.social_reddit || "",
+    social_discord: userInfo?.social_discord || "",
+  });
+
+  const [prevUserInfo, setPrevUserInfo] = useState(userInfo);
+
+  if (userInfo !== prevUserInfo) {
+    setPrevUserInfo(userInfo);
+    setSocials({
+      social_twitchtv: userInfo?.social_twitchtv || "",
+      social_youtube: userInfo?.social_youtube || "",
+      social_twitter: userInfo?.social_twitter || "",
+      social_facebook: userInfo?.social_facebook || "",
+      social_reddit: userInfo?.social_reddit || "",
+      social_discord: userInfo?.social_discord || "",
+    });
+  }
+
+  const handleSocialChange = (
+    key: keyof typeof socials,
+    value: string,
+    pattern: RegExp,
+  ) => {
+    if (value !== "" && !pattern.test(value)) return;
+    setSocials((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveSocials = async () => {
+    setIsSavingSocials(true);
+    try {
+      const authCookie = getCookie("USRSS");
+      if (!authCookie) return;
+
+      const res = await fetch("/api/v1/me", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: "Bearer " + atob(authCookie as string),
+        },
+        body: JSON.stringify(socials),
+      });
+
+      if (res.ok) {
+        patchUserInfo(socials);
+        toast.success(lang.data.app.account.success);
+      } else {
+        toast.error(lang.data.app.account.error);
+      }
+    } catch (err) {
+      console.error("Failed to save socials:", err);
+      toast.error(lang.data.app.account.fatal);
+    } finally {
+      setIsSavingSocials(false);
+    }
+  };
 
   const isUriCooldown =
     (userInfo?.uri_cooldown &&
@@ -168,9 +236,9 @@ function Page() {
         )}
       </div>
       <div className="flex gap-1.5 min-h-0 flex-1 mt-3">
-        <div className="w-64 flex flex-col h-max bg-card rounded-4xl z-10 relative">
-          <Accordion className="w-full">
-            <AccordionItem>
+        <div className="w-64 flex flex-col h-max z-10 relative gap-1.5">
+          <Accordion className="w-full bg-card rounded-4xl">
+            <AccordionItem defaultOpen={false}>
               <AccordionButton
                 className={cn(
                   "flex items-center p-3.5 rounded-4xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
@@ -180,7 +248,9 @@ function Page() {
                 showArrow={false}
               >
                 <SparkleIcon size={16} weight="fill" className="rotate-0!" />
-                <h1 className="font-semibold m-0">Social Media</h1>
+                <h1 className="font-semibold m-0">
+                  {lang.data.app.profile.socials.title}
+                </h1>
               </AccordionButton>
               <AccordionPanel
                 keepRendered={true}
@@ -190,34 +260,47 @@ function Page() {
                 <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
                   {[
                     {
+                      id: "social_twitchtv",
                       icon: <TwitchTv className="size-4" />,
-                      title: "Twitch.Tv",
-                      placeholder: "Your Username",
+                      title: lang.data.app.profile.socials.twitch,
+                      placeholder: lang.data.app.profile.socials.placeholder,
+                      pattern: allowed_chars,
                     },
                     {
+                      id: "social_youtube",
                       icon: <Youtube className="size-4" />,
-                      title: "Youtube",
-                      placeholder: "Your Username",
+                      title: lang.data.app.profile.socials.youtube,
+                      placeholder: lang.data.app.profile.socials.placeholder,
+                      pattern: allowed_chars,
                     },
                     {
+                      id: "social_twitter",
                       icon: <Twitter className="size-4" />,
-                      title: "Twitter",
-                      placeholder: "Your Username",
+                      title: lang.data.app.profile.socials.twitter,
+                      placeholder: lang.data.app.profile.socials.placeholder,
+                      pattern: allowed_chars,
                     },
                     {
+                      id: "social_facebook",
                       icon: <Facebook className="size-4" />,
-                      title: "Facebook",
-                      placeholder: "Your Username",
+                      title: lang.data.app.profile.socials.facebook,
+                      placeholder: lang.data.app.profile.socials.placeholder,
+                      pattern: allowed_chars,
                     },
                     {
+                      id: "social_reddit",
                       icon: <Reddit className="size-4" />,
-                      title: "Reddit",
-                      placeholder: "Your Username",
+                      title: lang.data.app.profile.socials.reddit,
+                      placeholder: lang.data.app.profile.socials.placeholder,
+                      pattern: allowed_chars,
                     },
                     {
+                      id: "social_discord",
                       icon: <Discord className="size-4" />,
-                      title: "Discord",
-                      placeholder: "Invite Code e.g. ABC123",
+                      title: lang.data.app.profile.socials.discord,
+                      placeholder:
+                        lang.data.app.profile.socials.discord_placeholder,
+                      pattern: /^[a-zA-Z0-9]+$/,
                     },
                   ].map((l, i) => (
                     <div
@@ -231,7 +314,16 @@ function Page() {
                       <Input
                         type="text"
                         placeholder={l.placeholder}
-                        className=""
+                        pattern={l.pattern.source}
+                        value={socials[l.id as keyof typeof socials]}
+                        onChange={(e) =>
+                          handleSocialChange(
+                            l.id as keyof typeof socials,
+                            e.target.value,
+                            l.pattern,
+                          )
+                        }
+                        maxLength={32}
                         classNames={{
                           base: "rounded-md bg-background/30! p-1",
                         }}
@@ -244,7 +336,107 @@ function Page() {
                   ))}
                 </div>
                 <div className="flex items-center p-3.5 rounded-t-4xl w-full gap-1.5">
-                  <Button className={"rounded-xl p-3.5 w-full"}>Save</Button>
+                  <Button
+                    className={"rounded-xl p-3.5 w-full"}
+                    onClick={handleSaveSocials}
+                    disabled={isSavingSocials}
+                  >
+                    {isSavingSocials ? (
+                      <Spinner className="mr-2" />
+                    ) : (
+                      lang.data.app.profile.socials.save
+                    )}
+                  </Button>
+                </div>
+              </AccordionPanel>
+            </AccordionItem>
+          </Accordion>
+          <Accordion className="w-full bg-card rounded-4xl">
+            <AccordionItem defaultOpen={true}>
+              <AccordionButton
+                className={cn(
+                  "flex items-center p-3.5 rounded-4xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
+                  "hover:bg-foreground/5",
+                  "data-open:rounded-b-lg data-open:pb-8 data-open:-mb-5",
+                )}
+                showArrow={false}
+              >
+                <SlidersHorizontalIcon
+                  size={16}
+                  weight="fill"
+                  className="rotate-0!"
+                />
+                <h1 className="font-semibold m-0">
+                  การตั้งค่าการบริจาคผ่าน{" "}
+                  <span className="whitespace-nowrap text-xs">Tip-to.me</span>
+                </h1>
+              </AccordionButton>
+              <AccordionPanel
+                keepRendered={true}
+                data-default-transition="false"
+                className="p-0"
+              >
+                <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
+                  {[
+                    {
+                      id: "social_twitchtv",
+                      icon: <TwitchTv className="size-4" />,
+                      title: lang.data.app.profile.socials.twitch,
+                      placeholder: lang.data.app.profile.socials.placeholder,
+                      pattern: allowed_chars,
+                    },
+                    {
+                      id: "social_youtube",
+                      icon: <Youtube className="size-4" />,
+                      title: lang.data.app.profile.socials.youtube,
+                      placeholder: lang.data.app.profile.socials.placeholder,
+                      pattern: allowed_chars,
+                    },
+                  ].map((l, i) => (
+                    <div
+                      className="flex flex-col rounded-lg p-1.5 gap-1.5"
+                      key={i}
+                    >
+                      <div className="flex gap-1.5 opacity-40 items-center">
+                        {l.icon}
+                        <h1 className="font-semibold text-xs">{l.title}</h1>
+                      </div>
+                      <Input
+                        type="text"
+                        placeholder={l.placeholder}
+                        pattern={l.pattern.source}
+                        value={socials[l.id as keyof typeof socials]}
+                        onChange={(e) =>
+                          handleSocialChange(
+                            l.id as keyof typeof socials,
+                            e.target.value,
+                            l.pattern,
+                          )
+                        }
+                        maxLength={32}
+                        classNames={{
+                          base: "rounded-md bg-background/30! p-1",
+                        }}
+                        fontStyle={{
+                          fontFamily: "var(--font-sans)",
+                          fontSize: "10px",
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center p-3.5 rounded-t-4xl w-full gap-1.5">
+                  <Button
+                    className={"rounded-xl p-3.5 w-full"}
+                    onClick={handleSaveSocials}
+                    disabled={isSavingSocials}
+                  >
+                    {isSavingSocials ? (
+                      <Spinner className="mr-2" />
+                    ) : (
+                      lang.data.app.profile.socials.save
+                    )}
+                  </Button>
                 </div>
               </AccordionPanel>
             </AccordionItem>

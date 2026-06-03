@@ -229,6 +229,18 @@
         "publish": "เผยแพร่เลย",
         "unpublish": "ยกเลิกการเผยแพร่"
       },
+      "socials": {
+        "title": "โซเชียลมีเดีย",
+        "save": "บันทึก",
+        "placeholder": "ชื่อผู้ใช้ของคุณ",
+        "discord_placeholder": "รหัสเชิญ เช่น ABC123",
+        "twitch": "Twitch.Tv",
+        "youtube": "Youtube",
+        "twitter": "Twitter",
+        "facebook": "Facebook",
+        "reddit": "Reddit",
+        "discord": "Discord"
+      },
       "live": {
         "onair": "หน้าโปรไฟล์ของคุณกำลังออนไลน์!",
         "prepairing": "หน้าโปรไฟล์ของคุณถูกซ่อนอยู่"

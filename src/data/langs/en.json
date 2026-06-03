@@ -228,6 +228,18 @@
         "publish": "Publish now",
         "unpublish": "Unpublish"
       },
+      "socials": {
+        "title": "Social Media",
+        "save": "Save",
+        "placeholder": "Your Username",
+        "discord_placeholder": "Invite Code e.g. ABC123",
+        "twitch": "Twitch.Tv",
+        "youtube": "Youtube",
+        "twitter": "Twitter",
+        "facebook": "Facebook",
+        "reddit": "Reddit",
+        "discord": "Discord"
+      },
       "live": {
         "onair": "Your Profile Page is Live!",
         "prepairing": "Your Profile Page is Hidden"

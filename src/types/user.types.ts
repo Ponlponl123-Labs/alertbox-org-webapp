@@ -11,6 +11,12 @@ export interface User {
   avatar: string | null;
   banner: string | null;
   bio: string | null;
+  social_discord: string | null;
+  social_facebook: string | null;
+  social_reddit: string | null;
+  social_twitchtv: string | null;
+  social_twitter: string | null;
+  social_youtube: string | null;
   disabled: Date | null;
   deleted: Date | null;
 }
