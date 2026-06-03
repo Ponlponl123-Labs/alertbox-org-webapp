@@ -26,6 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { motion } from "motion/react";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -165,19 +166,26 @@ function Page() {
   };
 
   return (
-    <div className="min-h-0 flex-1 w-full flex flex-col pb-8">
+    <>
       <div
         className="group relative w-full rounded-4xl bg-foreground/5 overflow-hidden border-3 border-transparent hover:border-foreground/10 transition-all select-none"
         onClick={() => bannerInputRef.current?.click()}
       >
         {userInfo?.banner && (
-          <Image
-            src={userInfo?.banner}
-            alt="Banner"
-            className="w-full h-max object-cover pointer-events-none transition-transform group-hover:scale-105 group-active:scale-103 group-hover:blur-xs"
-            width={1200}
-            height={488}
-          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+          >
+            <Image
+              src={userInfo?.banner}
+              alt="Banner"
+              className="w-full h-max object-cover pointer-events-none transition-transform group-hover:scale-105 group-active:scale-103 group-hover:blur-xs"
+              width={1200}
+              height={488}
+            />
+          </motion.div>
         )}
         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
           <div className="flex flex-col items-center gap-2">
@@ -359,7 +367,7 @@ function Page() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 

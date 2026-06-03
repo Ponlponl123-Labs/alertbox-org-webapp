@@ -4,11 +4,12 @@ import React, { useRef, useState } from "react";
 import Login from "./login";
 import { usePathname } from "next/navigation";
 import AppSidebar from "@/components/app-sidebar";
-import { motion, useScroll, useTransform } from "motion/react";
-import { cn } from "@/lib/utils";
+import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
+import { cn, getFallbackInitial } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import StreamerModeProtection from "@/components/streamer-mode-protection";
 import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const protectedPaths = ["/app/connections", "/app/account/security"];
 
@@ -62,7 +63,22 @@ function AppLayout({ children }: { children: React.ReactNode }) {
               className="w-full h-12 sticky top-0 bg-background mask-b-from-0% z-20"
             />
             <div className="px-12 max-sm:px-4 max-lg:px-6 py-2 flex-1 w-full min-h-[calc(100%-3rem)] flex flex-col z-10 relative">
-              {children}
+              <div className="min-h-0 flex-1 w-full flex flex-col pb-8">
+                {userInfo && !["/app/account"].includes(pathname) && (
+                  <div className="flex gap-1.75 items-center">
+                    <Avatar size="sm">
+                      {userInfo.avatar && <AvatarImage src={userInfo.avatar} />}
+                      <AvatarFallback>
+                        {getFallbackInitial(userInfo.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-foreground/40">
+                      @{userInfo?.name}
+                    </span>
+                  </div>
+                )}
+                {children}
+              </div>
             </div>
           </ScrollArea>
         )}

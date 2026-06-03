@@ -1,10 +1,8 @@
 "use client";
 import Connection from "@/components/connection";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
-import { getFallbackInitial } from "@/lib/utils";
 import { Connections } from "@/types/user.types";
 import { getCookie } from "cookies-next/client";
 import { useEffect, useRef, useState } from "react";
@@ -18,7 +16,7 @@ import {
   Twitch,
   Patreon,
 } from "@thesvg/react";
-import Image from "next/image";
+import { FeelFreePay } from "@/components/icons";
 import {
   Tabs,
   TabsContent,
@@ -60,17 +58,7 @@ function Page() {
   }, [logout, userInfo]);
 
   return (
-    <div className="min-h-0 flex-1 w-full flex flex-col pb-8">
-      {userInfo && (
-        <div className="flex gap-1.75 items-center">
-          <Avatar size="sm">
-            {userInfo.avatar && <AvatarImage src={userInfo.avatar} />}
-            <AvatarFallback>{getFallbackInitial(userInfo.name)}</AvatarFallback>
-          </Avatar>
-          <span className="text-foreground/40">@{userInfo?.name}</span>
-        </div>
-      )}
-
+    <>
       <h1 className="font-semibold text-3xl mt-1.5">
         {lang.data.app.connections.title}
       </h1>
@@ -139,14 +127,7 @@ function Page() {
                   },
                   {
                     api_endpoint: "/api/v1/me/connection/feelfreepay",
-                    icon: (
-                      <Image
-                        width={32}
-                        height={32}
-                        alt="FFP"
-                        src={"/feelfreepay.svg"}
-                      />
-                    ),
+                    icon: <FeelFreePay className="size-8" />,
                     name: lang.data.app.connections.providers.feelfreepay.name,
                     description:
                       lang.data.app.connections.providers.feelfreepay
@@ -269,7 +250,7 @@ function Page() {
           </Tabs>
         )}
       </div>
-    </div>
+    </>
   );
 }
 

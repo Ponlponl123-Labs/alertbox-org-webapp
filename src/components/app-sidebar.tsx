@@ -167,12 +167,24 @@ function AppSidebar() {
                         <Link key={ii} href={ll.href}>
                           <Button
                             className={cn(
-                              "rounded-xl overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start",
-                              pathname === ll.href &&
-                                "bg-foreground/10 text-foreground",
+                              "rounded-xl text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative",
+                              pathname === ll.href && "text-foreground",
                             )}
                             variant="ghost"
                           >
+                            <AnimatePresence mode="wait">
+                              {pathname === ll.href && (
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  data-default-transition="false"
+                                  id="sidebar-link-active"
+                                  layoutId="sidebar-link-active"
+                                  className="absolute inset-0 rounded-xl bg-foreground/10 z-10"
+                                />
+                              )}
+                            </AnimatePresence>
                             {ll.icon}
                             {!isSidebarCollapsed && (
                               <span className="text-xs">{ll.text}</span>
@@ -188,11 +200,24 @@ function AppSidebar() {
             <Link key={i} href={l.href}>
               <Button
                 className={cn(
-                  "rounded-xl overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start",
-                  pathname === l.href && "bg-foreground/10 text-foreground",
+                  "rounded-xl text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative",
+                  pathname === l.href && "text-foreground",
                 )}
                 variant="ghost"
               >
+                <AnimatePresence mode="wait">
+                  {pathname === l.href && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      data-default-transition="false"
+                      id="sidebar-link-active"
+                      layoutId="sidebar-link-active"
+                      className="absolute inset-0 rounded-xl bg-foreground/10 z-10"
+                    />
+                  )}
+                </AnimatePresence>
                 {l.icon}
                 {!isSidebarCollapsed && (
                   <span className="text-xs">{l.text}</span>
