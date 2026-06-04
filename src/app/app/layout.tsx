@@ -1,10 +1,10 @@
 "use client";
 import { useUserContext } from "@/contexts/user";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import Login from "./login";
 import { usePathname } from "next/navigation";
 import AppSidebar from "@/components/app-sidebar";
-import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
+import { motion, useScroll, useTransform } from "motion/react";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import StreamerModeProtection from "@/components/streamer-mode-protection";
@@ -47,16 +47,22 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             ref={setScrollarea}
             className={"h-screen flex flex-col relative"}
           >
-            {userInfo?.uri && userInfo?.banner && (
-              <div className="mask-b-to-100% mask-b-from-30% opacity-40 -translate-y-32 w-full h-96 absolute pointer-events-none top-0 left-0 z-0">
+            {userInfo?.profile?.uri && userInfo?.profile?.banner && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 1 }}
+                transition={{ duration: 1 }}
+                className="mask-b-to-100% mask-b-from-30% opacity-40 -translate-y-32 w-full h-96 absolute pointer-events-none top-0 left-0 z-0"
+              >
                 <Image
-                  src={userInfo?.banner}
+                  src={userInfo?.profile?.banner}
                   alt="Banner"
                   className="size-full object-cover inset-0 rounded-b-full blur-3xl z-0 saturate-150 contrast-150 select-none"
                   width={720}
                   height={288}
                 />
-              </div>
+              </motion.div>
             )}
             <motion.div
               style={{ opacity: headerOpacity }}
@@ -67,13 +73,15 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                 {userInfo && !["/app/account"].includes(pathname) && (
                   <div className="flex gap-1.75 items-center">
                     <Avatar size="sm">
-                      {userInfo.avatar && <AvatarImage src={userInfo.avatar} />}
+                      {userInfo.profile?.avatar && (
+                        <AvatarImage src={userInfo.profile.avatar} />
+                      )}
                       <AvatarFallback>
-                        {getFallbackInitial(userInfo.name)}
+                        {getFallbackInitial(userInfo.profile?.name || "?")}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-foreground/40">
-                      @{userInfo?.name}
+                      @{userInfo.profile?.name}
                     </span>
                   </div>
                 )}

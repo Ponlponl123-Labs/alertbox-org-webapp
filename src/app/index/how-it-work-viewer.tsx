@@ -11,23 +11,33 @@ import {
   UserIcon,
   VideoCameraIcon,
 } from "@phosphor-icons/react";
-import Image from "next/image";
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, createRef } from "react";
 import { useStore } from "zustand";
+import { PAYMENT_METHODS } from "./constants";
+import Image from "next/image";
 
 function HowItWorkViewer() {
   const lang = useStore(coreStore, (state) => state.lang);
-  const div1Ref = useRef<HTMLDivElement>(null);
-  const div2Ref = useRef<HTMLDivElement>(null);
-  const div3Ref = useRef<HTMLDivElement>(null);
-  const div4Ref = useRef<HTMLDivElement>(null);
-  const div5Ref = useRef<HTMLDivElement>(null);
-  const div9Ref = useRef<HTMLDivElement>(null);
-  const div10Ref = useRef<HTMLDivElement>(null);
-  const div11Ref = useRef<HTMLDivElement>(null);
-  const div12Ref = useRef<HTMLDivElement>(null);
-  const div13Ref = useRef<HTMLDivElement>(null);
+
+  // Static element refs
+  const cameraRefS1 = useRef<HTMLDivElement>(null);
+  const alertboxRefS1 = useRef<HTMLDivElement>(null);
+
+  const donorRefS3 = useRef<HTMLDivElement>(null);
+  const checkRefS3 = useRef<HTMLDivElement>(null);
+  const cameraRefS3 = useRef<HTMLDivElement>(null);
+  const alertboxRefS3 = useRef<HTMLDivElement>(null);
+  const teacherRefS3 = useRef<HTMLDivElement>(null);
+
+  // Dynamic payment refs
+  const paymentRefsS1 = useRef<React.RefObject<HTMLDivElement | null>[]>([]);
+  if (paymentRefsS1.current.length === 0) {
+    paymentRefsS1.current = PAYMENT_METHODS.map(() =>
+      createRef<HTMLDivElement>(),
+    );
+  }
+
   const sectionHIW1_content = useRef<HTMLDivElement>(null);
   const sectionHIW1_image = useRef<HTMLDivElement>(null);
   const sectionHIW2_content = useRef<HTMLDivElement>(null);
@@ -100,10 +110,10 @@ function HowItWorkViewer() {
         >
           <div className="flex w-full flex-col items-stretch justify-between gap-10">
             <div className="flex flex-row justify-between items-center">
-              <Circle ref={div1Ref}>
+              <Circle ref={cameraRefS1}>
                 <VideoCameraIcon />
               </Circle>
-              <Circle ref={div2Ref} className="p-2 size-14">
+              <Circle ref={alertboxRefS1} className="p-2 size-14">
                 <Image
                   src={"/favicon.ico"}
                   width={32}
@@ -112,89 +122,39 @@ function HowItWorkViewer() {
                 />
               </Circle>
               <div className="flex flex-col justify-center gap-2">
-                <Circle ref={div3Ref}>
-                  <Image
-                    src={"/stripe.webp"}
-                    width={24}
-                    height={24}
-                    alt="Stripe"
-                  />
-                </Circle>
-                <Circle ref={div4Ref}>
-                  <Image
-                    src={"/buymeacoffee.webp"}
-                    width={24}
-                    height={24}
-                    alt="Buy me a coffee"
-                  />
-                </Circle>
-                <Circle ref={div5Ref}>
-                  <Image
-                    src={"/kofi.webp"}
-                    width={24}
-                    height={24}
-                    alt="Ko-Fi"
-                  />
-                </Circle>
+                {PAYMENT_METHODS.map((method, index) => (
+                  <Circle key={method.id} ref={paymentRefsS1.current[index]}>
+                    <method.icon className="size-6" />
+                  </Circle>
+                ))}
               </div>
             </div>
           </div>
           <AnimatedBeam
             duration={3}
             containerRef={sectionHIW1_image}
-            fromRef={div1Ref}
-            toRef={div2Ref}
+            fromRef={cameraRefS1}
+            toRef={alertboxRefS1}
           />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW1_image}
-            fromRef={div2Ref}
-            toRef={div3Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW1_image}
-            fromRef={div2Ref}
-            toRef={div4Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW1_image}
-            fromRef={div2Ref}
-            toRef={div5Ref}
-          />
+          {paymentRefsS1.current.map((ref, index) => (
+            <AnimatedBeam
+              key={`beam-s1-to-${index}`}
+              duration={3}
+              containerRef={sectionHIW1_image}
+              fromRef={alertboxRefS1}
+              toRef={ref}
+            />
+          ))}
         </div>
         <div
           className="w-full h-screen sticky top-0 flex items-center justify-center p-6 bg-zinc-50 dark:bg-black mask-t-from-80%"
           ref={sectionHIW2_image}
         >
-          <div className="flex gap-3 flex-wrap">
-            {[
-              {
-                name: "Stripe",
-                image: "/stripe.webp",
-                href: "https://stripe.com/",
-              },
-              {
-                name: "Buy Me A Coffee",
-                image: "/buymeacoffee.webp",
-                href: "https://buymeacoffee.com/",
-              },
-              {
-                name: "Ko-Fi",
-                image: "/kofi.webp",
-                href: "https://ko-fi.com/",
-              },
-            ].map((v, i) => (
-              <Link key={i} href={v.href} target="_blank">
+          <div className="flex gap-3 flex-wrap items-center justify-center">
+            {PAYMENT_METHODS.map((v, i) => (
+              <Link key={v.id} href={v.href} target="_blank">
                 <Button variant={"secondary"} className={"rounded-2xl"}>
-                  <Image
-                    src={v.image}
-                    width={24}
-                    height={24}
-                    className="max-h-4 w-auto"
-                    alt={v.name}
-                  />
+                  <v.icon className="size-6 max-h-4 w-auto" />
                   {v.name}
                 </Button>
               </Link>
@@ -207,17 +167,17 @@ function HowItWorkViewer() {
         >
           <div className="flex w-full flex-col items-stretch justify-between gap-10">
             <div className="flex flex-row justify-between">
-              <Circle ref={div9Ref}>
+              <Circle ref={donorRefS3}>
                 <UserIcon />
               </Circle>
-              <Circle ref={div10Ref} className="bg-green-700 text-white">
+              <Circle ref={checkRefS3} className="bg-green-700 text-white">
                 <CheckIcon weight="bold" />
               </Circle>
               <div className="flex flex-col justify-center gap-2">
-                <Circle ref={div11Ref}>
+                <Circle ref={cameraRefS3}>
                   <VideoCameraIcon />
                 </Circle>
-                <Circle ref={div12Ref} className="p-2 size-14">
+                <Circle ref={alertboxRefS3} className="p-2 size-14">
                   <Image
                     src={"/favicon.ico"}
                     width={32}
@@ -226,7 +186,10 @@ function HowItWorkViewer() {
                   />
                 </Circle>
               </div>
-              <Circle ref={div13Ref} className="bg-red-900 text-white relative">
+              <Circle
+                ref={teacherRefS3}
+                className="bg-red-900 text-white relative"
+              >
                 <div className="absolute -z-10 animate-ping size-full bg-red-900 rounded-full" />
                 <ChalkboardTeacherIcon weight="fill" />
               </Circle>
@@ -235,26 +198,26 @@ function HowItWorkViewer() {
           <AnimatedBeam
             duration={3}
             containerRef={sectionHIW3_image}
-            fromRef={div9Ref}
-            toRef={div10Ref}
+            fromRef={donorRefS3}
+            toRef={checkRefS3}
           />
           <AnimatedBeam
             duration={3}
             containerRef={sectionHIW3_image}
-            fromRef={div10Ref}
-            toRef={div11Ref}
+            fromRef={checkRefS3}
+            toRef={cameraRefS3}
           />
           <AnimatedBeam
             duration={3}
             containerRef={sectionHIW3_image}
-            fromRef={div10Ref}
-            toRef={div12Ref}
+            fromRef={checkRefS3}
+            toRef={alertboxRefS3}
           />
           <AnimatedBeam
             duration={3}
             containerRef={sectionHIW3_image}
-            fromRef={div12Ref}
-            toRef={div13Ref}
+            fromRef={alertboxRefS3}
+            toRef={teacherRefS3}
           />
         </div>
       </div>

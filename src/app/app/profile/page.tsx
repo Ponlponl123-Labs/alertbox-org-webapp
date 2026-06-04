@@ -21,15 +21,18 @@ import { coreStore } from "@/hooks/store/core";
 import { cn } from "@/lib/utils";
 import {
   ArrowUpRightIcon,
+  CoinVerticalIcon,
   SlidersHorizontalIcon,
   SparkleIcon,
+  UserIcon,
 } from "@phosphor-icons/react";
 import { getCookie } from "cookies-next";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "react-smooth-input";
 import { useStore } from "zustand";
 import { toast } from "sonner";
+import ProfilePreview from "./profile-preview";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -38,12 +41,12 @@ function Page() {
   const [isSavingSocials, setIsSavingSocials] = useState(false);
 
   const [socials, setSocials] = useState({
-    social_twitchtv: userInfo?.social_twitchtv || "",
-    social_youtube: userInfo?.social_youtube || "",
-    social_twitter: userInfo?.social_twitter || "",
-    social_facebook: userInfo?.social_facebook || "",
-    social_reddit: userInfo?.social_reddit || "",
-    social_discord: userInfo?.social_discord || "",
+    socialTwitch: userInfo?.profile?.twitch || "",
+    socialYoutube: userInfo?.profile?.youtube || "",
+    socialTwitter: userInfo?.profile?.twitter || "",
+    socialFacebook: userInfo?.profile?.facebook || "",
+    socialReddit: userInfo?.profile?.reddit || "",
+    socialDiscord: userInfo?.profile?.discord || "",
   });
 
   const [prevUserInfo, setPrevUserInfo] = useState(userInfo);
@@ -51,12 +54,12 @@ function Page() {
   if (userInfo !== prevUserInfo) {
     setPrevUserInfo(userInfo);
     setSocials({
-      social_twitchtv: userInfo?.social_twitchtv || "",
-      social_youtube: userInfo?.social_youtube || "",
-      social_twitter: userInfo?.social_twitter || "",
-      social_facebook: userInfo?.social_facebook || "",
-      social_reddit: userInfo?.social_reddit || "",
-      social_discord: userInfo?.social_discord || "",
+      socialTwitch: userInfo?.profile?.twitch || "",
+      socialYoutube: userInfo?.profile?.youtube || "",
+      socialTwitter: userInfo?.profile?.twitter || "",
+      socialFacebook: userInfo?.profile?.facebook || "",
+      socialReddit: userInfo?.profile?.reddit || "",
+      socialDiscord: userInfo?.profile?.discord || "",
     });
   }
 
@@ -85,7 +88,8 @@ function Page() {
       });
 
       if (res.ok) {
-        patchUserInfo(socials);
+        const updatedUser = await res.json();
+        patchUserInfo(updatedUser);
         toast.success(lang.data.app.account.success);
       } else {
         toast.error(lang.data.app.account.error);
@@ -99,8 +103,9 @@ function Page() {
   };
 
   const isUriCooldown =
-    (userInfo?.uri_cooldown &&
-      new Date(userInfo?.uri_cooldown).getTime() > new Date().getTime()) ||
+    (userInfo?.profile?.uriCooldownEnd &&
+      new Date(userInfo?.profile?.uriCooldownEnd).getTime() >
+        new Date().getTime()) ||
     false;
 
   const handlePublish = async () => {
@@ -117,7 +122,12 @@ function Page() {
       });
 
       if (res.ok) {
-        patchUserInfo({ published: new Date() });
+        patchUserInfo({
+          profile: {
+            ...userInfo!.profile!,
+            publishedAt: new Date().toISOString(),
+          },
+        });
       }
     } catch (err) {
       console.error("Failed to publish:", err);
@@ -140,7 +150,9 @@ function Page() {
       });
 
       if (res.ok) {
-        patchUserInfo({ published: null });
+        patchUserInfo({
+          profile: { ...userInfo!.profile!, publishedAt: null },
+        });
       }
     } catch (err) {
       console.error("Failed to unpublish:", err);
@@ -156,11 +168,11 @@ function Page() {
           <span className="tracking-wider text-xs mt-1.5 text-foreground/40">
             {lang.data.app.profile.my_uri}:{" "}
             <Link
-              href={`https://tip-to.me/@${userInfo?.uri}`}
+              href={`https://tip-to.me/@${userInfo?.profile?.uri}`}
               className="text-blue-500"
               target="_blank"
             >
-              tip-to.me/@{userInfo?.uri}
+              tip-to.me/@{userInfo?.profile?.uri}
               <ArrowUpRightIcon
                 className="inline ml-px"
                 weight="bold"
@@ -170,20 +182,19 @@ function Page() {
           </span>
           {isUriCooldown && (
             <span className="tracking-wider text-xs mt-1.5 text-foreground/40">
-              {userInfo?.uri_cooldown &&
+              {userInfo?.profile?.uriCooldownEnd &&
                 lang.data.app.profile.get_started.reset_in.replace(
                   "{time}",
-                  new Date(userInfo?.uri_cooldown).toLocaleDateString(
-                    lang.key,
-                    {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    },
-                  ),
+                  new Date(
+                    userInfo?.profile?.uriCooldownEnd,
+                  ).toLocaleDateString(lang.key, {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  }),
                 )}
             </span>
           )}
@@ -207,7 +218,7 @@ function Page() {
         <strong className="text-xs text-foreground/40">
           {lang.data.app.profile.manage.title}
         </strong>
-        {userInfo?.published ? (
+        {userInfo?.profile?.publishedAt ? (
           <Button
             variant="destructive"
             className="rounded-xl p-2.5 text-[10px] font-semibold h-8"
@@ -260,42 +271,42 @@ function Page() {
                 <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
                   {[
                     {
-                      id: "social_twitchtv",
+                      id: "socialTwitch",
                       icon: <TwitchTv className="size-4" />,
                       title: lang.data.app.profile.socials.twitch,
                       placeholder: lang.data.app.profile.socials.placeholder,
                       pattern: allowed_chars,
                     },
                     {
-                      id: "social_youtube",
+                      id: "socialYoutube",
                       icon: <Youtube className="size-4" />,
                       title: lang.data.app.profile.socials.youtube,
                       placeholder: lang.data.app.profile.socials.placeholder,
                       pattern: allowed_chars,
                     },
                     {
-                      id: "social_twitter",
+                      id: "socialTwitter",
                       icon: <Twitter className="size-4" />,
                       title: lang.data.app.profile.socials.twitter,
                       placeholder: lang.data.app.profile.socials.placeholder,
                       pattern: allowed_chars,
                     },
                     {
-                      id: "social_facebook",
+                      id: "socialFacebook",
                       icon: <Facebook className="size-4" />,
                       title: lang.data.app.profile.socials.facebook,
                       placeholder: lang.data.app.profile.socials.placeholder,
                       pattern: allowed_chars,
                     },
                     {
-                      id: "social_reddit",
+                      id: "socialReddit",
                       icon: <Reddit className="size-4" />,
                       title: lang.data.app.profile.socials.reddit,
                       placeholder: lang.data.app.profile.socials.placeholder,
                       pattern: allowed_chars,
                     },
                     {
-                      id: "social_discord",
+                      id: "socialDiscord",
                       icon: <Discord className="size-4" />,
                       title: lang.data.app.profile.socials.discord,
                       placeholder:
@@ -379,18 +390,19 @@ function Page() {
                 <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
                   {[
                     {
-                      id: "social_twitchtv",
-                      icon: <TwitchTv className="size-4" />,
-                      title: lang.data.app.profile.socials.twitch,
-                      placeholder: lang.data.app.profile.socials.placeholder,
+                      id: "1",
+                      icon: <UserIcon className="size-4" />,
+                      title: "ค่าเริ่มต้นชื่อผู้บริจาค",
+                      placeholder: "Anonymous",
                       pattern: allowed_chars,
                     },
                     {
-                      id: "social_youtube",
-                      icon: <Youtube className="size-4" />,
-                      title: lang.data.app.profile.socials.youtube,
-                      placeholder: lang.data.app.profile.socials.placeholder,
-                      pattern: allowed_chars,
+                      id: "2",
+                      icon: <CoinVerticalIcon className="size-4" />,
+                      title: "จำนวนเงินบริจาคเริ่มต้น",
+                      placeholder: `${userInfo?.profile?.defaultDonorAmount || 10}`,
+                      endContent: userInfo?.profile?.currency || "฿",
+                      pattern: /^[0-9]+$/,
                     },
                   ].map((l, i) => (
                     <div
@@ -401,27 +413,28 @@ function Page() {
                         {l.icon}
                         <h1 className="font-semibold text-xs">{l.title}</h1>
                       </div>
-                      <Input
-                        type="text"
-                        placeholder={l.placeholder}
-                        pattern={l.pattern.source}
-                        value={socials[l.id as keyof typeof socials]}
-                        onChange={(e) =>
-                          handleSocialChange(
-                            l.id as keyof typeof socials,
-                            e.target.value,
-                            l.pattern,
-                          )
-                        }
-                        maxLength={32}
-                        classNames={{
-                          base: "rounded-md bg-background/30! p-1",
-                        }}
-                        fontStyle={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: "10px",
-                        }}
-                      />
+                      <div className="flex gap-1 w-full items-center">
+                        <Input
+                          type="text"
+                          placeholder={l.placeholder}
+                          pattern={l.pattern.source}
+                          className="w-full"
+                          classNames={{
+                            base: "rounded-md bg-background/30! p-1",
+                          }}
+                          fontStyle={{
+                            fontFamily: "var(--font-sans)",
+                            fontSize: "10px",
+                          }}
+                        />
+                        {l?.endContent && (
+                          <div className="size-9 bg-background/30 flex items-center justify-center rounded-md select-none px-2">
+                            <span className="text-xs font-semibold text-foreground/40">
+                              {l.endContent}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -442,7 +455,9 @@ function Page() {
             </AccordionItem>
           </Accordion>
         </div>
-        <div className="w-full flex flex-col items-center justify-center min-h-0 bg-foreground/5 rounded-4xl flex-1 border-2 border-dashed border-foreground/10 z-10 relative"></div>
+        <div className="w-full flex flex-col overflow-hidden min-h-0 bg-foreground/5 rounded-4xl flex-1 border-2 border-dashed border-foreground/10 z-10 relative">
+          <ProfilePreview />
+        </div>
       </div>
     </>
   );

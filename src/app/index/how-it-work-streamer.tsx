@@ -13,29 +13,47 @@ import {
   VideoCameraIcon,
   WebhooksLogoIcon,
 } from "@phosphor-icons/react";
-import Image from "next/image";
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, createRef } from "react";
 import { useStore } from "zustand";
+import { PAYMENT_METHODS } from "./constants";
+import Image from "next/image";
+import { Discord, Google, Obs } from "@thesvg/react";
 
 function HowItWorkStreamer() {
   const lang = useStore(coreStore, (state) => state.lang);
-  const div1Ref = useRef<HTMLDivElement>(null);
-  const div2Ref = useRef<HTMLDivElement>(null);
-  const div3Ref = useRef<HTMLDivElement>(null);
-  const div4Ref = useRef<HTMLDivElement>(null);
-  const div5Ref = useRef<HTMLDivElement>(null);
-  const div6Ref = useRef<HTMLDivElement>(null);
-  const div7Ref = useRef<HTMLDivElement>(null);
-  const div8Ref = useRef<HTMLDivElement>(null);
-  const div9Ref = useRef<HTMLDivElement>(null);
-  const div10Ref = useRef<HTMLDivElement>(null);
-  const div11Ref = useRef<HTMLDivElement>(null);
-  const div12Ref = useRef<HTMLDivElement>(null);
-  const div13Ref = useRef<HTMLDivElement>(null);
-  const div14Ref = useRef<HTMLDivElement>(null);
-  const div15Ref = useRef<HTMLDivElement>(null);
-  const div16Ref = useRef<HTMLDivElement>(null);
+
+  // Static element refs
+  const cameraRefS2 = useRef<HTMLDivElement>(null);
+  const discordRefS2 = useRef<HTMLDivElement>(null);
+  const googleRefS2 = useRef<HTMLDivElement>(null);
+  const alertboxRefS2 = useRef<HTMLDivElement>(null);
+
+  const cameraRefS3 = useRef<HTMLDivElement>(null);
+  const alertboxRefS3 = useRef<HTMLDivElement>(null);
+
+  const alertboxRefS5 = useRef<HTMLDivElement>(null);
+  const obsRefS5 = useRef<HTMLDivElement>(null);
+
+  const donorRefS6 = useRef<HTMLDivElement>(null);
+  const alertboxRefS6 = useRef<HTMLDivElement>(null);
+  const obsRefS6 = useRef<HTMLDivElement>(null);
+
+  // Dynamic payment refs
+  const paymentRefsS3 = useRef<React.RefObject<HTMLDivElement | null>[]>([]);
+  if (paymentRefsS3.current.length === 0) {
+    paymentRefsS3.current = PAYMENT_METHODS.map(() =>
+      createRef<HTMLDivElement>(),
+    );
+  }
+
+  const paymentRefsS6 = useRef<React.RefObject<HTMLDivElement | null>[]>([]);
+  if (paymentRefsS6.current.length === 0) {
+    paymentRefsS6.current = PAYMENT_METHODS.map(() =>
+      createRef<HTMLDivElement>(),
+    );
+  }
+
   const sectionHIW1_content = useRef<HTMLDivElement>(null);
   const sectionHIW1_image = useRef<HTMLDivElement>(null);
   const sectionHIW2_content = useRef<HTMLDivElement>(null);
@@ -155,33 +173,11 @@ function HowItWorkStreamer() {
           className="w-full h-screen sticky top-0 flex items-center justify-center p-6"
           ref={sectionHIW1_image}
         >
-          <div className="flex gap-3 flex-wrap">
-            {[
-              {
-                name: "Stripe",
-                image: "/stripe.webp",
-                href: "https://stripe.com/",
-              },
-              {
-                name: "Buy Me A Coffee",
-                image: "/buymeacoffee.webp",
-                href: "https://buymeacoffee.com/",
-              },
-              {
-                name: "Ko-Fi",
-                image: "/kofi.webp",
-                href: "https://ko-fi.com/",
-              },
-            ].map((v, i) => (
-              <Link key={i} href={v.href} target="_blank">
+          <div className="flex gap-3 flex-wrap items-center justify-center">
+            {PAYMENT_METHODS.map((v, i) => (
+              <Link key={v.id} href={v.href} target="_blank">
                 <Button variant={"secondary"} className={"rounded-2xl"}>
-                  <Image
-                    src={v.image}
-                    width={24}
-                    height={24}
-                    className="max-h-4 w-auto"
-                    alt={v.name}
-                  />
+                  <v.icon className="size-6 max-h-4 w-auto" />
                   {v.name}
                 </Button>
               </Link>
@@ -193,19 +189,22 @@ function HowItWorkStreamer() {
           ref={sectionHIW2_image}
         >
           <div className="flex w-full flex-col items-stretch justify-between gap-10">
-            <div className="flex flex-row justify-between">
-              <Circle ref={div6Ref}>
+            <div className="flex flex-row justify-between items-center">
+              <Circle ref={cameraRefS2}>
                 <VideoCameraIcon />
               </Circle>
-              <Circle ref={div7Ref}>
-                <Image
-                  src={"/google.webp"}
-                  width={24}
-                  height={24}
-                  alt="Google"
-                />
-              </Circle>
-              <Circle ref={div8Ref} className="p-2 size-14">
+              <div className="flex flex-col justify-center items-center gap-2">
+                <Circle ref={discordRefS2}>
+                  <Discord />
+                </Circle>
+                <Circle
+                  ref={googleRefS2}
+                  className="grayscale brightness-75 dark:brightness-25"
+                >
+                  <Google />
+                </Circle>
+              </div>
+              <Circle ref={alertboxRefS2} className="p-2 size-14">
                 <Image
                   src={"/favicon.ico"}
                   width={32}
@@ -218,14 +217,26 @@ function HowItWorkStreamer() {
           <AnimatedBeam
             duration={3}
             containerRef={sectionHIW2_image}
-            fromRef={div6Ref}
-            toRef={div7Ref}
+            fromRef={cameraRefS2}
+            toRef={googleRefS2}
           />
           <AnimatedBeam
             duration={3}
             containerRef={sectionHIW2_image}
-            fromRef={div7Ref}
-            toRef={div8Ref}
+            fromRef={cameraRefS2}
+            toRef={discordRefS2}
+          />
+          <AnimatedBeam
+            duration={3}
+            containerRef={sectionHIW2_image}
+            fromRef={googleRefS2}
+            toRef={alertboxRefS2}
+          />
+          <AnimatedBeam
+            duration={3}
+            containerRef={sectionHIW2_image}
+            fromRef={discordRefS2}
+            toRef={alertboxRefS2}
           />
         </div>
         <div
@@ -234,36 +245,17 @@ function HowItWorkStreamer() {
         >
           <div className="flex w-full flex-col items-stretch justify-between gap-10">
             <div className="flex flex-row justify-between items-center">
-              <Circle ref={div9Ref}>
+              <Circle ref={cameraRefS3}>
                 <VideoCameraIcon />
               </Circle>
               <div className="flex flex-col justify-center gap-2">
-                <Circle ref={div10Ref}>
-                  <Image
-                    src={"/stripe.webp"}
-                    width={24}
-                    height={24}
-                    alt="Stripe"
-                  />
-                </Circle>
-                <Circle ref={div11Ref}>
-                  <Image
-                    src={"/buymeacoffee.webp"}
-                    width={24}
-                    height={24}
-                    alt="Buy me a coffee"
-                  />
-                </Circle>
-                <Circle ref={div12Ref}>
-                  <Image
-                    src={"/kofi.webp"}
-                    width={24}
-                    height={24}
-                    alt="Ko-Fi"
-                  />
-                </Circle>
+                {PAYMENT_METHODS.map((method, index) => (
+                  <Circle key={method.id} ref={paymentRefsS3.current[index]}>
+                    <method.icon className="size-6" />
+                  </Circle>
+                ))}
               </div>
-              <Circle ref={div13Ref} className="p-2 size-14">
+              <Circle ref={alertboxRefS3} className="p-2 size-14">
                 <Image
                   src={"/favicon.ico"}
                   width={32}
@@ -273,42 +265,24 @@ function HowItWorkStreamer() {
               </Circle>
             </div>
           </div>
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW3_image}
-            fromRef={div9Ref}
-            toRef={div10Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW3_image}
-            fromRef={div9Ref}
-            toRef={div11Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW3_image}
-            fromRef={div9Ref}
-            toRef={div12Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW3_image}
-            fromRef={div11Ref}
-            toRef={div13Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW3_image}
-            fromRef={div12Ref}
-            toRef={div13Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW3_image}
-            fromRef={div10Ref}
-            toRef={div13Ref}
-          />
+          {paymentRefsS3.current.map((ref, index) => (
+            <AnimatedBeam
+              key={`beam-s3-from-${index}`}
+              duration={3}
+              containerRef={sectionHIW3_image}
+              fromRef={cameraRefS3}
+              toRef={ref}
+            />
+          ))}
+          {paymentRefsS3.current.map((ref, index) => (
+            <AnimatedBeam
+              key={`beam-s3-to-${index}`}
+              duration={3}
+              containerRef={sectionHIW3_image}
+              fromRef={ref}
+              toRef={alertboxRefS3}
+            />
+          ))}
         </div>
         <div
           className="w-full h-screen sticky top-0 flex items-center justify-center p-6 bg-zinc-50 dark:bg-black mask-t-from-80%"
@@ -333,7 +307,7 @@ function HowItWorkStreamer() {
         >
           <div className="flex w-full flex-col items-stretch justify-between gap-10">
             <div className="flex flex-row justify-between items-center">
-              <Circle ref={div14Ref} className="p-2 size-14">
+              <Circle ref={alertboxRefS5} className="p-2 size-14">
                 <Image
                   src={"/favicon.ico"}
                   width={32}
@@ -341,21 +315,16 @@ function HowItWorkStreamer() {
                   alt="Alertbox.org"
                 />
               </Circle>
-              <Circle ref={div15Ref} className="p-2 size-14">
-                <Image
-                  src={"/obs.webp"}
-                  width={32}
-                  height={32}
-                  alt="OBS Studio"
-                />
+              <Circle ref={obsRefS5} className="p-2 size-14">
+                <Obs />
               </Circle>
             </div>
           </div>
           <AnimatedBeam
             duration={3}
             containerRef={sectionHIW5_image}
-            fromRef={div14Ref}
-            toRef={div15Ref}
+            fromRef={alertboxRefS5}
+            toRef={obsRefS5}
           />
         </div>
         <div
@@ -364,36 +333,17 @@ function HowItWorkStreamer() {
         >
           <div className="flex w-full flex-col items-stretch justify-between gap-10">
             <div className="flex flex-row justify-between items-center">
-              <Circle ref={div1Ref}>
+              <Circle ref={donorRefS6}>
                 <UserIcon />
               </Circle>
               <div className="flex flex-col justify-center gap-2">
-                <Circle ref={div3Ref}>
-                  <Image
-                    src={"/stripe.webp"}
-                    width={24}
-                    height={24}
-                    alt="Stripe"
-                  />
-                </Circle>
-                <Circle ref={div4Ref}>
-                  <Image
-                    src={"/buymeacoffee.webp"}
-                    width={24}
-                    height={24}
-                    alt="Buy me a coffee"
-                  />
-                </Circle>
-                <Circle ref={div5Ref}>
-                  <Image
-                    src={"/kofi.webp"}
-                    width={24}
-                    height={24}
-                    alt="Ko-Fi"
-                  />
-                </Circle>
+                {PAYMENT_METHODS.map((method, index) => (
+                  <Circle key={method.id} ref={paymentRefsS6.current[index]}>
+                    <method.icon className="size-6" />
+                  </Circle>
+                ))}
               </div>
-              <Circle ref={div2Ref} className="p-2 size-14">
+              <Circle ref={alertboxRefS6} className="p-2 size-14">
                 <Image
                   src={"/favicon.ico"}
                   width={32}
@@ -401,57 +351,34 @@ function HowItWorkStreamer() {
                   alt="Alertbox.org"
                 />
               </Circle>
-              <Circle ref={div16Ref} className="p-2 size-14">
-                <Image
-                  src={"/obs.webp"}
-                  width={32}
-                  height={32}
-                  alt="OBS Studio"
-                />
+              <Circle ref={obsRefS6} className="p-2 size-14">
+                <Obs />
               </Circle>
             </div>
           </div>
+          {paymentRefsS6.current.map((ref, index) => (
+            <AnimatedBeam
+              key={`beam-s6-from-${index}`}
+              duration={3}
+              containerRef={sectionHIW6_image}
+              fromRef={donorRefS6}
+              toRef={ref}
+            />
+          ))}
+          {paymentRefsS6.current.map((ref, index) => (
+            <AnimatedBeam
+              key={`beam-s6-to-${index}`}
+              duration={3}
+              containerRef={sectionHIW6_image}
+              fromRef={ref}
+              toRef={alertboxRefS6}
+            />
+          ))}
           <AnimatedBeam
             duration={3}
             containerRef={sectionHIW6_image}
-            fromRef={div1Ref}
-            toRef={div3Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW6_image}
-            fromRef={div1Ref}
-            toRef={div4Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW6_image}
-            fromRef={div1Ref}
-            toRef={div5Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW6_image}
-            fromRef={div3Ref}
-            toRef={div2Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW6_image}
-            fromRef={div4Ref}
-            toRef={div2Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW6_image}
-            fromRef={div5Ref}
-            toRef={div2Ref}
-          />
-          <AnimatedBeam
-            duration={3}
-            containerRef={sectionHIW6_image}
-            fromRef={div2Ref}
-            toRef={div16Ref}
+            fromRef={alertboxRefS6}
+            toRef={obsRefS6}
           />
         </div>
       </div>

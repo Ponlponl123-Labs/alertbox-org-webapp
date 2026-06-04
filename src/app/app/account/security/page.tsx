@@ -104,8 +104,8 @@ function Page() {
               />
             ),
             title: lang.data.app.security.registered,
-            value: userInfo?.time
-              ? new Date(userInfo.time).toLocaleDateString(lang.key, {
+            value: userInfo?.createdAt
+              ? new Date(userInfo.createdAt).toLocaleDateString(lang.key, {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
@@ -121,7 +121,7 @@ function Page() {
             ),
             title: lang.data.app.security.registered_with,
             value:
-              userInfo?.create_with === "discord" ? (
+              userInfo?.createWith === "discord" ? (
                 <>
                   <svg
                     role="img"
@@ -134,7 +134,7 @@ function Page() {
                   <strong>Discord</strong>
                 </>
               ) : (
-                userInfo?.create_with?.toWellFormed() || "Not set"
+                userInfo?.createWith?.toWellFormed() || "Not set"
               ),
           },
           {
@@ -226,7 +226,7 @@ function Page() {
                         <DevicesIcon className="size-6" weight="fill" />
                         <div className="flex flex-col gap-1.5">
                           <h1 className="text-sm font-semibold">
-                            {`${d.os} ${d.os_ver}`}
+                            {`${d.os} ${d.osVersion}`}
                           </h1>
                         </div>
                       </div>
@@ -234,30 +234,30 @@ function Page() {
                         {
                           title: lang.data.app.security.device.info.os,
                           value:
-                            `${d.os} ${d.os_ver}` ||
+                            `${d.os} ${d.osVersion}` ||
                             lang.data.app.security.device.unknown,
                         },
                         {
                           title: lang.data.app.security.device.info.browser,
                           value:
-                            `${d.platform} ${d.platform_ver}` ||
+                            `${d.platform} ${d.platformVersion}` ||
                             lang.data.app.security.device.unknown,
                         },
                         {
                           title:
                             lang.data.app.security.device.info.cpu_architecture,
                           value:
-                            d.cpu_architecture ||
+                            d.cpuArchitecture ||
                             lang.data.app.security.device.unknown,
                         },
                         {
                           title: lang.data.app.security.device.info.ip,
-                          value: d.ip_addr,
+                          value: d.ipAddress,
                         },
                         {
                           title: lang.data.app.security.device.info.isp,
                           value:
-                            d.ip_addr_isp ||
+                            d.isp ||
                             lang.data.app.security.device.unknown,
                         },
                         ...(selectedDevice?.id === d.id
@@ -265,14 +265,14 @@ function Page() {
                               {
                                 title: lang.data.app.security.device.info.lat,
                                 value:
-                                  d.ip_addr_lat ||
+                                  d.latitude ||
                                   lang.data.app.security.device
                                     .unknown_location,
                               },
                               {
                                 title: lang.data.app.security.device.info.lon,
                                 value:
-                                  d.ip_addr_long ||
+                                  d.longitude ||
                                   lang.data.app.security.device
                                     .unknown_location,
                               },
@@ -280,14 +280,14 @@ function Page() {
                                 title:
                                   lang.data.app.security.device.info.country,
                                 value:
-                                  d.ip_addr_country ||
+                                  d.country ||
                                   lang.data.app.security.device
                                     .unknown_location,
                               },
                               {
                                 title: lang.data.app.security.device.info.city,
                                 value:
-                                  d.ip_addr_city ||
+                                  d.city ||
                                   lang.data.app.security.device
                                     .unknown_location,
                               },
@@ -295,7 +295,7 @@ function Page() {
                                 title:
                                   lang.data.app.security.device.info.region,
                                 value:
-                                  d.ip_addr_region ||
+                                  d.region ||
                                   lang.data.app.security.device
                                     .unknown_location,
                               },
@@ -304,7 +304,7 @@ function Page() {
                         {
                           title: lang.data.app.security.device.info.time,
                           value:
-                            new Date(d.time).toLocaleDateString(lang.key, {
+                            new Date(d.createdAt).toLocaleDateString(lang.key, {
                               year: "numeric",
                               month: "long",
                               day: "numeric",
@@ -316,21 +316,21 @@ function Page() {
                         },
                         {
                           title: lang.data.app.security.device.info.last_used,
-                          value:
-                            new Date(d.last_used).toLocaleDateString(lang.key, {
+                          value: d.lastUsed ? 
+                            new Date(d.lastUsed).toLocaleDateString(lang.key, {
                               year: "numeric",
                               month: "long",
                               day: "numeric",
                               hour: "2-digit",
                               minute: "2-digit",
                               second: "2-digit",
-                            }) || lang.data.app.security.device.unknown,
+                            }) : lang.data.app.security.device.unknown,
                           halfWidth: true,
                         },
                         {
                           title: lang.data.app.security.device.info.expires,
                           value:
-                            new Date(d.expire).toLocaleDateString(lang.key, {
+                            new Date(d.expiresAt).toLocaleDateString(lang.key, {
                               year: "numeric",
                               month: "long",
                               day: "numeric",
@@ -369,7 +369,7 @@ function Page() {
                     frameBorder="0"
                     scrolling="no"
                     className="absolute top-0 left-0 w-full h-full flex-1 min-w-0 min-h-0"
-                    src={`https://maps.google.com/maps?q=${String(selectedDevice?.ip_addr_lat ?? "0.0")},${String(selectedDevice?.ip_addr_long ?? "0.0")}&hl=${lang.key}&z=14&output=embed`}
+                    src={`https://maps.google.com/maps?q=${String(selectedDevice?.latitude ?? "0.0")},${String(selectedDevice?.longitude ?? "0.0")}&hl=${lang.key}&z=14&output=embed`}
                   />
                 ) : (
                   lang.data.app.security.device.unselected_map
@@ -390,7 +390,7 @@ function Page() {
                   {lang.data.app.security.device.manage.title}
                 </span>
                 <strong className="text-foreground/40 font-semibold m-0 text-xs -ml-1">
-                  {`"${selectedDevice?.os} ${selectedDevice?.os_ver}" : `}
+                  {`"${selectedDevice?.os} ${selectedDevice?.osVersion}" : `}
                 </strong>
                 <Tooltip disabled={!selectedDevice?.isThisDevice}>
                   <TooltipTrigger

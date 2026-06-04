@@ -1,24 +1,91 @@
 export interface User {
   id: string;
-  create_with: string;
-  time: Date;
-  name: string;
-  displayname: string;
-  uri: string;
-  uri_cooldown: Date | null;
-  published: Date | null;
   email: string;
+  createWith: string;
+  createdAt: string;
+  updatedAt: string;
+  disabledAt: string | null;
+  deletedAt: string | null;
+  profile: Profile | null;
+  widgets: Widget[];
+}
+
+export interface Profile {
+  id: string;
+  name: string;
+  displayName: string;
+  bio: string | null;
   avatar: string | null;
   banner: string | null;
-  bio: string | null;
-  social_discord: string | null;
-  social_facebook: string | null;
-  social_reddit: string | null;
-  social_twitchtv: string | null;
-  social_twitter: string | null;
-  social_youtube: string | null;
-  disabled: Date | null;
-  deleted: Date | null;
+  accentColor: number;
+  uri: string | null;
+  uriCooldownEnd: string | null;
+  publishedAt: string | null;
+  twitch: string | null;
+  youtube: string | null;
+  twitter: string | null;
+  facebook: string | null;
+  reddit: string | null;
+  discord: string | null;
+  defaultDonorName: string;
+  defaultDonorAmount: number;
+  defaultDonorAvatar: string | null;
+  currency: number | null;
+  minTipAmount: number;
+  maxTipAmount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Widget {
+  id: string;
+  type: "ALERTBOX" | "TIPJAR" | "GOALBAR";
+  token: string;
+  alertbox?: AlertboxSetting | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AlertboxSetting {
+  id: string;
+  globalVolume: number;
+  events: AlertboxEvent[];
+}
+
+export interface AlertboxEvent {
+  id: string;
+  eventType: "TIP" | "MEMBERSHIP" | "MERCH" | "FOLLOW";
+  isEnabled: boolean;
+  prefix: string | null;
+  subfix: string | null;
+  messageLayout: string | null;
+  minVisibleDuration: number;
+  animIn: string | null;
+  animOut: string | null;
+  animInDuration: number;
+  animOutDuration: number;
+  image: string | null;
+  sound: string | null;
+  soundVolume: number;
+  fontFamily: string | null;
+  fontSize: number;
+  fontWeight: number;
+  textColor: number;
+  accentColor: number;
+  subfixColor: number;
+  textShadowColor: number;
+  textShadowSize: number;
+  outlineColor: number;
+  outlineSize: number;
+  ttsEnabled: boolean;
+  ttsMinTip: number;
+  ttsVoice: string | null;
+  ttsVolume: number;
+  ttsSpeed: number;
+  ttsPitch: number;
+  ttsDelay: number;
+  ttsOptions: number;
+  updatedAt: string;
 }
 
 export interface Connections {
@@ -35,34 +102,34 @@ export interface Connections {
 
 export interface Device {
   id: string;
-  time: Date;
-  disabled: Date | null;
-  expire: Date;
-  ip_addr: string;
-  user_agent: string;
+  createdAt: string;
+  disabledAt: string | null;
+  expiresAt: string;
+  ipAddress: string;
+  userAgent: string;
   platform: string | null;
-  platform_major: string | null;
-  platform_ver: string | null;
-  platform_type: string | null;
-  cpu_architecture: string | null;
-  device_model: string | null;
-  device_type: string | null;
-  device_vendor: string | null;
-  ip_addr_asn: string | null;
-  ip_addr_city: string | null;
-  ip_addr_continent_code: string | null;
-  ip_addr_country: string | null;
-  ip_addr_country_code: string | null;
-  ip_addr_country_code_iso3: string | null;
-  ip_addr_isp: string | null;
-  ip_addr_lat: number | null;
-  ip_addr_long: number | null;
-  ip_addr_postal: string | null;
-  ip_addr_region: string | null;
-  ip_addr_region_code: string | null;
+  platformMajor: string | null;
+  platformVersion: string | null;
+  platformType: string | null;
+  cpuArchitecture: string | null;
+  deviceModel: string | null;
+  deviceType: string | null;
+  deviceVendor: string | null;
+  asn: string | null;
+  city: string | null;
+  continentCode: string | null;
+  country: string | null;
+  countryCode: string | null;
+  countryCodeIso3: string | null;
+  isp: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  postal: string | null;
+  region: string | null;
+  regionCode: string | null;
   os: string | null;
-  os_ver: string | null;
-  last_used: Date;
+  osVersion: string | null;
+  lastUsed: string | null;
   isThisDevice: boolean;
   isRevoked?: boolean;
 }

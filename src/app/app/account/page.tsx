@@ -32,7 +32,7 @@ function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo, patchUserInfo } = useUserContext();
 
-  const [bio, setBio] = useState(userInfo?.bio || "");
+  const [bio, setBio] = useState(userInfo?.profile?.bio || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
@@ -42,7 +42,7 @@ function Page() {
   if (userInfo !== prevUserInfo) {
     setPrevUserInfo(userInfo);
     if (userInfo) {
-      setBio(userInfo.bio || "");
+      setBio(userInfo.profile?.bio || "");
     }
   }
 
@@ -171,7 +171,7 @@ function Page() {
         className="group relative w-full rounded-4xl bg-foreground/5 overflow-hidden border-3 border-transparent hover:border-foreground/10 transition-all select-none"
         onClick={() => bannerInputRef.current?.click()}
       >
-        {userInfo?.banner && (
+        {userInfo?.profile?.banner ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -179,13 +179,15 @@ function Page() {
             transition={{ duration: 1 }}
           >
             <Image
-              src={userInfo?.banner}
+              src={userInfo?.profile?.banner}
               alt="Banner"
               className="w-full h-max object-cover pointer-events-none transition-transform group-hover:scale-105 group-active:scale-103 group-hover:blur-xs"
               width={1200}
               height={488}
             />
           </motion.div>
+        ) : (
+          <div className="inset-0 min-h-64" />
         )}
         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
           <div className="flex flex-col items-center gap-2">
@@ -210,9 +212,9 @@ function Page() {
           onClick={() => avatarInputRef.current?.click()}
         >
           <Avatar className="size-full rounded-none group-hover:blur-xs">
-            {userInfo?.avatar && <AvatarImage src={userInfo?.avatar} />}
+            {userInfo?.profile?.avatar && <AvatarImage src={userInfo?.profile?.avatar} />}
             <AvatarFallback className="text-2xl">
-              {getFallbackInitial(userInfo?.name || "?")}
+              {getFallbackInitial(userInfo?.profile?.name || "?")}
             </AvatarFallback>
           </Avatar>
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
@@ -234,11 +236,11 @@ function Page() {
 
         <div className="mt-14">
           <div className="flex items-center gap-2">
-            <h1 className="font-semibold text-3xl">{userInfo?.displayname}</h1>
+            <h1 className="font-semibold text-3xl">{userInfo?.profile?.displayName}</h1>
             <Button
               size={"icon"}
               onClick={() => {
-                setNewName(userInfo?.displayname || "");
+                setNewName(userInfo?.profile?.displayName || "");
                 setIsNameDialogOpen(true);
               }}
               className="p-1.5 rounded-lg bg-foreground/5 hover:bg-foreground/10 text-foreground/60 transition-colors"
@@ -247,7 +249,7 @@ function Page() {
               <PencilSimpleIcon weight="fill" className="size-3.5" />
             </Button>
           </div>
-          <span className="text-foreground/40 text-sm">@{userInfo?.name}</span>
+          <span className="text-foreground/40 text-sm">@{userInfo?.profile?.name}</span>
         </div>
       </div>
 

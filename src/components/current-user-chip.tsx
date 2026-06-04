@@ -43,19 +43,19 @@ function CurrentUserChip() {
       >
         <div>
           <Avatar size="sm">
-            {userInfo.avatar && <AvatarImage src={userInfo.avatar} />}
-            <AvatarFallback>{getFallbackInitial(userInfo.name)}</AvatarFallback>
+            {userInfo.profile?.avatar && <AvatarImage src={userInfo.profile.avatar} />}
+            <AvatarFallback>{getFallbackInitial(userInfo.profile?.name || "?")}</AvatarFallback>
           </Avatar>
         </div>
         <span className="text-xs text-foreground/60 ml-0.75 mr-1.5">
-          {userInfo.displayname}
+          {userInfo.profile?.displayName}
         </span>
       </PopoverTrigger>
       <PopoverContent className={"w-42 rounded-2xl p-1 relative"}>
-        {userInfo?.banner && (
+        {userInfo?.profile?.banner && (
           <>
             <Image
-              src={userInfo?.banner}
+              src={userInfo?.profile?.banner}
               alt="Banner"
               className="w-full blur-lg aspect-video top-0 left-0 pointer-events-none object-cover absolute rounded-2xl z-0 opacity-30 select-none"
               width={720}
@@ -68,13 +68,13 @@ function CurrentUserChip() {
           <PopoverTitle
             className={cn(
               "text-foreground/40 text-xs my-1 bg-background mt-0 p-2.5 rounded-xl bg-linear-150 to-rose-900/20 from-transparent relative",
-              userInfo?.banner && "to-transparent",
+              userInfo?.profile?.banner && "to-transparent",
             )}
           >
-            {userInfo?.banner && (
+            {userInfo?.profile?.banner && (
               <div className="size-full top-0 left-0 pointer-events-none absolute overflow-hidden rounded-xl">
                 <Image
-                  src={userInfo?.banner}
+                  src={userInfo?.profile?.banner}
                   alt="Banner"
                   className="size-full top-0 left-0 pointer-events-none object-cover absolute z-0 mask-linear-160 mask-linear-from-10% mask-linear-to-92% blur-[1px] select-none"
                   width={720}
@@ -84,17 +84,17 @@ function CurrentUserChip() {
             )}
             <div className="flex items-center gap-1.75 w-full z-10 relative">
               <Avatar size="sm">
-                {userInfo.avatar && <AvatarImage src={userInfo.avatar} />}
+                {userInfo.profile?.avatar && <AvatarImage src={userInfo.profile.avatar} />}
                 <AvatarFallback>
-                  {getFallbackInitial(userInfo.name)}
+                  {getFallbackInitial(userInfo.profile?.name || "?")}
                 </AvatarFallback>
               </Avatar>
               <span className="text-xs text-foreground/60 mr-1.5 flex-1 min-w-0 overflow-hidden text-ellipsis">
-                {userInfo.displayname}
+                {userInfo.profile?.displayName}
               </span>
             </div>
             <span className="text-[10px] mt-1.5 block z-10 relative">
-              @{userInfo.name}
+              @{userInfo.profile?.name}
             </span>
           </PopoverTitle>
           <div className="flex flex-col gap-px p-1.5 pt-0 -mt-0.5">
@@ -106,7 +106,7 @@ function CurrentUserChip() {
               },
               {
                 text: lang.data.header.user_chip.links.profile,
-                href: userInfo.uri ? "/@" + userInfo.uri : "/app/profile",
+                href: userInfo.profile?.uri ? "/@" + userInfo.profile.uri : "/app/profile",
                 icon: <UserRectangleIcon weight="fill" size={16} />,
               },
               {

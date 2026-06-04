@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation";
 
 function RegisURIPage() {
   const lang = useStore(coreStore, (state) => state.lang);
-  const { patchUserInfo } = useUserContext();
+  const { userInfo, patchUserInfo } = useUserContext();
   const router = useRouter();
   const [isRegistrable, setIsRegistrable] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -46,7 +46,15 @@ function RegisURIPage() {
       if (res.ok) {
         const newUri = currentUriInputValue.trim().toLowerCase();
         const nextCooldown = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        patchUserInfo({ uri: newUri, uri_cooldown: nextCooldown });
+        if (userInfo?.profile) {
+          patchUserInfo({
+            profile: {
+              ...userInfo.profile,
+              uri: newUri,
+              uriCooldownEnd: nextCooldown.toISOString(),
+            },
+          });
+        }
         router.push("/app/profile");
       } else {
         const errorText = await res.text();
