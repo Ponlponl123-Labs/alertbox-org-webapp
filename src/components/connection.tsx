@@ -32,7 +32,7 @@ function Connection({
   privacy?: string;
   payout?: string;
   isConnected: boolean;
-  secret: string | null;
+  secret: boolean | string | null;
   skey: string;
   soon: boolean;
   connections: Connections | null;
@@ -41,7 +41,7 @@ function Connection({
   const lang = useStore(coreStore, (state) => state.lang);
   const [isLoading, setIsLoading] = useState(false);
   const [isShowSecret, setIsShowSecret] = useState(isConnected && !!secret);
-  const [currentSecret, setCurrentSecret] = useState(secret);
+  const [currentSecret, setCurrentSecret] = useState(secret as string | null);
 
   const update = async (endpoint: string, key: string) => {
     setIsLoading(true);
@@ -87,7 +87,7 @@ function Connection({
   };
 
   return (
-    <div className="w-full bg-card p-4 rounded-2xl group">
+    <div className="w-full bg-card/80 backdrop-blur-sm backdrop-saturate-200 p-4 rounded-3xl group z-10">
       <div className="flex flex-col size-full min-w-0 min-h-0 flex-1 gap-1.5">
         {icon}
         <div className="flex flex-col">
@@ -128,6 +128,67 @@ function Connection({
             >
               {lang.data.app.connections.soon}
             </Button>
+          ) : typeof secret === "boolean" ? (
+            <>
+              {!secret ? (
+                <Button
+                  className="rounded-xl p-4 min-w-0 flex-1 w-full border-2 border-dashed"
+                  onClick={async () => {
+                    setIsLoading(true);
+                    const token = getCookie("USRSS");
+                    const r = await fetch(api_endpoint + "/oauth2", {
+                      method: "GET",
+                      headers: {
+                        Authorization: "Bearer " + atob(token || ""),
+                      },
+                    });
+                    if (r.ok) {
+                      const oauth2_link = await r.text();
+                      window.location.href = oauth2_link;
+                    }
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Spinner className="size-4" />
+                  ) : (
+                    lang.data.app.connections.status.connect
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  variant={"secondary"}
+                  className="rounded-xl p-4 min-w-0 flex-1 w-full"
+                  onClick={async () => {
+                    setIsLoading(true);
+                    const token = getCookie("USRSS");
+                    const r = await fetch(api_endpoint, {
+                      method: "DELETE",
+                      headers: {
+                        Authorization: "Bearer " + atob(token || ""),
+                      },
+                    });
+                    if (r.ok) {
+                      setConnections((prev) => {
+                        if (!prev) return prev;
+                        return {
+                          ...prev,
+                          [skey]: false,
+                        };
+                      });
+                    }
+                    setIsLoading(false);
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Spinner className="size-4" />
+                  ) : (
+                    lang.data.app.connections.status.disconnect
+                  )}
+                </Button>
+              )}
+            </>
           ) : (
             <>
               <AnimatePresence>
@@ -157,7 +218,11 @@ function Connection({
                         disabled={isLoading}
                         onClick={() => update(api_endpoint, skey)}
                       >
-                        {lang.data.app.connections.update}
+                        {isLoading ? (
+                          <Spinner className="size-4" />
+                        ) : (
+                          lang.data.app.connections.update
+                        )}
                       </Button>
                     ) : (
                       <Button

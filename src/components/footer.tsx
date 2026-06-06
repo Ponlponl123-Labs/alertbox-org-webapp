@@ -9,6 +9,7 @@ import { Button } from "./ui/button";
 import Image from "next/image";
 import { HandHeartIcon } from "@phosphor-icons/react";
 import { usePathname } from "next/navigation";
+import { BuyMeACoffee } from "@thesvg/react";
 
 const Footer = memo(function Footer() {
   const pathname = usePathname();
@@ -88,13 +89,7 @@ const Footer = memo(function Footer() {
                   "rounded-xl bg-amber-100 hover:bg-amber-50 text-black"
                 }
               >
-                <Image
-                  src={"/buymeacoffee.webp"}
-                  width={12}
-                  height={12}
-                  className="mr-0.5"
-                  alt="Buy me a coffee"
-                />
+                <BuyMeACoffee className="mr-0.5 size-3" />
                 {lang.data.helpus.button}
               </Button>
             </Link>

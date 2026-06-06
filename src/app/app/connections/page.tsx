@@ -29,11 +29,14 @@ import {
   FacebookLogoIcon,
   WebhooksLogoIcon,
 } from "@phosphor-icons/react";
+import { useSearchParams } from "next/navigation";
 
 function Page() {
   const [connections, setConnections] = useState<Connections | null>(null);
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo, logout } = useUserContext();
+  const params = useSearchParams();
+  const selectedTab = params.get("t");
   const isFetched = useRef(false);
 
   useEffect(() => {
@@ -72,7 +75,13 @@ function Page() {
           </div>
         )}
         {connections && (
-          <Tabs>
+          <Tabs
+            defaultValue={
+              typeof selectedTab === "string"
+                ? selectedTab.toLowerCase()
+                : "payment"
+            }
+          >
             <TabsList className="w-full h-max p-0 bg-transparent gap-1.5">
               <TabsTrigger value="payment" className="xl:p-2.5 p-5">
                 <ContactlessPaymentIcon weight="bold" size={32} />
@@ -217,7 +226,8 @@ function Page() {
               <TabsContent value="trigger" className="flex flex-col gap-1.5">
                 {[
                   {
-                    api_endpoint: "/api/v1/me/connection/streamlabs",
+                    api_endpoint:
+                      "/api/v1/me/connection/integration/streamlabs",
                     icon: <Streamlabs className="size-8" />,
                     name: lang.data.app.connections.providers.streamlabs.name,
                     description:
@@ -225,9 +235,9 @@ function Page() {
                         .description,
                     privacy:
                       lang.data.app.connections.providers.streamlabs.privacy,
-                    isConnected: connections?.streamlabs ? true : false,
+                    isConnected: connections?.streamlabs,
                     key: "streamlabs",
-                    soon: true,
+                    soon: false,
                   },
                 ].map((c, i) => (
                   <Connection
@@ -238,7 +248,7 @@ function Page() {
                     description={c.description}
                     privacy={c.privacy}
                     isConnected={c.isConnected}
-                    secret={connections?.[c.key as keyof Connections] || null}
+                    secret={c.isConnected}
                     connections={connections}
                     setConnections={setConnections}
                     skey={c.key}
