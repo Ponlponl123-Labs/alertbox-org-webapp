@@ -248,7 +248,14 @@
     "alertbox": {
       "title": "Alertbox",
       "donation": {
-        "title": "Tip"
+        "title": "Tip",
+        "description": "We are working hard to bring this feature to you, stay tuned!",
+        "or": "OR",
+        "streamlabs": {
+          "title": "Use Streamlabs integration!",
+          "description": "You can connect alertbox.org to your Streamlabs to let us trigger your overlay when we get your donation events via webhook.",
+          "button": "Connect with Streamlabs"
+        }
       },
       "subscription": {
         "title": "Membership"
@@ -344,6 +351,24 @@
           "description": "A fast, friendly way for fans to support your stream with a simple checkout experience.",
           "privacy": "Strong. Viewers donate on your public creator page. Alertbox.org only processes the notification payload to show the alert.",
           "payout": "Directly to your bank account via standard Buy Me a Coffee payout methods."
+        },
+        "xendit": {
+          "name": "Xendit",
+          "description": "Leading payment gateway in Southeast Asia, optimized for local bank transfers, e-wallets, and cards.",
+          "privacy": "Highest. Viewers pay on Xendit's secure checkout. Alertbox.org only receives a webhook notification without any of your sensitive banking data.",
+          "payout": "Direct to your bank account based on your Xendit payout schedule."
+        },
+        "omise": {
+          "name": "Omise",
+          "description": "A leading payment gateway in Southeast Asia, supporting a wide range of local and international payment methods.",
+          "privacy": "Highest. Viewers pay on Omise's secure checkout. Alertbox.org only receives a webhook notification without any of your sensitive banking data.",
+          "payout": "Direct to your bank account based on your Omise payout schedule."
+        },
+        "2c2p": {
+          "name": "2C2P",
+          "description": "Comprehensive payment platform helping businesses accept payments from across Southeast Asia and beyond.",
+          "privacy": "Highest. Viewers pay on 2C2P's secure checkout. Alertbox.org only receives a webhook notification without any of your sensitive banking data.",
+          "payout": "Direct to your bank account based on your 2C2P payout schedule."
         },
         "feelfreepay": {
           "name": "FeelFreePay",

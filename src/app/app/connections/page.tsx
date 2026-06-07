@@ -15,6 +15,7 @@ import {
   Streamlabs,
   Twitch,
   Patreon,
+  Xendit,
 } from "@thesvg/react";
 import { FeelFreePay } from "@/components/icons";
 import {
@@ -30,6 +31,7 @@ import {
   WebhooksLogoIcon,
 } from "@phosphor-icons/react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 function Page() {
   const [connections, setConnections] = useState<Connections | null>(null);
@@ -135,18 +137,56 @@ function Page() {
                     soon: false,
                   },
                   {
-                    api_endpoint: "/api/v1/me/connection/feelfreepay",
-                    icon: <FeelFreePay className="size-8" />,
-                    name: lang.data.app.connections.providers.feelfreepay.name,
+                    api_endpoint: "/api/v1/me/connection/xendit",
+                    icon: <Xendit className="size-8" />,
+                    name: lang.data.app.connections.providers.xendit.name,
                     description:
-                      lang.data.app.connections.providers.feelfreepay
-                        .description,
+                      lang.data.app.connections.providers.xendit.description,
+                    privacy: lang.data.app.connections.providers.xendit.privacy,
+                    payout: lang.data.app.connections.providers.xendit.payout,
+                    isConnected: connections?.xendit ? true : false,
+                    key: "xendit",
+                    soon: true,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/omise",
+                    icon: (
+                      <Image
+                        src={"/omise.webp"}
+                        width={32}
+                        height={32}
+                        className="rounded-md"
+                        alt="omise"
+                      />
+                    ),
+                    name: lang.data.app.connections.providers.omise.name,
+                    description:
+                      lang.data.app.connections.providers.omise.description,
+                    privacy: lang.data.app.connections.providers.omise.privacy,
+                    payout: lang.data.app.connections.providers.omise.payout,
+                    isConnected: false,
+                    key: "omise",
+                    soon: true,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/2c2p",
+                    icon: (
+                      <Image
+                        src={"/2c2p.webp"}
+                        width={32}
+                        height={32}
+                        className="rounded-md"
+                        alt="omise"
+                      />
+                    ),
+                    name: lang.data.app.connections.providers["2c2p"].name,
+                    description:
+                      lang.data.app.connections.providers["2c2p"].description,
                     privacy:
-                      lang.data.app.connections.providers.feelfreepay.privacy,
-                    payout:
-                      lang.data.app.connections.providers.feelfreepay.payout,
-                    isConnected: connections?.ffp ? true : false,
-                    key: "ffp",
+                      lang.data.app.connections.providers["2c2p"].privacy,
+                    payout: lang.data.app.connections.providers["2c2p"].payout,
+                    isConnected: false,
+                    key: "2c2p",
                     soon: true,
                   },
                   {
@@ -203,6 +243,21 @@ function Page() {
                     payout: lang.data.app.connections.providers.patreon.payout,
                     isConnected: connections?.patreon ? true : false,
                     key: "patreon",
+                    soon: true,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/feelfreepay",
+                    icon: <FeelFreePay className="size-8" />,
+                    name: lang.data.app.connections.providers.feelfreepay.name,
+                    description:
+                      lang.data.app.connections.providers.feelfreepay
+                        .description,
+                    privacy:
+                      lang.data.app.connections.providers.feelfreepay.privacy,
+                    payout:
+                      lang.data.app.connections.providers.feelfreepay.payout,
+                    isConnected: connections?.ffp ? true : false,
+                    key: "ffp",
                     soon: true,
                   },
                 ].map((c, i) => (
