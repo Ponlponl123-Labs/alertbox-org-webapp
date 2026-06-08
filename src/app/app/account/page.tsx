@@ -182,8 +182,8 @@ function Page() {
               src={userInfo?.profile?.banner}
               alt="Banner"
               className="w-full h-max object-cover pointer-events-none transition-transform group-hover:scale-105 group-active:scale-103 group-hover:blur-xs"
-              width={1200}
-              height={488}
+              width={2400}
+              height={800}
             />
           </motion.div>
         ) : (
@@ -212,7 +212,9 @@ function Page() {
           onClick={() => avatarInputRef.current?.click()}
         >
           <Avatar className="size-full rounded-none group-hover:blur-xs">
-            {userInfo?.profile?.avatar && <AvatarImage src={userInfo?.profile?.avatar} />}
+            {userInfo?.profile?.avatar && (
+              <AvatarImage src={userInfo?.profile?.avatar} />
+            )}
             <AvatarFallback className="text-2xl">
               {getFallbackInitial(userInfo?.profile?.name || "?")}
             </AvatarFallback>
@@ -236,7 +238,9 @@ function Page() {
 
         <div className="mt-14">
           <div className="flex items-center gap-2">
-            <h1 className="font-semibold text-3xl">{userInfo?.profile?.displayName}</h1>
+            <h1 className="font-semibold text-3xl">
+              {userInfo?.profile?.displayName}
+            </h1>
             <Button
               size={"icon"}
               onClick={() => {
@@ -249,7 +253,9 @@ function Page() {
               <PencilSimpleIcon weight="fill" className="size-3.5" />
             </Button>
           </div>
-          <span className="text-foreground/40 text-sm">@{userInfo?.profile?.name}</span>
+          <span className="text-foreground/40 text-sm">
+            @{userInfo?.profile?.name}
+          </span>
         </div>
       </div>
 
