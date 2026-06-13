@@ -15,6 +15,8 @@ import "@/styles/globals.css";
 import { UserContextProvider } from "@/contexts/user";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import BackendLivenessChecker from "@/components/backend-liveness-checker";
+import BackendLivenessBanner from "@/components/backend-liveness-banner";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -73,6 +75,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Toaster />
         <UserContextProvider>
+          <BackendLivenessChecker />
+          <BackendLivenessBanner />
           <TooltipProvider>
             <Header />
             <main id="app" className="flex-1 min-h-screen flex flex-col">

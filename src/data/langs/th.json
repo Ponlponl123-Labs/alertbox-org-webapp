@@ -10,7 +10,8 @@
     "customize": "ปรับแต่ง",
     "go_live": "เริ่มไลฟ์",
     "overlay_url": "รับ URL ของโอเวอร์เลย์",
-    "comming_soon": "เร็วๆ นี้"
+    "comming_soon": "เร็วๆ นี้",
+    "backend_offline": "ระบบหลังบ้าน (API) ไม่สามารถเชื่อมต่อได้ กำลังพยายามเชื่อมต่อใหม่..."
   },
   "header": {
     "links": {

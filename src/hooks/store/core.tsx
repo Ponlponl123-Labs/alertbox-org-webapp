@@ -7,6 +7,7 @@ type CoreStoreState = {
   lang: Language;
   isSidebarHiddenOnMobile: boolean;
   isSidebarCollapsed: boolean;
+  isBackendAlive: boolean | null;
 };
 
 type CoreStoreActions = {
@@ -14,6 +15,7 @@ type CoreStoreActions = {
   setSidebarCollapsed: (state: boolean) => void;
   setLang: (nextLang: languageKeys) => void;
   hydrateLang: () => void;
+  setBackendAlive: (alive: boolean | null) => void;
 };
 
 type CoreStore = CoreStoreState & CoreStoreActions;
@@ -24,6 +26,7 @@ export const coreStore = createStore<CoreStore>()((set) => ({
   lang: lang("en-US"),
   isSidebarHiddenOnMobile: false,
   isSidebarCollapsed: false,
+  isBackendAlive: null,
   setSidebarHiddenOnMobile: (b) => {
     set({ isSidebarHiddenOnMobile: b });
   },
@@ -43,5 +46,8 @@ export const coreStore = createStore<CoreStore>()((set) => ({
     if (stored && isValidLanguageKey(stored)) {
       set({ lang: lang(stored) });
     }
+  },
+  setBackendAlive: (alive) => {
+    set({ isBackendAlive: alive });
   },
 }));

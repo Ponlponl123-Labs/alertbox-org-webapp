@@ -249,7 +249,7 @@ function Page() {
       <div className="flex gap-1.5 min-h-0 flex-1 mt-3">
         <div className="w-64 flex flex-col h-max z-10 relative gap-1.5">
           <Accordion className="w-full bg-card rounded-2xl">
-            <AccordionItem defaultOpen={true}>
+            <AccordionItem>
               <AccordionButton
                 className={cn(
                   "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
@@ -267,11 +267,7 @@ function Page() {
                   {lang.data.app.profile.socials.title}
                 </h1>
               </AccordionButton>
-              <AccordionPanel
-                keepRendered={true}
-                data-default-transition="false"
-                className="p-0"
-              >
+              <AccordionPanel data-default-transition="false" className="p-0">
                 <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
                   {[
                     {

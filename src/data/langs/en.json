@@ -10,7 +10,8 @@
     "customize": "Customize",
     "go_live": "Go Live",
     "overlay_url": "Get Overlay URL",
-    "comming_soon": "Coming soon"
+    "comming_soon": "Coming soon",
+    "backend_offline": "API backend is currently offline. Trying to reconnect..."
   },
   "header": {
     "links": {

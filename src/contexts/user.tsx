@@ -92,16 +92,21 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       const authCookie = await getCookie("USRSS");
       if (!authCookie) return;
 
-      const r = await fetch("/api/v1/me", {
-        method: "GET",
-        headers: {
-          authorization: "Bearer " + atob(authCookie),
-        },
-      });
+      try {
+        const r = await fetch("/api/v1/me", {
+          method: "GET",
+          headers: {
+            authorization: "Bearer " + atob(authCookie),
+          },
+        });
 
-      const d = (await r.json()) as User;
-
-      setUserInfo(d);
+        if (r.ok) {
+          const d = (await r.json()) as User;
+          setUserInfo(d);
+        }
+      } catch {
+        // Silently catch network errors during initial load
+      }
     })();
   }, []);
 
