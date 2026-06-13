@@ -58,11 +58,11 @@ function AppSidebar() {
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0, maxWidth: 0 }}
-        animate={{ opacity: 1, maxWidth: isSidebarCollapsed ? 64 : 232 }}
+        animate={{ opacity: 1, maxWidth: isSidebarCollapsed ? 52 : 232 }}
         exit={{ opacity: 0, maxWidth: 0 }}
         className={cn(
-          "sticky top-0 h-screen z-40 w-58 p-3 pt-14 bg-sidebar flex flex-col text-foreground gap-1",
-          isSidebarCollapsed && "w-16",
+          "sticky top-0 h-screen z-40 w-58 p-1.5 pt-14 bg-sidebar flex flex-col text-foreground gap-1",
+          isSidebarCollapsed && "w-13",
           "max-md:fixed",
           isSidebarHiddenOnMobile && "max-md:-translate-x-full",
         )}
@@ -133,7 +133,7 @@ function AppSidebar() {
               <AccordionItem>
                 <AccordionButton
                   className={cn(
-                    "rounded-xl whitespace-nowrap group overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start items-center flex no-underline!",
+                    "rounded-lg whitespace-nowrap group overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start items-center flex no-underline!",
                     "hover:bg-primary/5 hover:text-primary",
                     isSidebarCollapsed &&
                       "aria-expanded:bg-background/80 aria-expanded:rounded-b-none",
@@ -167,7 +167,7 @@ function AppSidebar() {
                         <Link key={ii} href={ll.href}>
                           <Button
                             className={cn(
-                              "rounded-xl text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative",
+                              "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative",
                               pathname === ll.href && "text-foreground",
                             )}
                             variant="ghost"
@@ -181,7 +181,7 @@ function AppSidebar() {
                                   data-default-transition="false"
                                   id="sidebar-link-active"
                                   layoutId="sidebar-link-active"
-                                  className="absolute inset-0 rounded-xl bg-foreground/10 z-10"
+                                  className="absolute inset-0 rounded-lg bg-foreground/10 z-10"
                                 />
                               )}
                             </AnimatePresence>
@@ -200,7 +200,7 @@ function AppSidebar() {
             <Link key={i} href={l.href}>
               <Button
                 className={cn(
-                  "rounded-xl text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative",
+                  "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative",
                   pathname === l.href && "text-foreground",
                 )}
                 variant="ghost"
@@ -214,7 +214,7 @@ function AppSidebar() {
                       data-default-transition="false"
                       id="sidebar-link-active"
                       layoutId="sidebar-link-active"
-                      className="absolute inset-0 rounded-xl bg-foreground/10 z-10"
+                      className="absolute inset-0 rounded-lg bg-foreground/10 z-10"
                     />
                   )}
                 </AnimatePresence>
@@ -228,7 +228,7 @@ function AppSidebar() {
         )}
         <Button
           className={cn(
-            "rounded-xl overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start mt-auto",
+            "rounded-lg overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start mt-auto",
           )}
           variant="ghost"
           onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}

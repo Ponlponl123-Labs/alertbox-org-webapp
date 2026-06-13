@@ -248,18 +248,22 @@ function Page() {
       </div>
       <div className="flex gap-1.5 min-h-0 flex-1 mt-3">
         <div className="w-64 flex flex-col h-max z-10 relative gap-1.5">
-          <Accordion className="w-full bg-card rounded-4xl">
-            <AccordionItem defaultOpen={false}>
+          <Accordion className="w-full bg-card rounded-2xl">
+            <AccordionItem defaultOpen={true}>
               <AccordionButton
                 className={cn(
-                  "flex items-center p-3.5 rounded-4xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
+                  "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
                   "hover:bg-foreground/5",
-                  "data-open:rounded-b-lg data-open:pb-8 data-open:-mb-5",
+                  "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
                 )}
                 showArrow={false}
               >
-                <SparkleIcon size={16} weight="fill" className="rotate-0!" />
-                <h1 className="font-semibold m-0">
+                <SparkleIcon
+                  size={16}
+                  weight="fill"
+                  className="rotate-0! text-foreground/40 group-data-open:text-foreground"
+                />
+                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-0.25">
                   {lang.data.app.profile.socials.title}
                 </h1>
               </AccordionButton>
@@ -346,9 +350,10 @@ function Page() {
                     </div>
                   ))}
                 </div>
-                <div className="flex items-center p-3.5 rounded-t-4xl w-full gap-1.5">
+                <div className="flex items-center p-2.5 rounded-t-4xl w-full gap-1.5">
                   <Button
-                    className={"rounded-xl p-3.5 w-full"}
+                    variant={"secondary"}
+                    className={"rounded-xl border-2 p-4.5 w-full"}
                     onClick={handleSaveSocials}
                     disabled={isSavingSocials}
                   >
@@ -362,22 +367,22 @@ function Page() {
               </AccordionPanel>
             </AccordionItem>
           </Accordion>
-          <Accordion className="w-full bg-card rounded-4xl">
+          <Accordion className="w-full bg-card rounded-2xl">
             <AccordionItem defaultOpen={true}>
               <AccordionButton
                 className={cn(
-                  "flex items-center p-3.5 rounded-4xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
+                  "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
                   "hover:bg-foreground/5",
-                  "data-open:rounded-b-lg data-open:pb-8 data-open:-mb-5",
+                  "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
                 )}
                 showArrow={false}
               >
                 <SlidersHorizontalIcon
                   size={16}
                   weight="fill"
-                  className="rotate-0!"
+                  className="rotate-0! text-foreground/40 group-data-open:text-foreground"
                 />
-                <h1 className="font-semibold m-0">
+                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-0.25">
                   การตั้งค่าการบริจาคผ่าน{" "}
                   <span className="whitespace-nowrap text-xs">Tip-to.me</span>
                 </h1>
@@ -438,9 +443,10 @@ function Page() {
                     </div>
                   ))}
                 </div>
-                <div className="flex items-center p-3.5 rounded-t-4xl w-full gap-1.5">
+                <div className="flex items-center p-2.5 rounded-t-4xl w-full gap-1.5">
                   <Button
-                    className={"rounded-xl p-3.5 w-full"}
+                    variant={"secondary"}
+                    className={"rounded-xl border-2 p-4.5 w-full"}
                     onClick={handleSaveSocials}
                     disabled={isSavingSocials}
                   >

@@ -135,12 +135,11 @@ function Header() {
                     exit={{ opacity: 0, marginRight: -24, marginLeft: 0 }}
                     animate={{
                       opacity: 1,
-                      marginRight: isSidebarCollapsed ? 24 : -4,
-                      marginLeft: isSidebarCollapsed ? 8 : 0,
+                      marginRight: isSidebarCollapsed ? 16 : -4,
                     }}
                     initial={{
                       opacity: 0,
-                      marginRight: -32,
+                      marginRight: -24,
                       marginLeft: 0,
                     }}
                   >
@@ -175,7 +174,7 @@ function Header() {
               <motion.div className="flex items-center gap-3">
                 <Link
                   href={pathname.startsWith("/app") ? "/app" : "/"}
-                  className="flex items-center gap-2.5"
+                  className={cn("flex items-center gap-2.5")}
                 >
                   <HandHeartIcon size={26} weight="fill" />
                   <motion.h1

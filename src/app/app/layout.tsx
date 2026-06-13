@@ -23,6 +23,13 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   const headerOpacity = useTransform(scroll.scrollY, (v) => (v > 0 ? 1 : 0));
 
+  const bannerUrl = userInfo?.profile?.banner;
+  const [isBannerLoaded, setIsBannerLoaded] = useState(false);
+
+  React.useEffect(() => {
+    setIsBannerLoaded(false);
+  }, [bannerUrl]);
+
   return (
     <div
       id="webapp-wrapper"
@@ -47,20 +54,21 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             ref={setScrollarea}
             className={"h-screen flex flex-col relative"}
           >
-            {userInfo?.profile?.uri && userInfo?.profile?.banner && (
+            {userInfo?.profile?.uri && bannerUrl && (
               <motion.div
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                animate={{ opacity: isBannerLoaded ? 1 : 0 }}
                 exit={{ opacity: 1 }}
                 transition={{ duration: 1 }}
                 className="mask-b-to-100% mask-b-from-30% opacity-40 -translate-y-32 w-full h-96 absolute pointer-events-none top-0 left-0 z-0"
               >
                 <Image
-                  src={userInfo?.profile?.banner}
+                  src={bannerUrl}
                   alt="Banner"
                   className="size-full object-cover inset-0 rounded-b-full blur-3xl z-0 saturate-150 contrast-150 select-none"
                   width={720}
                   height={288}
+                  onLoad={() => setIsBannerLoaded(true)}
                 />
               </motion.div>
             )}
