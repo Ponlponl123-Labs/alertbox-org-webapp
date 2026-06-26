@@ -2,11 +2,11 @@
 import PreParing from "../preparing";
 import { redirect, useSearchParams } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import Error from "../error";
 import Success from "../success";
 
-function Page() {
+function DiscordLoginContent() {
   const { login } = useUserContext();
   const searchParams = useSearchParams();
   const [isLoginSuccess, setIsLoginSuccess] = useState<undefined | boolean>(
@@ -51,4 +51,10 @@ function Page() {
   return isLoginSuccess ? <Success /> : <Error />;
 }
 
-export default Page;
+export default function Page() {
+  return (
+    <Suspense fallback={<PreParing />}>
+      <DiscordLoginContent />
+    </Suspense>
+  );
+}
