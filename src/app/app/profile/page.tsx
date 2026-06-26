@@ -22,10 +22,15 @@ import { cn } from "@/lib/utils";
 import {
   ArrowUpRightIcon,
   CoinVerticalIcon,
-  SlidersHorizontalIcon,
+  FloppyDiskIcon,
+  PaletteIcon,
+  PersonIcon,
   SparkleIcon,
+  UserFocusIcon,
   UserIcon,
 } from "@phosphor-icons/react";
+import { ColorPicker } from "@/components/ui/color-picker";
+import { hexColorToNumber, numberToHexColor } from "@/lib/color";
 import { getCookie } from "cookies-next";
 import Link from "next/link";
 import { useState } from "react";
@@ -39,6 +44,19 @@ function Page() {
   const { userInfo, patchUserInfo } = useUserContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingSocials, setIsSavingSocials] = useState(false);
+
+  const [displayName, setDisplayName] = useState(
+    userInfo?.profile?.displayName || "",
+  );
+  const [bio, setBio] = useState(userInfo?.profile?.bio || "");
+  const [isSavingBasic, setIsSavingBasic] = useState(false);
+
+  const [isSavingColor, setIsSavingColor] = useState(false);
+  const [accentColor, setAccentColor] = useState(
+    userInfo?.profile?.accentColor
+      ? numberToHexColor(userInfo.profile.accentColor)
+      : "#6366f1",
+  );
 
   const [socials, setSocials] = useState({
     socialTwitch: userInfo?.profile?.twitch || "",
@@ -61,6 +79,15 @@ function Page() {
       socialReddit: userInfo?.profile?.reddit || "",
       socialDiscord: userInfo?.profile?.discord || "",
     });
+    if (userInfo?.profile) {
+      setDisplayName(userInfo.profile.displayName || "");
+      setBio(userInfo.profile.bio || "");
+      setAccentColor(
+        userInfo.profile.accentColor
+          ? numberToHexColor(userInfo.profile.accentColor)
+          : "#6366f1",
+      );
+    }
   }
 
   const handleSocialChange = (
@@ -99,6 +126,69 @@ function Page() {
       toast.error(lang.data.app.account.fatal);
     } finally {
       setIsSavingSocials(false);
+    }
+  };
+
+  const handleSaveAccentColor = async () => {
+    setIsSavingColor(true);
+    try {
+      const authCookie = getCookie("USRSS");
+      if (!authCookie) return;
+
+      const res = await fetch("/api/v1/me", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: "Bearer " + atob(authCookie as string),
+        },
+        body: JSON.stringify({ accentColor }),
+      });
+
+      if (res.ok) {
+        const updatedUser = await res.json();
+        patchUserInfo(updatedUser);
+        toast.success(lang.data.app.account.success);
+      } else {
+        toast.error(lang.data.app.account.error);
+      }
+    } catch (err) {
+      console.error("Failed to save accent color:", err);
+      toast.error(lang.data.app.account.fatal);
+    } finally {
+      setIsSavingColor(false);
+    }
+  };
+
+  const handleSaveBasicInfo = async () => {
+    setIsSavingBasic(true);
+    try {
+      const authCookie = getCookie("USRSS");
+      if (!authCookie) return;
+
+      const res = await fetch("/api/v1/me", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: "Bearer " + atob(authCookie as string),
+        },
+        body: JSON.stringify({
+          displayname: displayName,
+          bio: bio,
+        }),
+      });
+
+      if (res.ok) {
+        const updatedUser = await res.json();
+        patchUserInfo(updatedUser);
+        toast.success(lang.data.app.account.success);
+      } else {
+        toast.error(lang.data.app.account.error);
+      }
+    } catch (err) {
+      console.error("Failed to save basic info:", err);
+      toast.error(lang.data.app.account.fatal);
+    } finally {
+      setIsSavingBasic(false);
     }
   };
 
@@ -249,6 +339,109 @@ function Page() {
       <div className="flex gap-1.5 min-h-0 flex-1 mt-3">
         <div className="w-64 flex flex-col h-max z-10 relative gap-1.5">
           <Accordion className="w-full bg-card rounded-2xl">
+            <AccordionItem defaultOpen={true}>
+              <AccordionButton
+                className={cn(
+                  "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
+                  "hover:bg-foreground/5",
+                  "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
+                )}
+                showArrow={false}
+              >
+                <PersonIcon
+                  size={16}
+                  weight="fill"
+                  className="rotate-0! text-foreground/40 group-data-open:text-foreground"
+                />
+                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-0.25">
+                  ข้อมูลพื้นฐาน
+                </h1>
+              </AccordionButton>
+              <AccordionPanel
+                keepRendered={true}
+                data-default-transition="false"
+                className="p-0"
+              >
+                <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
+                  {[
+                    {
+                      id: "1",
+                      type: 1,
+                      icon: <UserIcon className="size-4" />,
+                      title: "ชื่อที่แสดง",
+                      placeholder: `${userInfo?.profile?.displayName}`,
+                      pattern: allowed_chars,
+                      value: displayName,
+                      onChange: setDisplayName,
+                    },
+                    {
+                      id: "2",
+                      type: 2,
+                      icon: <UserFocusIcon className="size-4" />,
+                      title: "เกี่ยวกับฉัน",
+                      placeholder: `${userInfo?.profile?.bio || ""}`,
+                      pattern: allowed_chars,
+                      value: bio,
+                      onChange: setBio,
+                    },
+                  ].map((l, i) => (
+                    <div
+                      className="flex flex-col rounded-lg p-1.5 gap-1.5"
+                      key={i}
+                    >
+                      <div className="flex gap-1.5 opacity-40 items-center">
+                        {l.icon}
+                        <h1 className="font-semibold text-xs">{l.title}</h1>
+                      </div>
+                      <div className="flex gap-1 w-full items-center">
+                        {l.type === 1 ? (
+                          <Input
+                            type="text"
+                            placeholder={l.placeholder}
+                            pattern={l.pattern.source}
+                            value={l.value}
+                            onChange={(e) => l.onChange(e.target.value)}
+                            className="w-full"
+                            classNames={{
+                              base: "rounded-md bg-background/30! p-1",
+                            }}
+                            fontStyle={{
+                              fontFamily: "var(--font-sans)",
+                              fontSize: "10px",
+                            }}
+                          />
+                        ) : l.type === 2 ? (
+                          <textarea
+                            placeholder={l.placeholder}
+                            value={l.value}
+                            onChange={(e) => l.onChange(e.target.value)}
+                            className="w-full rounded-md bg-background/30 p-1.5 border-2 border-transparent hover:border-foreground/10 min-h-8 outline-0 focus-visible:border-foreground/10 focus-visible:bg-foreground/5 font-sans text-[10px]"
+                          />
+                        ) : (
+                          <></>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center p-2.5 rounded-t-4xl w-full gap-1.5">
+                  <Button
+                    variant={"secondary"}
+                    className={"rounded-xl border-2 p-4.5 w-full"}
+                    onClick={handleSaveBasicInfo}
+                    disabled={isSavingBasic}
+                  >
+                    {isSavingBasic ? (
+                      <Spinner className="mr-2" />
+                    ) : (
+                      lang.data.app.profile.socials.save
+                    )}
+                  </Button>
+                </div>
+              </AccordionPanel>
+            </AccordionItem>
+          </Accordion>
+          <Accordion className="w-full bg-card rounded-2xl">
             <AccordionItem>
               <AccordionButton
                 className={cn(
@@ -364,7 +557,7 @@ function Page() {
             </AccordionItem>
           </Accordion>
           <Accordion className="w-full bg-card rounded-2xl">
-            <AccordionItem defaultOpen={true}>
+            <AccordionItem>
               <AccordionButton
                 className={cn(
                   "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
@@ -373,80 +566,47 @@ function Page() {
                 )}
                 showArrow={false}
               >
-                <SlidersHorizontalIcon
+                <PaletteIcon
                   size={16}
                   weight="fill"
                   className="rotate-0! text-foreground/40 group-data-open:text-foreground"
                 />
                 <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-0.25">
-                  การตั้งค่าการบริจาคผ่าน{" "}
-                  <span className="whitespace-nowrap text-xs">Tip-to.me</span>
+                  {lang.data.app.profile.accent_color}
                 </h1>
               </AccordionButton>
-              <AccordionPanel
-                keepRendered={true}
-                data-default-transition="false"
-                className="p-0"
-              >
+              <AccordionPanel data-default-transition="false" className="p-0">
                 <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
-                  {[
-                    {
-                      id: "1",
-                      icon: <UserIcon className="size-4" />,
-                      title: "ค่าเริ่มต้นชื่อผู้บริจาค",
-                      placeholder: "Anonymous",
-                      pattern: allowed_chars,
-                    },
-                    {
-                      id: "2",
-                      icon: <CoinVerticalIcon className="size-4" />,
-                      title: "จำนวนเงินบริจาคเริ่มต้น",
-                      placeholder: `${userInfo?.profile?.defaultDonorAmount || 10}`,
-                      endContent: userInfo?.profile?.currency || "฿",
-                      pattern: /^[0-9]+$/,
-                    },
-                  ].map((l, i) => (
-                    <div
-                      className="flex flex-col rounded-lg p-1.5 gap-1.5"
-                      key={i}
-                    >
-                      <div className="flex gap-1.5 opacity-40 items-center">
-                        {l.icon}
-                        <h1 className="font-semibold text-xs">{l.title}</h1>
+                  <div className="flex flex-col rounded-lg p-1.5 gap-1.5">
+                    <p className="text-foreground/40 text-[10px] leading-normal">
+                      {lang.data.app.profile.accent_color_description}
+                    </p>
+                    <div className="flex flex-col gap-3 items-center mt-2 w-full">
+                      <div className="flex gap-2 items-center w-full bg-background/20 p-2 rounded-xl border border-foreground/5 justify-between">
+                        <span className="text-[10px] font-semibold opacity-60">
+                          Color Hex:
+                        </span>
+                        <span className="text-xs font-mono uppercase font-bold tracking-wider">
+                          {accentColor}
+                        </span>
                       </div>
-                      <div className="flex gap-1 w-full items-center">
-                        <Input
-                          type="text"
-                          placeholder={l.placeholder}
-                          pattern={l.pattern.source}
-                          className="w-full"
-                          classNames={{
-                            base: "rounded-md bg-background/30! p-1",
-                          }}
-                          fontStyle={{
-                            fontFamily: "var(--font-sans)",
-                            fontSize: "10px",
-                          }}
-                        />
-                        {l?.endContent && (
-                          <div className="size-9 bg-background/30 flex items-center justify-center rounded-md select-none px-2">
-                            <span className="text-xs font-semibold text-foreground/40">
-                              {l.endContent}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      <ColorPicker
+                        color={accentColor}
+                        onChange={setAccentColor}
+                      />
                     </div>
-                  ))}
+                  </div>
                 </div>
                 <div className="flex items-center p-2.5 rounded-t-4xl w-full gap-1.5">
                   <Button
                     variant={"secondary"}
-                    className={"rounded-xl border-2 p-4.5 w-full"}
-                    onClick={handleSaveSocials}
-                    disabled={isSavingSocials}
+                    className={
+                      "rounded-xl border-2 p-4.5 w-full flex items-center justify-center gap-1.5"
+                    }
+                    onClick={handleSaveAccentColor}
+                    disabled={isSavingColor}
                   >
-                    {isSavingSocials ? (
+                    {isSavingColor ? (
                       <Spinner className="mr-2" />
                     ) : (
                       lang.data.app.profile.socials.save
@@ -458,7 +618,19 @@ function Page() {
           </Accordion>
         </div>
         <div className="w-full flex flex-col overflow-hidden min-h-0 bg-foreground/5 rounded-4xl flex-1 border-2 border-dashed border-foreground/10 z-10 relative">
-          <ProfilePreview />
+          <ProfilePreview
+            liveData={{
+              displayName,
+              bio,
+              twitch: socials.socialTwitch || null,
+              youtube: socials.socialYoutube || null,
+              twitter: socials.socialTwitter || null,
+              facebook: socials.socialFacebook || null,
+              reddit: socials.socialReddit || null,
+              discord: socials.socialDiscord || null,
+              accentColor: hexColorToNumber(accentColor),
+            }}
+          />
         </div>
       </div>
     </>

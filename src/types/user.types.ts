@@ -17,6 +17,8 @@ export interface Profile {
   bio: string | null;
   avatar: string | null;
   banner: string | null;
+  options: number;
+  badges: number;
   accentColor: number;
   uri: string | null;
   uriCooldownEnd: string | null;

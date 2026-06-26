@@ -1,15 +1,240 @@
 "use client";
-import { useStore } from "zustand";
-import { coreStore } from "@/hooks/store/core";
+import React from "react";
+import { useUserContext } from "@/contexts/user";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { getActiveBadges } from "@/lib/badges";
+import { cn, getFallbackInitial } from "@/lib/utils";
+import {
+  TwitchTv,
+  Youtube,
+  Twitter,
+  Facebook,
+  Reddit,
+  Discord,
+} from "@/components/icons";
+import Image from "next/image";
+import { CheckCircleIcon, SealCheckIcon } from "@phosphor-icons/react";
+import { numberToHexColor, getAccentForeground } from "@/lib/color";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-export default () => {
-  const lang = useStore(coreStore, (state) => state.lang);
+export interface LiveProfileData {
+  displayName?: string;
+  bio?: string | null;
+  twitch?: string | null;
+  youtube?: string | null;
+  twitter?: string | null;
+  facebook?: string | null;
+  reddit?: string | null;
+  discord?: string | null;
+  accentColor?: number;
+}
+
+export default function ProfilePreview({
+  liveData,
+}: {
+  liveData?: LiveProfileData;
+}) {
+  const { userInfo } = useUserContext();
+
+  if (!userInfo || !userInfo.profile) {
+    return (
+      <div className="flex h-full items-center justify-center p-6 text-foreground/40 text-sm">
+        Loading preview...
+      </div>
+    );
+  }
+
+  const profile = {
+    ...userInfo.profile,
+    ...liveData,
+  };
+  const allBadges = getActiveBadges(profile.badges);
+  const isVerified = allBadges.some((b) => b.name === "verified");
+  const badges = allBadges.filter((b) => b.name !== "verified");
+  const accentHex = profile.accentColor
+    ? numberToHexColor(profile.accentColor)
+    : "#6366f1";
+  const accentForegroundHex = getAccentForeground(accentHex);
+
+  // Define social links and their corresponding icons/colors
+  const socialList = [
+    {
+      value: profile.twitch,
+      icon: TwitchTv,
+      label: "Twitch",
+      color: "hover:text-[#9146FF]",
+    },
+    {
+      value: profile.youtube,
+      icon: Youtube,
+      label: "YouTube",
+      color: "hover:text-[#FF0000]",
+    },
+    {
+      value: profile.twitter,
+      icon: Twitter,
+      label: "Twitter",
+      color: "hover:text-[#1DA1F2] dark:hover:text-white",
+    },
+    {
+      value: profile.facebook,
+      icon: Facebook,
+      label: "Facebook",
+      color: "hover:text-[#1877F2]",
+    },
+    {
+      value: profile.reddit,
+      icon: Reddit,
+      label: "Reddit",
+      color: "hover:text-[#FF4500]",
+    },
+    {
+      value: profile.discord,
+      icon: Discord,
+      label: "Discord",
+      color: "hover:text-[#5865F2]",
+    },
+  ];
 
   return (
-    <main>
-      <div className="text-4xl font-bold text-foreground/25 dark:text-foreground/25">
-        test
+    <div className="flex flex-col items-center justify-center min-h-[450px] p-6 size-full bg-linear-to-br from-zinc-50/50 to-zinc-100/50 dark:from-zinc-950/20 dark:to-zinc-900/20">
+      <div className="w-full max-w-[280px] bg-background border border-foreground/10 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col relative aspect-[9/16] max-h-[500px]">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-30 flex items-center justify-between px-3">
+          <div className="size-1.5 rounded-full bg-zinc-800" />
+          <div className="w-8 h-1 bg-zinc-800 rounded-full" />
+        </div>
+
+        {profile.avatar && (
+          <Image
+            src={profile.avatar}
+            alt="Avatar Backdrop"
+            className="size-full blur-md absolute top-0 saturate-200 left-0 opacity-10 pointer-events-none object-cover"
+            width={500}
+            height={160}
+          />
+        )}
+        {profile.banner && (
+          <Image
+            src={profile.banner}
+            alt="Banner Backdrop"
+            className="w-full h-20 blur-3xl absolute top-10 saturate-200 left-0 object-cover"
+            width={500}
+            height={160}
+          />
+        )}
+        <div className="relative w-full mask-b-from-60% mask-t-from-80% bg-linear-to-r from-violet-600/80 to-indigo-600/80 shrink-0 overflow-hidden">
+          {profile.banner ? (
+            <Image
+              src={profile.banner}
+              alt="Banner"
+              className="size-full object-cover h-32"
+              width={500}
+              height={160}
+            />
+          ) : (
+            <div
+              className="size-full opacity-60 min-h-20"
+              style={{ backgroundColor: accentHex }}
+            />
+          )}
+        </div>
+
+        <div className="relative px-3 -mt-8 z-10 flex w-full">
+          <Avatar className="size-16 shadow-md">
+            {profile.avatar && <AvatarImage src={profile.avatar} />}
+            <AvatarFallback className="text-xl">
+              {getFallbackInitial(profile.name || "?")}
+            </AvatarFallback>
+          </Avatar>
+          <div className="mt-8 flex flex-wrap p-2">
+            {badges.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {badges.map((badge) => {
+                  const Icon = badge.icon;
+                  return (
+                    <Badge
+                      key={badge.name}
+                      variant="default"
+                      className={cn(
+                        "text-[8px] px-1 h-4 gap-0.5 rounded border-0 font-semibold",
+                        badge.className,
+                      )}
+                    >
+                      <Icon className="size-2 shrink-0" weight="fill" />
+                      {badge.label}
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="pt-2 px-4 pb-4 flex flex-col flex-1 min-h-0 overflow-y-auto scrollbar-none">
+          <div className="flex flex-col">
+            <h2 className="font-bold text-base text-foreground flex items-center gap-1 leading-tight">
+              {profile.displayName || "Display Name"}
+              {isVerified && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <SealCheckIcon
+                      className="size-4 text-blue-500 shrink-0"
+                      style={{ color: accentHex }}
+                      weight="fill"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Official Account</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </h2>
+            <span className="text-[10px] text-foreground/40 leading-none">
+              @{profile.name || "username"}
+            </span>
+          </div>
+
+          <p className="text-[10px] text-foreground/70 mt-3 line-clamp-3 leading-normal whitespace-break-spaces wrap-break-word w-full">
+            {profile.bio || "This streamer hasn't set their bio yet."}
+          </p>
+
+          <div className="mt-auto pt-4 flex flex-col gap-2 shrink-0">
+            <div className="flex flex-wrap gap-1.5 justify-center">
+              {socialList.map((soc, i) => {
+                if (!soc.value) return null;
+                const Icon = soc.icon;
+                return (
+                  <a
+                    key={i}
+                    href="#"
+                    onClick={(e) => e.preventDefault()}
+                    className={cn(
+                      "p-1.5 rounded-lg bg-foreground/5 hover:bg-foreground/10 text-foreground/50 transition-colors duration-200",
+                      soc.color,
+                    )}
+                    title={`${soc.label}: ${soc.value}`}
+                  >
+                    <Icon className="size-3.5" />
+                  </a>
+                );
+              })}
+            </div>
+
+            <button
+              disabled
+              style={{ backgroundColor: accentHex, color: accentForegroundHex }}
+              className="w-full py-1.5 rounded-xl text-[10px] font-bold tracking-wider hover:opacity-90 active:scale-[0.98] transition-all cursor-not-allowed"
+            >
+              TIP TO ME
+            </button>
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
   );
-};
+}

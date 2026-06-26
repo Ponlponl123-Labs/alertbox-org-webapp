@@ -213,6 +213,8 @@
     },
     "profile": {
       "title": "My Profile",
+      "accent_color": "Profile Accent Color",
+      "accent_color_description": "Choose the main accent color for your profile page.",
       "get_started": {
         "title": "Claim Your Profile URL",
         "description": "Choose a unique username for your donation page. This will be the link you share with your fans.",
