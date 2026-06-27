@@ -261,10 +261,16 @@ function BmacPage() {
                   {t.step3_desc}
                 </p>
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  <Badge variant="secondary" className="rounded-lg font-mono text-[10px] px-2 py-0.5 border border-foreground/10 select-all cursor-pointer">
+                  <Badge
+                    variant="secondary"
+                    className="rounded-lg font-mono text-[10px] px-2 py-0.5 border border-foreground/10 select-all cursor-pointer"
+                  >
                     support created
                   </Badge>
-                  <Badge variant="secondary" className="rounded-lg font-mono text-[10px] px-2 py-0.5 border border-foreground/10 select-all cursor-pointer">
+                  <Badge
+                    variant="secondary"
+                    className="rounded-lg font-mono text-[10px] px-2 py-0.5 border border-foreground/10 select-all cursor-pointer"
+                  >
                     monthly support started
                   </Badge>
                 </div>
@@ -375,7 +381,7 @@ function BmacPage() {
                   type="submit"
                   variant="secondary"
                   disabled={isSaving || !username.trim() || !secret.trim()}
-                  className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <Spinner className="size-4 text-current" />
