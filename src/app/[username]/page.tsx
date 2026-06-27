@@ -306,7 +306,7 @@ export default function PublicProfilePage({
         <Image
           src={profileData.banner}
           alt="Banner Backdrop"
-          className="w-full h-128 blur-2xl absolute pointer-events-none object-cover opacity-30 dark:opacity-20"
+          className="w-full h-128 blur-2xl absolute pointer-events-none select-none object-cover opacity-30 dark:opacity-20"
           width={1600}
           height={400}
           priority
@@ -316,7 +316,7 @@ export default function PublicProfilePage({
         <Image
           src={profileData.avatar}
           alt="Avatar Backdrop"
-          className="size-full blur-3xl fixed pointer-events-none object-cover opacity-30 saturate-200 dark:opacity-10"
+          className="size-full blur-3xl fixed pointer-events-none select-none object-cover opacity-30 saturate-200 dark:opacity-10"
           width={400}
           height={400}
           priority
@@ -332,7 +332,7 @@ export default function PublicProfilePage({
           <Image
             src={profileData.banner}
             alt="Banner"
-            className="size-full object-cover"
+            className="size-full object-cover pointer-events-none select-none"
             width={1600}
             height={400}
             priority

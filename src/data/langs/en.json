@@ -142,6 +142,25 @@
             "Our intention in building AlertBox.org is not to destroy market competitors. We simply want to provide another alternative for everyone.",
             "Built by humans, for humans, on Earth."
           ]
+        },
+        "good_to_know": {
+          "title": "Good to know",
+          "subtitle": "Foundation Insights",
+          "description": "True innovation flourishes when knowledge is free. Here are a few things about the streaming donation landscape that most creators only learn the hard way.",
+          "insights": [
+            {
+              "title": "1. The Hidden Cost of 'Free' Alerts",
+              "desc": "Many alert platforms claim to be free, but they take a 5% to 15% cut of your tips or delay your payouts. Alertbox charges 0% platform fees. We only listen to webhooks from your payment gateways (Stripe, Ko-fi, BMAC), so your money goes directly to you instantly."
+            },
+            {
+              "title": "2. The Privacy Exposure Dilemma",
+              "desc": "Direct payment links (like PayPal or standard card billing) often expose your real name, email, or billing address to donors, which is dangerous for anonymous creators. By routing donations through gateway webhooks, Alertbox keeps your identity private and secure."
+            },
+            {
+              "title": "3. Why Open Source is Critical",
+              "desc": "Closed-source widgets track viewer behavior and can shut down or change terms overnight. Because Alertbox is open-source, the code is fully reviewable and self-hostable. You own your alerts, your data, and your overlay forever."
+            }
+          ]
         }
       }
     }
@@ -585,6 +604,91 @@
     "title": "Keep Alertbox.org Free",
     "description": "We provide this service with zero platform fees, but running the backend infrastructure costs money. If you find it useful, buying us a coffee helps cover server costs and fuels our motivation to maintain this project for everyone.",
     "button": "Buy Me a Coffee"
+  },
+  "about": {
+    "title": "Built by creators, for creators.",
+    "subtitle": "About Us",
+    "description": "Alertbox.org is a free, open-source, and private alert box designed for streamers. We believe that true innovation flourishes when knowledge is free.",
+    "mission_title": "Our Mission",
+    "mission_desc": "Most platforms charge high fees or force you to disclose your personal identity to receive tips. We created Alertbox.org to give streamers a privacy-first alternative with absolutely zero platform fees. Your support alerts appear live instantly, while your funds go directly to your personal payment gateways.",
+    "values": {
+      "privacy_title": "100% Private",
+      "privacy_desc": "We never access your banking credentials or sensitive transaction data. We only process webhook events to trigger alerts on your stream.",
+      "fee_title": "Zero Platform Fees",
+      "fee_desc": "We charge absolutely zero fees for using Alertbox.org. The only fees you incur are standard card processor fees directly from Stripe or Ko-fi.",
+      "open_source_title": "Open Source",
+      "open_source_desc": "Our code is fully open-source and reviewable by anyone. You are in complete control of your data and overlay integrations."
+    },
+    "team_title": "The Idea",
+    "team_desc": "Alertbox.org was built by a small group of developers who wanted to support their favorite creators securely and privately. If you find our tool useful, please consider supporting the project to help us cover server infrastructure costs.",
+    "faq_question": "If you don't collect any service charge, how do you survive?",
+    "faq_answer": "We don't. Alertbox.org is not a commercial enterprise or a venture-backed startup. It is a public utility run entirely on volunteer contributions and personal pocket funds. We survive solely on donations from the streamers and viewers who use our tools to keep the servers running."
+  },
+  "pricing": {
+    "title": "Zero platform fees. Forever.",
+    "subtitle": "Pricing",
+    "description": "Alertbox.org is a free public utility. We do not take a cut of your donations or charge subscription fees. What you earn is yours to keep.",
+    "free_plan": {
+      "title": "Free Tier",
+      "price": "$0",
+      "period": "forever",
+      "desc": "Everything you need to set up a private, professional alert box.",
+      "features": [
+        "Unlimited real-time alerts",
+        "Customizable streamer profile",
+        "Stripe, Ko-fi & Buy Me a Coffee webhooks",
+        "100% private and open-source",
+        "Zero platform service charges"
+      ]
+    },
+    "gateway_fees": {
+      "title": "Payment Gateway Fees",
+      "desc": "While we charge 0%, payment gateway providers charge their own standard transaction processing fees to transfer money to your bank account:",
+      "providers": [
+        {
+          "name": "Stripe",
+          "fee": "2.9% + $0.30",
+          "desc": "Standard card processing fee. Varies slightly by region."
+        },
+        {
+          "name": "Buy Me a Coffee",
+          "fee": "5.0%",
+          "desc": "Platform fee taken by BMAC. Free accounts have no transaction fee except for card processing."
+        },
+        {
+          "name": "Ko-fi",
+          "fee": "0% / 5.0%",
+          "desc": "0% for direct donations. 5% fee applies for memberships, shop, or commissions unless using Ko-fi Gold."
+        }
+      ]
+    },
+    "help_title": "Support Alertbox.org",
+    "help_desc": "Since we do not charge any fees, we rely entirely on donations from our community to cover server bills, domain registrations, and development costs. If you find our service useful, please consider helping us keep it running.",
+    "help_action": "Support the Platform"
+  },
+  "donate": {
+    "title": "Support Alertbox.org",
+    "subtitle": "Donate",
+    "description": "We run this platform as a free public utility with 0% fees. Your contributions help us keep the servers running and maintain the code for everyone.",
+    "cta_title": "Choose How to Support",
+    "cta_desc": "Support our small independent team of developers directly through our donation gateway.",
+    "button": "Buy Me a Coffee",
+    "button_github": "Sponsor on GitHub",
+    "usage_title": "Where Your Donations Go",
+    "usage_items": [
+      {
+        "title": "Server Infrastructure",
+        "desc": "Web servers, databases, and secure SSL/TLS certificate renewals to ensure 100% uptime for alert relays."
+      },
+      {
+        "title": "Webhook Processing",
+        "desc": "Routing instant donation alerts from Stripe, Ko-fi, and Buy Me a Coffee to your OBS in real-time."
+      },
+      {
+        "title": "Continuous Maintenance",
+        "desc": "Updating integration APIs, fixing stream overlay bugs, and building new features requested by streamers."
+      }
+    ]
   },
   "footer": {
     "description": "Alertbox.org is an open-source alert box service featuring custom streamer profiles, zero platform fees, and robust privacy protection. \nPowered by trusted payment gateways like Buy Me a Coffee, Ko-fi, and Stripe.",
