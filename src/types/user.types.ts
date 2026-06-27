@@ -92,8 +92,8 @@ export interface AlertboxEvent {
 
 export interface Connections {
   stripe: string | null;
-  bmac: string | null;
-  kofi: string | null;
+  bmac: { username: string; secret: string } | null;
+  kofi: { username: string; secret: string } | null;
   xendit: string | null;
   ffp: string | null;
   youtube: string | null;

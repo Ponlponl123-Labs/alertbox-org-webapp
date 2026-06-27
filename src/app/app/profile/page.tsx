@@ -354,7 +354,7 @@ function Page() {
                   className="rotate-0! text-foreground/40 group-data-open:text-foreground"
                 />
                 <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-0.25">
-                  ข้อมูลพื้นฐาน
+                  {lang.data.app.profile.basic_info}
                 </h1>
               </AccordionButton>
               <AccordionPanel
@@ -368,7 +368,7 @@ function Page() {
                       id: "1",
                       type: 1,
                       icon: <UserIcon className="size-4" />,
-                      title: "ชื่อที่แสดง",
+                      title: lang.data.app.account.display_name,
                       placeholder: `${userInfo?.profile?.displayName}`,
                       pattern: allowed_chars,
                       value: displayName,
@@ -378,7 +378,7 @@ function Page() {
                       id: "2",
                       type: 2,
                       icon: <UserFocusIcon className="size-4" />,
-                      title: "เกี่ยวกับฉัน",
+                      title: lang.data.app.account.bio,
                       placeholder: `${userInfo?.profile?.bio || ""}`,
                       pattern: allowed_chars,
                       value: bio,

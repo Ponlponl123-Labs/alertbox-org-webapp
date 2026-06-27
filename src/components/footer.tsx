@@ -15,6 +15,8 @@ const Footer = memo(function Footer() {
   const pathname = usePathname();
   const lang = useStore(coreStore, (state) => state.lang);
 
+  if (pathname.startsWith("/@")) return null;
+
   const FOOTER_LINKS = [
     {
       title: lang.data.footer.links.legal.title,

@@ -78,6 +78,9 @@ function Nav({
 function Header() {
   const pathname = usePathname();
   const { userInfo } = useUserContext();
+
+  if (pathname.startsWith("/@")) return null;
+
   const [isNavActive, setIsNavActive] = useState(false);
   const isSidebarCollapsed = useStore(
     coreStore,

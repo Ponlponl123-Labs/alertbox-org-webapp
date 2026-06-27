@@ -11,7 +11,12 @@ import StreamerModeProtection from "@/components/streamer-mode-protection";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const protectedPaths = ["/app/connections", "/app/account/security"];
+const protectedPaths = [
+  "/app/connections",
+  "/app/connections/kofi",
+  "/app/connections/bmac",
+  "/app/account/security",
+];
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const [scrollarea, setScrollarea] = useState<HTMLDivElement | null>(null);

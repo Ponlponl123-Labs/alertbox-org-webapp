@@ -2,6 +2,7 @@ import {
   CheckCircleIcon,
   ShieldCheckIcon,
   SparkleIcon,
+  HandshakeIcon,
 } from "@phosphor-icons/react";
 import React from "react";
 
@@ -12,6 +13,7 @@ export const ProfileBadges = {
   VERIFIED: 1 << 0, // 1
   STAFF: 1 << 1, // 2
   EARLY_USER: 1 << 2, // 4
+  PARTNER: 1 << 3, // 8
 } as const;
 
 /**
@@ -57,6 +59,15 @@ export function getActiveBadges(flags: number): BadgeInfo[] {
       icon: SparkleIcon,
       className:
         "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/15",
+    });
+  }
+  if (flags & ProfileBadges.PARTNER) {
+    active.push({
+      name: "partner",
+      label: "Partner",
+      icon: HandshakeIcon,
+      className:
+        "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/15",
     });
   }
   return active;
