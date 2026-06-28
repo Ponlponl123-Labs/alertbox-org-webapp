@@ -46,13 +46,13 @@ RUN mkdir .next && chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-USER nextjs
-
-EXPOSE 3000
-
 # Copy and set up the entrypoint script
 COPY --chown=nextjs:nodejs entrypoint.sh /app/entrypoint.sh
 RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
+USER nextjs
+
+EXPOSE 3000
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node", "server.js"]
