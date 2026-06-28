@@ -50,6 +50,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --chown=nextjs:nodejs entrypoint.sh /app/entrypoint.sh
 RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
+# Ensure nextjs has write access to /app so `sed -i` can create temp files
+RUN chown nextjs:nodejs /app
+
 USER nextjs
 
 EXPOSE 3000
