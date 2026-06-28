@@ -6,12 +6,11 @@
  * @returns The resolved absolute API URL
  */
 export const getApiUrl = (path: string): string => {
-  const endpoint =
-    (typeof window !== "undefined"
-      ? (window as any).__RUNTIME_API_ENDPOINT
-      : process.env.API_ENDPOINT) ||
-    process.env.NEXT_PUBLIC_API_ENDPOINT ||
-    "";
+  let endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT || "";
+
+  if (process.env.NODE_ENV === "production") {
+    endpoint = "https://api.alertbox.org/";
+  }
   const cleanEndpoint = endpoint.endsWith("/") ? endpoint : `${endpoint}/`;
 
   let cleanPath = path.startsWith("/") ? path.slice(1) : path;

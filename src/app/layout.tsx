@@ -70,7 +70,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script src="/env.js" />
         <script dangerouslySetInnerHTML={{ __html: preload }} />
       </head>
       <body className="min-h-full flex flex-col">
