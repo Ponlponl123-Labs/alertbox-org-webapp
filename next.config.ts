@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react", "lucide-react"],
   },
+  env: {
+    NEXT_PUBLIC_API_ENDPOINT: process.env["NEXT_PUBLIC_API_ENDPOINT"],
+  },
   images: {
     remotePatterns: [
       new URL("https://cdn.discordapp.com/**"),
