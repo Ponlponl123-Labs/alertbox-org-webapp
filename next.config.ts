@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["@phosphor-icons/react", "lucide-react"],
   },
   env: {
-    NEXT_PUBLIC_API_ENDPOINT: process.env["NEXT_PUBLIC_API_ENDPOINT"],
+    NEXT_PUBLIC_API_ENDPOINT: process.env["API_ENDPOINT"],
   },
   images: {
     remotePatterns: [
