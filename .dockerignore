@@ -1,0 +1,37 @@
+# Dependencies
+node_modules
+/node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Next.js Build Output
+.next
+out
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env*.local
+
+# Editor configs and metadata
+.vscode
+.idea
+.gitattributes
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Project files and configuration files not needed at build time
+README.md
+LICENSE
+Jenkinsfile
+Dockerfile
+.dockerignore
+task.md
+implementation_plan.md
+walkthrough.md
