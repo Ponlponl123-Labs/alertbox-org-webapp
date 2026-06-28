@@ -17,6 +17,10 @@ COPY . .
 # Disable telemetry during the build
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Inject placeholder for runtime replacement
+ENV NEXT_PUBLIC_API_ENDPOINT=__API_ENDPOINT_PLACEHOLDER__
+ENV API_ENDPOINT=__API_ENDPOINT_PLACEHOLDER__
+
 RUN bun run build
 
 # Stage 3: Production runner
@@ -46,4 +50,9 @@ USER nextjs
 
 EXPOSE 3000
 
+# Copy and set up the entrypoint script
+COPY --chown=nextjs:nodejs entrypoint.sh /app/entrypoint.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node", "server.js"]
