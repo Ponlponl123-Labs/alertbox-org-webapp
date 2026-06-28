@@ -1,17 +1,18 @@
 #!/bin/sh
 set -e
 
-# Replace the placeholder with the actual environment variable
-# API_ENDPOINT is provided by Kubernetes at runtime
-echo "Injecting runtime environment variables..."
+# Injecting runtime environment variables via env.js
+echo "Generating runtime env.js..."
+
+mkdir -p /app/public
 
 if [ -n "$API_ENDPOINT" ]; then
   echo "Setting API_ENDPOINT to $API_ENDPOINT"
-  find /app/.next /app/server.js -type f \( -name "*.js" -o -name "*.html" -o -name "*.json" \) -exec sed -i "s|__API_ENDPOINT_PLACEHOLDER__|${API_ENDPOINT}|g" {} +
+  echo "window.__RUNTIME_API_ENDPOINT = '${API_ENDPOINT}';" > /app/public/env.js
 else
   echo "API_ENDPOINT is not set, leaving empty string"
-  find /app/.next /app/server.js -type f \( -name "*.js" -o -name "*.html" -o -name "*.json" \) -exec sed -i "s|__API_ENDPOINT_PLACEHOLDER__||g" {} +
+  echo "window.__RUNTIME_API_ENDPOINT = '';" > /app/public/env.js
 fi
 
-# Execute the provided CMD
+# Execute the main command
 exec "$@"

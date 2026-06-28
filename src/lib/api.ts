@@ -6,8 +6,12 @@
  * @returns The resolved absolute API URL
  */
 export const getApiUrl = (path: string): string => {
-  // cache-buster: 2026-06-28
-  const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT || "";
+  const endpoint =
+    (typeof window !== "undefined"
+      ? (window as any).__RUNTIME_API_ENDPOINT
+      : process.env.API_ENDPOINT) ||
+    process.env.NEXT_PUBLIC_API_ENDPOINT ||
+    "";
   const cleanEndpoint = endpoint.endsWith("/") ? endpoint : `${endpoint}/`;
 
   let cleanPath = path.startsWith("/") ? path.slice(1) : path;
