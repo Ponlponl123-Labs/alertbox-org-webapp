@@ -17,6 +17,7 @@ import { useRef, useState } from "react";
 import { Input } from "react-smooth-input";
 import { toast } from "sonner";
 import { useStore } from "zustand";
+import { getApiUrl } from "@/lib/api";
 import { ImageCropperModal } from "@/components/image-cropper-modal";
 import {
   Dialog,
@@ -78,7 +79,7 @@ function Page() {
       const formData = new FormData();
       formData.append(cropType, croppedImage, `${cropType}.webp`);
 
-      const res = await fetch("/api/v1/me", {
+      const res = await fetch(getApiUrl("/api/v1/me"), {
         method: "PATCH",
         headers: {
           authorization: "Bearer " + atob(authCookie as string),
@@ -108,7 +109,7 @@ function Page() {
       const formData = new FormData();
       formData.append("bio", bio);
 
-      const res = await fetch("/api/v1/me", {
+      const res = await fetch(getApiUrl("/api/v1/me"), {
         method: "PATCH",
         headers: {
           authorization: "Bearer " + atob(authCookie as string),
@@ -141,7 +142,7 @@ function Page() {
       const formData = new FormData();
       formData.append("displayname", newName.trim());
 
-      const res = await fetch("/api/v1/me", {
+      const res = await fetch(getApiUrl("/api/v1/me"), {
         method: "PATCH",
         headers: {
           authorization: "Bearer " + atob(authCookie as string),

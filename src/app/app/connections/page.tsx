@@ -2,6 +2,7 @@
 import Connection from "@/components/connection";
 import { Spinner } from "@/components/ui/spinner";
 import { useUserContext } from "@/contexts/user";
+import { getApiUrl } from "@/lib/api";
 import { coreStore } from "@/hooks/store/core";
 import { Connections } from "@/types/user.types";
 import { getCookie } from "cookies-next/client";
@@ -45,7 +46,7 @@ function Page() {
     if (isFetched.current || !userInfo) return;
     isFetched.current = true;
     const token = getCookie("USRSS");
-    fetch("/api/v1/me/connection", {
+    fetch(getApiUrl("/api/v1/me/connection"), {
       headers: {
         Authorization: "Bearer " + atob(token || ""),
       },

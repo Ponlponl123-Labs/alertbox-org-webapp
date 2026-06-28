@@ -19,6 +19,7 @@ import { TrashIcon, WarningOctagonIcon } from "@phosphor-icons/react";
 import { getCookie } from "cookies-next/client";
 import { useState } from "react";
 import { useStore } from "zustand";
+import { getApiUrl } from "@/lib/api";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -29,7 +30,7 @@ function Page() {
     if (!userInfo || !userInfo.id || isDeleting) return;
     setIsDeleting(true);
     const accessToken = atob(getCookie("USRSS") || "");
-    const r = await fetch("/api/v1/me", {
+    const r = await fetch(getApiUrl("/api/v1/me"), {
       method: "DELETE",
       headers: {
         Authorization: "Bearer " + accessToken,

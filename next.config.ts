@@ -14,14 +14,6 @@ const nextConfig: NextConfig = {
       new URL("https://static.tip-to.me/**"),
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_ENDPOINT}:path*`,
-      },
-    ];
-  },
 };
 
 export default nextConfig;

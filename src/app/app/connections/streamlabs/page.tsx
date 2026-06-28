@@ -9,6 +9,7 @@ import { coreStore } from "@/hooks/store/core";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/api";
 import {
   ArrowLeftIcon,
   LinkBreakIcon,
@@ -90,7 +91,7 @@ function StreamlabsPage() {
       setIsLoading(false);
       setOauthStatus("connecting");
       const token = getCookie("USRSS");
-      fetch("/api/v1/me/connection/integration/streamlabs", {
+      fetch(getApiUrl("/api/v1/me/connection/integration/streamlabs"), {
         method: "POST",
         headers: {
           Authorization: "Bearer " + atob(token || ""),
@@ -208,7 +209,7 @@ function StreamlabsPage() {
     try {
       // Load settings
       const settingsRes = await fetch(
-        "/api/v1/me/connection/integration/streamlabs",
+        getApiUrl("/api/v1/me/connection/integration/streamlabs"),
         { headers },
       );
       if (settingsRes.status === 401) {
@@ -250,7 +251,7 @@ function StreamlabsPage() {
 
       // Load logs
       const logsRes = await fetch(
-        "/api/v1/me/connection/integration/streamlabs/logs",
+        getApiUrl("/api/v1/me/connection/integration/streamlabs/logs"),
         { headers },
       );
       if (logsRes.ok) {
@@ -277,7 +278,7 @@ function StreamlabsPage() {
     if (bmacEnabled) val |= StreamlabsOption.BMAC_DONATION_SUCCESS;
 
     try {
-      const res = await fetch("/api/v1/me/connection/integration/streamlabs", {
+      const res = await fetch(getApiUrl("/api/v1/me/connection/integration/streamlabs"), {
         method: "PATCH",
         headers: {
           Authorization: "Bearer " + atob(token || ""),
@@ -303,7 +304,7 @@ function StreamlabsPage() {
     const token = getCookie("USRSS");
 
     try {
-      const res = await fetch("/api/v1/me/connection/integration/streamlabs", {
+      const res = await fetch(getApiUrl("/api/v1/me/connection/integration/streamlabs"), {
         method: "DELETE",
         headers: {
           Authorization: "Bearer " + atob(token || ""),

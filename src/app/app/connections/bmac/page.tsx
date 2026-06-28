@@ -7,6 +7,7 @@ import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { getApiUrl } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "react-smooth-input";
 import { toast } from "sonner";
@@ -53,7 +54,7 @@ function BmacPage() {
     if (isFetched.current || !userInfo) return;
     isFetched.current = true;
     const token = getCookie("USRSS");
-    fetch("/api/v1/me/connection", {
+    fetch(getApiUrl("/api/v1/me/connection"), {
       headers: {
         Authorization: "Bearer " + atob(token || ""),
       },
@@ -100,7 +101,7 @@ function BmacPage() {
 
     const token = getCookie("USRSS");
     try {
-      const res = await fetch("/api/v1/me/connection/buymeacoffee", {
+      const res = await fetch(getApiUrl("/api/v1/me/connection/buymeacoffee"), {
         method: "POST",
         headers: {
           Authorization: "Bearer " + atob(token || ""),
@@ -137,7 +138,7 @@ function BmacPage() {
 
     const token = getCookie("USRSS");
     try {
-      const res = await fetch("/api/v1/me/connection/buymeacoffee", {
+      const res = await fetch(getApiUrl("/api/v1/me/connection/buymeacoffee"), {
         method: "DELETE",
         headers: {
           Authorization: "Bearer " + atob(token || ""),

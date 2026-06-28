@@ -10,6 +10,7 @@ import { Connections } from "@/types/user.types";
 import { getCookie } from "cookies-next/client";
 import { Spinner } from "./ui/spinner";
 import Link from "next/link";
+import { getApiUrl } from "@/lib/api";
 
 function Connection({
   api_endpoint,
@@ -32,9 +33,9 @@ function Connection({
   privacy?: string;
   payout?: string;
   isConnected: boolean;
-  secret: any;
+  secret: unknown;
   skey: string;
-  soon: boolean;
+  soon?: boolean;
   connections: Connections | null;
   setConnections: Dispatch<SetStateAction<Connections | null>>;
 }) {
@@ -78,7 +79,7 @@ function Connection({
       body = currentSecret || "";
     }
 
-    const r = await fetch(endpoint, {
+    const r = await fetch(getApiUrl(endpoint), {
       method: "POST",
       headers,
       body,
@@ -101,7 +102,7 @@ function Connection({
   const disconnect = async (endpoint: string, key: string) => {
     setIsLoading(true);
     const token = getCookie("USRSS");
-    const r = await fetch(endpoint, {
+    const r = await fetch(getApiUrl(endpoint), {
       method: "DELETE",
       headers: {
         Authorization: "Bearer " + atob(token || ""),

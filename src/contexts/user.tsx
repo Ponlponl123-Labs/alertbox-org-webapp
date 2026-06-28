@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { setCookie, getCookie, deleteCookie } from "cookies-next";
+import { getApiUrl } from "@/lib/api";
 
 export interface UserContext {
   userInfo: User | null;
@@ -43,7 +44,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
             : "https://alertbox.org/app/login/discord",
       });
 
-      const r = await fetch("/api/v1/auth/discord", {
+      const r = await fetch(getApiUrl("/api/v1/auth/discord"), {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: params.toString(),
@@ -68,7 +69,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     try {
       const authCookie = await getCookie("USRSS");
       if (!authCookie) return false;
-      const r = await fetch("/api/v1/auth", {
+      const r = await fetch(getApiUrl("/api/v1/auth"), {
         method: "DELETE",
         headers: {
           authorization: "Bearer " + atob(authCookie),
@@ -93,7 +94,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       if (!authCookie) return;
 
       try {
-        const r = await fetch("/api/v1/me", {
+        const r = await fetch(getApiUrl("/api/v1/me"), {
           method: "GET",
           headers: {
             authorization: "Bearer " + atob(authCookie),

@@ -15,6 +15,7 @@ import {
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { getApiUrl } from "@/lib/api";
 import { allowed_chars } from "@/consts/regex";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
@@ -105,7 +106,7 @@ function Page() {
       const authCookie = getCookie("USRSS");
       if (!authCookie) return;
 
-      const res = await fetch("/api/v1/me", {
+      const res = await fetch(getApiUrl("/api/v1/me"), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -135,7 +136,7 @@ function Page() {
       const authCookie = getCookie("USRSS");
       if (!authCookie) return;
 
-      const res = await fetch("/api/v1/me", {
+      const res = await fetch(getApiUrl("/api/v1/me"), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -165,7 +166,7 @@ function Page() {
       const authCookie = getCookie("USRSS");
       if (!authCookie) return;
 
-      const res = await fetch("/api/v1/me", {
+      const res = await fetch(getApiUrl("/api/v1/me"), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -204,7 +205,7 @@ function Page() {
       const authCookie = getCookie("USRSS");
       if (!authCookie) return;
 
-      const res = await fetch("/api/v1/me/profile", {
+      const res = await fetch(getApiUrl("/api/v1/me/profile"), {
         method: "POST",
         headers: {
           authorization: "Bearer " + atob(authCookie as string),
@@ -232,7 +233,7 @@ function Page() {
       const authCookie = getCookie("USRSS");
       if (!authCookie) return;
 
-      const res = await fetch("/api/v1/me/profile", {
+      const res = await fetch(getApiUrl("/api/v1/me/profile"), {
         method: "DELETE",
         headers: {
           authorization: "Bearer " + atob(authCookie as string),

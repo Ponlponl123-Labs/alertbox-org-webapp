@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import { getApiUrl } from "@/lib/api";
 import { getActiveBadges } from "@/lib/badges";
 import { cn, getFallbackInitial, getSocialUrl } from "@/lib/utils";
 import { numberToHexColor, getAccentForeground } from "@/lib/color";
@@ -118,7 +119,7 @@ export default function PublicProfilePage({
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await fetch(`/api/v1/profile/${uri}/details`);
+        const res = await fetch(getApiUrl(`/api/v1/profile/${uri}/details`));
         if (res.status === 404) {
           setError("not_found");
           return;

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import { getApiUrl } from "@/lib/api";
 
 /**
  * BackendLivenessChecker is a client-side component that periodically
@@ -25,7 +26,7 @@ export default function BackendLivenessChecker() {
      */
     const checkLiveness = async (): Promise<void> => {
       try {
-        const res = await fetch("/api/health");
+        const res = await fetch(getApiUrl("/api/health"));
         if (activeRef.current) {
           setBackendAlive(res.ok);
         }

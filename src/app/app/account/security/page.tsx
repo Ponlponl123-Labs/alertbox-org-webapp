@@ -29,6 +29,7 @@ import { getCookie } from "cookies-next/client";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
+import { getApiUrl } from "@/lib/api";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -43,7 +44,7 @@ function Page() {
     if (isRevoking || device.isThisDevice) return;
     setIsRevoking(true);
     const access_token = atob(getCookie("USRSS") || "");
-    const r = await fetch(`/api/v1/me/device/${device.id}`, {
+    const r = await fetch(getApiUrl(`/api/v1/me/device/${device.id}`), {
       method: "DELETE",
       headers: {
         authorization: "Bearer " + access_token,
@@ -69,7 +70,7 @@ function Page() {
     isFetched.current = true;
     (async () => {
       const access_token = atob(getCookie("USRSS") || "");
-      const r = await fetch("/api/v1/me/device", {
+      const r = await fetch(getApiUrl("/api/v1/me/device"), {
         headers: {
           authorization: "Bearer " + access_token,
         },

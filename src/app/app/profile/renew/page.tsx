@@ -13,6 +13,7 @@ import { Input } from "react-smooth-input";
 import { useStore } from "zustand";
 import { getCookie } from "cookies-next";
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/api";
 
 import { useUserContext } from "@/contexts/user";
 import { useRouter } from "next/navigation";
@@ -35,7 +36,7 @@ function RegisURIPage() {
       const authCookie = getCookie("USRSS");
       if (!authCookie) return;
 
-      const res = await fetch("/api/v1/me/profile", {
+      const res = await fetch(getApiUrl("/api/v1/me/profile"), {
         method: "PATCH",
         headers: {
           authorization: "Bearer " + atob(authCookie as string),
@@ -99,7 +100,7 @@ function RegisURIPage() {
         }
 
         const res = await fetch(
-          `/api/v1/profile/${encodeURIComponent(currentUriInputValue)}`,
+          getApiUrl(`/api/v1/profile/${encodeURIComponent(currentUriInputValue)}`),
           { signal: controller.signal },
         );
 
