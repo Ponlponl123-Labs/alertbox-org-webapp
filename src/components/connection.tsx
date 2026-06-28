@@ -200,7 +200,7 @@ function Connection({
                   onClick={async () => {
                     setIsLoading(true);
                     const token = getCookie("USRSS");
-                    const r = await fetch(api_endpoint + "/oauth2", {
+                    const r = await fetch(getApiUrl(api_endpoint + "/oauth2"), {
                       method: "GET",
                       headers: {
                         Authorization: "Bearer " + atob(token || ""),

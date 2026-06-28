@@ -134,25 +134,25 @@ function StreamlabsPage() {
     const connectWS = () => {
       try {
         const decodedToken = atob(token);
-        const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT;
+        const apiEndpoint = getApiUrl("/");
         let wsHost = window.location.host;
         let wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 
-        if (apiEndpoint) {
-          try {
+        try {
+          if (apiEndpoint.includes("://")) {
             const url = new URL(apiEndpoint);
             wsHost = url.host;
             wsProtocol = url.protocol === "https:" ? "wss:" : "ws:";
-          } catch (e) {
-            // ignore
+          } else {
+            if (
+              window.location.hostname === "localhost" ||
+              window.location.hostname === "127.0.0.1"
+            ) {
+              wsHost = `${window.location.hostname}:3001`;
+            }
           }
-        } else {
-          if (
-            window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1"
-          ) {
-            wsHost = `${window.location.hostname}:3001`;
-          }
+        } catch (e) {
+          // ignore
         }
 
         const wsUrl = `${wsProtocol}//${wsHost}/v1/me/connection/integration/streamlabs/ws?token=${encodeURIComponent(decodedToken)}`;

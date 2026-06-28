@@ -17,7 +17,7 @@ async function fetchProfileData(
   const uri = decodedUsername.slice(1);
   try {
     const res = await fetch(getApiUrl(`/api/v1/profile/${uri}/details`), {
-      next: { revalidate: 60 }, // optional: cache for 60 seconds
+      cache: "no-store",
     });
     if (!res.ok) return null;
     return await res.json();
