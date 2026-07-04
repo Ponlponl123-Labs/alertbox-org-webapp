@@ -338,15 +338,15 @@ export default function PublicProfileClient({
   return (
     <div className="flex flex-col min-h-screen bg-linear-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-black relative overflow-x-hidden font-sans">
       <div
-        className="absolute w-[400px] h-[400px] rounded-full blur-[120px] opacity-10 dark:opacity-20 pointer-events-none -top-40 -right-40"
+        className="absolute w-[400px] h-[400px] rounded-full hidden supports-[filter:blur(1px)]:block blur-[120px] opacity-10 dark:opacity-20 pointer-events-none -top-40 -right-40"
         style={{ backgroundColor: accentHex }}
       />
       <div
-        className="absolute w-[500px] h-[500px] rounded-full blur-[150px] opacity-5 dark:opacity-10 pointer-events-none top-[60vh] -left-60"
+        className="absolute w-[500px] h-[500px] rounded-full hidden supports-[filter:blur(1px)]:block blur-[150px] opacity-5 dark:opacity-10 pointer-events-none top-[60vh] -left-60"
         style={{ backgroundColor: accentHex }}
       />
 
-      <div className="absolute top-4 right-4 z-50 flex items-center gap-1.5 bg-background/60 backdrop-blur-md border border-foreground/10 px-2.5 py-1.5 rounded-2xl shadow-lg">
+      <div className="absolute top-4 right-4 z-50 flex items-center gap-1.5 bg-background supports-backdrop-filter:bg-background/60 supports-backdrop-filter:backdrop-blur-md border border-foreground/10 px-2.5 py-1.5 rounded-2xl shadow-lg">
         <LanguageSwitcher />
         <ThemeSwitcher />
       </div>
@@ -354,7 +354,7 @@ export default function PublicProfileClient({
         <Image
           src={profileData.banner}
           alt="Banner Backdrop"
-          className="w-full h-128 blur-2xl absolute pointer-events-none select-none object-cover opacity-30 dark:opacity-20"
+          className="w-full h-128 absolute pointer-events-none select-none object-cover opacity-30 dark:opacity-20 hidden supports-[filter:blur(1px)]:block blur-2xl"
           width={1600}
           height={400}
           priority
@@ -506,7 +506,7 @@ export default function PublicProfileClient({
           variants={fadeInUp}
           className="md:col-span-5 flex flex-col justify-start"
         >
-          <div className="w-full max-w-md mx-auto md:mx-0 bg-background/40 backdrop-saturate-200 backdrop-blur-lg border-2 border-foreground/10 p-6 md:p-8 rounded-[2rem] shadow-2xl flex flex-col relative md:sticky md:top-8 gap-6">
+          <div className="w-full max-w-md mx-auto md:mx-0 bg-background supports-backdrop-filter:bg-background/40 supports-backdrop-filter:backdrop-saturate-200 supports-backdrop-filter:backdrop-blur-lg border-2 border-foreground/10 p-6 md:p-8 rounded-[2rem] shadow-2xl flex flex-col relative md:sticky md:top-8 gap-6">
             {activeMethods.length === 0 ? (
               <div className="flex flex-col items-center text-center py-10 animate-fade-in-up duration-300">
                 <div className="p-4 rounded-full bg-foreground/5 text-foreground/40 mb-4">

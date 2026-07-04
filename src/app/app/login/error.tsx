@@ -11,7 +11,7 @@ function Error() {
   return (
     <div className="min-h-screen relative flex flex-col p-6 pb-24 items-center">
       <div className="m-auto flex flex-col gap-3 max-w-92">
-        <div className="p-8 bg-background/60 text-center bg-linear-150 from-red-950/10 to-red-600/10 flex flex-col items-center justify-center z-10 backdrop-blur-2xl rounded-3xl w-full">
+        <div className="p-8 bg-background supports-backdrop-filter:bg-background/60 text-center supports-backdrop-filter:bg-linear-150 supports-backdrop-filter:from-red-950/10 supports-backdrop-filter:to-red-600/10 flex flex-col items-center justify-center z-10 supports-backdrop-filter:backdrop-blur-2xl rounded-3xl w-full">
           <SmileyXEyesIcon
             weight="fill"
             className="mb-6 text-red-600"

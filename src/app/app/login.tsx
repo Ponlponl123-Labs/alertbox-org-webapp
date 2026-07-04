@@ -39,7 +39,7 @@ function Login() {
         transition={{ delay: 0.26 }}
         className="m-auto flex flex-col gap-3 max-w-92"
       >
-        <motion.div className="p-6 bg-background/60 text-center flex flex-col z-10 backdrop-blur-2xl rounded-3xl w-full">
+        <motion.div className="p-6 bg-background supports-backdrop-filter:bg-background/60 text-center flex flex-col z-10 supports-backdrop-filter:backdrop-blur-2xl rounded-3xl w-full">
           <h1 className="font-semibold tracking-widest text-xl">
             {lang.data.app.login.title}
           </h1>
@@ -58,7 +58,7 @@ function Login() {
             {lang.data.app.login.disclaimer}
           </span>
         </motion.div>
-        <motion.div className="p-6 bg-background/60 bg-linear-150 from-amber-950/10 to-amber-600/10 flex flex-col z-10 backdrop-blur-2xl rounded-3xl w-full">
+        <motion.div className="p-6 bg-background supports-backdrop-filter:bg-background/60 supports-backdrop-filter:bg-linear-150 supports-backdrop-filter:from-amber-950/10 supports-backdrop-filter:to-amber-600/10 flex flex-col z-10 supports-backdrop-filter:backdrop-blur-2xl rounded-3xl w-full">
           <h1 className="text-sm text-foreground/60 font-semibold">
             <WarningIcon
               weight="fill"

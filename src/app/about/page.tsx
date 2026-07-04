@@ -4,6 +4,26 @@ import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { Button } from "@/components/ui/button";
 import SideRays from "@/components/SideRays";
+import { motion } from "motion/react";
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as any },
+  },
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
 
 export default function AboutPage() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -29,57 +49,83 @@ export default function AboutPage() {
         </div>
 
         {/* Header Section: Minimalist Editorial Title */}
-        <header className="max-w-3xl mb-16">
-          <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-4">
+        <motion.header
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+          className="max-w-3xl mb-16"
+        >
+          <motion.p variants={fadeInUp} className="text-xs font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-4">
             {t.subtitle}
-          </p>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight mb-6">
+          </motion.p>
+          <motion.h1 variants={fadeInUp} className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight mb-6">
             {t.title}
-          </h1>
-          <p className="text-lg text-zinc-500 dark:text-zinc-400 leading-relaxed font-normal max-w-2xl">
+          </motion.h1>
+          <motion.p variants={fadeInUp} className="text-lg text-zinc-500 dark:text-zinc-400 leading-relaxed font-normal max-w-2xl">
             {t.description}
-          </p>
-        </header>
+          </motion.p>
+        </motion.header>
 
         {/* Separator line */}
         <hr className="border-t border-zinc-100 dark:border-zinc-900 mb-16" />
 
         {/* Section 1: The Mission (Editorial Row Split) */}
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20">
-          <div className="md:col-span-4">
+        <motion.section
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20"
+        >
+          <motion.div variants={fadeInUp} className="md:col-span-4">
             <h2 className="text-xl font-bold tracking-tight text-zinc-400 dark:text-zinc-600 uppercase">
               {t.mission_title}
             </h2>
-          </div>
-          <div className="md:col-span-8">
+          </motion.div>
+          <motion.div variants={fadeInUp} className="md:col-span-8">
             <p className="text-base md:text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed font-normal">
               {t.mission_desc}
             </p>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* Section 2: FAQ (Survival) */}
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20 border-t border-zinc-100 dark:border-zinc-900 pt-16">
-          <div className="md:col-span-4">
+        <motion.section
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20 border-t border-zinc-100 dark:border-zinc-900 pt-16"
+        >
+          <motion.div variants={fadeInUp} className="md:col-span-4">
             <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 leading-snug">
               {t.faq_question}
             </h2>
-          </div>
-          <div className="md:col-span-8">
+          </motion.div>
+          <motion.div variants={fadeInUp} className="md:col-span-8">
             <p className="text-base md:text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed font-normal">
               {t.faq_answer}
             </p>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* Section 3: Values (Editorial Row Split with Grid Content) */}
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20 border-t border-zinc-100 dark:border-zinc-900 pt-16">
-          <div className="md:col-span-4">
+        <motion.section
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20 border-t border-zinc-100 dark:border-zinc-900 pt-16"
+        >
+          <motion.div variants={fadeInUp} className="md:col-span-4">
             <h2 className="text-xl font-bold tracking-tight text-zinc-400 dark:text-zinc-600 uppercase">
               {lang.key === "th-TH" ? "ค่านิยมหลัก" : "Core Values"}
             </h2>
-          </div>
-          <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-8">
+          </motion.div>
+          <motion.div
+            variants={staggerContainer}
+            className="md:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-8"
+          >
             {[
               {
                 title: t.values.privacy_title,
@@ -94,26 +140,32 @@ export default function AboutPage() {
                 desc: t.values.open_source_desc,
               },
             ].map((value, idx) => (
-              <div key={idx} className="flex flex-col gap-2">
+              <motion.div key={idx} variants={fadeInUp} className="flex flex-col gap-2">
                 <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
                   {value.title}
                 </h3>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed font-normal">
                   {value.desc}
                 </p>
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* Section 4: The Idea & Actions */}
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-8 border-t border-zinc-100 dark:border-zinc-900 pt-16">
-          <div className="md:col-span-4">
+        <motion.section
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-12 gap-8 border-t border-zinc-100 dark:border-zinc-900 pt-16"
+        >
+          <motion.div variants={fadeInUp} className="md:col-span-4">
             <h2 className="text-xl font-bold tracking-tight text-zinc-400 dark:text-zinc-600 uppercase">
               {t.team_title}
             </h2>
-          </div>
-          <div className="md:col-span-8">
+          </motion.div>
+          <motion.div variants={fadeInUp} className="md:col-span-8">
             <p className="text-base md:text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed font-normal mb-8">
               {t.team_desc}
             </p>
@@ -136,8 +188,8 @@ export default function AboutPage() {
                 </Button>
               </Link>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
       </div>
     </div>
   );

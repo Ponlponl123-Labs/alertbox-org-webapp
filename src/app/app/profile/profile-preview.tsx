@@ -16,7 +16,11 @@ import {
   Discord,
 } from "@/components/icons";
 import Image from "next/image";
-import { CheckCircleIcon, SealCheckIcon, DeviceMobile, Monitor } from "@phosphor-icons/react";
+import {
+  SealCheckIcon,
+  DeviceMobileIcon,
+  MonitorIcon,
+} from "@phosphor-icons/react";
 import { numberToHexColor, getAccentForeground } from "@/lib/color";
 import {
   Tooltip,
@@ -47,7 +51,9 @@ export default function ProfilePreview({
 }) {
   const { userInfo } = useUserContext();
   const lang = useStore(coreStore, (state) => state.lang);
-  const [viewMode, setViewMode] = useState<"mobile" | "desktop" | "responsive">(defaultViewMode);
+  const [viewMode, setViewMode] = useState<"mobile" | "desktop" | "responsive">(
+    defaultViewMode,
+  );
 
   if (!publicProfile && (!userInfo || !userInfo.profile)) {
     return (
@@ -115,8 +121,8 @@ export default function ProfilePreview({
       className={cn(
         "bg-background border border-foreground/10 shadow-2xl overflow-hidden flex flex-col relative",
         isDashboardPreview
-          ? "w-full max-w-[280px] rounded-[2rem] aspect-[9/16] max-h-[500px]"
-          : "w-full max-w-[360px] rounded-3xl min-h-[520px]"
+          ? "w-full max-w-[280px] rounded-[2rem] aspect-9/16 max-h-[500px]"
+          : "w-full max-w-[360px] rounded-3xl min-h-[520px]",
       )}
     >
       {isDashboardPreview && (
@@ -205,7 +211,7 @@ export default function ProfilePreview({
                     weight="fill"
                   />
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent className="rounded-lg">
                   <p>{lang.data.app.profile.preview.official_account}</p>
                 </TooltipContent>
               </Tooltip>
@@ -335,7 +341,7 @@ export default function ProfilePreview({
                       weight="fill"
                     />
                   </TooltipTrigger>
-                  <TooltipContent>
+                  <TooltipContent className="rounded-lg">
                     <p>{lang.data.app.profile.preview.official_account}</p>
                   </TooltipContent>
                 </Tooltip>
@@ -374,8 +380,12 @@ export default function ProfilePreview({
 
         <div className="col-span-5 flex flex-col justify-center items-center bg-foreground/3 border border-foreground/5 p-4 rounded-2xl h-fit my-auto">
           <div className="text-center mb-3">
-            <span className="text-[9px] uppercase font-bold tracking-wider opacity-45">{lang.data.app.profile.preview.support_title}</span>
-            <p className="text-[10px] text-foreground/60 mt-1 leading-snug">{lang.data.app.profile.preview.support_desc}</p>
+            <span className="text-[9px] uppercase font-bold tracking-wider opacity-45">
+              {lang.data.app.profile.preview.support_title}
+            </span>
+            <p className="text-[10px] text-foreground/60 mt-1 leading-snug">
+              {lang.data.app.profile.preview.support_desc}
+            </p>
           </div>
           <button
             disabled
@@ -390,10 +400,12 @@ export default function ProfilePreview({
   );
 
   return (
-    <div className={cn(
-      "flex flex-col items-center justify-center p-6 size-full bg-linear-to-br from-zinc-50/50 to-zinc-100/50 dark:from-zinc-950/20 dark:to-zinc-900/20 relative",
-      isDashboardPreview ? "min-h-[450px]" : "min-h-screen"
-    )}>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center p-6 size-full bg-linear-to-br from-zinc-50/50 to-zinc-100/50 dark:from-zinc-950/20 dark:to-zinc-900/20 relative",
+        isDashboardPreview ? "min-h-[450px]" : "min-h-screen",
+      )}
+    >
       {/* View Toggle */}
       {viewMode !== "responsive" && (
         <div className="absolute top-4 right-4 z-20 flex bg-foreground/5 p-1 rounded-xl border border-foreground/10 gap-0.5">
@@ -403,10 +415,10 @@ export default function ProfilePreview({
               "px-2.5 py-1 rounded-lg flex items-center justify-center text-[10px] font-semibold gap-1 transition-all duration-200 cursor-pointer",
               viewMode === "mobile"
                 ? "bg-background text-foreground shadow-sm"
-                : "text-foreground/45 hover:text-foreground/80 hover:bg-foreground/5"
+                : "text-foreground/45 hover:text-foreground/80 hover:bg-foreground/5",
             )}
           >
-            <DeviceMobile className="size-3.5" />
+            <DeviceMobileIcon className="size-3.5" />
             Mobile
           </button>
           <button
@@ -415,10 +427,10 @@ export default function ProfilePreview({
               "px-2.5 py-1 rounded-lg flex items-center justify-center text-[10px] font-semibold gap-1 transition-all duration-200 cursor-pointer",
               viewMode === "desktop"
                 ? "bg-background text-foreground shadow-sm"
-                : "text-foreground/45 hover:text-foreground/80 hover:bg-foreground/5"
+                : "text-foreground/45 hover:text-foreground/80 hover:bg-foreground/5",
             )}
           >
-            <Monitor className="size-3.5" />
+            <MonitorIcon className="size-3.5" />
             Desktop
           </button>
         </div>

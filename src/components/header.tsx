@@ -109,10 +109,10 @@ function Header() {
         className={cn(
           "h-16 flex items-center justify-between px-4 absolute top-0 left-0 right-0 z-50",
           pathname === "/"
-            ? "bg-linear-0 to-white dark:to-black from-transparent border-transparent"
-            : "bg-background/80 backdrop-blur-sm border-border border-b border-solid ",
+            ? "bg-linear-0 to-white dark:to-black from-transparent supports-backdrop-filter:from-white/80 supports-backdrop-filter:to-black/80 supports-backdrop-filter:backdrop-blur-sm border-transparent"
+            : "supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur-sm border-border border-b border-solid ",
           pathname.startsWith("/app") &&
-            "border-0 bg-transparent backdrop-blur-none",
+            "border-0 bg-transparent bg-none supports-backdrop-filter:bg-transparent/80 supports-backdrop-filter:backdrop-blur-none",
         )}
       >
         <AnimatePresence>
@@ -238,7 +238,7 @@ function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             id="header-nav-mobile"
-            className="fixed flex flex-col gap-3 top-0 left-0 size-full bg-background/60 backdrop-blur-3xl z-40 p-6 pt-22 overflow-y-auto"
+            className="fixed flex flex-col gap-3 top-0 left-0 size-full bg-background supports-backdrop-filter:bg-background/60 supports-backdrop-filter:backdrop-blur-3xl z-40 p-6 pt-22 overflow-y-auto"
           >
             <Nav
               classNames={{

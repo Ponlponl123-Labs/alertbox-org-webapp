@@ -69,8 +69,8 @@ const Footer = memo(function Footer() {
     <>
       {["/", "/pricing", "/about", "/docs"].includes(pathname) && (
         <section className="py-16 p-6 bg-zinc-50 font-sans dark:bg-black flex flex-col items-center justify-center gap-3">
-          <div className="p-6 rounded-3xl flex flex-col gap-3 bg-foreground/5 bg-linear-150 from-rose-950/10 to-rose-700/10 w-full max-w-xl">
-            <h1 className="text-lg font-semibold">
+          <div className="p-6 rounded-3xl flex flex-col gap-3 bg-foreground/5 bg-linear-150 from-rose-950 to-rose-300 w-full max-w-xl">
+            <h1 className="text-lg font-semibold text-white">
               <HandHeartIcon
                 className="inline mr-1.5"
                 size={26}
@@ -78,7 +78,7 @@ const Footer = memo(function Footer() {
               />{" "}
               {lang.data.helpus.title}
             </h1>
-            <p className="text-xs text-foreground/40">
+            <p className="text-xs text-white/40">
               {lang.data.helpus.description}
             </p>
             <Link

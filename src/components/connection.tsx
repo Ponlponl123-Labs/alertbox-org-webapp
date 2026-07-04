@@ -131,7 +131,7 @@ function Connection({
     : (currentSecret !== initialSecret);
 
   return (
-    <div className="w-full bg-card/80 backdrop-blur-sm backdrop-saturate-200 p-4 rounded-3xl group z-10">
+    <div className="w-full bg-card supports-backdrop-filter:bg-card/80 supports-backdrop-filter:backdrop-blur-sm supports-backdrop-filter:backdrop-saturate-200 p-4 rounded-3xl group z-10">
       <div className="flex flex-col size-full min-w-0 min-h-0 flex-1 gap-1.5">
         {icon}
         <div className="flex items-center justify-between w-full">

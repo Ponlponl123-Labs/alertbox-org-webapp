@@ -11,7 +11,7 @@ function Success() {
   return (
     <div className="min-h-screen relative flex flex-col p-6 pb-24 items-center">
       <div className="m-auto flex flex-col gap-3 max-w-92">
-        <div className="p-8 bg-background/60 text-center bg-linear-150 from-green-950/10 to-green-600/10 flex flex-col items-center justify-center z-10 backdrop-blur-2xl rounded-3xl w-full">
+        <div className="p-8 bg-background supports-backdrop-filter:bg-background/60 text-center supports-backdrop-filter:bg-linear-150 supports-backdrop-filter:from-green-950/10 supports-backdrop-filter:to-green-600/10 flex flex-col items-center justify-center z-10 supports-backdrop-filter:backdrop-blur-2xl rounded-3xl w-full">
           <CheckCircleIcon
             weight="fill"
             className="mb-6 text-green-600"

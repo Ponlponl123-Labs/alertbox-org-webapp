@@ -191,7 +191,7 @@ function RegisURIPage() {
           pattern="^[a-zA-Z0-9_]+$"
           placeholder={lang.data.pages.index.actions.yourname}
           classNames={{
-            base: "h-10 rounded-full backdrop-blur-xs",
+            base: "h-10 rounded-full supports-backdrop-filter:backdrop-blur-xs",
             container: "min-w-0 max-w-64 max-md:min-w-88 flex-1",
           }}
         />
