@@ -109,7 +109,7 @@ function Header() {
         className={cn(
           "h-16 flex items-center justify-between px-4 absolute top-0 left-0 right-0 z-50",
           pathname === "/"
-            ? "bg-linear-0 to-white dark:to-black from-transparent supports-backdrop-filter:from-white/80 supports-backdrop-filter:to-black/80 supports-backdrop-filter:backdrop-blur-sm border-transparent"
+            ? "border-transparent"
             : "supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur-sm border-border border-b border-solid ",
           pathname.startsWith("/app") &&
             "border-0 bg-transparent bg-none supports-backdrop-filter:bg-transparent/80 supports-backdrop-filter:backdrop-blur-none",
