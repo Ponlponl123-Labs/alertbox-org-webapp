@@ -206,7 +206,7 @@ export default function Home() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="sticky top-12 mt-16 -mb-16 flex flex-col items-center z-20"
+          className="sticky top-12 bottom-12 mt-16 -mb-16 flex flex-col items-center"
         >
           <motion.h1
             variants={fadeInUp}
