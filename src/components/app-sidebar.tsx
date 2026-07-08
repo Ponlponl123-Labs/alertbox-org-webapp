@@ -11,7 +11,6 @@ import {
   GearSixIcon,
   HandWavingIcon,
   HeartIcon,
-  PaletteIcon,
   PlugsIcon,
   ShieldCheckIcon,
   SidebarSimpleIcon,
@@ -28,7 +27,18 @@ import {
   AccordionItem,
   AccordionPanel,
 } from "./animate-ui/components/headless/accordion";
-import { useEffect } from "react";
+import { useDisclosure } from "./animate-ui/primitives/headless/disclosure";
+import { useEffect, useMemo, useState } from "react";
+
+function AccordionStateSync({ hydrated, onToggle }: { hydrated: boolean; onToggle: (isOpen: boolean) => void }) {
+  const { isOpen } = useDisclosure();
+  useEffect(() => {
+    if (hydrated) {
+      onToggle(isOpen);
+    }
+  }, [isOpen, hydrated, onToggle]);
+  return null;
+}
 
 function AppSidebar() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -48,11 +58,89 @@ function AppSidebar() {
     coreStore,
     (state) => state.setSidebarCollapsed,
   );
+  const openAccordions = useStore(coreStore, (state) => state.openAccordions);
+  const setAccordionOpen = useStore(coreStore, (state) => state.setAccordionOpen);
+  const hydrateSidebar = useStore(coreStore, (state) => state.hydrateSidebar);
   const pathname = usePathname();
+  const [sidebarHydrated, setSidebarHydrated] = useState(false);
+
+  useEffect(() => {
+    hydrateSidebar();
+    setSidebarHydrated(true);
+  }, [hydrateSidebar]);
 
   useEffect(() => {
     setSidebarHiddenOnMobile(true);
   }, [pathname, setSidebarHiddenOnMobile]);
+
+  const sidebarItems = useMemo(() => {
+    return [
+      {
+        id: "dashboard",
+        text: lang.data.header.user_chip.links.dashboard,
+        icon: <ChartLineIcon weight="bold" size={16} />,
+        href: "/app",
+      },
+      {
+        id: "profile",
+        text: lang.data.app.sidebar.links.profile,
+        icon: <UserIcon weight="bold" size={16} />,
+        href: "/app/profile",
+      },
+      {
+        id: "connections",
+        text: lang.data.app.sidebar.links.connection,
+        icon: <PlugsIcon weight="bold" size={16} />,
+        href: "/app/connections",
+      },
+      {
+        id: "alertbox",
+        text: lang.data.app.sidebar.links.alertbox.title,
+        icon: (
+          <BellRingingIcon className="rotate-0!" weight="bold" size={16} />
+        ),
+        links: [
+          {
+            text: lang.data.app.sidebar.links.alertbox.donation,
+            icon: <HeartIcon weight="bold" size={16} />,
+            href: "/app/alertbox/tip",
+          },
+          {
+            text: lang.data.app.sidebar.links.alertbox.subscription,
+            icon: <HandWavingIcon weight="bold" size={16} />,
+            href: "/app/alertbox/membership",
+          },
+          {
+            text: lang.data.app.sidebar.links.alertbox.purchased,
+            icon: <StorefrontIcon weight="bold" size={16} />,
+            href: "/app/alertbox/purchased",
+          },
+        ],
+      },
+      {
+        id: "settings",
+        text: lang.data.app.sidebar.links.settings.title,
+        icon: <GearSixIcon weight="bold" size={16} />,
+        links: [
+          {
+            text: lang.data.app.sidebar.links.settings.account,
+            icon: <UserGearIcon weight="bold" size={16} />,
+            href: "/app/account",
+          },
+          {
+            text: lang.data.app.sidebar.links.settings.security,
+            icon: <ShieldCheckIcon weight="bold" size={16} />,
+            href: "/app/account/security",
+          },
+          {
+            text: lang.data.app.sidebar.links.settings.danger,
+            icon: <WarningOctagonIcon weight="bold" size={16} />,
+            href: "/app/account/danger",
+          },
+        ],
+      },
+    ];
+  }, [lang]);
 
   return (
     <AnimatePresence>
@@ -67,76 +155,17 @@ function AppSidebar() {
           isSidebarHiddenOnMobile && "max-md:-translate-x-full",
         )}
       >
-        {[
-          {
-            text: lang.data.header.user_chip.links.dashboard,
-            icon: <ChartLineIcon weight="bold" size={16} />,
-            href: "/app",
-          },
-          {
-            text: lang.data.app.sidebar.links.profile,
-            icon: <UserIcon weight="bold" size={16} />,
-            href: "/app/profile",
-          },
-          {
-            text: lang.data.app.sidebar.links.connection,
-            icon: <PlugsIcon weight="bold" size={16} />,
-            href: "/app/connections",
-          },
-          {
-            text: lang.data.app.sidebar.links.alertbox.title,
-            icon: (
-              <BellRingingIcon className="rotate-0!" weight="bold" size={16} />
-            ),
-            links: [
-              {
-                text: lang.data.app.sidebar.links.alertbox.donation,
-                icon: <HeartIcon weight="bold" size={16} />,
-                href: "/app/alertbox/tip",
-              },
-              {
-                text: lang.data.app.sidebar.links.alertbox.subscription,
-                icon: <HandWavingIcon weight="bold" size={16} />,
-                href: "/app/alertbox/membership",
-              },
-              {
-                text: lang.data.app.sidebar.links.alertbox.purchased,
-                icon: <StorefrontIcon weight="bold" size={16} />,
-                href: "/app/alertbox/purchased",
-              },
-            ],
-          },
-          {
-            text: lang.data.app.sidebar.links.settings.title,
-            icon: <GearSixIcon weight="bold" size={16} />,
-            links: [
-              {
-                text: lang.data.app.sidebar.links.settings.account,
-                icon: <UserGearIcon weight="bold" size={16} />,
-                href: "/app/account",
-              },
-              {
-                text: lang.data.app.sidebar.links.settings.security,
-                icon: <ShieldCheckIcon weight="bold" size={16} />,
-                href: "/app/account/security",
-              },
-              {
-                text: lang.data.app.sidebar.links.settings.danger,
-                icon: <WarningOctagonIcon weight="bold" size={16} />,
-                href: "/app/account/danger",
-              },
-            ],
-          },
-        ].map((l, i) =>
-          !l?.href ? (
-            <Accordion key={i}>
-              <AccordionItem>
+        {sidebarItems.map((l) =>
+          !l.href ? (
+            <Accordion key={`${l.id}-${sidebarHydrated}`}>
+              <AccordionItem defaultOpen={openAccordions[l.id] ?? true}>
+                <AccordionStateSync hydrated={sidebarHydrated} onToggle={(isOpen) => setAccordionOpen(l.id, isOpen)} />
                 <AccordionButton
                   className={cn(
                     "rounded-lg whitespace-nowrap group overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start items-center flex no-underline!",
                     "hover:bg-primary/5 hover:text-primary",
                     isSidebarCollapsed &&
-                      "aria-expanded:bg-background/80 aria-expanded:rounded-b-none",
+                    "aria-expanded:bg-background/80 aria-expanded:rounded-b-none",
                   )}
                   showArrow={false}
                 >
@@ -197,7 +226,7 @@ function AppSidebar() {
               </AccordionItem>
             </Accordion>
           ) : (
-            <Link key={i} href={l.href}>
+            <Link key={l.id} href={l.href}>
               <Button
                 className={cn(
                   "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative",

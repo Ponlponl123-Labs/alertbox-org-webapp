@@ -193,7 +193,13 @@
       "description": "Welcome aboard, Captain!",
       "disclaimer": "By signing in, you agree to our Terms of Service, Privacy Policy, and additional policies for our services.",
       "methods": {
-        "discord": "Continue with Discord"
+        "discord": "Continue with Discord",
+        "google": "Continue with Google",
+        "streamlabs": "Continue with Streamlabs"
+      },
+      "beta": {
+        "title": "Alertbox is currently in Public Beta",
+        "description": "We are enabling Google and Streamlabs logins soon; please use Discord to sign in for now."
       },
       "announcement": {
         "title": "Please Note",

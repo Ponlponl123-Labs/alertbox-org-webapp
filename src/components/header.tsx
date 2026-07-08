@@ -112,7 +112,7 @@ function Header() {
             ? "border-transparent"
             : "supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur-sm border-border border-b border-solid ",
           pathname.startsWith("/app") &&
-            "border-0 bg-transparent bg-none supports-backdrop-filter:bg-transparent/80 supports-backdrop-filter:backdrop-blur-none",
+          "border-0 bg-transparent bg-none supports-backdrop-filter:bg-transparent/80 supports-backdrop-filter:backdrop-blur-none",
         )}
       >
         <AnimatePresence>
@@ -179,19 +179,22 @@ function Header() {
                   href={pathname.startsWith("/app") ? "/app" : "/"}
                   className={cn("flex items-center gap-2.5")}
                 >
-                  <HandHeartIcon size={26} weight="fill" />
+                  <HandHeartIcon size={24} weight="fill" />
                   <motion.h1
                     initial={{
-                      fontWeight: pathname.startsWith("/app") ? 300 : 600,
-                      opacity: pathname.startsWith("/app") ? 0.6 : 1,
+                      fontWeight: pathname.startsWith("/app") ? 500 : 600,
+                      opacity: pathname.startsWith("/app") ? 0.8 : 1,
                     }}
                     animate={{
-                      fontWeight: pathname.startsWith("/app") ? 300 : 600,
-                      opacity: pathname.startsWith("/app") ? 0.6 : 1,
+                      fontWeight: pathname.startsWith("/app") ? 500 : 600,
+                      opacity: pathname.startsWith("/app") ? 0.8 : 1,
                     }}
-                    className="text-lg tracking-tight"
+                    className="text-base font-semibold"
                   >
-                    AlertBox.org
+                    AlertBox
+                    <span className="text-sm opacity-60 ml-0.5 font-light tracking-wider">
+                      .org
+                    </span>
                   </motion.h1>
                 </Link>
                 <div className="mt-0.75 -ml-1.5">
