@@ -1,24 +1,27 @@
 "use client";
+
 import Link from "next/link";
 import DotField from "@/components/DotField";
 import { coreStore } from "@/hooks/store/core";
 import { AnimatePresence, motion } from "motion/react";
 import { useStore } from "zustand";
-import { ArrowUpRightIcon, BellRingingIcon } from "@phosphor-icons/react";
+import {
+  BellRingingIcon,
+  HandCoinsIcon,
+  ShieldCheckIcon,
+  CodeBlockIcon,
+  CaretRightIcon,
+} from "@phosphor-icons/react";
 import { Input } from "react-smooth-input";
 import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import LightRays from "@/components/LightRays";
+import MagicRings from "@/components/MagicRings";
 import BorderGlow from "@/components/BorderGlow";
 import HowItWorkStreamer from "./index/how-it-work-streamer";
-import { cn } from "@/lib/utils";
-import {
-  Accordion,
-  AccordionButton,
-  AccordionItem,
-  AccordionPanel,
-} from "@/components/animate-ui/components/headless/accordion";
 import HowItWorkViewer from "./index/how-it-work-viewer";
+import StreamerWorkspaceMockup from "@/components/StreamerWorkspaceMockup";
+import { cn } from "@/lib/utils";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 16 },
@@ -41,6 +44,7 @@ const staggerContainer = {
 
 export default function Home() {
   const lang = useStore(coreStore, (state) => state.lang);
+  const [username, setUsername] = useState("");
   const [isHIWStreamer, setIsHIWStreamer] = useState(true);
   const sectionHIW = useRef<HTMLDivElement>(null);
 
@@ -50,28 +54,9 @@ export default function Home() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, ease: "easeOut" }}
-        className="flex flex-col flex-1 min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black relative"
+        className="w-full min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-black relative overflow-hidden pt-28 pb-16"
       >
-        {/* Backdrop Light Rays */}
-        <div className="w-full absolute top-0 left-0 h-[600px] pointer-events-none overflow-hidden z-0">
-          <div className="w-full absolute top-0 left-0 h-[600px] mask-b-from-60%">
-            <LightRays
-              raysOrigin="top-right"
-              raysColor="#EAB308"
-              raysSpeed={1.5}
-              lightSpread={0.6}
-              rayLength={2.5}
-              followMouse={true}
-              mouseInfluence={0.05}
-              className="opacity-40 dark:opacity-20"
-              pulsating={true}
-              fadeDistance={0.8}
-              saturation={1.2}
-            />
-          </div>
-        </div>
-
-        <div className="absolute w-full h-full top-0 left-0 opacity-15 dark:invert">
+        <div className="absolute w-full h-full top-0 left-0 opacity-10 dark:opacity-15 dark:invert pointer-events-none z-0">
           <DotField
             dotRadius={2.4}
             dotSpacing={14}
@@ -87,102 +72,100 @@ export default function Home() {
             glowColor="#00000010"
           />
         </div>
-        <main className="flex flex-1 w-full max-w-5xl flex-col items-center justify-between py-32 px-16 sm:items-start z-10">
-          <div />
+
+        <main className="w-full max-w-5xl mx-auto px-6 md:px-12 z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="flex gap-6"
-          >
-            <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-              <motion.div
-                variants={fadeInUp}
-                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/65 dark:border-zinc-800/65 mb-4 self-center sm:self-start"
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
-                </span>
-                <span className="text-xs font-semibold tracking-wider uppercase text-zinc-600 dark:text-zinc-400">
-                  {lang.key === "th-TH"
-                    ? "บริการฟรี 100% ไม่มีค่าธรรมเนียม"
-                    : "100% Free • No Platform Fees"}
-                </span>
-              </motion.div>
-              <motion.h1
-                variants={fadeInUp}
-                className="max-w-md text-4xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50"
-              >
-                {lang.data.pages.index.title[0]}
-                <br />
-                {lang.data.pages.index.title[1]}
-              </motion.h1>
-              <motion.p
-                variants={fadeInUp}
-                className="max-w-md text-lg max-md:text-sm leading-8 text-zinc-600 dark:text-zinc-400"
-              >
-                {lang.data.pages.index.description}
-              </motion.p>
-            </div>
-            <div className="max-md:hidden"></div>
-          </motion.div>
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-            className="flex flex-col gap-4 text-base font-medium sm:flex-row w-full items-center"
+            className="lg:col-span-6 flex flex-col gap-6 text-center lg:text-left items-center lg:items-start"
           >
             <motion.div
               variants={fadeInUp}
-              className="min-w-0 max-w-106 max-md:min-w-88 flex-1 rounded-full"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-100/90 dark:bg-zinc-900/90 border border-zinc-200/65 dark:border-zinc-800/65 shadow-sm"
             >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-600 dark:text-zinc-300">
+                {lang.key === "th-TH"
+                  ? "บริการฟรี 100% ไม่มีค่าธรรมเนียม"
+                  : "100% Free • No Platform Fees"}
+              </span>
+            </motion.div>
+
+            <motion.h1
+              variants={fadeInUp}
+              className="text-4xl sm:text-5xl lg:text-[54px] font-black tracking-tight leading-tight text-black dark:text-zinc-50"
+            >
+              {lang.data.pages.index.title[0]}
+              <br />
+              <span className="bg-linear-to-r from-rose-500 via-pink-500 to-rose-600 bg-clip-text text-transparent">
+                {lang.data.pages.index.title[1]}
+              </span>
+            </motion.h1>
+
+            <motion.p
+              variants={fadeInUp}
+              className="max-w-xl text-base leading-relaxed text-zinc-600 dark:text-zinc-400 font-normal font-read"
+            >
+              {lang.data.pages.index.description}
+            </motion.p>
+
+            <motion.div variants={fadeInUp} className="w-full max-w-md mt-2">
               <BorderGlow
                 edgeSensitivity={40}
                 glowColor="60 90 90"
                 borderRadius={9999}
-                glowRadius={40}
+                glowRadius={45}
                 glowIntensity={0.8}
-                colors={["#EAB308", "#38bdf8", "#ec4899"]}
+                colors={["#F43F5E", "#38bdf8", "#ec4899"]}
                 backgroundColor="var(--bg-card)"
-                className="min-w-0 max-w-106 max-md:min-w-88 flex-1 rounded-full p-px bg-zinc-100 dark:bg-zinc-900 supports-backdrop-filter:bg-zinc-100/50 supports-backdrop-filter:dark:bg-zinc-900/50 supports-backdrop-filter:backdrop-blur-sm"
+                className="w-full p-px rounded-full bg-zinc-100 dark:bg-zinc-900 supports-backdrop-filter:bg-zinc-100/50 supports-backdrop-filter:dark:bg-zinc-900/50 supports-backdrop-filter:backdrop-blur-sm shadow-md"
               >
                 <Input
                   type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   startContent={
-                    <span className="text-xs font-baijamjuree translate-y-0.5 ml-2 relative flex -mr-2.75 text-foreground/40">
+                    <span className="text-xs font-baijamjuree translate-y-0.5 ml-3.5 relative flex -mr-2 text-foreground/45">
                       tip-to.me/@
                     </span>
                   }
                   endContent={
                     <Link
-                      className="text-xs flex w-max -mr-0.5 h-8 items-center justify-center gap-2 rounded-full bg-foreground px-3 text-background hover:bg-[#383838] dark:hover:bg-[#ccc]"
-                      href="/app/profile"
+                      className="text-xs flex w-max -mr-1 h-8 items-center justify-center gap-1.5 rounded-full bg-foreground px-4 text-background hover:bg-[#383838] dark:hover:bg-[#ccc] font-bold shadow-sm transition-transform active:scale-[0.98]"
+                      href={
+                        username.trim()
+                          ? `/app/profile?username=${username}`
+                          : "/app/profile"
+                      }
                     >
                       <BellRingingIcon
                         weight="fill"
-                        className="max-sm:hidden"
-                        size={16}
+                        className="max-sm:hidden size-3.5"
                       />
                       {lang.data.pages.index.actions.primary}
                     </Link>
                   }
                   fontStyle={{
-                    fontFamily: "var(--font-baijamjuree)",
+                    fontFamily: "var(--font-bai-jamjuree)",
                     fontSize: "12px",
                   }}
                   placeholder={lang.data.pages.index.actions.yourname}
                   classNames={{
-                    base: "h-11 rounded-full bg-transparent border-0 ring-0 focus-visible:ring-0 focus:ring-0",
+                    base: "h-11 rounded-full bg-transparent border-0 ring-0 focus-visible:ring-0 focus:ring-0 px-4",
                     container: "w-full bg-transparent",
                   }}
                 />
               </BorderGlow>
             </motion.div>
-            <motion.div variants={fadeInUp}>
+
+            <motion.div variants={fadeInUp} className="flex items-center gap-4">
               <Button
-                variant={"outline"}
-                className="text-sm flex h-11 items-center justify-center rounded-full border-2 border-solid border-black/8 px-5 hover:border-transparent hover:bg-black/4 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+                variant="outline"
+                className="text-xs font-bold flex h-10 items-center justify-center gap-1.5 rounded-full border border-zinc-300 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 px-5 shadow-sm hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all"
                 onClick={() =>
                   sectionHIW.current &&
                   sectionHIW.current.scrollIntoView({
@@ -192,128 +175,162 @@ export default function Home() {
                 }
               >
                 {lang.data.pages.index.actions.secondary}
+                <CaretRightIcon size={12} weight="bold" />
               </Button>
             </motion.div>
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-6 w-full flex justify-center z-10"
+          >
+            <StreamerWorkspaceMockup username={username} lang={lang} />
+          </motion.div>
         </main>
       </motion.div>
+
       <section
         ref={sectionHIW}
-        className="p-6 py-16 min-h-screen w-full flex flex-col items-center bg-zinc-50 font-sans dark:bg-black"
+        className="w-full py-24 px-6 bg-zinc-50 dark:bg-black font-sans flex flex-col items-center justify-center border-t border-zinc-100 dark:border-zinc-900/60 relative overflow-hidden"
       >
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="sticky top-12 bottom-12 mt-16 -mb-16 flex flex-col items-center"
-        >
-          <motion.h1
-            variants={fadeInUp}
-            className="text-4xl font-semibold mb-3"
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(244,63,94,0.02)_0%,transparent_50%)] pointer-events-none" />
+
+        <div className="w-full max-w-5xl mx-auto flex flex-col items-center z-10">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="flex flex-col items-center text-center mb-10"
           >
-            {lang.data.pages.index.sections.howitworks.title}
-          </motion.h1>
-          <motion.p variants={fadeInUp}>
-            {lang.data.pages.index.sections.howitworks.description}
-          </motion.p>
-          <motion.div variants={fadeInUp}>
-            <BorderGlow
-              edgeSensitivity={20}
-              glowColor="40 80 80"
-              borderRadius={9999}
-              glowRadius={25}
-              glowIntensity={0.6}
-              colors={["#EAB308", "#38bdf8", "#ec4899"]}
-              className="mt-6 bg-foreground/5 p-px rounded-full"
+            <motion.h2
+              variants={fadeInUp}
+              className="text-3xl md:text-4xl font-black mb-3 tracking-tight text-black dark:text-zinc-50"
             >
-              <div className="flex bg-zinc-50 dark:bg-zinc-950 rounded-full p-0.5">
-                <Button
-                  className="rounded-full relative"
-                  variant={"ghost"}
-                  onClick={() => setIsHIWStreamer(true)}
-                >
-                  <AnimatePresence>
-                    {isHIWStreamer && (
-                      <motion.div
-                        id="HIW-Selector-Active"
-                        layoutId="HIW-Selector-Active"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="size-full top-0 left-0 rounded-full absolute bg-foreground pointer-events-none"
-                        data-default-transition="false"
-                      />
-                    )}
-                  </AnimatePresence>
-                  <span
-                    className={cn("z-10", isHIWStreamer && "text-background")}
+              {lang.data.pages.index.sections.howitworks.title}
+            </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="text-sm md:text-base text-zinc-500 dark:text-zinc-400 font-semibold uppercase tracking-wider mb-6"
+            >
+              {lang.data.pages.index.sections.howitworks.description}
+            </motion.p>
+
+            <motion.div variants={fadeInUp}>
+              <BorderGlow
+                edgeSensitivity={20}
+                glowColor="40 80 80"
+                borderRadius={9999}
+                glowRadius={25}
+                glowIntensity={0.6}
+                colors={["#F43F5E", "#38bdf8", "#ec4899"]}
+                className="bg-foreground/5 p-px rounded-full"
+              >
+                <div className="flex bg-white dark:bg-zinc-950 rounded-full p-0.75 shadow-inner">
+                  <Button
+                    className="rounded-full relative text-xs font-semibold px-5 h-8"
+                    variant={"ghost"}
+                    onClick={() => setIsHIWStreamer(true)}
                   >
-                    {
-                      lang.data.pages.index.sections.howitworks.selectors
-                        .streamer
-                    }
-                  </span>
-                </Button>
-                <Button
-                  className="rounded-full relative"
-                  variant={"ghost"}
-                  onClick={() => setIsHIWStreamer(false)}
-                >
-                  <AnimatePresence>
-                    {!isHIWStreamer && (
-                      <motion.div
-                        id="HIW-Selector-Active"
-                        layoutId="HIW-Selector-Active"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="size-full top-0 left-0 rounded-full absolute bg-foreground pointer-events-none"
-                        data-default-transition="false"
-                      />
-                    )}
-                  </AnimatePresence>
-                  <span
-                    className={cn("z-10", !isHIWStreamer && "text-background")}
+                    <AnimatePresence>
+                      {isHIWStreamer && (
+                        <motion.div
+                          id="HIW-Selector-Active"
+                          layoutId="HIW-Selector-Active"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="size-full top-0 left-0 rounded-full absolute bg-foreground pointer-events-none"
+                          data-default-transition="false"
+                        />
+                      )}
+                    </AnimatePresence>
+                    <span
+                      className={cn(
+                        "z-10 transition-colors",
+                        isHIWStreamer
+                          ? "text-background"
+                          : "text-foreground/60",
+                      )}
+                    >
+                      {
+                        lang.data.pages.index.sections.howitworks.selectors
+                          .streamer
+                      }
+                    </span>
+                  </Button>
+                  <Button
+                    className="rounded-full relative text-xs font-semibold px-5 h-8"
+                    variant={"ghost"}
+                    onClick={() => setIsHIWStreamer(false)}
                   >
-                    {lang.data.pages.index.sections.howitworks.selectors.viewer}
-                  </span>
-                </Button>
-              </div>
-            </BorderGlow>
+                    <AnimatePresence>
+                      {!isHIWStreamer && (
+                        <motion.div
+                          id="HIW-Selector-Active"
+                          layoutId="HIW-Selector-Active"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="size-full top-0 left-0 rounded-full absolute bg-foreground pointer-events-none"
+                          data-default-transition="false"
+                        />
+                      )}
+                    </AnimatePresence>
+                    <span
+                      className={cn(
+                        "z-10 transition-colors",
+                        !isHIWStreamer
+                          ? "text-background"
+                          : "text-foreground/60",
+                      )}
+                    >
+                      {
+                        lang.data.pages.index.sections.howitworks.selectors
+                          .viewer
+                      }
+                    </span>
+                  </Button>
+                </div>
+              </BorderGlow>
+            </motion.div>
           </motion.div>
-        </motion.div>
-        <div className="flex gap-8 w-full min-h-screen z-10 -mb-16 bg-zinc-50 dark:bg-black relative mt-64">
-          <div className="absolute w-full pointer-events-none h-64 bg-linear-180 to-zinc-50 dark:to-black from-transparent top-0 left-0 -translate-y-full" />
-          <AnimatePresence mode="wait">
-            {isHIWStreamer ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="mx-auto"
-                key="HIW-Streamer"
-                layoutId="HIW-Streamer"
-              >
-                <HowItWorkStreamer />
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="mx-auto"
-                key="HIW-Viewer"
-                layoutId="HIW-Viewer"
-              >
-                <HowItWorkViewer />
-              </motion.div>
-            )}
-          </AnimatePresence>
+
+          <div className="w-full z-10 bg-transparent relative flex justify-center">
+            <AnimatePresence mode="wait">
+              {isHIWStreamer ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.25 }}
+                  className="w-full"
+                  key="HIW-Streamer"
+                >
+                  <HowItWorkStreamer />
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.25 }}
+                  className="w-full"
+                  key="HIW-Viewer"
+                >
+                  <HowItWorkViewer />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </section>
 
-      <section className="w-full bg-zinc-50 dark:bg-black font-sans py-24 border-t border-zinc-100 dark:border-zinc-900 relative overflow-hidden">
+      <section className="w-full bg-zinc-50 dark:bg-black font-sans py-24 border-t border-zinc-100 dark:border-zinc-900/60 relative overflow-hidden">
+        <div className="absolute inset-y-0 right-0 w-80 bg-[radial-gradient(circle_at_center,rgba(244,63,94,0.015)_0%,transparent_60%)] pointer-events-none" />
+
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -324,23 +341,24 @@ export default function Home() {
           <div className="max-w-3xl mb-16">
             <motion.p
               variants={fadeInUp}
-              className="text-xs font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-4"
+              className="text-xs font-bold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-3"
             >
               {lang.data.pages.index.sections.good_to_know.title}
             </motion.p>
             <motion.h2
               variants={fadeInUp}
-              className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-6"
+              className="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-5 text-black dark:text-zinc-50"
             >
               {lang.data.pages.index.sections.good_to_know.subtitle}
             </motion.h2>
             <motion.p
               variants={fadeInUp}
-              className="text-base text-zinc-500 dark:text-zinc-400 leading-relaxed font-normal"
+              className="text-sm md:text-base text-zinc-500 dark:text-zinc-400 leading-relaxed font-medium"
             >
               {lang.data.pages.index.sections.good_to_know.description}
             </motion.p>
           </div>
+
           <motion.div
             variants={staggerContainer}
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
@@ -352,7 +370,8 @@ export default function Home() {
                 desc: lang.data.pages.index.sections.good_to_know.insights[0]
                   .desc,
                 glowColor: "40 80 80",
-                colors: ["#EAB308", "#38bdf8"],
+                colors: ["#F43F5E", "#38bdf8"],
+                icon: HandCoinsIcon,
               },
               {
                 title:
@@ -361,6 +380,7 @@ export default function Home() {
                   .desc,
                 glowColor: "60 90 90",
                 colors: ["#ec4899", "#38bdf8"],
+                icon: ShieldCheckIcon,
               },
               {
                 title:
@@ -369,28 +389,35 @@ export default function Home() {
                   .desc,
                 glowColor: "80 80 80",
                 colors: ["#22c55e", "#c084fc"],
+                icon: CodeBlockIcon,
               },
-            ].map((insight, idx) => (
-              <motion.div key={idx} variants={fadeInUp}>
-                <BorderGlow
-                  edgeSensitivity={30}
-                  glowColor={insight.glowColor}
-                  borderRadius={12}
-                  glowRadius={30}
-                  glowIntensity={0.8}
-                  colors={insight.colors}
-                  backgroundColor="var(--bg-card)"
-                  className="flex flex-col gap-4 p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-900 shadow-none!"
-                >
-                  <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
-                    {insight.title}
-                  </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed font-normal">
-                    {insight.desc}
-                  </p>
-                </BorderGlow>
-              </motion.div>
-            ))}
+            ].map((insight, idx) => {
+              const Icon = insight.icon;
+              return (
+                <motion.div key={idx} variants={fadeInUp}>
+                  <BorderGlow
+                    edgeSensitivity={30}
+                    glowColor={insight.glowColor}
+                    borderRadius={20}
+                    glowRadius={35}
+                    glowIntensity={0.8}
+                    colors={insight.colors}
+                    backgroundColor="var(--bg-card)"
+                    className="flex flex-col gap-4 p-6 rounded-2xl bg-white/40 dark:bg-zinc-950/40 backdrop-blur-md border border-zinc-200/50 dark:border-zinc-900/60 shadow-lg"
+                  >
+                    <div className="size-10 rounded-xl bg-zinc-100 dark:bg-zinc-900/80 flex items-center justify-center text-zinc-700 dark:text-zinc-300">
+                      <Icon size={22} weight="fill" />
+                    </div>
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                      {insight.title}
+                    </h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed font-normal">
+                      {insight.desc}
+                    </p>
+                  </BorderGlow>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </motion.div>
       </section>
