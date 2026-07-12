@@ -38,3 +38,7 @@ export function getSocialUrl(platform: string, value: string): string {
       return trimmed;
   }
 }
+
+export function clamp(val: number, min: number, max: number) {
+  return val < min ? min : val > max ? max : val;
+}
