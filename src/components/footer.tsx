@@ -5,11 +5,10 @@ import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import LanguageSwitcher from "./language-switcher";
 import Link from "next/link";
-import { Button } from "./ui/button";
-import Image from "next/image";
 import { HandHeartIcon } from "@phosphor-icons/react";
 import { usePathname } from "next/navigation";
-import { BuyMeACoffee } from "@thesvg/react";
+import BorderGlow from "./BorderGlow";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 const Footer = memo(function Footer() {
   const pathname = usePathname();
@@ -67,7 +66,7 @@ const Footer = memo(function Footer() {
 
   return (
     <>
-      {["/", "/pricing", "/about", "/docs"].includes(pathname) && (
+      {/* {["/", "/pricing", "/about", "/docs"].includes(pathname) && (
         <section className="py-16 p-6 bg-zinc-50 font-sans dark:bg-black flex flex-col items-center justify-center gap-3">
           <div className="p-6 rounded-3xl flex flex-col gap-3 bg-foreground/5 bg-linear-150 from-rose-950 to-rose-300 w-full max-w-xl">
             <h1 className="text-lg font-semibold text-white">
@@ -97,16 +96,18 @@ const Footer = memo(function Footer() {
             </Link>
           </div>
         </section>
-      )}
+      )} */}
 
       <footer className="w-full min-w-0 flex-1 p-6 flex flex-col items-center relative bg-sidebar">
         {!pathname.startsWith("/app") && (
-          <div className="absolute top-0 left-0 -translate-y-full w-full min-w-0 flex-1 bg-linear-0 to-transparent from-sidebar h-12 opacity-60" />
+          <div className="absolute top-0 left-0 -translate-y-full w-full min-w-0 flex-1 bg-linear-0 to-transparent from-sidebar h-40 z-10 pointer-events-none" />
         )}
         <div className="min-w-0 w-full max-w-5xl flex gap-6 mx-auto py-6 max-sm:flex-col">
           <div className="flex flex-col gap-2 text-foreground/30 flex-1 min-w-0">
             <h1 className="text-xl font-light tracking-wider">Alertbox.org</h1>
-            <p className="font-read text-xs">{lang.data.footer.description}</p>
+            <p className="font-sans text-xs text-foreground/15 leading-4.5">
+              {lang.data.footer.description}
+            </p>
             <div className="text-foreground">
               <LanguageSwitcher showLabel={true} />
             </div>
@@ -137,13 +138,45 @@ const Footer = memo(function Footer() {
             ))}
           </div>
         </div>
-        <div className="flex flex-col">
-          <span className="text-foreground/10 font-mono text-xs my-3 tracking-widest text-center">
-            Made with ❤︎ by Ponlponl123 Labs
-          </span>
-          <span className="text-foreground/10 font-mono text-xs mb-3 tracking-widest text-center">
-            Innovative / Human / Open / Earth
-          </span>
+        <div className="flex items-center justify-between w-full max-w-5xl mx-auto mt-4">
+          <div className="text-foreground/10 font-mono text-xs">
+            <Tooltip>
+              <TooltipTrigger delay={2000}>
+                <Link href="/donate">
+                  <BorderGlow
+                    edgeSensitivity={10}
+                    glowColor="10 80 80"
+                    borderRadius={8}
+                    glowRadius={40}
+                    glowIntensity={1}
+                    backgroundColor="var(--bg-card)"
+                    colors={["#f43f5e", "#ec4899", "#d946ef"]}
+                    className="flex flex-col justify-between p-2.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-900 h-full"
+                  >
+                    <h1 className="text-[11px] font-bold text-foreground/30">
+                      <HandHeartIcon
+                        className="inline"
+                        size={18}
+                        weight="fill"
+                      />{" "}
+                      {lang.data.helpus.title}
+                    </h1>
+                  </BorderGlow>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent className={"rounded-lg p-4"}>
+                <p className="text-xs">{lang.data.helpus.description}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="flex flex-col gap-2 text-end">
+            <span className="text-foreground/10 font-mono text-[10px] mt-2 tracking-widest">
+              Made with ❤︎ by Ponlponl123 Labs
+            </span>
+            <span className="text-foreground/10 font-mono text-[11px] mb-2 tracking-widest">
+              Innovative / Human / Open / Earth
+            </span>
+          </div>
         </div>
       </footer>
     </>

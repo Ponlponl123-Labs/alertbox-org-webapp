@@ -174,21 +174,21 @@
           ]
         },
         "good_to_know": {
-          "title": "Good to know",
-          "subtitle": "Foundation Insights",
-          "description": "True innovation flourishes when knowledge is free. Here are a few things about the streaming donation landscape that most creators only learn the hard way.",
+          "title": "Deep FAQ",
+          "subtitle": "Streamer Secrets",
+          "description": "The hard questions about privacy, chargebacks, and fees that other alert platforms don't want to talk about.",
           "insights": [
             {
-              "title": "1. The Hidden Cost of 'Free' Alerts",
-              "desc": "Many alert platforms claim to be free, but they take a 5% to 15% cut of your tips or delay your payouts. Alertbox charges 0% platform fees. We only listen to webhooks from your payment gateways (Stripe, Ko-fi, BMAC), so your money goes directly to you instantly."
+              "title": "1. How do I mask my real name on Stripe/PayPal?",
+              "desc": "Alertbox doesn't touch your money, which means your gateway handles the billing statement. To stay anonymous, configure a custom 'Statement Descriptor' or 'Public Details' on your Stripe/Ko-fi dashboard. Avoid using personal PayPal accounts, as they expose your email and real name to donors."
             },
             {
-              "title": "2. The Privacy Exposure Dilemma",
-              "desc": "Direct payment links (like PayPal or standard card billing) often expose your real name, email, or billing address to donors, which is dangerous for anonymous creators. By routing donations through gateway webhooks, Alertbox keeps your identity private and secure."
+              "title": "2. How do I protect myself from troll chargebacks?",
+              "desc": "Troll donations are a huge risk. Since Alertbox connects directly to your Stripe or Ko-fi account, you can enable Stripe Radar rules to block high-risk cards. We also recommend setting a minimum alert threshold and using our alert delay features to intercept offensive messages before they display on stream."
             },
             {
-              "title": "3. Why Open Source is Critical",
-              "desc": "Closed-source widgets track viewer behavior and can shut down or change terms overnight. Because Alertbox is open-source, the code is fully reviewable and self-hostable. You own your alerts, your data, and your overlay forever."
+              "title": "3. Can I self-host Alertbox to avoid all tracking?",
+              "desc": "Yes, completely. Alertbox is open-source. You can run the entire system on your own server or a free service like Vercel/Fly.io. This ensures that no third party (including us) can ever track your donors, collect analytics, or change terms of service on you. Your overlay, your code, your absolute control."
             }
           ]
         },

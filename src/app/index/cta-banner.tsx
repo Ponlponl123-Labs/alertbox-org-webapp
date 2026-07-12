@@ -159,7 +159,7 @@ export default function CTABanner() {
           transition={{ delay: 0.4 }}
           className="text-[9px] font-mono tracking-widest text-foreground/25 uppercase mt-10"
         >
-          Free forever • No credit card • Open source MIT
+          Free forever • No credit card • Open source
         </motion.p>
       </div>
     </section>

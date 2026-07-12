@@ -14,7 +14,7 @@ export default function CinematicInsights() {
   const lang = useStore(coreStore, (state) => state.lang);
   const t = lang.data.pages.index.sections.good_to_know;
 
-  const icons = [HandCoinsIcon, ShieldCheckIcon, CodeBlockIcon];
+  const icons = [ShieldCheckIcon, HandCoinsIcon, CodeBlockIcon];
   const glowColors = ["40 80 80", "60 90 90", "80 80 80"];
   const gradientColors = [
     ["#F43F5E", "#38bdf8"],
@@ -79,7 +79,7 @@ export default function CinematicInsights() {
                     backgroundColor="var(--card)"
                     className="flex flex-col h-full gap-5 p-8 rounded-3xl bg-card border border-border shadow-xl"
                   >
-                    <div className="size-12 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground border border-foreground/10">
+                    <div className="size-12 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground border border-foreground/10 mb-3">
                       <Icon size={24} weight="fill" />
                     </div>
                     <div>
