@@ -666,7 +666,7 @@ export default function PublicProfileClient({
                           className={cn(
                             "w-full rounded-2xl border-2 border-transparent dark:bg-white/10 bg-black/10 px-4 py-3 outline-none text-xs text-foreground transition-all duration-200 resize-none",
                             "hover:bg-black/5 dark:hover:bg-white/5 hover:border-black/10 dark:hover:border-white/10",
-                            "focus:bg-black/5! focus:dark:bg-white/5! focus:border-black/10! focus:dark:bg-white/10!",
+                            "focus:bg-black/5! focus:dark:bg-white/5! focus:border-black/10! focus:dark:border-white/10!",
                           )}
                         />
                       </div>

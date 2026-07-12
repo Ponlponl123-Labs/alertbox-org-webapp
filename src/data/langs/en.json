@@ -51,6 +51,36 @@
         "secondary": "How It Works?",
         "yourname": "your-name"
       },
+      "hero": {
+        "badge": "Zero Platform Fees • 100% Private",
+        "stats": {
+          "alerts": "Alerts Synced",
+          "streamers": "Active Streamers",
+          "latency": "Webhook Latency",
+          "uptime": "Edge Uptime"
+        },
+        "simulator": {
+          "live": "OBS STREAM LIVE",
+          "latency": "Latency: ~12ms",
+          "select_trigger": "Select simulated trigger below",
+          "privacy_tag": "Masked Beneficiary Routing",
+          "donation": {
+            "tag": "DONATION",
+            "title": "Sarah gifted $25.00",
+            "message": "Love the stream! 💜"
+          },
+          "sub": {
+            "tag": "SUBSCRIBER",
+            "title": "Zenith_Live subscribed",
+            "message": "Tier 3 • 6 month streak"
+          },
+          "cheer": {
+            "tag": "BITS CHEER",
+            "title": "GamerGuy cheered 1,000 Bits",
+            "message": "Hype train is here!"
+          }
+        }
+      },
       "sections": {
         "howitworks": {
           "title": "How it Works?",
@@ -161,6 +191,234 @@
               "desc": "Closed-source widgets track viewer behavior and can shut down or change terms overnight. Because Alertbox is open-source, the code is fully reviewable and self-hostable. You own your alerts, your data, and your overlay forever."
             }
           ]
+        },
+        "social_proof": {
+          "badge": "Trusted by Creators Worldwide",
+          "description": "Powering donation alerts for streamers across the globe"
+        },
+        "privacy_guard": {
+          "title": "Zero-Trust Privacy Guard",
+          "subtitle": "Streamer Anonymity",
+          "description": "Alertbox is built to keep your financial trail separate from your streaming identity. Receive support directly, but reveal only what you choose.",
+          "items": {
+            "account": {
+              "title": "Masked Beneficiary Details",
+              "desc": "Your legal name, bank details, and email addresses are masked from payment records to protect you from doxxing."
+            },
+            "webhook": {
+              "title": "Gateway Webhook Ingest",
+              "desc": "Donors pay your chosen payment gateway directly. Alertbox only listens for webhook events to trigger the on-screen alert."
+            },
+            "tracking": {
+              "title": "Zero Transaction Trackers",
+              "desc": "We do not store, process, or sell donor profiles. Your transactions belong entirely to you and your payment gateway."
+            }
+          },
+          "simulator": {
+            "routing": "Privacy Routing",
+            "encrypted": "ENCRYPTED",
+            "exposed": "EXPOSED IN PLAIN TEXT",
+            "shield_active": "IDENTITY SHIELD: ACTIVE",
+            "shield_disabled": "IDENTITY SHIELD: DISABLED",
+            "disable_shield": "Disable Shield (Reveal)",
+            "enable_shield": "Enable Shield (Mask)",
+            "fields": {
+              "name": "Beneficiary Legal Name",
+              "account": "Payout Bank Account",
+              "email": "Streamer Private Email",
+              "routing": "Routing & Transit Code"
+            },
+            "values": {
+              "name": "Alex Rivers (Streamer)",
+              "account": "US Bank ****9840",
+              "email": "alex_rivers_official@gmail.com",
+              "routing": "RT-021000021"
+            }
+          }
+        },
+        "features": {
+          "title": "Packed with Features",
+          "subtitle": "Streamer Toolbox",
+          "description": "Everything you need to receive donations privately and display real-time alerts without middleman platform cuts.",
+          "items": [
+            {
+              "title": "0% Platform Fees",
+              "desc": "Keep 100% of your viewer donations. We process webhooks directly, meaning we never take a cut of your earnings."
+            },
+            {
+              "title": "Privacy Protection",
+              "desc": "Donors pay your standard gateway (Stripe/Ko-fi). Your private personal details, name, and bank info are never exposed."
+            },
+            {
+              "title": "Bespoke Overlay Design",
+              "desc": "Design alerts to match your channel. Edit animation types, colors, timers, templates, and layouts with real-time preview."
+            },
+            {
+              "title": "Instant Webhook Sync",
+              "desc": "Get notified on screen immediately when a viewer subscribes or donates. Near zero-latency alert rendering."
+            },
+            {
+              "title": "Open Source & Private",
+              "desc": "Total ownership of your widgets. Host it yourself or run our free cloud deployment. Auditable and tracking-free."
+            },
+            {
+              "title": "OBS & Studio Ready",
+              "desc": "Copy a single secure overlay browser source URL and paste it directly into OBS Studio, Streamlabs, or Prism."
+            }
+          ],
+          "demos": {
+            "calculator": {
+              "others": "Others (10%)",
+              "alertbox": "AlertBox (0%)",
+              "volume": "Monthly Volume"
+            },
+            "customizer": {
+              "tip_received": "TIP RECEIVED",
+              "sent": "sent"
+            },
+            "webhooks": {
+              "listening": "📡 Webhook server ready on port 3000...",
+              "ingesting": "» POST /webhooks/stripe - Ingesting payload...",
+              "success": "✓ 200 OK - Alert synced in 14ms",
+              "simulate": "Simulate Payment Webhook",
+              "processing": "Broadcasting...",
+              "done": "Alert Synced ✓"
+            },
+            "opensource": {
+              "license": "Apache-2.0 LICENSE",
+              "contributions": "CONTRIBUTIONS",
+              "copied": "COPIED"
+            }
+          }
+        },
+        "testimonials": {
+          "title": "Loved by Streamers",
+          "subtitle": "What Creators Say",
+          "items": [
+            {
+              "name": "Alex Rivera",
+              "handle": "@alexstreams",
+              "role": "Twitch Partner",
+              "quote": "Switching to AlertBox was a no-brainer. Zero fees, full privacy, and my alerts look incredible. I wish I'd found this sooner."
+            },
+            {
+              "name": "Mina K.",
+              "handle": "@mina_vt",
+              "role": "VTuber",
+              "quote": "As a VTuber, privacy is everything. AlertBox lets my fans support me without ever exposing my real identity. It's exactly what I needed."
+            },
+            {
+              "name": "Jordan Chen",
+              "handle": "@jordanplays",
+              "role": "YouTube Streamer",
+              "quote": "The fact that it's open-source and self-hostable sold me immediately. No vendor lock-in, no hidden fees, just clean donation alerts."
+            }
+          ]
+        },
+        "comparison": {
+          "title": "Why AlertBox?",
+          "subtitle": "Feature Comparison",
+          "description": "See how AlertBox.org stacks up against typical donation alert platforms.",
+          "headers": [
+            "Feature",
+            "AlertBox.org",
+            "Typical Platforms"
+          ],
+          "rows": [
+            {
+              "feature": "Platform Fee",
+              "alertbox": "0% Forever",
+              "others": "5% – 15%"
+            },
+            {
+              "feature": "Open Source",
+              "alertbox": true,
+              "others": false
+            },
+            {
+              "feature": "Privacy Protection",
+              "alertbox": true,
+              "others": false
+            },
+            {
+              "feature": "Self-Hostable",
+              "alertbox": true,
+              "others": false
+            },
+            {
+              "feature": "Custom Alert Design",
+              "alertbox": true,
+              "others": "Limited"
+            },
+            {
+              "feature": "Multiple Payment Gateways",
+              "alertbox": true,
+              "others": "Platform-locked"
+            },
+            {
+              "feature": "Real-time Webhooks",
+              "alertbox": true,
+              "others": "Varies"
+            },
+            {
+              "feature": "No Ads",
+              "alertbox": true,
+              "others": false
+            }
+          ]
+        },
+        "pricing_highlight": {
+          "title": "Forever Free",
+          "subtitle": "No hidden fees. No premium tiers. No catches.",
+          "price": "$0",
+          "period": "forever",
+          "description": "AlertBox.org is a non-profit, open-source project. Every feature is free for every creator.",
+          "features": [
+            "Unlimited donation alerts",
+            "Custom overlay design",
+            "Multiple payment gateways",
+            "Privacy-first architecture",
+            "Self-hostable codebase",
+            "Community support"
+          ],
+          "cta": "Start Creating — It's Free",
+          "footnote": "Only standard payment gateway fees apply (Stripe, Ko-fi, etc.)"
+        },
+        "faq": {
+          "title": "Questions & Answers",
+          "subtitle": "Frequently Asked",
+          "items": [
+            {
+              "q": "Is AlertBox.org really free?",
+              "a": "Yes, 100% free. We are a non-profit, open-source project. We charge zero platform fees. The only fees you'll ever pay are the standard processing fees from your chosen payment gateway (Stripe, Ko-fi, Buy Me a Coffee)."
+            },
+            {
+              "q": "How does AlertBox protect my privacy?",
+              "a": "Donations are processed through third-party payment gateways. AlertBox never sees your financial data. We only receive webhook notifications to trigger alerts. Your real name, email, and bank details are never exposed to donors."
+            },
+            {
+              "q": "Which payment gateways are supported?",
+              "a": "We currently support Stripe, Buy Me a Coffee, Ko-fi, and FeelFreePay. More integrations are coming soon. Each gateway sends us webhook events when a donation occurs."
+            },
+            {
+              "q": "Can I self-host AlertBox?",
+              "a": "Absolutely. AlertBox is fully open-source under a permissive license. You can clone the repository, deploy it on your own infrastructure, and have complete control over your data and alerts."
+            },
+            {
+              "q": "How do I set up alerts for my stream?",
+              "a": "It takes under 2 minutes: Create a profile, connect your payment gateway via webhook, customize your alert design, then copy the overlay URL into OBS as a Browser Source. That's it!"
+            },
+            {
+              "q": "What makes AlertBox different from Streamlabs or StreamElements?",
+              "a": "Unlike closed-source platforms, AlertBox is open-source, charges 0% platform fees, protects creator privacy through webhook-based architecture, and gives you full ownership of your data and alerts."
+            }
+          ]
+        },
+        "cta_banner": {
+          "title": "Ready to Go Live?",
+          "description": "Set up your donation alerts in under 2 minutes. Free forever, no credit card required.",
+          "cta": "Create Your Alert Box",
+          "secondary": "View on GitHub"
         }
       }
     }
