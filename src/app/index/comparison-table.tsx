@@ -104,7 +104,7 @@ export default function ComparisonTable() {
                     key={idx}
                     className={`text-left px-5 py-4 text-[10px] font-bold uppercase tracking-wider ${
                       idx === 1
-                        ? "text-rose-500 bg-rose-500/[0.04]"
+                        ? "text-rose-500 bg-rose-500/4"
                         : "text-muted-foreground/60"
                     }`}
                   >
@@ -126,12 +126,12 @@ export default function ComparisonTable() {
                   <motion.tr
                     key={idx}
                     variants={fadeInUp}
-                    className="border-t border-border hover:bg-foreground/[0.02] transition-colors"
+                    className="border-t border-border hover:bg-foreground/2 transition-colors"
                   >
                     <td className="px-5 py-4 text-xs font-semibold text-foreground/80 text-left">
                       {row.feature}
                     </td>
-                    <td className="px-5 py-4 text-center bg-rose-500/[0.02]">
+                    <td className="px-5 py-4 text-center bg-rose-500/2">
                       <CellValue value={row.alertbox} isAlertBox />
                     </td>
                     <td className="px-5 py-4 text-center">

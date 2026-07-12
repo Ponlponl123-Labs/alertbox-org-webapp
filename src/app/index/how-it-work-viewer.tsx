@@ -98,7 +98,7 @@ function Step2VisualViewer() {
         Complete Donation
       </h4>
       <div className="flex flex-col gap-2">
-        <div className="rounded-xl border border-border p-2 bg-foreground/[0.02] flex justify-between items-center">
+        <div className="rounded-xl border border-border p-2 bg-foreground/2 flex justify-between items-center">
           <div className="flex flex-col">
             <span className="text-[8px] text-muted-foreground uppercase font-bold">
               Selected Amount
@@ -290,7 +290,7 @@ export default function HowItWorkViewer() {
           </div>
         </div>
 
-        <div className="mt-4 p-4 rounded-2xl bg-foreground/[0.02] border border-border min-h-[140px] flex flex-col justify-between shrink-0">
+        <div className="mt-4 p-4 rounded-2xl bg-foreground/2 border border-border min-h-[140px] flex flex-col justify-between shrink-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeStep}
@@ -308,7 +308,7 @@ export default function HowItWorkViewer() {
         </div>
       </div>
 
-      <div className="flex-1 min-w-0 bg-foreground/[0.02] rounded-2xl border border-border flex items-center justify-center h-[340px] md:self-stretch relative overflow-hidden shadow-inner p-4">
+      <div className="flex-1 min-w-0 bg-foreground/2 rounded-2xl border border-border flex items-center justify-center h-[340px] md:self-stretch relative overflow-hidden shadow-inner p-4">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-size-[20px_20px] pointer-events-none" />
 
         <AnimatePresence mode="wait">

@@ -69,7 +69,7 @@ export default function CTABanner() {
         className="absolute inset-0 z-0 pointer-events-none"
         aria-hidden="true"
       >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-rose-500/[0.01] dark:bg-rose-500/[0.015] blur-[140px] rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-rose-500/1 dark:bg-rose-500/1.5 blur-[140px] rounded-full" />
       </div>
 
       <div className="z-10 relative flex flex-col items-center text-center w-full max-w-3xl px-6">
@@ -78,7 +78,7 @@ export default function CTABanner() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-foreground/10 bg-foreground/[0.03] mb-6"
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-foreground/10 bg-foreground/3 mb-6"
         >
           <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>

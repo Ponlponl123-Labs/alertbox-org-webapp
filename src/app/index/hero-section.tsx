@@ -88,7 +88,7 @@ function LiveAlertStack({ hero }: { hero: any }) {
       <motion.div
         animate={{ y: [0, -3, 0], rotate: [-2, -2.5, -2] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute w-[85%] h-36 bg-card/40 border border-border rounded-2xl p-4 shadow-lg -translate-y-10 -translate-x-6 rotate-[-2deg] select-none text-left"
+        className="absolute w-[85%] h-36 bg-card/40 border border-border rounded-2xl p-4 shadow-lg -translate-y-10 -translate-x-6 -rotate-2 select-none text-left"
       >
         <div className="flex items-center justify-between mb-3 border-b border-border/40 pb-2">
           <span className="text-[8px] font-bold text-muted-foreground uppercase font-mono tracking-wider">
@@ -122,7 +122,7 @@ function LiveAlertStack({ hero }: { hero: any }) {
           ease: "easeInOut",
           delay: 1,
         }}
-        className="absolute w-[80%] h-28 bg-card/30 border border-border rounded-2xl p-4 shadow-lg translate-y-12 translate-x-8 rotate-[3deg] select-none text-left"
+        className="absolute w-[80%] h-28 bg-card/30 border border-border rounded-2xl p-4 shadow-lg translate-y-12 translate-x-8 rotate-3 select-none text-left"
       >
         <span className="text-[8px] font-bold text-muted-foreground uppercase font-mono tracking-wider block mb-2.5">
           Overlay Settings
@@ -160,7 +160,7 @@ function LiveAlertStack({ hero }: { hero: any }) {
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
               exit={{ scale: 0.8, opacity: 0, rotate: 10 }}
               transition={{ type: "spring", stiffness: 350, damping: 20 }}
-              className={`size-12 rounded-2xl bg-gradient-to-br ${current.gradient} flex items-center justify-center text-white shrink-0 shadow-lg ${current.glow}`}
+              className={`size-12 rounded-2xl bg-linear-to-br ${current.gradient} flex items-center justify-center text-white shrink-0 shadow-lg ${current.glow}`}
             >
               {current.icon}
             </motion.div>
@@ -336,7 +336,7 @@ export default function HeroSection() {
         <LiveAlertStack hero={hero} />
       </div>
 
-      <div className="w-full mt-16 border-t border-border/40 pt-8 overflow-hidden bg-foreground/[0.01]">
+      <div className="w-full mt-16 border-t border-border/40 pt-8 overflow-hidden bg-foreground/1">
         <div className="max-w-5xl mx-auto px-6 flex flex-wrap items-center justify-around gap-y-6 text-center">
           <div className="flex flex-col gap-1">
             <span className="text-2xl sm:text-3xl font-black font-mono text-foreground">

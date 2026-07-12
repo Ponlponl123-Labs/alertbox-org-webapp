@@ -28,7 +28,7 @@ function Step1Visual() {
         {PAYMENT_METHODS.slice(0, 3).map((method) => (
           <div
             key={method.id}
-            className="flex items-center justify-between p-2 rounded-xl bg-foreground/[0.02] border border-border/50"
+            className="flex items-center justify-between p-2 rounded-xl bg-foreground/2 border border-border/50"
           >
             <div className="flex items-center gap-2">
               <div className="size-7 rounded-lg bg-card border border-border/40 flex items-center justify-center p-1">
@@ -62,7 +62,7 @@ function Step2Visual() {
           <label className="text-[8px] font-bold text-muted-foreground uppercase">
             Your Link
           </label>
-          <div className="h-8 rounded-lg bg-foreground/[0.02] border border-border/50 flex items-center px-2.5 mt-1 text-[9px] text-muted-foreground font-mono">
+          <div className="h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2.5 mt-1 text-[9px] text-muted-foreground font-mono">
             tip-to.me/@<span className="text-primary font-bold">yourname</span>
           </div>
         </div>
@@ -71,7 +71,7 @@ function Step2Visual() {
             <label className="text-[8px] font-bold text-muted-foreground uppercase">
               Display Name
             </label>
-            <div className="h-8 rounded-lg bg-foreground/[0.02] border border-border/50 flex items-center px-2.5 mt-1 text-[9px] text-foreground/80">
+            <div className="h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2.5 mt-1 text-[9px] text-foreground/80">
               Your Stream Name
             </div>
           </div>
@@ -79,7 +79,7 @@ function Step2Visual() {
             <label className="text-[8px] font-bold text-muted-foreground uppercase">
               Accent Theme
             </label>
-            <div className="h-8 rounded-lg bg-foreground/[0.02] border border-border/50 flex items-center justify-between px-2 mt-1">
+            <div className="h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center justify-between px-2 mt-1">
               <div className="flex gap-1">
                 <span className="size-3.5 rounded-full bg-rose-500 border border-background" />
                 <span className="size-3.5 rounded-full bg-pink-500" />
@@ -112,7 +112,7 @@ function Step3Visual() {
           listen to events.
         </p>
         <div className="flex gap-1">
-          <div className="flex-1 h-8 rounded-lg bg-foreground/[0.02] border border-border/50 flex items-center px-2 text-[8px] text-muted-foreground font-mono truncate select-none">
+          <div className="flex-1 h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2 text-[8px] text-muted-foreground font-mono truncate select-none">
             https://api.alertbox.org/v1/webhooks/wh_9x28...
           </div>
           <button className="px-3 bg-foreground/5 border border-border rounded-lg text-[9px] font-bold text-foreground/80">
@@ -137,20 +137,20 @@ function Step4Visual({ lang }: { lang: any }) {
       <div className="grid grid-cols-2 gap-2 text-[8px] font-bold text-muted-foreground uppercase">
         <div>
           <span>Alert Template</span>
-          <div className="h-7 rounded-lg bg-foreground/[0.02] border border-border/50 flex items-center px-2 mt-1 font-mono text-[8px] text-foreground/80">
+          <div className="h-7 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2 mt-1 font-mono text-[8px] text-foreground/80">
             {"{name} tipped {amount}"}
           </div>
         </div>
         <div>
           <span>Alert Animation</span>
-          <div className="h-7 rounded-lg bg-foreground/[0.02] border border-border/50 flex items-center justify-between px-2 mt-1 text-[8px] text-foreground/80">
+          <div className="h-7 rounded-lg bg-foreground/2 border border-border/50 flex items-center justify-between px-2 mt-1 text-[8px] text-foreground/80">
             <span>Bounce Up</span>
             <span className="text-muted-foreground">▼</span>
           </div>
         </div>
       </div>
 
-      <div className="border border-dashed border-border rounded-xl p-3 bg-foreground/[0.02] flex justify-center items-center h-16 mt-1">
+      <div className="border border-dashed border-border rounded-xl p-3 bg-foreground/2 flex justify-center items-center h-16 mt-1">
         <div className="p-2.5 rounded-xl bg-card border border-border/40 shadow-[0_0_20px_var(--primary-glow)] flex flex-col gap-1 text-center scale-90">
           <h1 className="whitespace-nowrap text-[9px] text-foreground/95 leading-none">
             <strong className="text-primary font-bold">Ponlponl123</strong>{" "}
@@ -180,7 +180,7 @@ function Step5Visual() {
           OBS.
         </p>
         <div className="flex gap-1">
-          <div className="flex-1 h-8 rounded-lg bg-foreground/[0.02] border border-border/50 flex items-center px-2 text-[8px] text-muted-foreground font-mono truncate select-none">
+          <div className="flex-1 h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2 text-[8px] text-muted-foreground font-mono truncate select-none">
             https://overlay.alertbox.org/widget/ov_a39...
           </div>
           <button className="px-3 bg-foreground/5 border border-border rounded-lg text-[9px] font-bold text-foreground/80">
@@ -188,7 +188,7 @@ function Step5Visual() {
           </button>
         </div>
 
-        <div className="rounded-xl border border-border overflow-hidden bg-foreground/[0.02] mt-1">
+        <div className="rounded-xl border border-border overflow-hidden bg-foreground/2 mt-1">
           <div className="bg-foreground/10 px-2 py-1 flex items-center gap-1.5 border-b border-border">
             <span className="size-1.5 rounded-full bg-muted-foreground" />
             <span className="text-[7.5px] text-muted-foreground font-bold font-mono uppercase">
@@ -238,7 +238,7 @@ function Step6Visual() {
         </span>
       </h4>
       <div className="flex flex-col gap-2">
-        <div className="rounded-xl bg-foreground/[0.02] border border-border/50 p-2 flex flex-col gap-1.5">
+        <div className="rounded-xl bg-foreground/2 border border-border/50 p-2 flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-[7px] text-muted-foreground border-b border-border pb-1">
             <span>Recent Alert Activity</span>
             <span>100% Direct</span>
@@ -441,7 +441,7 @@ export default function HowItWorkStreamer() {
           </div>
         </div>
 
-        <div className="mt-4 p-4 rounded-2xl bg-foreground/[0.02] border border-border min-h-[140px] flex flex-col justify-between shrink-0">
+        <div className="mt-4 p-4 rounded-2xl bg-foreground/2 border border-border min-h-[140px] flex flex-col justify-between shrink-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeStep}
@@ -462,7 +462,7 @@ export default function HowItWorkStreamer() {
         </div>
       </div>
 
-      <div className="flex-1 min-w-0 bg-foreground/[0.02] rounded-2xl border border-border flex items-center justify-center h-[340px] md:self-stretch relative overflow-hidden shadow-inner p-4">
+      <div className="flex-1 min-w-0 bg-foreground/2 rounded-2xl border border-border flex items-center justify-center h-[340px] md:self-stretch relative overflow-hidden shadow-inner p-4">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-size-[20px_20px] pointer-events-none" />
 
         <AnimatePresence mode="wait">
