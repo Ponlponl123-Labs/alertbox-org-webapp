@@ -171,11 +171,10 @@ function DemoCustomization({ t }: { t: any }) {
             <button
               key={col}
               onClick={() => setAccent(col)}
-              className={`size-4.5 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
-                accent === col
-                  ? "border-foreground scale-110"
-                  : "border-transparent hover:scale-105"
-              }`}
+              className={`size-4.5 rounded-full border flex items-center justify-center transition-all cursor-pointer ${accent === col
+                ? "border-foreground scale-110"
+                : "border-transparent hover:scale-105"
+                }`}
               style={{ backgroundColor: colors[col].hex }}
             />
           ))}
@@ -337,11 +336,10 @@ function DemoOpenSource({ t }: { t: any }) {
           </div>
           <button
             onClick={handleStar}
-            className={`p-2.5 rounded-full border flex items-center gap-1.5 text-[9px] font-bold transition-all cursor-pointer ${
-              starred
-                ? "bg-rose-500/15 border-rose-500/30 text-rose-500"
-                : "border-foreground/10 hover:border-foreground/20 text-foreground/60 hover:text-foreground"
-            }`}
+            className={`p-2.5 rounded-full border flex items-center gap-1.5 text-[9px] font-bold transition-all cursor-pointer ${starred
+              ? "bg-rose-500/15 border-rose-500/30 text-rose-500"
+              : "border-foreground/10 hover:border-foreground/20 text-foreground/60 hover:text-foreground"
+              }`}
           >
             <StarIcon weight={starred ? "fill" : "bold"} size={11} />
             <span className="hidden">{stars.toLocaleString()}</span>
@@ -440,13 +438,6 @@ export default function Features() {
       ref={ref}
       className="w-full py-24 md:py-32 bg-background relative overflow-hidden"
     >
-      <div
-        className="absolute inset-0 pointer-events-none select-none opacity-30 dark:opacity-75"
-        aria-hidden="true"
-      >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-rose-500/1 dark:bg-rose-500/1.5 blur-[140px] rounded-full" />
-      </div>
-
       <div className="max-w-7xl mx-auto px-6 z-10 relative">
         <motion.div
           initial={{ opacity: 0, y: 15 }}

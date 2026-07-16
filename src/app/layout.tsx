@@ -100,7 +100,7 @@ export default function RootLayout({
         <Toaster />
         <UserContextProvider>
           <BackendLivenessChecker />
-          <BackendLivenessBanner />
+          {/* <BackendLivenessBanner /> */}
           <TooltipProvider>
             <Header />
             <main id="app" className="flex-1 min-h-screen flex flex-col">

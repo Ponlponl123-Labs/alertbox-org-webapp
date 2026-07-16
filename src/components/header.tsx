@@ -118,10 +118,10 @@ function Header() {
         <AnimatePresence>
           <motion.div
             initial={{
-              maxWidth: pathname.startsWith("/app") ? "100vw" : 1024,
+              maxWidth: pathname.startsWith("/app") ? "100vw" : 1280,
             }}
             animate={{
-              maxWidth: pathname.startsWith("/app") ? "100vw" : 1024,
+              maxWidth: pathname.startsWith("/app") ? "100vw" : 1280,
             }}
             className={cn(
               "flex-1 min-w-0 max-w-5xl mx-auto w-full flex items-center justify-between gap-4",

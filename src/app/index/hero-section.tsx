@@ -215,28 +215,7 @@ export default function HeroSection() {
     <section className="relative w-full min-h-screen pt-32 pb-20 md:pt-40 md:pb-24 bg-background overflow-hidden flex flex-col items-center justify-between">
       <GridBackground />
 
-      <div
-        className="absolute inset-0 pointer-events-none select-none opacity-50 dark:opacity-80"
-        aria-hidden="true"
-      >
-        <motion.div
-          animate={{ scale: [1, 1.08, 1], opacity: [0.06, 0.1, 0.06] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-rose-50/10 dark:bg-rose-500/10 blur-[130px] rounded-full"
-        />
-        <motion.div
-          animate={{ scale: [1.06, 1, 1.06], opacity: [0.04, 0.08, 0.04] }}
-          transition={{
-            duration: 14,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2.5,
-          }}
-          className="absolute top-1/3 left-1/3 w-[600px] h-[300px] bg-purple-50/8 dark:bg-purple-500/8 blur-[110px] rounded-full"
-        />
-      </div>
-
-      <div className="max-w-5xl mx-auto px-6 z-10 relative w-full flex flex-col items-center text-center flex-1 justify-center gap-12">
+      <div className="max-w-7xl mx-auto px-6 z-10 relative w-full flex flex-col items-center text-center flex-1 justify-center gap-12">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
