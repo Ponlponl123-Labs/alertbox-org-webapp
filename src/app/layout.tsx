@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import {
   Noto_Serif_Thai,
+  Afacad,
+  Inter_Tight,
   Fredoka,
   Geist_Mono,
   JetBrains_Mono,
+  Sarabun,
   Bai_Jamjuree,
 } from "next/font/google";
 import { CountryFlagsPolyfill } from "@/components/CountryFlagsPolyfill";
@@ -23,6 +26,18 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
+const afacadSans = Afacad({
+  variable: "--font-afacad",
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+});
+
+const interTight = Inter_Tight({
+  variable: "--font-inter-tight",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  subsets: ["latin"],
+});
+
 const fredokaSans = Fredoka({
   variable: "--font-fredoka",
   subsets: ["latin"],
@@ -30,6 +45,12 @@ const fredokaSans = Fredoka({
 
 const notoSarifThai = Noto_Serif_Thai({
   variable: "--font-noto-sarif-thai",
+  subsets: ["latin"],
+});
+
+const sarabun = Sarabun({
+  variable: "--font-sarabun",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
   subsets: ["latin"],
 });
 
@@ -66,6 +87,9 @@ export default function RootLayout({
         notoSarifThai.variable,
         "font-sans",
         jetbrainsMono.variable,
+        sarabun.variable,
+        interTight.variable,
+        afacadSans.variable,
       )}
       suppressHydrationWarning
     >

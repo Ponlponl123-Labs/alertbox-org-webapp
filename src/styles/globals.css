@@ -10,26 +10,39 @@
   @import "./theme.css";
 
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/50 font-sans;
   }
-  *:not([data-default-transition="false"])
-    *:not([data-default-transition="false"]),
+
+  *:not([data-default-transition="false"]) *:not([data-default-transition="false"]),
   [data-default-transition="true"] {
     transition: 0.16s cubic-bezier(0.165, 0.84, 0.44, 1);
   }
+
   p {
     @apply font-read;
   }
+
   button:active,
   a:active {
     @apply opacity-80 scale-98;
     transition-duration: 0.08s;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-mono;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
   }
 }
 
@@ -38,19 +51,21 @@
     text-shadow: 0 0 20px rgba(244, 63, 94, 0.3),
       0 0 40px rgba(244, 63, 94, 0.15);
   }
+
   .text-glow-cyan {
     text-shadow: 0 0 20px rgba(56, 189, 248, 0.3),
       0 0 40px rgba(56, 189, 248, 0.15);
   }
+
   .glass-card {
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.18);
   }
+
   .dark .glass-card {
     background: rgba(9, 9, 11, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
 }
-

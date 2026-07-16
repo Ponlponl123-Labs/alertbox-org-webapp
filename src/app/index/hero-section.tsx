@@ -241,11 +241,11 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-foreground/5 animate-fade-in"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-foreground/10 animate-fade-in"
         >
           <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-foreground opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-foreground"></span>
           </span>
           <span className="text-[9px] font-mono tracking-widest text-foreground/50 uppercase font-black">
             {hero.badge}
@@ -253,7 +253,7 @@ export default function HeroSection() {
         </motion.div>
 
         <div className="space-y-4">
-          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[0.95] text-foreground">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl **:font-heading font-medium tracking-tight leading-[0.95] text-foreground">
             <motion.span
               initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -274,7 +274,7 @@ export default function HeroSection() {
                 delay: 0.25,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="block bg-linear-to-r from-rose-500 via-pink-500 to-purple-500 bg-clip-text text-transparent"
+              className="block"
             >
               {title2}
             </motion.span>
@@ -332,8 +332,6 @@ export default function HeroSection() {
             }
           />
         </motion.div>
-
-        <LiveAlertStack hero={hero} />
       </div>
 
       <div className="w-full mt-16 border-t border-border/40 pt-8 overflow-hidden bg-foreground/1">
