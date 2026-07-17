@@ -216,7 +216,7 @@ export default function HeroSection() {
   const primaryAction = lang.data.pages.index.actions.primary;
 
   return (
-    <section className="relative w-full min-h-[92vh] pt-32 pb-20 md:pt-40 md:pb-24 bg-background flex flex-col items-center justify-between">
+    <section className="relative w-full min-h-[92vh] pt-32 pb-20 md:pt-40 md:pb-24 flex flex-col items-center justify-between">
       <motion.div
         initial={{
           opacity: 0,

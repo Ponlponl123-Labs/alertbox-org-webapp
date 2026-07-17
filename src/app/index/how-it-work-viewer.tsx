@@ -1,14 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { coreStore } from "@/hooks/store/core";
 import {
   CalendarHeartIcon,
   ChalkboardTeacherIcon,
   HandCoinsIcon,
-  ArrowRightIcon,
-  ArrowLeftIcon,
   SealCheckIcon,
 } from "@phosphor-icons/react";
 import { useStore } from "zustand";
@@ -107,7 +104,9 @@ function Step2VisualViewer() {
               $10.00 USD
             </span>
           </div>
-          <span className="text-[8px] font-bold text-muted-foreground">Change</span>
+          <span className="text-[8px] font-bold text-muted-foreground">
+            Change
+          </span>
         </div>
 
         <div className="rounded-xl border border-border p-2 flex flex-col gap-1.5">
@@ -226,71 +225,9 @@ export default function HowItWorkViewer() {
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-card/60 backdrop-blur-md rounded-3xl border border-border p-6 md:p-8 flex flex-col md:flex-row gap-8 shadow-xl">
-      <div className="grow flex flex-col justify-between md:max-w-[45%] h-auto">
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[11px] font-bold tracking-wider uppercase text-muted-foreground font-mono">
-              Fans Guide
-            </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                className="size-8 rounded-lg cursor-pointer"
-                disabled={activeStep === 0}
-                onClick={() => setActiveStep((prev) => Math.max(0, prev - 1))}
-              >
-                <ArrowLeftIcon size={14} />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="size-8 rounded-lg cursor-pointer"
-                disabled={activeStep === steps.length - 1}
-                onClick={() =>
-                  setActiveStep((prev) => Math.min(steps.length - 1, prev + 1))
-                }
-              >
-                <ArrowRightIcon size={14} />
-              </Button>
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {steps.map((step, idx) => {
-              const Icon = step.icon;
-              const isActive = idx === activeStep;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setActiveStep(idx)}
-                  className={`text-left px-3.5 py-2.5 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
-                    isActive
-                      ? "bg-foreground/5 border-foreground/10 text-foreground shadow-sm"
-                      : "bg-transparent border-transparent text-muted-foreground/80 hover:bg-foreground/5"
-                  }`}
-                >
-                  <div
-                    className={`size-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                      isActive
-                        ? "bg-foreground text-background font-extrabold"
-                        : "bg-foreground/10 text-foreground/85"
-                    }`}
-                  >
-                    <Icon size={15} weight={isActive ? "fill" : "regular"} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xs font-semibold tracking-tight leading-snug">
-                      {step.title}
-                    </h3>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mt-4 p-4 rounded-2xl bg-foreground/2 border border-border min-h-[140px] flex flex-col justify-between shrink-0">
+    <div className="w-full mx-auto flex flex-col md:flex-row gap-8">
+      <div className="flex-1 min-w-0 flex flex-col justify-between h-auto">
+        <div className="mt-16 mb-12 min-h-[140px] flex flex-col justify-between shrink-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeStep}
@@ -300,15 +237,40 @@ export default function HowItWorkViewer() {
               transition={{ duration: 0.15 }}
               className="grow flex flex-col justify-between text-left"
             >
-              <p className="text-xs text-muted-foreground font-normal leading-relaxed font-read">
+              <p className="text-2xl text-foreground font-medium leading-relaxed font-heading max-w-sm">
                 {steps[activeStep].description}
               </p>
             </motion.div>
           </AnimatePresence>
         </div>
+        <div>
+          <div className="flex flex-col gap-1.5">
+            <strong className="font-mono text-foreground/40 text-sm font-normal">
+              {lang.data.pages.index.sections.howitworks.viewer_guide_title}
+            </strong>
+            {steps.map((step, idx) => {
+              const isActive = idx === activeStep;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setActiveStep(idx)}
+                  className={`text-left p-0 flex items-center uppercase gap-3 transition-all cursor-pointer ${
+                    isActive ? "" : "text-foreground/40"
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold font-mono tracking-wide leading-snug">
+                      {step.title}
+                    </h3>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 min-w-0 bg-foreground/2 rounded-2xl border border-border flex items-center justify-center h-[340px] md:self-stretch relative overflow-hidden shadow-inner p-4">
+      <div className="flex-2 min-w-0 bg-foreground/2 rounded-2xl border border-border flex items-center justify-center min-h-[52vh] md:self-stretch relative overflow-hidden shadow-inner p-4">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-size-[20px_20px] pointer-events-none" />
 
         <AnimatePresence mode="wait">

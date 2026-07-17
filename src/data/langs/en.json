@@ -106,43 +106,45 @@
           },
           "donated": "donated",
           "test_message": "This is a test message.",
+          "steps_title": "Steps",
+          "viewer_guide_title": "Fans Guide",
           "steps": [
             {
-              "title": "1. Prepare Your Payment Gateway",
+              "title": "Prepare Your Payment Gateway",
               "description": "Ensure you have an active account with a supported provider like Stripe, Ko-fi, or Buy Me a Coffee."
             },
             {
-              "title": "2. Create Your Profile",
+              "title": "Create Your Profile",
               "description": "Sign up on Alertbox.org to generate your custom, privacy-focused streamer profile."
             },
             {
-              "title": "3. Connect via Webhook",
+              "title": "Connect via Webhook",
               "description": "Link your payment gateway using our secure webhook so we can trigger alerts when you receive a donation."
             },
             {
-              "title": "4. Customize Your Alert Box",
+              "title": "Customize Your Alert Box",
               "description": "Adjust the design, colors, and layout of your alerts to perfectly match your stream's aesthetic."
             },
             {
-              "title": "5. Add Overlay to OBS",
+              "title": "Add Overlay to OBS",
               "description": "Copy your unique overlay URL and paste it as a Browser Source in your broadcasting software."
             },
             {
-              "title": "6. Go Live!",
+              "title": "Go Live!",
               "description": "You are all set. We handle the overlay and profile, while your funds go directly to you."
             }
           ],
           "steps_for_viewer": [
             {
-              "title": "1. Visit Streamer Profile (Optional)",
+              "title": "Visit Streamer Profile (Optional)",
               "description": "Go to the streamer's Alertbox.org page or click their direct donation link."
             },
             {
-              "title": "2. Make a Donation",
+              "title": "Make a Donation",
               "description": "Pay securely through trusted platforms like Stripe, Buy Me a Coffee, or Ko-fi."
             },
             {
-              "title": "3. You're on Screen!",
+              "title": "You're on Screen!",
               "description": "That's it! Your support instantly triggers a live alert on their stream."
             }
           ]

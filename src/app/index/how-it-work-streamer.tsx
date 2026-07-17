@@ -20,7 +20,7 @@ import { AnimatePresence, motion } from "motion/react";
 
 function Step1Visual() {
   return (
-    <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left">
+    <div className="w-full max-w-[340px] border border-border bg-background rounded-2xl p-4 shadow-lg text-left group/preview">
       <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
         Payment Settings
       </h4>
@@ -32,15 +32,15 @@ function Step1Visual() {
           >
             <div className="flex items-center gap-2">
               <div className="size-7 rounded-lg bg-card border border-border/40 flex items-center justify-center p-1">
-                <method.icon className="size-full animate-pulse" />
+                <method.icon className="size-full animate-pulse not-group-hover/preview:grayscale" />
               </div>
               <span className="text-[10px] font-semibold text-foreground/90">
                 {method.name}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">
+              <span className="size-1.5 rounded-full bg-foreground group-hover/preview:bg-emerald-500 animate-pulse" />
+              <span className="text-[9px] font-bold text-foreground group-hover/preview:text-emerald-600 dark:group-hover/preview:text-emerald-400 uppercase">
                 Connected
               </span>
             </div>
@@ -206,7 +206,9 @@ function Step5Visual() {
               <span className="text-muted-foreground/85 px-1 py-0.5 truncate">
                 Gameplay
               </span>
-              <span className="text-muted-foreground/85 px-1 py-0.5 truncate">Webcam</span>
+              <span className="text-muted-foreground/85 px-1 py-0.5 truncate">
+                Webcam
+              </span>
             </div>
             <div className="flex-1 aspect-video rounded border border-border bg-background flex items-center justify-center relative overflow-hidden">
               <span className="text-[5px] font-bold text-foreground/80 uppercase font-mono z-0">
@@ -296,13 +298,12 @@ export default function HowItWorkStreamer() {
         lang.data.pages.index.sections.howitworks.steps[1].description,
       visual: <Step2Visual />,
       action: (
-        <Link href={"/app"} className="w-max mt-3 block">
-          <Button
-            variant="default"
-            className="rounded-xl px-4 py-1.5 h-8 text-xs font-semibold cursor-pointer"
-          >
-            {lang.data.header.actions.get_started}
-          </Button>
+        <Link
+          href={"/app"}
+          className="w-max mt-3 block text-muted-foreground font-semibold"
+        >
+          {lang.data.header.actions.get_started}
+          <ArrowRightIcon className="inline ml-1.5 -mt-0.5" />
         </Link>
       ),
     },
@@ -313,13 +314,12 @@ export default function HowItWorkStreamer() {
         lang.data.pages.index.sections.howitworks.steps[2].description,
       visual: <Step3Visual />,
       action: (
-        <Link href={"/app/connect"} className="w-max mt-3 block">
-          <Button
-            variant="default"
-            className="rounded-xl px-4 py-1.5 h-8 text-xs font-semibold cursor-pointer"
-          >
-            {lang.data.common.connect}
-          </Button>
+        <Link
+          href={"/app/connect"}
+          className="w-max mt-3 block text-muted-foreground font-semibold"
+        >
+          {lang.data.common.connect}
+          <ArrowRightIcon className="inline ml-1.5 -mt-0.5" />
         </Link>
       ),
     },
@@ -330,13 +330,12 @@ export default function HowItWorkStreamer() {
         lang.data.pages.index.sections.howitworks.steps[3].description,
       visual: <Step4Visual lang={lang} />,
       action: (
-        <Link href={"/app/customize"} className="w-max mt-3 block">
-          <Button
-            variant="default"
-            className="rounded-xl px-4 py-1.5 h-8 text-xs font-semibold cursor-pointer"
-          >
-            {lang.data.common.customize}
-          </Button>
+        <Link
+          href={"/app/customize"}
+          className="w-max mt-3 block text-muted-foreground font-semibold"
+        >
+          {lang.data.common.customize}
+          <ArrowRightIcon className="inline ml-1.5 -mt-0.5" />
         </Link>
       ),
     },
@@ -347,13 +346,12 @@ export default function HowItWorkStreamer() {
         lang.data.pages.index.sections.howitworks.steps[4].description,
       visual: <Step5Visual />,
       action: (
-        <Link href={"/app/customize"} className="w-max mt-3 block">
-          <Button
-            variant="default"
-            className="rounded-xl px-4 py-1.5 h-8 text-xs font-semibold cursor-pointer"
-          >
-            {lang.data.common.overlay_url}
-          </Button>
+        <Link
+          href={"/app/customize"}
+          className="w-max mt-3 block text-muted-foreground font-semibold"
+        >
+          {lang.data.common.overlay_url}
+          <ArrowRightIcon className="inline ml-1.5 -mt-0.5" />
         </Link>
       ),
     },
@@ -364,84 +362,21 @@ export default function HowItWorkStreamer() {
         lang.data.pages.index.sections.howitworks.steps[5].description,
       visual: <Step6Visual />,
       action: (
-        <Link href={"/app"} className="w-max mt-3 block">
-          <Button
-            variant="default"
-            className="rounded-xl px-4 py-1.5 h-8 text-xs font-semibold cursor-pointer"
-          >
-            {lang.data.common.go_live}
-          </Button>
+        <Link
+          href={"/app"}
+          className="w-max mt-3 block text-muted-foreground font-semibold"
+        >
+          {lang.data.common.go_live}
+          <ArrowRightIcon className="inline ml-1.5 -mt-0.5" />
         </Link>
       ),
     },
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-card/60 backdrop-blur-md rounded-3xl border border-border p-6 md:p-8 flex flex-col md:flex-row gap-8 shadow-xl">
-      <div className="grow flex flex-col justify-between md:max-w-[45%] h-auto">
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[11px] font-bold tracking-wider uppercase text-muted-foreground font-mono">
-              Setup Guide
-            </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                className="size-8 rounded-lg cursor-pointer"
-                disabled={activeStep === 0}
-                onClick={() => setActiveStep((prev) => Math.max(0, prev - 1))}
-              >
-                <ArrowLeftIcon size={14} />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="size-8 rounded-lg cursor-pointer"
-                disabled={activeStep === steps.length - 1}
-                onClick={() =>
-                  setActiveStep((prev) => Math.min(steps.length - 1, prev + 1))
-                }
-              >
-                <ArrowRightIcon size={14} />
-              </Button>
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {steps.map((step, idx) => {
-              const Icon = step.icon;
-              const isActive = idx === activeStep;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setActiveStep(idx)}
-                  className={`text-left px-3.5 py-2.5 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
-                    isActive
-                      ? "bg-foreground/5 border-foreground/10 text-foreground shadow-sm"
-                      : "bg-transparent border-transparent text-muted-foreground/80 hover:bg-foreground/5"
-                  }`}
-                >
-                  <div
-                    className={`size-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                      isActive
-                        ? "bg-foreground text-background font-extrabold"
-                        : "bg-foreground/10 text-foreground/80"
-                    }`}
-                  >
-                    <Icon size={15} weight={isActive ? "fill" : "regular"} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xs font-semibold tracking-tight leading-snug">
-                      {step.title}
-                    </h3>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mt-4 p-4 rounded-2xl bg-foreground/2 border border-border min-h-[140px] flex flex-col justify-between shrink-0">
+    <div className="w-full mx-auto flex flex-col md:flex-row gap-8">
+      <div className="flex-1 min-w-0 flex flex-col justify-between h-auto">
+        <div className="mt-16 mb-12 min-h-[140px] flex flex-col justify-between shrink-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeStep}
@@ -451,7 +386,7 @@ export default function HowItWorkStreamer() {
               transition={{ duration: 0.15 }}
               className="grow flex flex-col justify-between text-left"
             >
-              <p className="text-xs text-muted-foreground font-normal leading-relaxed font-read">
+              <p className="text-2xl text-foreground font-medium leading-relaxed font-heading max-w-sm">
                 {steps[activeStep].description}
               </p>
               {steps[activeStep].action && (
@@ -460,9 +395,35 @@ export default function HowItWorkStreamer() {
             </motion.div>
           </AnimatePresence>
         </div>
+        <div>
+          <div className="flex flex-col gap-1.5">
+            <strong className="font-mono text-foreground/40 text-sm font-normal">
+              {lang.data.pages.index.sections.howitworks.steps_title}
+            </strong>
+            {steps.map((step, idx) => {
+              const Icon = step.icon;
+              const isActive = idx === activeStep;
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setActiveStep(idx)}
+                  className={`text-left p-0 flex items-center uppercase gap-3 transition-all cursor-pointer ${
+                    isActive ? "" : "text-foreground/40"
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold font-mono tracking-wide leading-snug">
+                      {step.title}
+                    </h3>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 min-w-0 bg-foreground/2 rounded-2xl border border-border flex items-center justify-center h-[340px] md:self-stretch relative overflow-hidden shadow-inner p-4">
+      <div className="flex-2 min-w-0 bg-foreground/2 rounded-2xl border border-border flex items-center justify-center min-h-[52vh] md:self-stretch relative overflow-hidden shadow-inner p-4">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-size-[20px_20px] pointer-events-none" />
 
         <AnimatePresence mode="wait">
