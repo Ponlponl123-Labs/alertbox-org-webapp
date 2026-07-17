@@ -1,8 +1,14 @@
 "use client";
-import LightPillar from "@/components/LightPillar";
 import { Button } from "@/components/ui/button";
 import { coreStore } from "@/hooks/store/core";
-import { CraneIcon, DiscordLogoIcon, MegaphoneSimpleIcon, WarningIcon } from "@phosphor-icons/react";
+import {
+  CraneIcon,
+  DiscordLogoIcon,
+  MegaphoneSimpleIcon,
+  PlanetIcon,
+  RocketLaunchIcon,
+  WarningIcon,
+} from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { useStore } from "zustand";
 import Link from "next/link";
@@ -53,16 +59,21 @@ function Login() {
         className="m-auto flex flex-col gap-1.5 max-w-92 py-16"
       >
         <motion.div className="p-6 bg-background supports-backdrop-filter:bg-background/30 text-center flex flex-col z-10 supports-backdrop-filter:backdrop-blur-2xl rounded-3xl w-full">
-          <h1 className="font-semibold tracking-widest text-xl">
+          <RocketLaunchIcon className="mx-auto my-3" size={48} />
+          <h1 className="font-semibold tracking-widest text-xl hidden">
             {lang.data.app.login.title}
           </h1>
-          <p className="font-sans tracking-wider text-xs text-foreground/40 my-1.5 mb-3">
+          <p className="font-sans tracking-wider text-xs text-foreground/40 mb-3">
             {lang.data.app.login.description}
           </p>
-          <Alert className="mx-auto mt-1 -mb-1 text-xs rounded-xl bg-amber-600/5 border-amber-600/15 p-3">
-            <CraneIcon weight="fill" className="fill-amber-600" />
-            <strong className="font-medium">{lang.data.app.login.beta.title}</strong>
-            <p className="font-baijamjuree text-xs text-foreground/60">{lang.data.app.login.beta.description}</p>
+          <Alert className="mx-auto mt-1 -mb-1 text-[13px] rounded-xl border-2 bg-foreground/5 border-foreground/5 p-3">
+            <CraneIcon weight="fill" />
+            <strong className="font-medium">
+              {lang.data.app.login.beta.title}
+            </strong>
+            <p className="font-baijamjuree text-[11px] text-foreground/60">
+              {lang.data.app.login.beta.description}
+            </p>
           </Alert>
           <div className="my-6 w-full flex flex-col gap-1">
             <Link href={"/app/login/discord"}>
@@ -71,15 +82,27 @@ function Login() {
                 {lang.data.app.login.methods.discord}
               </Button>
             </Link>
-            <Button disabled variant={"outline"} className={"w-full p-5 rounded-sm"}>
+            <Button
+              disabled
+              variant={"outline"}
+              className={"w-full p-5 rounded-sm"}
+            >
               <Google className="size-4" />
               {lang.data.app.login.methods.google}
-              <Badge variant={"secondary"} className="rounded-sm text-xs">{lang.data.common.comming_soon}</Badge>
+              <Badge variant={"secondary"} className="rounded-sm text-xs">
+                {lang.data.common.comming_soon}
+              </Badge>
             </Button>
-            <Button disabled variant={"outline"} className={"w-full p-5 rounded-t-sm rounded-b-2xl"}>
+            <Button
+              disabled
+              variant={"outline"}
+              className={"w-full p-5 rounded-t-sm rounded-b-2xl"}
+            >
               <Streamlabs className="size-4" />
               {lang.data.app.login.methods.streamlabs}
-              <Badge variant={"secondary"} className="rounded-sm text-xs">{lang.data.common.comming_soon}</Badge>
+              <Badge variant={"secondary"} className="rounded-sm text-xs">
+                {lang.data.common.comming_soon}
+              </Badge>
             </Button>
           </div>
           <span className="text-[10px] text-foreground/40 mt-3 tracking-wider">

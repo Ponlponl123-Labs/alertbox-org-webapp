@@ -112,19 +112,19 @@ function Header() {
             ? "border-transparent"
             : "supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur-sm border-border border-b border-solid ",
           pathname.startsWith("/app") &&
-          "border-0 bg-transparent bg-none supports-backdrop-filter:bg-transparent/80 supports-backdrop-filter:backdrop-blur-none",
+            "border-0 bg-transparent bg-none supports-backdrop-filter:bg-transparent/80 supports-backdrop-filter:backdrop-blur-none",
         )}
       >
         <AnimatePresence>
           <motion.div
             initial={{
-              maxWidth: pathname.startsWith("/app") ? "100vw" : 1280,
+              maxWidth: pathname.startsWith("/app") ? "100vw" : 1448,
             }}
             animate={{
-              maxWidth: pathname.startsWith("/app") ? "100vw" : 1280,
+              maxWidth: pathname.startsWith("/app") ? "100vw" : 1448,
             }}
             className={cn(
-              "flex-1 min-w-0 max-w-5xl mx-auto w-full flex items-center justify-between gap-4",
+              "flex-1 min-w-0 max-w-362 mx-auto w-full flex items-center justify-between gap-4",
               pathname.startsWith("/app") && "max-w-none",
             )}
             id="header-main"
@@ -189,7 +189,7 @@ function Header() {
                       fontWeight: pathname.startsWith("/app") ? 500 : 600,
                       opacity: pathname.startsWith("/app") ? 0.8 : 1,
                     }}
-                    className="text-base font-semibold"
+                    className="text-base font-semibold font-sans"
                   >
                     AlertBox
                     <span className="text-sm opacity-60 ml-0.5 font-light tracking-wider">

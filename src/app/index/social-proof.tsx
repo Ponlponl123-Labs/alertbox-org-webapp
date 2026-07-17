@@ -3,8 +3,66 @@
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { motion } from "motion/react";
-import { PAYMENT_METHODS } from "@/consts/payment";
-import Link from "next/link";
+import LogoLoop from "@/components/LogoLoop";
+import {
+  BuyMeACoffee,
+  FacebookLive,
+  KoFi,
+  Patreon,
+  Streamlabs,
+  Stripe,
+  Twitch,
+  Xendit,
+  Youtube,
+} from "@thesvg/react";
+import { FeelFreePay } from "@/components/icons";
+import clsx from "clsx";
+
+const default_class =
+  "not-hover:grayscale not-hover:opacity-30 text-foreground fill-foreground";
+
+const techLogos = [
+  {
+    node: <Patreon className={clsx("size-8", default_class)} />,
+    title: "Patreon",
+  },
+  {
+    node: <KoFi className={clsx("size-8", default_class)} />,
+    title: "KoFi",
+  },
+  {
+    node: <BuyMeACoffee className={clsx("size-8", default_class)} />,
+    title: "Buy Me A Coffee",
+  },
+  {
+    node: <Stripe className={clsx("size-12", default_class)} />,
+    title: "Stripe",
+  },
+  {
+    node: <FeelFreePay className={clsx("size-8", default_class)} />,
+    title: "FeelFreePay",
+  },
+  {
+    node: <Xendit className={clsx("size-8", default_class)} />,
+    title: "Xendit",
+  },
+  {
+    node: <Streamlabs className={clsx("size-8", default_class)} />,
+    title: "Streamlabs",
+  },
+  {
+    node: <Twitch className={clsx("size-8", default_class)} />,
+    title: "Twitch",
+  },
+  {
+    node: <Youtube className={clsx("size-8", default_class)} />,
+    title: "Youtube",
+  },
+  {
+    node: <FacebookLive className={clsx("size-12", default_class)} />,
+    title: "Facebook",
+  },
+];
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 16 },
@@ -30,47 +88,30 @@ export default function SocialProof() {
   const t = lang.data.pages.index.sections.social_proof;
 
   return (
-    <section className="w-full py-16 bg-background border-t border-border relative overflow-hidden">
+    <section className="w-full max-w-[90vw] relative overflow-hidden">
       <motion.div
         variants={staggerContainer}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-50px" }}
-        className="max-w-5xl mx-auto px-6 flex flex-col items-center gap-8"
+        className="max-w-368 mx-auto flex flex-col items-center gap-8"
       >
-        <motion.p
-          variants={fadeInUp}
-          className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground"
-        >
-          {t.badge}
-        </motion.p>
-
         <motion.div
           variants={fadeInUp}
-          className="flex flex-wrap items-center justify-center gap-8 md:gap-12"
+          className="flex flex-wrap items-center justify-center gap-8 md:gap-12 w-full mask-r-from-90% mask-l-from-90%"
         >
-          {PAYMENT_METHODS.map((method) => (
-            <Link
-              key={method.id}
-              href={method.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex items-center gap-2.5 opacity-40 hover:opacity-80 transition-opacity"
-            >
-              <method.icon className="size-5 grayscale group-hover:grayscale-0 transition-all" />
-              <span className="text-xs font-semibold text-muted-foreground/80 tracking-wide">
-                {method.name}
-              </span>
-            </Link>
-          ))}
+          <LogoLoop
+            logos={techLogos}
+            speed={32}
+            direction="left"
+            gap={128}
+            hoverSpeed={0}
+            scaleOnHover
+            fadeOut
+            fadeOutColor="transparent"
+            ariaLabel="Technology partners"
+          />
         </motion.div>
-
-        <motion.p
-          variants={fadeInUp}
-          className="text-xs text-muted-foreground font-medium"
-        >
-          {t.description}
-        </motion.p>
       </motion.div>
     </section>
   );

@@ -17,10 +17,26 @@ function MaskingReceipt({ t }: { t: any }) {
   const [isProtected, setIsProtected] = useState(true);
 
   const receiptData = [
-    { label: t.simulator.fields.name, protected: "•••••••• ••••", exposed: t.simulator.values.name },
-    { label: t.simulator.fields.account, protected: "•••• •••• 9840", exposed: t.simulator.values.account },
-    { label: t.simulator.fields.email, protected: "••••@••••.com", exposed: t.simulator.values.email },
-    { label: t.simulator.fields.routing, protected: "•••• ••••", exposed: t.simulator.values.routing },
+    {
+      label: t.simulator.fields.name,
+      protected: "•••••••• ••••",
+      exposed: t.simulator.values.name,
+    },
+    {
+      label: t.simulator.fields.account,
+      protected: "•••• •••• 9840",
+      exposed: t.simulator.values.account,
+    },
+    {
+      label: t.simulator.fields.email,
+      protected: "••••@••••.com",
+      exposed: t.simulator.values.email,
+    },
+    {
+      label: t.simulator.fields.routing,
+      protected: "•••• ••••",
+      exposed: t.simulator.values.routing,
+    },
   ];
 
   return (
@@ -47,8 +63,13 @@ function MaskingReceipt({ t }: { t: any }) {
 
           <div className="flex flex-col gap-3.5 text-left">
             {receiptData.map((item) => (
-              <div key={item.label} className="flex justify-between items-center text-xs gap-4">
-                <span className="text-foreground/45 font-medium">{item.label}</span>
+              <div
+                key={item.label}
+                className="flex justify-between items-center text-xs gap-4"
+              >
+                <span className="text-foreground/45 font-medium">
+                  {item.label}
+                </span>
                 <div className="relative overflow-hidden min-w-[120px] text-right">
                   <AnimatePresence mode="wait">
                     <motion.span
@@ -58,7 +79,9 @@ function MaskingReceipt({ t }: { t: any }) {
                       exit={{ opacity: 0, y: -3, filter: "blur(2px)" }}
                       transition={{ duration: 0.15 }}
                       className={`font-mono text-xs block truncate ${
-                        isProtected ? "text-foreground/30 select-none blur-[2px]" : "text-foreground font-semibold"
+                        isProtected
+                          ? "text-foreground/30 select-none blur-[2px]"
+                          : "text-foreground font-semibold"
                       }`}
                     >
                       {isProtected ? item.protected : item.exposed}
@@ -78,7 +101,9 @@ function MaskingReceipt({ t }: { t: any }) {
               <EyeIcon size={15} weight="bold" className="text-amber-500" />
             )}
             <span className="text-[10px] font-bold text-foreground/50 tracking-wider">
-              {isProtected ? t.simulator.shield_active : t.simulator.shield_disabled}
+              {isProtected
+                ? t.simulator.shield_active
+                : t.simulator.shield_disabled}
             </span>
           </div>
           <button
@@ -89,7 +114,9 @@ function MaskingReceipt({ t }: { t: any }) {
                 : "bg-transparent text-foreground border-foreground/20 hover:bg-foreground/5"
             }`}
           >
-            {isProtected ? t.simulator.disable_shield : t.simulator.enable_shield}
+            {isProtected
+              ? t.simulator.disable_shield
+              : t.simulator.enable_shield}
           </button>
         </div>
       </div>
@@ -106,8 +133,14 @@ export default function PrivacyGuard() {
   if (!t) return null;
 
   return (
-    <section ref={ref} className="w-full py-24 md:py-32 bg-background relative overflow-hidden border-t border-foreground/10">
-      <div className="absolute inset-0 pointer-events-none select-none opacity-40 dark:opacity-100" aria-hidden="true">
+    <section
+      ref={ref}
+      className="w-full py-24 md:py-32 relative overflow-hidden"
+    >
+      <div
+        className="absolute inset-0 pointer-events-none select-none opacity-40 dark:opacity-100"
+        aria-hidden="true"
+      >
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-rose-500/1 dark:bg-rose-500/2.5 blur-[130px] rounded-full" />
       </div>
 

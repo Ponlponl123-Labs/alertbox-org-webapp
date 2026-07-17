@@ -6,6 +6,7 @@ import {
   Fredoka,
   Geist_Mono,
   JetBrains_Mono,
+  Lexend_Exa,
   Sarabun,
   Bai_Jamjuree,
 } from "next/font/google";
@@ -48,6 +49,11 @@ const notoSarifThai = Noto_Serif_Thai({
   subsets: ["latin"],
 });
 
+const lexendExa = Lexend_Exa({
+  variable: "--font-lexend-exa",
+  subsets: ["latin"],
+});
+
 const sarabun = Sarabun({
   variable: "--font-sarabun",
   weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
@@ -87,6 +93,7 @@ export default function RootLayout({
         notoSarifThai.variable,
         "font-sans",
         jetbrainsMono.variable,
+        lexendExa.variable,
         sarabun.variable,
         interTight.variable,
         afacadSans.variable,

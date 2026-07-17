@@ -12,10 +12,13 @@ import {
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { langs } from "@/lib/i18n";
+import { GlobeSimpleIcon } from "@phosphor-icons/react";
+import { usePathname } from "next/navigation";
 
 function LanguageSwitcher({ showLabel = false }: { showLabel?: boolean }) {
   const lang = useStore(coreStore, (state) => state.lang);
   const setLang = useStore(coreStore, (state) => state.setLang);
+  const pathname = usePathname();
 
   useEffect(() => {
     coreStore.getState().hydrateLang();
@@ -34,7 +37,11 @@ function LanguageSwitcher({ showLabel = false }: { showLabel?: boolean }) {
           />
         }
       >
-        <span className="font-country-flag-emoji">{lang.data.flag}</span>
+        {!showLabel && !pathname.startsWith("/app") ? (
+          <GlobeSimpleIcon weight="bold" />
+        ) : (
+          <span className="font-country-flag-emoji">{lang.data.flag}</span>
+        )}
         {showLabel && (
           <span className="text-xs text-foreground/60">{lang.data.label}</span>
         )}

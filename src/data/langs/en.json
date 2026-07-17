@@ -59,6 +59,20 @@
           "latency": "Webhook Latency",
           "uptime": "Edge Uptime"
         },
+        "features": [
+          {
+            "title": "By Creators",
+            "description": "to receive donations privately without exposing your identity."
+          },
+          {
+            "title": "For Creators",
+            "description": "to keep 100% of tips with direct routing via Stripe or Ko-fi."
+          },
+          {
+            "title": "Transparency by Design",
+            "description": "with an open-source codebase you can inspect and self-host."
+          }
+        ],
         "simulator": {
           "live": "OBS STREAM LIVE",
           "latency": "Latency: ~12ms",

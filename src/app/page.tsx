@@ -66,7 +66,7 @@ export default function Home() {
         className="w-full py-24 px-6 bg-background font-sans flex flex-col items-center justify-center border-t border-border relative overflow-hidden"
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(244,63,94,0.02)_0%,transparent_50%)] pointer-events-none" />
-        <div className="w-full max-w-5xl mx-auto flex flex-col items-center z-10">
+        <div className="w-full max-w-362 mx-auto flex flex-col items-center z-10">
           <motion.div
             variants={staggerContainer}
             initial="hidden"
