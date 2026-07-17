@@ -324,7 +324,7 @@ export default function HeroSection() {
                   }
                   className="relative h-full px-4 py-2 rounded-full bg-foreground text-background font-black text-xs flex items-center justify-center gap-1.5 hover:bg-foreground/90 active:scale-95 ml-2 shadow-md z-10 cursor-pointer"
                 >
-                  <span>Claim</span>
+                  <span>{lang.data.pages.index.actions.claim}</span>
                   <ArrowRightIcon weight="bold" size={13} />
                 </Link>
               }

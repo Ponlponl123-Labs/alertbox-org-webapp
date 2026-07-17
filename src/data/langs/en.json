@@ -49,7 +49,8 @@
       "actions": {
         "primary": "Create Your Alert Box",
         "secondary": "How It Works?",
-        "yourname": "your-name"
+        "yourname": "your-name",
+        "claim": "Claim"
       },
       "hero": {
         "badge": "Zero Platform Fees • 100% Private",
