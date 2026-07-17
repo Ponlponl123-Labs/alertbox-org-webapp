@@ -7,7 +7,7 @@ import { coreStore } from "@/hooks/store/core";
 import { getApiUrl } from "@/lib/api";
 import { getActiveBadges } from "@/lib/badges";
 import { cn, getFallbackInitial, getSocialUrl } from "@/lib/utils";
-import { numberToHexColor, getAccentForeground } from "@/lib/color";
+import { numberToHexColor, getAccentForeground, hexToOklch } from "@/lib/color";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
@@ -37,6 +37,7 @@ import { Input } from "react-smooth-input";
 import LanguageSwitcher from "@/components/language-switcher";
 import ThemeSwitcher from "@/components/theme-switcher";
 import { motion, Variants } from "motion/react";
+import Link from "next/link";
 
 const staggerContainer: Variants = {
   hidden: { opacity: 0 },
@@ -118,7 +119,15 @@ export default function PublicProfileClient({
     "stripe" | "xendit" | "omise" | "2c2p" | "feelfreepay" | "kofi" | "bmac"
   >(() => {
     if (initialData?.integrations) {
-      const methodsOrder: ("stripe" | "xendit" | "omise" | "2c2p" | "feelfreepay" | "kofi" | "bmac")[] = [
+      const methodsOrder: (
+        | "stripe"
+        | "xendit"
+        | "omise"
+        | "2c2p"
+        | "feelfreepay"
+        | "kofi"
+        | "bmac"
+      )[] = [
         "stripe",
         "xendit",
         "omise",
@@ -127,7 +136,9 @@ export default function PublicProfileClient({
         "kofi",
         "bmac",
       ];
-      const firstActive = methodsOrder.find((m) => initialData.integrations?.[m]);
+      const firstActive = methodsOrder.find(
+        (m) => initialData.integrations?.[m],
+      );
       if (firstActive) {
         return firstActive;
       }
@@ -142,7 +153,7 @@ export default function PublicProfileClient({
       setProfileData(initialData);
       setLoading(false);
       setError(null);
-      
+
       const isThai = lang.key === "th-TH";
       setTipAmount(isThai ? "100" : "10");
 
@@ -156,7 +167,9 @@ export default function PublicProfileClient({
           "kofi",
           "bmac",
         ];
-        const firstActive = methodsOrder.find((m) => initialData.integrations?.[m]);
+        const firstActive = methodsOrder.find(
+          (m) => initialData.integrations?.[m],
+        );
         if (firstActive) {
           setPaymentMethod(firstActive);
         }
@@ -243,6 +256,8 @@ export default function PublicProfileClient({
     ? numberToHexColor(profileData.accentColor)
     : "#6366f1";
   const accentForegroundHex = getAccentForeground(accentHex);
+  const primaryOklch = hexToOklch(accentHex);
+  const primaryForegroundOklch = hexToOklch(accentForegroundHex);
 
   const isThai = lang.key === "th-TH";
   const currencySymbol = isThai ? "฿" : "$";
@@ -263,7 +278,7 @@ export default function PublicProfileClient({
     { id: "2c2p", label: "2C2P", logo: "/2c2p.webp" },
     { id: "feelfreepay", label: "FeelFreePay", icon: FeelFreePay },
     { id: "kofi", label: "Ko-fi", icon: KoFi },
-    { id: "bmac", label: "BMAC", icon: BuyMeACoffee },
+    { id: "bmac", label: "Buy Me a Coffee", icon: BuyMeACoffee },
   ];
 
   const integrations = profileData.integrations;
@@ -336,15 +351,17 @@ export default function PublicProfileClient({
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-linear-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-black relative overflow-x-hidden font-sans">
-      <div
-        className="absolute w-[400px] h-[400px] rounded-full hidden supports-[filter:blur(1px)]:block blur-[120px] opacity-10 dark:opacity-20 pointer-events-none -top-40 -right-40"
-        style={{ backgroundColor: accentHex }}
-      />
-      <div
-        className="absolute w-[500px] h-[500px] rounded-full hidden supports-[filter:blur(1px)]:block blur-[150px] opacity-5 dark:opacity-10 pointer-events-none top-[60vh] -left-60"
-        style={{ backgroundColor: accentHex }}
-      />
+    <div
+      className="flex flex-col min-h-screen bg-linear-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-black relative font-sans"
+      style={
+        {
+          "--primary": primaryOklch,
+          "--primary-foreground": primaryForegroundOklch,
+        } as React.CSSProperties
+      }
+    >
+      <div className="absolute w-[400px] h-[400px] rounded-full hidden supports-[filter:blur(1px)]:block blur-[120px] opacity-10 dark:opacity-20 pointer-events-none -top-40 -right-40 bg-primary" />
+      <div className="absolute w-[500px] h-[500px] rounded-full hidden supports-[filter:blur(1px)]:block blur-[150px] opacity-5 dark:opacity-10 pointer-events-none top-[60vh] -left-60 bg-primary" />
 
       <div className="absolute top-4 right-4 z-50 flex items-center gap-1.5 bg-background supports-backdrop-filter:bg-background/60 supports-backdrop-filter:backdrop-blur-md border border-foreground/10 px-2.5 py-1.5 rounded-2xl shadow-lg">
         <LanguageSwitcher />
@@ -386,12 +403,7 @@ export default function PublicProfileClient({
             priority
           />
         ) : (
-          <div
-            className="size-full opacity-80"
-            style={{
-              background: `linear-gradient(135deg, ${accentHex} 0%, #1e1b4b 100%)`,
-            }}
-          />
+          <div className="size-full opacity-80 bg-linear-to-br from-primary to-[#1e1b4b]" />
         )}
       </motion.div>
 
@@ -405,7 +417,7 @@ export default function PublicProfileClient({
           <div className="flex flex-col items-start">
             <motion.div
               variants={fadeInUp}
-              className="relative p-1 bg-background border border-foreground/10 rounded-full shadow-2xl"
+              className="relative p-1 bg-primary border border-foreground/10 rounded-full shadow-2xl"
             >
               <Avatar className="size-28 md:size-40 shadow-inner">
                 {profileData.avatar && <AvatarImage src={profileData.avatar} />}
@@ -417,15 +429,14 @@ export default function PublicProfileClient({
 
             <motion.h1
               variants={fadeInUp}
-              className="text-3xl md:text-5xl font-extrabold tracking-tight mt-6 text-foreground flex items-center gap-2"
+              className="text-3xl md:text-5xl font-extrabold tracking-tight mt-6 text-foreground font-sans flex items-center gap-2"
             >
               {profileData.displayName || "Display Name"}
               {isVerified && (
                 <Tooltip>
                   <TooltipTrigger>
                     <SealCheckIcon
-                      className="size-7 md:size-9 text-blue-500 shrink-0 select-none cursor-pointer"
-                      style={{ color: accentHex }}
+                      className="size-7 md:size-9 text-primary shrink-0 select-none cursor-pointer"
                       weight="fill"
                     />
                   </TooltipTrigger>
@@ -457,6 +468,7 @@ export default function PublicProfileClient({
                       className={cn(
                         "text-sm px-3 py-1 h-auto gap-1 rounded-md border-0 font-semibold shadow-xs select-none",
                         badge.className,
+                        "bg-primary/10 hover:bg-primary/15 text-primary",
                       )}
                     >
                       <Icon className="size-3 shrink-0" weight="fill" />
@@ -490,7 +502,7 @@ export default function PublicProfileClient({
                     target="_blank"
                     rel="noopener noreferrer"
                     className={cn(
-                      "p-3 rounded-2xl bg-card border border-foreground/10 text-foreground/45 transition-all duration-300 flex items-center justify-center shadow-xs",
+                      "p-2.5 rounded-xl bg-primary/10 text-primary transition-all duration-300 flex items-center justify-center shadow-xs",
                       soc.color,
                     )}
                     title={`${soc.label}: ${soc.value}`}
@@ -524,10 +536,7 @@ export default function PublicProfileClient({
               </div>
             ) : isSuccess ? (
               <div className="flex flex-col items-center text-center py-6 animate-fade-in-up duration-300">
-                <div
-                  className="size-16 rounded-full flex items-center justify-center text-white mb-6 shadow-lg shadow-emerald-500/20"
-                  style={{ backgroundColor: accentHex }}
-                >
+                <div className="size-16 rounded-full flex items-center justify-center text-white mb-6 shadow-lg shadow-emerald-500/20 bg-primary">
                   <CheckCircleIcon size={36} weight="bold" />
                 </div>
                 <h2 className="text-2xl font-bold text-foreground">
@@ -545,11 +554,7 @@ export default function PublicProfileClient({
                 )}
                 <button
                   onClick={handleReset}
-                  style={{
-                    backgroundColor: accentHex,
-                    color: accentForegroundHex,
-                  }}
-                  className="w-full mt-8 py-3 rounded-2xl text-xs font-bold tracking-wider hover:opacity-90 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-md"
+                  className="w-full mt-8 py-3 rounded-2xl text-xs font-bold tracking-wider hover:opacity-90 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-md bg-primary text-primary-foreground"
                 >
                   {lang.data.app.profile.preview.send_another_tip}
                 </button>
@@ -559,13 +564,12 @@ export default function PublicProfileClient({
                 <div>
                   <h2 className="text-lg font-bold text-foreground flex items-center gap-1.5 leading-snug">
                     <HeartIcon
-                      className="size-5 shrink-0"
-                      style={{ color: accentHex }}
+                      className="size-5 shrink-0 text-primary"
                       weight="fill"
                     />
                     {lang.data.app.profile.preview.support_title}
                   </h2>
-                  <p className="text-[11px] text-foreground/50 mt-1 leading-snug">
+                  <p className="text-sm text-foreground/50 mt-2 leading-snug">
                     {lang.data.app.profile.preview.support_desc}
                   </p>
                 </div>
@@ -675,10 +679,10 @@ export default function PublicProfileClient({
                 )}
 
                 <div className="flex flex-col gap-2.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/40">
+                  <span className="text-xs font-bold uppercase tracking-wider text-foreground/40">
                     {lang.data.app.profile.preview.payment_gateway}
                   </span>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {activeMethods.map((item) => {
                       const ProviderIcon = item.icon;
                       return (
@@ -687,10 +691,10 @@ export default function PublicProfileClient({
                           type="button"
                           onClick={() => setPaymentMethod(item.id as any)}
                           className={cn(
-                            "py-2.5 px-1 rounded-xl flex flex-col items-center justify-center border transition-all duration-200 cursor-pointer gap-1",
+                            "py-2.5 px-1 rounded-lg flex flex-col items-center justify-center border-2 transition-all duration-200 cursor-pointer gap-1",
                             paymentMethod === item.id
-                              ? "bg-foreground/5 border-foreground/10 shadow-xs"
-                              : "bg-transparent border-transparent opacity-40 hover:opacity-75",
+                              ? "bg-primary/10 border-primary/40"
+                              : "bg-transparent border-transparent hover:bg-primary/10 opacity-40 hover:opacity-75",
                           )}
                         >
                           {ProviderIcon ? (
@@ -715,11 +719,7 @@ export default function PublicProfileClient({
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    style={{
-                      backgroundColor: accentHex,
-                      color: accentForegroundHex,
-                    }}
-                    className="w-full py-3 rounded-2xl text-xs font-bold tracking-wider hover:opacity-90 active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-md disabled:cursor-not-allowed"
+                    className="w-full py-3 rounded-2xl text-xs font-bold tracking-wider hover:opacity-90 active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-md disabled:cursor-not-allowed bg-primary text-primary-foreground"
                   >
                     {isSubmitting ? (
                       <>
@@ -741,7 +741,7 @@ export default function PublicProfileClient({
                     )}
                   </button>
                 ) : (
-                  <a
+                  <Link
                     href={
                       paymentMethod === "kofi"
                         ? `https://ko-fi.com/${profileData.kofiUsername || profileData.name}`
@@ -749,11 +749,7 @@ export default function PublicProfileClient({
                     }
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      backgroundColor: accentHex,
-                      color: accentForegroundHex,
-                    }}
-                    className="w-full py-3 rounded-2xl text-xs font-bold tracking-wider hover:opacity-90 active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-md text-center"
+                    className="w-full py-3 rounded-2xl text-xs font-bold tracking-wider hover:opacity-90 active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-md text-center bg-primary text-primary-foreground"
                   >
                     <span>
                       {lang.data.app.profile.preview.support_on
@@ -768,7 +764,7 @@ export default function PublicProfileClient({
                             : "BUY ME A COFFEE",
                         )}
                     </span>
-                  </a>
+                  </Link>
                 )}
               </form>
             )}

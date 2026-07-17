@@ -2,6 +2,8 @@ import React from "react";
 import { Metadata } from "next";
 import { getApiUrl } from "@/lib/api";
 import PublicProfileClient, { PublicProfileData } from "./PublicProfileClient";
+import Link from "next/link";
+import Footer from "./footer";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -57,5 +59,12 @@ export default async function PublicProfilePage({ params }: Props) {
   const { username } = await params;
   const initialData = await fetchProfileData(username);
 
-  return <PublicProfileClient username={username} initialData={initialData} />;
+  return (
+    <>
+      <section className="min-h-screen">
+        <PublicProfileClient username={username} initialData={initialData} />
+      </section>
+      <Footer username={username} initialData={initialData} />
+    </>
+  );
 }

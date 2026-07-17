@@ -43,17 +43,13 @@ function DemoFeeCalculator({ t }: { t: any }) {
 
         <div className="flex flex-col items-center gap-3">
           <motion.div
-            className="w-16 h-2 rounded-t-lg relative"
-            style={{
-              background: "linear-gradient(to top, #F43F5E, #ec4899)",
-              boxShadow: "0 0 20px rgba(244,63,94,0.3)",
-            }}
+            className="w-16 h-2 rounded-t-lg relative bg-foreground border border-foreground shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
           >
-            <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-rose-500 font-mono text-[10px] font-black">
+            <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-foreground font-mono text-[10px] font-black">
               $0
             </span>
           </motion.div>
-          <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest font-mono">
+          <span className="text-[9px] font-black text-foreground uppercase tracking-widest font-mono">
             {t.demos.calculator.alertbox}
           </span>
         </div>
@@ -73,7 +69,7 @@ function DemoFeeCalculator({ t }: { t: any }) {
           step="100"
           value={volume}
           onChange={(e) => setVolume(Number(e.target.value))}
-          className="w-full accent-rose-500 h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
+          className="w-full accent-foreground h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
         />
         <div className="flex justify-between text-[8px] text-foreground/25 font-mono mt-1.5">
           <span>$100</span>
@@ -96,19 +92,19 @@ function DemoCustomization({ t }: { t: any }) {
       hex: "#F43F5E",
       text: "text-rose-500",
       bg: "bg-rose-500",
-      glow: "shadow-rose-500/20",
+      glow: "border border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.2)]",
     },
     purple: {
       hex: "#a855f7",
       text: "text-purple-500",
       bg: "bg-purple-500",
-      glow: "shadow-purple-500/20",
+      glow: "border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]",
     },
     cyan: {
       hex: "#22d3ee",
       text: "text-cyan-500",
       bg: "bg-cyan-500",
-      glow: "shadow-cyan-500/20",
+      glow: "border border-cyan-500/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]",
     },
   };
 
@@ -171,10 +167,11 @@ function DemoCustomization({ t }: { t: any }) {
             <button
               key={col}
               onClick={() => setAccent(col)}
-              className={`size-4.5 rounded-full border flex items-center justify-center transition-all cursor-pointer ${accent === col
-                ? "border-foreground scale-110"
-                : "border-transparent hover:scale-105"
-                }`}
+              className={`size-4.5 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
+                accent === col
+                  ? "border-foreground scale-110"
+                  : "border-transparent hover:scale-105"
+              }`}
               style={{ backgroundColor: colors[col].hex }}
             />
           ))}
@@ -274,7 +271,7 @@ function DemoWebhooks({ t }: { t: any }) {
         <button
           onClick={handleWebhookFire}
           disabled={status !== "idle"}
-          className="w-full h-9 rounded-xl bg-foreground hover:bg-foreground/90 text-background font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs disabled:opacity-40 cursor-pointer"
+          className="w-full h-9 rounded-xl bg-background hover:bg-foreground/5 border border-border/50 text-foreground font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm disabled:opacity-40 cursor-pointer"
         >
           <LightningIcon weight="fill" size={14} />
           {status === "idle"
@@ -313,10 +310,10 @@ function DemoOpenSource({ t }: { t: any }) {
   };
 
   const getColor = (val: number) => {
-    if (val < 0.25) return "bg-foreground/2 border border-foreground/5";
-    if (val < 0.5) return "bg-rose-500/10";
-    if (val < 0.75) return "bg-rose-500/25";
-    return "bg-rose-500/50";
+    if (val < 0.25) return "bg-foreground/5 border border-foreground/5";
+    if (val < 0.5) return "bg-foreground/20";
+    if (val < 0.75) return "bg-foreground/50";
+    return "bg-foreground";
   };
 
   return (
@@ -324,22 +321,23 @@ function DemoOpenSource({ t }: { t: any }) {
       <div>
         <div className="flex justify-between items-center mb-4 pb-3 border-b border-foreground/5">
           <div className="flex items-center gap-2">
-            <CodeBlockIcon size={18} className="text-rose-500" />
+            <CodeBlockIcon size={18} className="text-foreground" />
             <div className="text-left">
               <p className="text-xs font-bold text-foreground font-mono">
                 Ponlponl123-Labs/alertbox-org
               </p>
-              <p className="text-[9px] text-foreground/30 font-mono">
+              <p className="text-[9px] text-foreground/40 font-mono">
                 {t.demos.opensource.license}
               </p>
             </div>
           </div>
           <button
             onClick={handleStar}
-            className={`p-2.5 rounded-full border flex items-center gap-1.5 text-[9px] font-bold transition-all cursor-pointer ${starred
-              ? "bg-rose-500/15 border-rose-500/30 text-rose-500"
-              : "border-foreground/10 hover:border-foreground/20 text-foreground/60 hover:text-foreground"
-              }`}
+            className={`p-2.5 rounded-full border flex items-center gap-1.5 text-[9px] font-bold transition-all cursor-pointer ${
+              starred
+                ? "bg-foreground border-foreground text-background"
+                : "border-border hover:border-foreground/30 text-foreground/60 hover:text-foreground bg-background"
+            }`}
           >
             <StarIcon weight={starred ? "fill" : "bold"} size={11} />
             <span className="hidden">{stars.toLocaleString()}</span>
@@ -395,9 +393,9 @@ export default function Features() {
       title: t.items[0].title,
       desc: t.items[0].desc,
       icon: HandCoinsIcon,
-      accent: "text-rose-500",
-      accentBg: "bg-rose-500/10",
-      accentBorder: "border-rose-500/20",
+      accent: "text-foreground",
+      accentBg: "bg-foreground/5",
+      accentBorder: "border-border/50",
       colSpan: "lg:col-span-7",
       demo: <DemoFeeCalculator t={t} />,
     },
@@ -405,9 +403,9 @@ export default function Features() {
       title: t.items[2].title,
       desc: t.items[2].desc,
       icon: PaintBrushIcon,
-      accent: "text-purple-500",
-      accentBg: "bg-purple-500/10",
-      accentBorder: "border-purple-500/20",
+      accent: "text-foreground",
+      accentBg: "bg-foreground/5",
+      accentBorder: "border-border/50",
       colSpan: "lg:col-span-5",
       demo: <DemoCustomization t={t} />,
     },
@@ -415,9 +413,9 @@ export default function Features() {
       title: t.items[3].title,
       desc: t.items[3].desc,
       icon: LightningIcon,
-      accent: "text-cyan-500",
-      accentBg: "bg-cyan-500/10",
-      accentBorder: "border-cyan-500/20",
+      accent: "text-foreground",
+      accentBg: "bg-foreground/5",
+      accentBorder: "border-border/50",
       colSpan: "lg:col-span-5",
       demo: <DemoWebhooks t={t} />,
     },
@@ -425,33 +423,30 @@ export default function Features() {
       title: t.items[4].title,
       desc: t.items[4].desc,
       icon: CodeBlockIcon,
-      accent: "text-rose-500",
-      accentBg: "bg-rose-500/10",
-      accentBorder: "border-rose-500/20",
+      accent: "text-foreground",
+      accentBg: "bg-foreground/5",
+      accentBorder: "border-border/50",
       colSpan: "lg:col-span-7",
       demo: <DemoOpenSource t={t} />,
     },
   ];
 
   return (
-    <section
-      ref={ref}
-      className="w-full py-24 md:py-32 bg-background relative overflow-hidden"
-    >
-      <div className="max-w-7xl mx-auto px-6 z-10 relative">
+    <section ref={ref} className="w-full py-24 md:py-32 relative">
+      <div className="max-w-362 mx-auto px-6 z-10 relative">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
           className="text-left mb-16"
         >
-          <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-rose-500 mb-2 block font-mono">
+          <span className="text-[11px] font-medium tracking-tight text-muted-foreground uppercase mb-2 block font-mono">
             {t.subtitle}
           </span>
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-foreground mb-4">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-foreground tracking-tighter mb-4">
             {t.title}
           </h2>
-          <p className="text-sm md:text-base text-foreground/50 max-w-2xl font-medium">
+          <p className="text-sm md:text-base text-muted-foreground font-medium max-w-2xl">
             {t.description}
           </p>
         </motion.div>
@@ -469,7 +464,7 @@ export default function Features() {
                   duration: 0.6,
                   ease: [0.16, 1, 0.3, 1],
                 }}
-                className={`flex flex-col justify-between p-6 rounded-3xl border border-foreground/10 bg-foreground/2 hover:border-foreground/20 transition-all duration-300 backdrop-blur-xl group relative overflow-hidden ${config.colSpan}`}
+                className={`flex flex-col justify-between p-6 rounded-3xl border border-border/50 bg-card hover:border-foreground/30 hover:shadow-md transition-all duration-500 group relative overflow-hidden ${config.colSpan}`}
               >
                 <div className="mb-6 flex-1">{config.demo}</div>
 
@@ -480,10 +475,10 @@ export default function Features() {
                     <Icon size={18} weight="fill" className={config.accent} />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-sm font-black text-foreground group-hover:text-rose-500 transition-colors">
+                    <h3 className="text-sm font-semibold text-foreground transition-colors">
                       {config.title}
                     </h3>
-                    <p className="text-xs text-foreground/50 leading-relaxed font-medium mt-1">
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-1">
                       {config.desc}
                     </p>
                   </div>

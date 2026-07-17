@@ -103,7 +103,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: preload }} />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col overflow-y-auto overflow-x-hidden">
         <Toaster />
         <UserContextProvider>
           <BackendLivenessChecker />
