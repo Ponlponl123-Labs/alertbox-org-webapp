@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import clsx from "clsx";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { motion, AnimatePresence, useInView } from "motion/react";
@@ -12,99 +13,106 @@ import {
   CopyIcon,
   StarIcon,
 } from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
 
-function DemoFeeCalculator({ t }: { t: any }) {
+function VisualFeeCalculator({ t }: { t: any }) {
   const [volume, setVolume] = useState(1500);
   const competitorFee = Math.round(volume * 0.1);
 
   return (
-    <div className="flex flex-col h-full justify-between bg-foreground/1 p-5 md:p-6 border border-foreground/5 rounded-2xl">
-      <div className="flex items-end justify-center gap-8 md:gap-12 flex-1 py-6 px-4">
+    <div className="w-full">
+      <div className="flex items-end gap-16 pb-10 pl-2 pt-4">
         <div className="flex flex-col items-center gap-3">
           <motion.div
-            className="w-16 rounded-t-lg bg-foreground/10 relative overflow-hidden"
-            animate={{ height: Math.max(20, (competitorFee / 500) * 140) }}
+            className="relative w-14 overflow-hidden rounded-t-sm bg-foreground/10"
+            animate={{ height: Math.max(20, (competitorFee / 500) * 150) }}
             transition={{ type: "spring", stiffness: 260, damping: 22 }}
           >
-            <div className="absolute inset-0 bg-linear-to-b from-foreground/5 to-transparent" />
             <motion.span
               key={competitorFee}
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="absolute -top-7 left-1/2 -translate-x-1/2 text-foreground/45 font-mono text-[10px] font-bold whitespace-nowrap"
+              className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[11px] font-medium tabular-nums text-foreground/40"
             >
               -${competitorFee}
             </motion.span>
           </motion.div>
-          <span className="text-[9px] font-bold text-foreground/30 uppercase tracking-widest font-mono">
+          <span className="font-mono text-[9px] font-medium uppercase tracking-widest text-foreground/35">
             {t.demos.calculator.others}
           </span>
         </div>
 
         <div className="flex flex-col items-center gap-3">
-          <motion.div
-            className="w-16 h-2 rounded-t-lg relative bg-foreground border border-foreground shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
-          >
-            <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-foreground font-mono text-[10px] font-black">
+          <div className="relative h-[3px] w-14 rounded-t-sm bg-foreground">
+            <span className="absolute -top-6 left-1/2 -translate-x-1/2 font-mono text-[11px] font-semibold tabular-nums text-foreground">
               $0
             </span>
-          </motion.div>
-          <span className="text-[9px] font-black text-foreground uppercase tracking-widest font-mono">
+          </div>
+          <span className="font-mono text-[9px] font-semibold uppercase tracking-widest text-foreground">
             {t.demos.calculator.alertbox}
           </span>
         </div>
+
+        <div className="flex-1 border-l border-foreground/10 pl-8">
+          <p className="font-mono text-[9px] uppercase tracking-widest text-foreground/30">
+            {t.demos.calculator.volume}
+          </p>
+          <p className="mt-1 font-mono text-3xl font-semibold tabular-nums text-foreground">
+            ${volume.toLocaleString()}
+          </p>
+        </div>
       </div>
 
-      <div className="bg-background border border-foreground/5 p-4 rounded-xl mt-4">
-        <div className="flex justify-between items-center text-xs font-semibold text-foreground/50 mb-3">
-          <span>{t.demos.calculator.volume}</span>
-          <span className="font-mono text-foreground font-bold">
-            ${volume.toLocaleString()}
-          </span>
-        </div>
-        <input
-          type="range"
-          min="100"
-          max="5000"
-          step="100"
-          value={volume}
-          onChange={(e) => setVolume(Number(e.target.value))}
-          className="w-full accent-foreground h-1 bg-foreground/10 rounded-lg appearance-none cursor-pointer"
-        />
-        <div className="flex justify-between text-[8px] text-foreground/25 font-mono mt-1.5">
-          <span>$100</span>
-          <span>$5,000</span>
-        </div>
+      <input
+        type="range"
+        min="100"
+        max="5000"
+        step="100"
+        value={volume}
+        onChange={(e) => setVolume(Number(e.target.value))}
+        className="h-px w-full cursor-pointer appearance-none rounded-full bg-foreground/10 accent-foreground"
+      />
+      <div className="mt-2 flex justify-between font-mono text-[9px] text-foreground/25">
+        <span>$100</span>
+        <span>$5,000 / mo</span>
       </div>
     </div>
   );
 }
 
-function DemoCustomization({ t }: { t: any }) {
-  const [accent, setAccent] = useState<"rose" | "purple" | "cyan">("rose");
+function VisualCustomization({ t }: { t: any }) {
+  const [accent, setAccent] = useState<
+    "foreground" | "rose" | "purple" | "cyan"
+  >("foreground");
   const [animation, setAnimation] = useState<"bounce" | "slide" | "scale">(
     "bounce",
   );
   const [triggerCount, setTriggerCount] = useState(0);
 
   const colors = {
+    foreground: {
+      hex: "var(--foreground)",
+      text: "text-foreground",
+      bg: "bg-foreground",
+      icon: "text-background",
+    },
     rose: {
       hex: "#F43F5E",
       text: "text-rose-500",
       bg: "bg-rose-500",
-      glow: "border border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.2)]",
+      icon: "text-white",
     },
     purple: {
       hex: "#a855f7",
       text: "text-purple-500",
       bg: "bg-purple-500",
-      glow: "border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)]",
+      icon: "text-white",
     },
     cyan: {
       hex: "#22d3ee",
       text: "text-cyan-500",
       bg: "bg-cyan-500",
-      glow: "border border-cyan-500/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]",
+      icon: "text-white",
     },
   };
 
@@ -122,8 +130,14 @@ function DemoCustomization({ t }: { t: any }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-foreground/1 p-5 md:p-6 justify-between border border-foreground/5 rounded-2xl">
-      <div className="flex-1 flex items-center justify-center relative overflow-hidden min-h-[140px] border border-foreground/5 rounded-xl bg-background/50">
+    <div className="w-full">
+      <div className="relative flex min-h-[160px] items-center justify-center">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-30 blur-3xl transition-colors duration-500"
+          style={{
+            background: `radial-gradient(circle at center, ${activeColor.hex}, transparent 70%)`,
+          }}
+        />
         <AnimatePresence mode="wait">
           <motion.div
             key={`${animation}-${triggerCount}`}
@@ -138,19 +152,23 @@ function DemoCustomization({ t }: { t: any }) {
               y: { type: "tween", duration: 0.5, ease: "easeOut" },
               scale: { type: "tween", duration: 0.5, ease: "easeOut" },
             }}
-            className="relative z-10 w-full max-w-[220px]"
+            className="relative z-10 w-full max-w-[230px]"
           >
-            <div className="p-3.5 rounded-xl border border-foreground/10 bg-background flex items-center gap-3 shadow-lg">
+            <div className="flex items-center gap-3 rounded-lg border border-foreground/10 bg-foreground/[0.03] p-3.5 shadow-lg shadow-foreground/5 backdrop-blur-sm">
               <div
-                className={`size-8 rounded-lg flex items-center justify-center text-white text-xs font-black shrink-0 shadow-lg ${activeColor.bg} ${activeColor.glow}`}
+                className={clsx(
+                  "flex size-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold",
+                  activeColor.icon,
+                  activeColor.bg,
+                )}
               >
                 ★
               </div>
               <div className="min-w-0 flex-1 text-left">
-                <p className="text-[8px] font-bold text-foreground/30 uppercase tracking-widest font-mono">
+                <p className="font-mono text-[8px] font-medium uppercase tracking-widest text-foreground/35">
                   {t.demos.customizer.tip_received}
                 </p>
-                <p className="text-[10px] font-black text-foreground mt-0.5 truncate">
+                <p className="mt-0.5 truncate text-[10px] font-semibold text-foreground">
                   <span className={activeColor.text}>StreamFan</span>{" "}
                   {t.demos.customizer.sent}{" "}
                   <span className={activeColor.text}>$10.00</span>
@@ -161,31 +179,33 @@ function DemoCustomization({ t }: { t: any }) {
         </AnimatePresence>
       </div>
 
-      <div className="flex items-center justify-between border-t border-foreground/5 pt-4 mt-4">
-        <div className="flex gap-2">
-          {(["rose", "purple", "cyan"] as const).map((col) => (
-            <button
+      <div className="mt-6 flex items-center justify-between border-t border-foreground/10 pt-5">
+        <div className="flex gap-2.5">
+          {(["foreground", "rose", "purple", "cyan"] as const).map((col) => (
+            <Button
               key={col}
               onClick={() => setAccent(col)}
-              className={`size-4.5 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
+              aria-label={col}
+              className={clsx(
+                "size-4.5 cursor-pointer rounded-full ring-1 ring-offset-2 ring-offset-background transition-all",
                 accent === col
-                  ? "border-foreground scale-110"
-                  : "border-transparent hover:scale-105"
-              }`}
+                  ? "ring-foreground"
+                  : "ring-transparent hover:ring-foreground/30",
+              )}
               style={{ backgroundColor: colors[col].hex }}
             />
           ))}
         </div>
-
         <div className="flex gap-1">
           {(["bounce", "scale", "slide"] as const).map((type) => (
-            <button
+            <Button
+              variant={"outline"}
               key={type}
               onClick={() => handleTrigger(type)}
-              className="text-[8px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border border-foreground/10 bg-background hover:bg-foreground/5 text-foreground/70 hover:text-foreground transition-all cursor-pointer"
+              className="cursor-pointer px-2 py-1 font-mono rounded-lg text-[9px] font-medium uppercase tracking-wider text-foreground/40 hover:text-foreground"
             >
               {type}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -193,11 +213,11 @@ function DemoCustomization({ t }: { t: any }) {
   );
 }
 
-function DemoWebhooks({ t }: { t: any }) {
+function VisualWebhooks({ t }: { t: any }) {
   const [status, setStatus] = useState<"idle" | "firing" | "done">("idle");
   const [lines, setLines] = useState<{ text: string; color: string }[]>([
-    { text: "$ alertbox listen --port 3000", color: "text-foreground/45" },
-    { text: t.demos.webhooks.listening, color: "text-foreground/30" },
+    { text: "$ alertbox listen --port 3000", color: "text-foreground/40" },
+    { text: t.demos.webhooks.listening, color: "text-foreground/25" },
   ]);
 
   const handleWebhookFire = () => {
@@ -206,7 +226,7 @@ function DemoWebhooks({ t }: { t: any }) {
 
     setLines((prev) => [
       ...prev,
-      { text: t.demos.webhooks.ingesting, color: "text-yellow-500" },
+      { text: t.demos.webhooks.ingesting, color: "text-foreground/60" },
     ]);
 
     setTimeout(() => {
@@ -214,7 +234,7 @@ function DemoWebhooks({ t }: { t: any }) {
         ...prev,
         {
           text: '{ "type": "payment.succeeded", "amount": 5000 }',
-          color: "text-cyan-500 dark:text-cyan-400",
+          color: "text-foreground/45",
         },
       ]);
     }, 700);
@@ -222,7 +242,7 @@ function DemoWebhooks({ t }: { t: any }) {
     setTimeout(() => {
       setLines((prev) => [
         ...prev,
-        { text: t.demos.webhooks.success, color: "text-emerald-500" },
+        { text: t.demos.webhooks.success, color: "text-foreground" },
       ]);
       setStatus("done");
     }, 1400);
@@ -230,69 +250,62 @@ function DemoWebhooks({ t }: { t: any }) {
     setTimeout(() => {
       setStatus("idle");
       setLines([
-        { text: "$ alertbox listen --port 3000", color: "text-foreground/45" },
-        { text: t.demos.webhooks.listening, color: "text-foreground/30" },
+        { text: "$ alertbox listen --port 3000", color: "text-foreground/40" },
+        { text: t.demos.webhooks.listening, color: "text-foreground/25" },
       ]);
     }, 4500);
   };
 
   return (
-    <div className="flex flex-col h-full bg-foreground/1 p-5 md:p-6 justify-between border border-foreground/5 rounded-2xl">
-      <div className="border border-foreground/10 bg-background/50 rounded-xl p-4 font-mono text-[9px] flex-1 flex flex-col justify-between min-h-[140px] text-left">
-        <div className="flex gap-1 mb-2 border-b border-foreground/5 pb-2">
-          <span className="size-1.5 rounded-full bg-foreground/20" />
-          <span className="size-1.5 rounded-full bg-foreground/20" />
-          <span className="size-1.5 rounded-full bg-foreground/20" />
-        </div>
-        <div className="flex-1 flex flex-col gap-1.5 overflow-hidden">
-          {lines.map((line, idx) => (
-            <motion.p
-              key={`${idx}-${line.text}`}
-              initial={{ opacity: 0, x: -3 }}
-              animate={{ opacity: 1, x: 0 }}
-              className={line.color}
-            >
-              {line.text}
-            </motion.p>
-          ))}
-          {status === "firing" && (
-            <motion.span
-              animate={{ opacity: [0, 1, 0] }}
-              transition={{ duration: 0.8, repeat: Infinity }}
-              className="text-yellow-500"
-            >
-              ▌
-            </motion.span>
-          )}
-        </div>
-      </div>
+    <div className="w-full">
+      <Button
+        variant={"secondary"}
+        onClick={handleWebhookFire}
+        disabled={status !== "idle"}
+        className="mb-5 flex cursor-pointer items-center gap-2 font-mono text-[11px] font-medium text-foreground rounded-xl hover:opacity-70 disabled:opacity-30"
+      >
+        <LightningIcon weight="bold" size={13} />
+        {status === "idle"
+          ? t.demos.webhooks.simulate
+          : status === "firing"
+            ? t.demos.webhooks.processing
+            : t.demos.webhooks.done}
+        <span className="text-foreground/25">→</span>
+      </Button>
 
-      <div className="border-t border-foreground/5 pt-4 mt-4">
-        <button
-          onClick={handleWebhookFire}
-          disabled={status !== "idle"}
-          className="w-full h-9 rounded-xl bg-background hover:bg-foreground/5 border border-border/50 text-foreground font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm disabled:opacity-40 cursor-pointer"
-        >
-          <LightningIcon weight="fill" size={14} />
-          {status === "idle"
-            ? t.demos.webhooks.simulate
-            : status === "firing"
-              ? t.demos.webhooks.processing
-              : t.demos.webhooks.done}
-        </button>
+      <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-4 font-mono text-[10px] leading-relaxed">
+        {lines.map((line, idx) => (
+          <motion.p
+            key={`${idx}-${line.text}`}
+            initial={{ opacity: 0, x: -3 }}
+            animate={{ opacity: 1, x: 0 }}
+            className={line.color}
+          >
+            {line.text}
+          </motion.p>
+        ))}
+        {status === "firing" && (
+          <motion.span
+            animate={{ opacity: [0, 1, 0] }}
+            transition={{ duration: 0.8, repeat: Infinity }}
+            className="text-foreground/50"
+          >
+            ▌
+          </motion.span>
+        )}
       </div>
     </div>
   );
 }
 
-function DemoOpenSource({ t }: { t: any }) {
+function VisualOpenSource({ t }: { t: any }) {
   const [starred, setStarred] = useState(false);
   const [stars, setStars] = useState(1324);
   const [cells, setCells] = useState<number[]>([]);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const levels = Array.from({ length: 36 }, () => Math.random());
+    const levels = Array.from({ length: 60 }, () => Math.random());
     setCells(levels);
   }, []);
 
@@ -310,71 +323,68 @@ function DemoOpenSource({ t }: { t: any }) {
   };
 
   const getColor = (val: number) => {
-    if (val < 0.25) return "bg-foreground/5 border border-foreground/5";
+    if (val < 0.25) return "bg-foreground/6";
     if (val < 0.5) return "bg-foreground/20";
-    if (val < 0.75) return "bg-foreground/50";
-    return "bg-foreground";
+    if (val < 0.75) return "bg-foreground/45";
+    return "bg-foreground/90";
   };
 
   return (
-    <div className="flex flex-col h-full bg-foreground/1 p-5 md:p-6 justify-between border border-foreground/5 rounded-2xl">
-      <div>
-        <div className="flex justify-between items-center mb-4 pb-3 border-b border-foreground/5">
-          <div className="flex items-center gap-2">
-            <CodeBlockIcon size={18} className="text-foreground" />
-            <div className="text-left">
-              <p className="text-xs font-bold text-foreground font-mono">
-                Ponlponl123-Labs/alertbox-org
-              </p>
-              <p className="text-[9px] text-foreground/40 font-mono">
-                {t.demos.opensource.license}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleStar}
-            className={`p-2.5 rounded-full border flex items-center gap-1.5 text-[9px] font-bold transition-all cursor-pointer ${
-              starred
-                ? "bg-foreground border-foreground text-background"
-                : "border-border hover:border-foreground/30 text-foreground/60 hover:text-foreground bg-background"
-            }`}
-          >
-            <StarIcon weight={starred ? "fill" : "bold"} size={11} />
-            <span className="hidden">{stars.toLocaleString()}</span>
-          </button>
-        </div>
-
-        <div className="mb-4 text-left">
-          <p className="text-[9px] font-bold text-foreground/35 uppercase tracking-widest mb-2 font-mono">
-            {t.demos.opensource.contributions}
+    <div className="w-full">
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <p className="font-mono text-sm text-foreground">
+            Ponlponl123-Labs/alertbox-org
           </p>
-          <div className="grid grid-cols-12 gap-1 bg-background p-2.5 rounded-xl border border-foreground/5">
-            {cells.map((val, idx) => (
-              <div
-                key={idx}
-                className={`aspect-square rounded-[3px] ${getColor(val)}`}
-              />
-            ))}
-          </div>
+          <p className="mt-0.5 font-mono text-[10px] text-foreground/40">
+            {t.demos.opensource.license}
+          </p>
         </div>
+        <Button
+          size={"icon"}
+          variant={"outline"}
+          onClick={handleStar}
+          className={clsx(
+            "flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium transition-all",
+            starred
+              ? "border-foreground bg-foreground text-background"
+              : "border-foreground/15 bg-transparent text-foreground/60 hover:border-foreground/30 hover:text-foreground",
+          )}
+        >
+          <StarIcon weight={starred ? "fill" : "bold"} size={12} />
+          <span className="font-mono tabular-nums hidden">
+            {stars.toLocaleString()}
+          </span>
+        </Button>
       </div>
 
-      <div className="flex items-center justify-between border border-foreground/10 bg-background/50 px-3.5 h-9 rounded-xl text-[9px] font-mono">
-        <span className="text-foreground/45 select-all">
+      <div className="grid grid-cols-20 gap-[3px]">
+        {cells.map((val, idx) => (
+          <div
+            key={idx}
+            className={clsx("aspect-square rounded-[1.5px]", getColor(val))}
+          />
+        ))}
+      </div>
+
+      <div className="mt-5 flex items-center justify-between border-t border-foreground/10 pt-4 font-mono text-[10px]">
+        <span className="select-all text-foreground/40">
           git clone Ponlponl123-Labs/alertbox-org
         </span>
-        <button
+        <Button
+          variant={"secondary"}
+          size={"icon"}
           onClick={handleCopy}
-          className="text-foreground/40 hover:text-foreground transition-colors p-1 cursor-pointer"
+          className="flex cursor-pointer rounded-lg items-center gap-1 text-foreground/40 transition-colors hover:text-foreground"
         >
           {copied ? (
-            <span className="text-emerald-500 font-bold text-[8px]">
+            <span className="font-sans text-[10px] font-medium text-foreground">
               {t.demos.opensource.copied}
             </span>
           ) : (
-            <CopyIcon size={12} />
+            <CopyIcon size={13} />
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -388,100 +398,127 @@ export default function Features() {
 
   if (!t) return null;
 
-  const featureConfigs = [
+  const rows = [
     {
+      tag: "Live",
       title: t.items[0].title,
       desc: t.items[0].desc,
       icon: HandCoinsIcon,
-      accent: "text-foreground",
-      accentBg: "bg-foreground/5",
-      accentBorder: "border-border/50",
-      colSpan: "lg:col-span-7",
-      demo: <DemoFeeCalculator t={t} />,
+      visual: <VisualFeeCalculator t={t} />,
     },
     {
+      tag: "Preview",
       title: t.items[2].title,
       desc: t.items[2].desc,
       icon: PaintBrushIcon,
-      accent: "text-foreground",
-      accentBg: "bg-foreground/5",
-      accentBorder: "border-border/50",
-      colSpan: "lg:col-span-5",
-      demo: <DemoCustomization t={t} />,
+      visual: <VisualCustomization t={t} />,
     },
     {
+      tag: "Realtime",
       title: t.items[3].title,
       desc: t.items[3].desc,
       icon: LightningIcon,
-      accent: "text-foreground",
-      accentBg: "bg-foreground/5",
-      accentBorder: "border-border/50",
-      colSpan: "lg:col-span-5",
-      demo: <DemoWebhooks t={t} />,
+      visual: <VisualWebhooks t={t} />,
     },
     {
+      tag: "Public",
       title: t.items[4].title,
       desc: t.items[4].desc,
       icon: CodeBlockIcon,
-      accent: "text-foreground",
-      accentBg: "bg-foreground/5",
-      accentBorder: "border-border/50",
-      colSpan: "lg:col-span-7",
-      demo: <DemoOpenSource t={t} />,
+      visual: <VisualOpenSource t={t} />,
     },
   ];
 
   return (
-    <section ref={ref} className="w-full py-24 md:py-32 relative">
-      <div className="max-w-362 mx-auto px-6 z-10 relative">
+    <section ref={ref} className="relative w-full py-24 md:py-32">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.4]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, var(--border) 1px, transparent 1px), linear-gradient(to bottom, var(--border) 1px, transparent 1px)",
+          backgroundSize: "64px 64px",
+          maskImage:
+            "linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)",
+        }}
+      />
+
+      <div className="relative z-10 mx-auto max-w-362 px-6">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-left mb-16"
+          className="mb-8 flex flex-col justify-between gap-8 lg:mb-4 lg:flex-row lg:items-end"
         >
-          <span className="text-[11px] font-medium tracking-tight text-muted-foreground uppercase mb-2 block font-mono">
-            {t.subtitle}
-          </span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-foreground tracking-tighter mb-4">
-            {t.title}
-          </h2>
-          <p className="text-sm md:text-base text-muted-foreground font-medium max-w-2xl">
+          <div>
+            <span className="mb-3 block font-mono text-[11px] font-medium uppercase tracking-tight text-foreground/40">
+              {t.subtitle}
+            </span>
+            <h2 className="max-w-2xl text-5xl tracking-tighter text-foreground md:text-6xl lg:text-7xl">
+              {t.title}
+            </h2>
+          </div>
+          <p className="max-w-md text-sm font-medium leading-relaxed text-foreground/50 lg:text-right">
             {t.description}
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {featureConfigs.map((config, i) => {
-            const Icon = config.icon;
+        <div>
+          {rows.map((row, i) => {
+            const Icon = row.icon;
+            const reversed = i % 2 === 1;
             return (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
                 transition={{
-                  delay: 0.1 * i,
+                  delay: 0.08 * i,
                   duration: 0.6,
                   ease: [0.16, 1, 0.3, 1],
                 }}
-                className={`flex flex-col justify-between p-6 rounded-3xl border border-border/50 bg-card hover:border-foreground/30 hover:shadow-md transition-all duration-500 group relative overflow-hidden ${config.colSpan}`}
+                className="relative grid grid-cols-1 gap-x-12 gap-y-8 py-14 min-h-128 md:py-20 lg:grid-cols-12"
               >
-                <div className="mb-6 flex-1">{config.demo}</div>
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -top-2 select-none font-mono text-[110px] font-bold leading-none text-foreground/[0.025] md:text-[150px]"
+                  style={reversed ? { right: 0 } : { left: 0 }}
+                >
+                  0{i + 1}
+                </span>
 
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`size-10 rounded-2xl flex items-center justify-center shrink-0 border ${config.accentBg} ${config.accentBorder}`}
-                  >
-                    <Icon size={18} weight="fill" className={config.accent} />
+                <div
+                  className={clsx(
+                    "relative flex flex-col justify-center lg:col-span-4",
+                    reversed ? "lg:order-2" : "lg:order-1",
+                  )}
+                >
+                  <div className="mb-5 flex items-center gap-3">
+                    <div className="flex size-8 items-center justify-center rounded-md bg-foreground">
+                      <Icon
+                        size={14}
+                        weight="bold"
+                        className="text-background"
+                      />
+                    </div>
+                    <span className="font-mono text-[9px] font-medium uppercase tracking-widest text-foreground/35">
+                      {row.tag}
+                    </span>
                   </div>
-                  <div className="text-left">
-                    <h3 className="text-sm font-semibold text-foreground transition-colors">
-                      {config.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                      {config.desc}
-                    </p>
-                  </div>
+                  <h3 className="mb-3 text-2xl font-semibold tracking-tight text-foreground md:text-[28px]">
+                    {row.title}
+                  </h3>
+                  <p className="max-w-xs text-sm leading-relaxed text-foreground/50">
+                    {row.desc}
+                  </p>
+                </div>
+
+                <div
+                  className={clsx(
+                    "relative flex items-center lg:col-span-8",
+                    reversed ? "lg:order-1" : "lg:order-2",
+                  )}
+                >
+                  {row.visual}
                 </div>
               </motion.div>
             );

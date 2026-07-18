@@ -79,6 +79,11 @@
           "latency": "ดีเลย์: ~12ms",
           "select_trigger": "เลือกตัวอย่างการส่งแจ้งเตือนด้านล่าง",
           "privacy_tag": "ซ่อนบัญชีผู้รับเงินแล้ว",
+          "event_stream": "กระแสกิจกรรมสด",
+          "overlay_settings": "ตั้งค่าโอเวอร์เลย์",
+          "alert_volume": "ระดับเสียงแจ้งเตือน",
+          "overlay_scaling": "ขนาดโอเวอร์เลย์",
+          "anonymous_donor": "ผู้บริจาคไม่ประสงค์ออกนาม",
           "donation": {
             "tag": "โดเนท",
             "title": "Sarah ส่งโดเนท $25.00",
@@ -147,7 +152,52 @@
               "title": "แจ้งเตือนขึ้นจอทันที!",
               "description": "แค่นี้ก็เรียบร้อย! ระบบจะแสดงชื่อและข้อความของคุณบนไลฟ์สตรีมทันที"
             }
-          ]
+          ],
+          "mockups": {
+            "payment_settings": "การตั้งค่าการชำระเงิน",
+            "connected": "เชื่อมต่อแล้ว",
+            "create_profile": "สร้างโปรไฟล์",
+            "your_link": "ลิงก์ของคุณ",
+            "display_name": "ชื่อที่แสดง",
+            "accent_theme": "ธีมสีหลัก",
+            "save_settings": "บันทึกการตั้งค่า",
+            "webhook_settings": "การตั้งค่า Webhook",
+            "active": "เปิดใช้งาน",
+            "webhook_instruction": "นำ URL ของ Webhook นี้ไปวางในแดชบอร์ดผู้พัฒนาของช่องทางชำระเงินของคุณ",
+            "copy": "คัดลอก",
+            "last_success": "สำเร็จล่าสุด: 2 นาทีที่แล้ว (Stripe gateway)",
+            "alert_customizer": "ปรับแต่งการแจ้งเตือน",
+            "alert_template": "รูปแบบข้อความ",
+            "alert_animation": "แอนิเมชันแจ้งเตือน",
+            "bounce_up": "เด้งขึ้น",
+            "browser_source_url": "URL ของ Browser Source",
+            "browser_source_instruction": "นำ URL ส่วนตัวนี้ไปเพิ่มเป็น Browser Source ใน OBS Studio หรือ Streamlabs OBS",
+            "sources": "ซอร์ส",
+            "alertbox_link": "ลิงก์ Alertbox",
+            "gameplay": "ภาพเกม",
+            "webcam": "กล้องเว็บแคม",
+            "main_canvas": "หน้าจอหลัก",
+            "channel_activity": "กิจกรรมของช่อง",
+            "live": "ถ่ายทอดสด",
+            "recent_activity": "กิจกรรมแจ้งเตือนล่าสุด",
+            "direct_100": "รับตรง 100%",
+            "anonymous": "ไม่ประสงค์ออกนาม",
+            "net_revenue": "🎉 รายได้ตรงสุทธิ:",
+            "welcome_bio": "ยินดีต้อนรับสู่หน้ารับโดเนทของฉัน ขอบคุณสำหรับการสนับสนุน!",
+            "tip_amount": "จำนวนเงินโดเนท",
+            "anonymous_fan": "แฟนคลับไม่ประสงค์ออกนาม",
+            "test_fan_msg": "สู้ๆ นะครับ! ❤️",
+            "send_alert": "ส่งแจ้งเตือน",
+            "complete_donation": "ทำรายการโดเนท",
+            "selected_amount": "ยอดเงินที่เลือก",
+            "change": "เปลี่ยน",
+            "credit_card": "บัตรเครดิต",
+            "pay_and_trigger": "ชำระเงิน {amount} และแสดงแจ้งเตือน",
+            "live_overlay": "โอเวอร์เลย์สด",
+            "viewers_count": "ผู้ชม {count} คน",
+            "live_gameplay_stream": "ไลฟ์สตรีมเกม",
+            "powered_by": "ให้บริการโดย Alertbox.org"
+          }
         },
         "for_thai_people": {
           "separate": "สำหรับผู้ที่มีสัญชาติไทย และกำลังอาศัยอยู่ในประเทศไทย",
@@ -329,6 +379,24 @@
               "handle": "@jordanplays",
               "role": "YouTube Streamer",
               "quote": "การที่มันเป็น Open-Source และ Self-host ได้ทำให้ตัดสินใจได้ทันที ไม่มี Vendor Lock-in ไม่มีค่าธรรมเนียมแอบแฝง แค่ระบบแจ้งเตือนโดเนทที่สะอาดหมดจด"
+            },
+            {
+              "name": "Samira Patel",
+              "handle": "@samiragames",
+              "role": "Kick Streamer",
+              "quote": "การตั้งค่า Webhook ใช้เวลาไม่ถึงสองนาที ค่าความหน่วงแทบเป็นศูนย์บน OBS!"
+            },
+            {
+              "name": "Liam Vance",
+              "handle": "@liamv_dev",
+              "role": "Tech Streamer",
+              "quote": "ไม่มีคนกลางหักเปอร์เซ็นต์ ทิปจากแฟนคลับ 100% ตรงเข้าบัญชี Stripe ของฉันทันที เปลี่ยนเกมชีวิตสตรีมเมอร์เลย"
+            },
+            {
+              "name": "Elena Rostova",
+              "handle": "@elena_cosplay",
+              "role": "Variety Creator",
+              "quote": "เทมเพลตโอเวอร์เลย์ปรับแต่งได้หลากหลาย เข้ากับธีมสตรีมของฉันได้อย่างไร้ที่ติแกะกล่อง"
             }
           ]
         },
@@ -404,6 +472,7 @@
         "faq": {
           "title": "คำถามที่พบบ่อย",
           "subtitle": "คำถามและคำตอบ",
+          "description": "ทุกสิ่งที่คุณควรรู้เกี่ยวกับแพลตฟอร์มแจ้งเตือนโดเนทสตรีมยุคใหม่",
           "items": [
             {
               "q": "AlertBox.org ฟรีจริงหรือ?",
@@ -432,10 +501,12 @@
           ]
         },
         "cta_banner": {
+          "badge": "ไม่มีค่าธรรมเนียมคนกลางแพลตฟอร์ม",
           "title": "พร้อมเริ่มไลฟ์แล้วหรือยัง?",
           "description": "ตั้งค่าแจ้งเตือนโดเนทในไม่ถึง 2 นาที ฟรีตลอดกาล ไม่ต้องใช้บัตรเครดิต",
           "cta": "สร้างกล่องแจ้งเตือน",
-          "secondary": "ดูบน GitHub"
+          "secondary": "ดูบน GitHub",
+          "footnote": "ฟรีตลอดกาล • ไม่ต้องใช้บัตรเครดิต • โอเพนซอร์ส"
         }
       }
     }

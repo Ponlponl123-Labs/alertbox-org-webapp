@@ -199,7 +199,7 @@ export default function Home() {
 
       <ComparisonTable />
 
-      <PricingHighlight />
+      {/* <PricingHighlight /> */}
 
       <FAQSection />
 

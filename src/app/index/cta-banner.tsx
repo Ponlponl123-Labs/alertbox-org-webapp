@@ -8,10 +8,6 @@ import { Input } from "react-smooth-input";
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react";
 
-/**
- * HorizonGlow: A premium bottom-aligned soft aurora light source.
- * Adapts to both light and dark backgrounds beautifully.
- */
 function HorizonGlow() {
   return (
     <div
@@ -34,9 +30,6 @@ function HorizonGlow() {
   );
 }
 
-/**
- * Subtle linear grid background.
- */
 function SubtleGrid() {
   return (
     <div
@@ -81,11 +74,11 @@ export default function CTABanner() {
           className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-foreground/10 bg-foreground/3 mb-6"
         >
           <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-450 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-foreground opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-foreground"></span>
           </span>
-          <span className="text-[9px] font-mono tracking-widest text-foreground/50 uppercase">
-            No gateway middleman fees
+          <span className="text-xs font-mono tracking-widest text-foreground/50 uppercase">
+            {t.badge}
           </span>
         </motion.div>
 
@@ -94,7 +87,7 @@ export default function CTABanner() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-foreground mb-5 leading-none"
+          className="text-5xl md:text-6xl lg:text-7xl tracking-tight text-foreground mb-5 leading-none"
         >
           {t.title}
         </motion.h2>
@@ -124,7 +117,7 @@ export default function CTABanner() {
             placeholder={lang.data.pages.index.actions.yourname}
             className="relative flex-1 bg-transparent border-none focus:ring-0 text-foreground pl-5 z-10"
             classNames={{
-              base: "p-1 rounded-full backdrop-blur-xs",
+              base: "p-1 rounded-full backdrop-blur-xs border-2",
             }}
             fontStyle={{
               fontFamily: "var(--font-sans)",
@@ -159,7 +152,7 @@ export default function CTABanner() {
           transition={{ delay: 0.4 }}
           className="text-[9px] font-mono tracking-widest text-foreground/25 uppercase mt-10"
         >
-          Free forever • No credit card • Open source
+          {t.footnote}
         </motion.p>
       </div>
     </section>

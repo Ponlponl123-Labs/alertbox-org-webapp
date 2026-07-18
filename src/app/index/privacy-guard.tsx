@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import clsx from "clsx";
 import { motion, AnimatePresence, useInView } from "motion/react";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
@@ -51,11 +52,12 @@ function MaskingReceipt({ t }: { t: any }) {
               </span>
             </div>
             <span
-              className={`text-[9px] px-2.5 py-0.5 rounded-full font-bold transition-colors ${
+              className={clsx(
+                "text-[9px] px-2.5 py-0.5 rounded-full font-bold transition-colors",
                 isProtected
                   ? "bg-foreground/10 text-foreground border border-foreground/20"
-                  : "bg-foreground/5 text-foreground/30 border border-foreground/10"
-              }`}
+                  : "bg-foreground/5 text-foreground/30 border border-foreground/10",
+              )}
             >
               {isProtected ? t.simulator.encrypted : t.simulator.exposed}
             </span>
@@ -78,11 +80,12 @@ function MaskingReceipt({ t }: { t: any }) {
                       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                       exit={{ opacity: 0, y: -3, filter: "blur(2px)" }}
                       transition={{ duration: 0.15 }}
-                      className={`font-mono text-xs block truncate ${
+                      className={clsx(
+                        "font-mono text-xs block truncate",
                         isProtected
                           ? "text-foreground/30 select-none blur-[2px]"
-                          : "text-foreground font-semibold"
-                      }`}
+                          : "text-foreground font-semibold",
+                      )}
                     >
                       {isProtected ? item.protected : item.exposed}
                     </motion.span>
@@ -112,11 +115,12 @@ function MaskingReceipt({ t }: { t: any }) {
           </div>
           <button
             onClick={() => setIsProtected(!isProtected)}
-            className={`h-8 px-4 rounded-full text-[10px] font-bold transition-all border cursor-pointer ${
+            className={clsx(
+              "h-8 px-4 rounded-full text-[10px] font-bold transition-all border cursor-pointer",
               isProtected
                 ? "bg-foreground text-background border-foreground hover:bg-foreground/90"
-                : "bg-transparent text-foreground border-foreground/20 hover:bg-foreground/5"
-            }`}
+                : "bg-transparent text-foreground border-foreground/20 hover:bg-foreground/5",
+            )}
           >
             {isProtected
               ? t.simulator.disable_shield

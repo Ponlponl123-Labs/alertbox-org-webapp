@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import clsx from "clsx";
 import { coreStore } from "@/hooks/store/core";
 import {
   CalendarHeartIcon,
@@ -11,7 +12,8 @@ import {
 import { useStore } from "zustand";
 import { AnimatePresence, motion } from "motion/react";
 
-function Step1VisualViewer() {
+function Step1VisualViewer({ lang }: { lang: any }) {
+  const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] rounded-2xl border border-border bg-card overflow-hidden shadow-xl font-sans text-left transition-all duration-300">
       <div className="bg-foreground/5 px-3 py-1.5 flex items-center gap-1 border-b border-border">
@@ -44,24 +46,25 @@ function Step1VisualViewer() {
           </span>
 
           <p className="text-[6.5px] text-muted-foreground/85 mt-1 leading-normal line-clamp-2 font-read">
-            Welcome to my tip page. Thank you for your support!
+            {m.welcome_bio}
           </p>
         </div>
 
         <div className="col-span-7 bg-background border border-border rounded-xl p-2 flex flex-col gap-1 shadow-sm">
           <div className="text-[6px] font-bold text-muted-foreground uppercase tracking-wider">
-            Tip Amount
+            {m.tip_amount}
           </div>
 
           <div className="grid grid-cols-4 gap-0.5">
             {["$5", "$10", "$25", "$50"].map((preset, i) => (
               <span
                 key={i}
-                className={`text-[7px] font-bold py-0.5 rounded text-center border font-baijamjuree ${
+                className={clsx(
+                  "text-[7px] font-bold py-0.5 rounded text-center border font-baijamjuree",
                   i === 1
                     ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-foreground/5 text-foreground/75 border-border"
-                }`}
+                    : "bg-foreground/5 text-foreground/75 border-border",
+                )}
               >
                 {preset}
               </span>
@@ -73,14 +76,14 @@ function Step1VisualViewer() {
           </div>
 
           <div className="bg-foreground/5 text-[6px] text-muted-foreground px-2 py-0.5 rounded border border-border">
-            Anonymous Fan
+            {m.anonymous_fan}
           </div>
           <div className="bg-foreground/5 text-[6px] text-muted-foreground/85 p-1.5 rounded italic leading-normal border border-border line-clamp-1">
-            Keep streaming! ❤️
+            {m.test_fan_msg}
           </div>
 
           <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[7.5px] py-0.75 rounded shadow-sm transition-colors cursor-pointer">
-            Send Alert
+            {m.send_alert}
           </button>
         </div>
       </div>
@@ -88,31 +91,32 @@ function Step1VisualViewer() {
   );
 }
 
-function Step2VisualViewer() {
+function Step2VisualViewer({ lang }: { lang: any }) {
+  const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left flex flex-col gap-3">
       <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-        Complete Donation
+        {m.complete_donation}
       </h4>
       <div className="flex flex-col gap-2">
         <div className="rounded-xl border border-border p-2 bg-foreground/2 flex justify-between items-center">
           <div className="flex flex-col">
             <span className="text-[8px] text-muted-foreground uppercase font-bold">
-              Selected Amount
+              {m.selected_amount}
             </span>
             <span className="text-[11px] font-bold text-foreground">
               $10.00 USD
             </span>
           </div>
           <span className="text-[8px] font-bold text-muted-foreground">
-            Change
+            {m.change}
           </span>
         </div>
 
         <div className="rounded-xl border border-border p-2 flex flex-col gap-1.5">
           <div className="flex justify-between items-center border-b border-border pb-1">
             <span className="text-[8px] font-bold text-muted-foreground uppercase">
-              Credit Card
+              {m.credit_card}
             </span>
             <div className="flex gap-1">
               <span className="text-[6.5px] bg-foreground/5 border border-border px-1 py-0.25 rounded font-bold">
@@ -139,25 +143,26 @@ function Step2VisualViewer() {
         </div>
 
         <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold text-[9px] h-8 rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
-          <span>Pay $10.00 & Trigger Alert</span>
+          <span>{m.pay_and_trigger.replace("{amount}", "$10.00")}</span>
         </button>
       </div>
     </div>
   );
 }
 
-function Step3VisualViewer() {
+function Step3VisualViewer({ lang }: { lang: any }) {
+  const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-background border border-border rounded-2xl overflow-hidden shadow-lg text-left relative aspect-video flex flex-col justify-between">
       <div className="p-2 flex justify-between items-center z-10">
         <div className="flex items-center gap-1 bg-black/60 rounded-full px-2 py-0.5">
           <span className="size-1 rounded-full bg-red-500 animate-pulse" />
           <span className="text-[6px] font-bold text-white uppercase tracking-wider font-mono">
-            Live Overlay
+            {m.live_overlay}
           </span>
         </div>
         <span className="text-[6.5px] text-foreground/50 font-semibold font-mono">
-          1,842 Viewers
+          {m.viewers_count.replace("{count}", "1,842")}
         </span>
       </div>
 
@@ -165,25 +170,25 @@ function Step3VisualViewer() {
         <div className="p-2.5 rounded-xl bg-card border border-border shadow-[0_0_20px_var(--primary-glow)] flex flex-col gap-0.5 text-center scale-90 animate-bounce">
           <h1 className="whitespace-nowrap text-[9px] text-foreground/95 leading-none">
             <strong className="text-primary font-extrabold">
-              Anonymous Fan
+              {m.anonymous_fan}
             </strong>{" "}
-            donated{" "}
+            {lang.data.pages.index.sections.howitworks.donated}{" "}
             <strong className="text-primary font-extrabold font-baijamjuree">
               $10.00
             </strong>
           </h1>
           <p className="text-[7.5px] text-muted-foreground font-normal leading-none italic mt-0.5 select-none">
-            Keep streaming! ❤️
+            {m.test_fan_msg}
           </p>
         </div>
       </div>
 
       <div className="bg-linear-to-t from-background/80 to-transparent p-2.5 flex items-center justify-between z-10 mt-auto">
         <span className="text-[7px] text-foreground/90 font-bold">
-          Live Gameplay Stream
+          {m.live_gameplay_stream}
         </span>
         <span className="text-[6px] text-foreground/50 font-mono">
-          Powered by Alertbox.org
+          {m.powered_by}
         </span>
       </div>
     </div>
@@ -202,7 +207,7 @@ export default function HowItWorkViewer() {
       description:
         lang.data.pages.index.sections.howitworks.steps_for_viewer[0]
           .description,
-      visual: <Step1VisualViewer />,
+      visual: <Step1VisualViewer lang={lang} />,
     },
     {
       icon: HandCoinsIcon,
@@ -211,7 +216,7 @@ export default function HowItWorkViewer() {
       description:
         lang.data.pages.index.sections.howitworks.steps_for_viewer[1]
           .description,
-      visual: <Step2VisualViewer />,
+      visual: <Step2VisualViewer lang={lang} />,
     },
     {
       icon: ChalkboardTeacherIcon,
@@ -220,7 +225,7 @@ export default function HowItWorkViewer() {
       description:
         lang.data.pages.index.sections.howitworks.steps_for_viewer[2]
           .description,
-      visual: <Step3VisualViewer />,
+      visual: <Step3VisualViewer lang={lang} />,
     },
   ];
 
@@ -254,9 +259,10 @@ export default function HowItWorkViewer() {
                 <button
                   key={idx}
                   onClick={() => setActiveStep(idx)}
-                  className={`text-left p-0 flex items-center uppercase gap-3 transition-all cursor-pointer ${
-                    isActive ? "" : "text-foreground/40"
-                  }`}
+                  className={clsx(
+                    "text-left p-0 flex items-center uppercase gap-3 transition-all cursor-pointer",
+                    !isActive && "text-foreground/40",
+                  )}
                 >
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-bold font-mono tracking-wide leading-snug">

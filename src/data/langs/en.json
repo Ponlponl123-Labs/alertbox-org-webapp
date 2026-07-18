@@ -79,6 +79,11 @@
           "latency": "Latency: ~12ms",
           "select_trigger": "Select simulated trigger below",
           "privacy_tag": "Masked Beneficiary Routing",
+          "event_stream": "Live Event Stream",
+          "overlay_settings": "Overlay Settings",
+          "alert_volume": "Alert Volume",
+          "overlay_scaling": "Overlay Scaling",
+          "anonymous_donor": "Anonymous Donor",
           "donation": {
             "tag": "DONATION",
             "title": "Sarah gifted $25.00",
@@ -147,7 +152,52 @@
               "title": "You're on Screen!",
               "description": "That's it! Your support instantly triggers a live alert on their stream."
             }
-          ]
+          ],
+          "mockups": {
+            "payment_settings": "Payment Settings",
+            "connected": "Connected",
+            "create_profile": "Create Profile",
+            "your_link": "Your Link",
+            "display_name": "Display Name",
+            "accent_theme": "Accent Theme",
+            "save_settings": "Save Settings",
+            "webhook_settings": "Webhook Settings",
+            "active": "Active",
+            "webhook_instruction": "Paste this webhook URL into your provider developer dashboard to listen to events.",
+            "copy": "Copy",
+            "last_success": "Last success: 2 minutes ago (Stripe gateway)",
+            "alert_customizer": "Alert Customizer",
+            "alert_template": "Alert Template",
+            "alert_animation": "Alert Animation",
+            "bounce_up": "Bounce Up",
+            "browser_source_url": "Browser Source URL",
+            "browser_source_instruction": "Add this private URL as a Browser Source in OBS Studio or Streamlabs OBS.",
+            "sources": "Sources",
+            "alertbox_link": "Alertbox Link",
+            "gameplay": "Gameplay",
+            "webcam": "Webcam",
+            "main_canvas": "Main Canvas",
+            "channel_activity": "Channel Activity",
+            "live": "Live",
+            "recent_activity": "Recent Alert Activity",
+            "direct_100": "100% Direct",
+            "anonymous": "anonymous",
+            "net_revenue": "🎉 Net direct revenue:",
+            "welcome_bio": "Welcome to my tip page. Thank you for your support!",
+            "tip_amount": "Tip Amount",
+            "anonymous_fan": "Anonymous Fan",
+            "test_fan_msg": "Keep streaming! ❤️",
+            "send_alert": "Send Alert",
+            "complete_donation": "Complete Donation",
+            "selected_amount": "Selected Amount",
+            "change": "Change",
+            "credit_card": "Credit Card",
+            "pay_and_trigger": "Pay {amount} & Trigger Alert",
+            "live_overlay": "Live Overlay",
+            "viewers_count": "{count} Viewers",
+            "live_gameplay_stream": "Live Gameplay Stream",
+            "powered_by": "Powered by Alertbox.org"
+          }
         },
         "for_thai_people": {
           "separate": "For Thai citizens currently residing in Thailand",
@@ -329,6 +379,24 @@
               "handle": "@jordanplays",
               "role": "YouTube Streamer",
               "quote": "The fact that it's open-source and self-hostable sold me immediately. No vendor lock-in, no hidden fees, just clean donation alerts."
+            },
+            {
+              "name": "Samira Patel",
+              "handle": "@samiragames",
+              "role": "Kick Streamer",
+              "quote": "Setting up webhooks took less than two minutes. The latency is practically non-existent on OBS!"
+            },
+            {
+              "name": "Liam Vance",
+              "handle": "@liamv_dev",
+              "role": "Tech Streamer",
+              "quote": "No middleman cuts means 100% of fan tips go directly to my Stripe account. Absolute game-changer."
+            },
+            {
+              "name": "Elena Rostova",
+              "handle": "@elena_cosplay",
+              "role": "Variety Creator",
+              "quote": "The customizable overlay templates matched my stream theme flawlessly right out of the box."
             }
           ]
         },
@@ -404,6 +472,7 @@
         "faq": {
           "title": "Questions & Answers",
           "subtitle": "Frequently Asked",
+          "description": "Everything you need to know about the most advanced stream alert platform on the market.",
           "items": [
             {
               "q": "Is AlertBox.org really free?",
@@ -432,10 +501,12 @@
           ]
         },
         "cta_banner": {
+          "badge": "No gateway middleman fees",
           "title": "Ready to Go Live?",
           "description": "Set up your donation alerts in under 2 minutes. Free forever, no credit card required.",
           "cta": "Create Your Alert Box",
-          "secondary": "View on GitHub"
+          "secondary": "View on GitHub",
+          "footnote": "Free forever • No credit card • Open source"
         }
       }
     }

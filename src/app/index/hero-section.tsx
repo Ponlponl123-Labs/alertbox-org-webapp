@@ -94,13 +94,13 @@ function LiveAlertStack({ hero }: { hero: any }) {
       >
         <div className="flex items-center justify-between mb-3 border-b border-border/40 pb-2">
           <span className="text-[8px] font-bold text-muted-foreground uppercase font-mono tracking-wider">
-            Live Event Stream
+            {hero.simulator.event_stream}
           </span>
           <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
         </div>
         <div className="space-y-2 opacity-60 text-[9px]">
           <div className="flex justify-between font-semibold">
-            <span className="text-foreground/80">Anonymous Donor</span>
+            <span className="text-foreground/80">{hero.simulator.anonymous_donor}</span>
             <span className="text-rose-500 font-bold font-mono">+$50.00</span>
           </div>
           <div className="flex justify-between font-semibold">
@@ -127,18 +127,18 @@ function LiveAlertStack({ hero }: { hero: any }) {
         className="absolute w-[80%] h-28 bg-card/30 border border-border rounded-2xl p-4 shadow-lg translate-y-12 translate-x-8 rotate-3 select-none text-left"
       >
         <span className="text-[8px] font-bold text-muted-foreground uppercase font-mono tracking-wider block mb-2.5">
-          Overlay Settings
+          {hero.simulator.overlay_settings}
         </span>
         <div className="space-y-2 text-[9px] text-foreground/50">
           <div className="flex justify-between">
-            <span>Alert Volume</span>
+            <span>{hero.simulator.alert_volume}</span>
             <span className="font-mono">80%</span>
           </div>
           <div className="h-1 bg-foreground/10 rounded-full overflow-hidden">
             <div className="w-[80%] h-full bg-rose-500" />
           </div>
           <div className="flex justify-between">
-            <span>Overlay Scaling</span>
+            <span>{hero.simulator.overlay_scaling}</span>
             <span className="font-mono">1.0x</span>
           </div>
         </div>
@@ -162,7 +162,11 @@ function LiveAlertStack({ hero }: { hero: any }) {
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
               exit={{ scale: 0.8, opacity: 0, rotate: 10 }}
               transition={{ type: "spring", stiffness: 350, damping: 20 }}
-              className={`size-12 rounded-2xl bg-linear-to-br ${current.gradient} flex items-center justify-center text-white shrink-0 shadow-lg ${current.glow}`}
+              className={clsx(
+                "size-12 rounded-2xl bg-linear-to-br flex items-center justify-center text-white shrink-0 shadow-lg",
+                current.gradient,
+                current.glow,
+              )}
             >
               {current.icon}
             </motion.div>

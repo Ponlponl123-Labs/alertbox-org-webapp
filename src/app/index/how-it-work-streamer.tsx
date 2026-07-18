@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import clsx from "clsx";
 import { Button } from "@/components/ui/button";
 import { coreStore } from "@/hooks/store/core";
 import {
@@ -18,11 +19,12 @@ import { useStore } from "zustand";
 import { PAYMENT_METHODS } from "@/consts/payment";
 import { AnimatePresence, motion } from "motion/react";
 
-function Step1Visual() {
+function Step1Visual({ lang }: { lang: any }) {
+  const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] border border-border bg-background rounded-2xl p-4 shadow-lg text-left group/preview">
       <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
-        Payment Settings
+        {m.payment_settings}
       </h4>
       <div className="flex flex-col gap-2.5">
         {PAYMENT_METHODS.slice(0, 3).map((method) => (
@@ -41,7 +43,7 @@ function Step1Visual() {
             <div className="flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-foreground group-hover/preview:bg-emerald-500 animate-pulse" />
               <span className="text-[9px] font-bold text-foreground group-hover/preview:text-emerald-600 dark:group-hover/preview:text-emerald-400 uppercase">
-                Connected
+                {m.connected}
               </span>
             </div>
           </div>
@@ -51,16 +53,17 @@ function Step1Visual() {
   );
 }
 
-function Step2Visual() {
+function Step2Visual({ lang }: { lang: any }) {
+  const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left">
       <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
-        Create Profile
+        {m.create_profile}
       </h4>
       <div className="flex flex-col gap-3">
         <div>
           <label className="text-[8px] font-bold text-muted-foreground uppercase">
-            Your Link
+            {m.your_link}
           </label>
           <div className="h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2.5 mt-1 text-[9px] text-muted-foreground font-mono">
             tip-to.me/@<span className="text-primary font-bold">yourname</span>
@@ -69,7 +72,7 @@ function Step2Visual() {
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[8px] font-bold text-muted-foreground uppercase">
-              Display Name
+              {m.display_name}
             </label>
             <div className="h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2.5 mt-1 text-[9px] text-foreground/80">
               Your Stream Name
@@ -77,7 +80,7 @@ function Step2Visual() {
           </div>
           <div>
             <label className="text-[8px] font-bold text-muted-foreground uppercase">
-              Accent Theme
+              {m.accent_theme}
             </label>
             <div className="h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center justify-between px-2 mt-1">
               <div className="flex gap-1">
@@ -90,38 +93,38 @@ function Step2Visual() {
           </div>
         </div>
         <button className="w-full bg-foreground text-background font-bold text-[9px] h-8 rounded-lg mt-1 transition-all shadow-sm">
-          Save Settings
+          {m.save_settings}
         </button>
       </div>
     </div>
   );
 }
 
-function Step3Visual() {
+function Step3Visual({ lang }: { lang: any }) {
+  const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left">
       <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center justify-between">
-        <span>Webhook Settings</span>
+        <span>{m.webhook_settings}</span>
         <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[7px] font-extrabold uppercase animate-pulse">
-          Active
+          {m.active}
         </span>
       </h4>
       <div className="flex flex-col gap-2.5">
         <p className="text-[8.5px] text-muted-foreground/85 leading-normal font-read">
-          Paste this webhook URL into your provider developer dashboard to
-          listen to events.
+          {m.webhook_instruction}
         </p>
         <div className="flex gap-1">
           <div className="flex-1 h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2 text-[8px] text-muted-foreground font-mono truncate select-none">
             https://api.alertbox.org/v1/webhooks/wh_9x28...
           </div>
           <button className="px-3 bg-foreground/5 border border-border rounded-lg text-[9px] font-bold text-foreground/80">
-            Copy
+            {m.copy}
           </button>
         </div>
         <div className="mt-1 flex items-center gap-1.5 text-[8.5px] text-muted-foreground font-semibold border-t border-border pt-2.5">
           <div className="size-1.5 rounded-full bg-emerald-500" />
-          <span>Last success: 2 minutes ago (Stripe gateway)</span>
+          <span>{m.last_success}</span>
         </div>
       </div>
     </div>
@@ -129,22 +132,23 @@ function Step3Visual() {
 }
 
 function Step4Visual({ lang }: { lang: any }) {
+  const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left flex flex-col gap-3">
       <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-        Alert Customizer
+        {m.alert_customizer}
       </h4>
       <div className="grid grid-cols-2 gap-2 text-[8px] font-bold text-muted-foreground uppercase">
         <div>
-          <span>Alert Template</span>
+          <span>{m.alert_template}</span>
           <div className="h-7 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2 mt-1 font-mono text-[8px] text-foreground/80">
             {"{name} tipped {amount}"}
           </div>
         </div>
         <div>
-          <span>Alert Animation</span>
+          <span>{m.alert_animation}</span>
           <div className="h-7 rounded-lg bg-foreground/2 border border-border/50 flex items-center justify-between px-2 mt-1 text-[8px] text-foreground/80">
-            <span>Bounce Up</span>
+            <span>{m.bounce_up}</span>
             <span className="text-muted-foreground">▼</span>
           </div>
         </div>
@@ -168,23 +172,23 @@ function Step4Visual({ lang }: { lang: any }) {
   );
 }
 
-function Step5Visual() {
+function Step5Visual({ lang }: { lang: any }) {
+  const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left">
       <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
-        Browser Source URL
+        {m.browser_source_url}
       </h4>
       <div className="flex flex-col gap-3">
         <p className="text-[8.5px] text-muted-foreground/85 leading-normal font-read">
-          Add this private URL as a Browser Source in OBS Studio or Streamlabs
-          OBS.
+          {m.browser_source_instruction}
         </p>
         <div className="flex gap-1">
           <div className="flex-1 h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2 text-[8px] text-muted-foreground font-mono truncate select-none">
             https://overlay.alertbox.org/widget/ov_a39...
           </div>
           <button className="px-3 bg-foreground/5 border border-border rounded-lg text-[9px] font-bold text-foreground/80">
-            Copy
+            {m.copy}
           </button>
         </div>
 
@@ -198,21 +202,21 @@ function Step5Visual() {
           <div className="p-2 flex items-center gap-2">
             <div className="w-[65px] bg-background rounded border border-border p-1 flex flex-col gap-0.5 text-[5.5px]">
               <span className="text-muted-foreground font-bold uppercase text-[4.5px] mb-0.5">
-                Sources
+                {m.sources}
               </span>
               <span className="bg-foreground text-background rounded px-1 py-0.5 truncate">
-                Alertbox Link
+                {m.alertbox_link}
               </span>
               <span className="text-muted-foreground/85 px-1 py-0.5 truncate">
-                Gameplay
+                {m.gameplay}
               </span>
               <span className="text-muted-foreground/85 px-1 py-0.5 truncate">
-                Webcam
+                {m.webcam}
               </span>
             </div>
             <div className="flex-1 aspect-video rounded border border-border bg-background flex items-center justify-center relative overflow-hidden">
               <span className="text-[5px] font-bold text-foreground/80 uppercase font-mono z-0">
-                Main Canvas
+                {m.main_canvas}
               </span>
               <div className="absolute top-1.5 px-1.5 py-0.75 rounded bg-background border border-primary/35 scale-75 shadow z-10">
                 <span className="text-[5.5px] text-foreground whitespace-nowrap leading-none block font-semibold">
@@ -227,30 +231,31 @@ function Step5Visual() {
   );
 }
 
-function Step6Visual() {
+function Step6Visual({ lang }: { lang: any }) {
+  const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left">
       <h4 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center justify-between">
-        <span>Channel Activity</span>
+        <span>{m.channel_activity}</span>
         <span className="flex items-center gap-1">
           <span className="size-1.5 rounded-full bg-red-500 animate-pulse" />
           <span className="text-red-500 text-[7px] font-extrabold uppercase font-mono">
-            Live
+            {m.live}
           </span>
         </span>
       </h4>
       <div className="flex flex-col gap-2">
         <div className="rounded-xl bg-foreground/2 border border-border/50 p-2 flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-[7px] text-muted-foreground border-b border-border pb-1">
-            <span>Recent Alert Activity</span>
-            <span>100% Direct</span>
+            <span>{m.recent_activity}</span>
+            <span>{m.direct_100}</span>
           </div>
 
           <div className="flex items-center justify-between text-[7.5px]">
             <div className="flex items-center gap-1.5">
               <span className="size-1 rounded-full bg-muted-foreground" />
               <span className="font-semibold text-foreground/90">
-                anonymous
+                {m.anonymous}
               </span>
             </div>
             <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
@@ -271,7 +276,7 @@ function Step6Visual() {
         </div>
 
         <div className="mt-0.5 flex items-center justify-between text-[8px] bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 text-emerald-600 dark:text-emerald-400">
-          <span>🎉 Net direct revenue:</span>
+          <span>{m.net_revenue}</span>
           <strong className="font-bold font-baijamjuree">150.00 THB</strong>
         </div>
       </div>
@@ -289,14 +294,14 @@ export default function HowItWorkStreamer() {
       title: lang.data.pages.index.sections.howitworks.steps[0].title,
       description:
         lang.data.pages.index.sections.howitworks.steps[0].description,
-      visual: <Step1Visual />,
+      visual: <Step1Visual lang={lang} />,
     },
     {
       icon: UserRectangleIcon,
       title: lang.data.pages.index.sections.howitworks.steps[1].title,
       description:
         lang.data.pages.index.sections.howitworks.steps[1].description,
-      visual: <Step2Visual />,
+      visual: <Step2Visual lang={lang} />,
       action: (
         <Link
           href={"/app"}
@@ -312,7 +317,7 @@ export default function HowItWorkStreamer() {
       title: lang.data.pages.index.sections.howitworks.steps[2].title,
       description:
         lang.data.pages.index.sections.howitworks.steps[2].description,
-      visual: <Step3Visual />,
+      visual: <Step3Visual lang={lang} />,
       action: (
         <Link
           href={"/app/connect"}
@@ -344,7 +349,7 @@ export default function HowItWorkStreamer() {
       title: lang.data.pages.index.sections.howitworks.steps[4].title,
       description:
         lang.data.pages.index.sections.howitworks.steps[4].description,
-      visual: <Step5Visual />,
+      visual: <Step5Visual lang={lang} />,
       action: (
         <Link
           href={"/app/customize"}
@@ -360,7 +365,7 @@ export default function HowItWorkStreamer() {
       title: lang.data.pages.index.sections.howitworks.steps[5].title,
       description:
         lang.data.pages.index.sections.howitworks.steps[5].description,
-      visual: <Step6Visual />,
+      visual: <Step6Visual lang={lang} />,
       action: (
         <Link
           href={"/app"}
@@ -407,9 +412,10 @@ export default function HowItWorkStreamer() {
                 <button
                   key={idx}
                   onClick={() => setActiveStep(idx)}
-                  className={`text-left p-0 flex items-center uppercase gap-3 transition-all cursor-pointer ${
-                    isActive ? "" : "text-foreground/40"
-                  }`}
+                  className={clsx(
+                    "text-left p-0 flex items-center uppercase gap-3 transition-all cursor-pointer",
+                    !isActive && "text-foreground/40",
+                  )}
                 >
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-bold font-mono tracking-wide leading-snug">

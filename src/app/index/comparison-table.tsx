@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { motion } from "motion/react";
@@ -36,7 +37,7 @@ function CellValue({
       <CheckCircleIcon
         size={18}
         weight="fill"
-        className="text-emerald-500 mx-auto"
+        className="text-foreground mx-auto"
       />
     ) : (
       <XCircleIcon
@@ -48,11 +49,11 @@ function CellValue({
   }
   return (
     <span
-      className={
+      className={clsx(
         isAlertBox
-          ? "text-xs font-bold text-emerald-600 dark:text-emerald-400"
-          : "text-xs font-medium text-muted-foreground"
-      }
+          ? "text-sm text-foreground"
+          : "text-sm text-muted-foreground",
+      )}
     >
       {value}
     </span>
@@ -64,24 +65,25 @@ export default function ComparisonTable() {
   const t = lang.data.pages.index.sections.comparison;
 
   return (
-    <section className="w-full py-24 bg-background border-t border-border relative overflow-hidden">
+    <section className="w-full py-24 relative">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,var(--foreground)_0%,transparent_20%)] blur-[128px] opacity-40 pointer-events-none" />
       <motion.div
         variants={staggerContainer}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
-        className="max-w-5xl mx-auto px-6 z-10 relative"
+        className="max-w-368 mx-auto px-6 z-10 relative"
       >
         <div className="max-w-3xl mb-12 text-left">
           <motion.p
             variants={fadeInUp}
-            className="text-xs font-bold uppercase tracking-widest text-rose-500 mb-3 font-mono"
+            className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3 font-mono"
           >
             {t.subtitle}
           </motion.p>
           <motion.h2
             variants={fadeInUp}
-            className="text-3xl sm:text-4xl font-black tracking-tight text-foreground mb-4"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight text-foreground mb-4"
           >
             {t.title}
           </motion.h2>
@@ -96,24 +98,26 @@ export default function ComparisonTable() {
           variants={fadeInUp}
           className="w-full overflow-x-auto rounded-3xl border border-border shadow-lg"
         >
-          <table className="w-full border-collapse min-w-[500px]">
+          <table className="w-full border-collapse **:font-heading **:tracking-wider min-w-[500px]">
             <thead>
-              <tr className="bg-foreground/5">
+              <tr className="bg-background">
                 {t.headers.map((header: string, idx: number) => (
                   <th
                     key={idx}
-                    className={`text-left px-5 py-4 text-[10px] font-bold uppercase tracking-wider ${
+                    className={clsx(
+                      "text-center px-5 py-6 text-lg font-medium",
+                      idx === 0 && "text-start",
                       idx === 1
-                        ? "text-rose-500 bg-rose-500/4"
-                        : "text-muted-foreground/60"
-                    }`}
+                        ? "text-foreground bg-foreground/10"
+                        : "text-muted-foreground",
+                    )}
                   >
                     {header}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-background/60">
               {t.rows.map(
                 (
                   row: {
@@ -126,15 +130,15 @@ export default function ComparisonTable() {
                   <motion.tr
                     key={idx}
                     variants={fadeInUp}
-                    className="border-t border-border hover:bg-foreground/2 transition-colors"
+                    className="border-t border-border hover:bg-foreground/10 transition-colors"
                   >
-                    <td className="px-5 py-4 text-xs font-semibold text-foreground/80 text-left">
+                    <td className="px-5 py-4 text-sm text-foreground/60 text-left">
                       {row.feature}
                     </td>
-                    <td className="px-5 py-4 text-center bg-rose-500/2">
+                    <td className="px-5 py-4 text-center font-medium bg-foreground/5">
                       <CellValue value={row.alertbox} isAlertBox />
                     </td>
-                    <td className="px-5 py-4 text-center">
+                    <td className="px-5 py-4 text-center font-medium">
                       <CellValue value={row.others} />
                     </td>
                   </motion.tr>
