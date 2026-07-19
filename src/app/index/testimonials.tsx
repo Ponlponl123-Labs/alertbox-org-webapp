@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { motion } from "motion/react";
@@ -9,6 +10,7 @@ interface TestimonialItem {
   handle: string;
   role: string;
   quote: string;
+  avatar?: string;
 }
 
 function TestimonialCard({
@@ -18,6 +20,8 @@ function TestimonialCard({
   item: TestimonialItem;
   itemKey: string | number;
 }) {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <div
       key={itemKey}
@@ -28,16 +32,25 @@ function TestimonialCard({
         &ldquo;{item.quote}&rdquo;
       </p>
       <div className="flex items-center gap-3 mt-2">
-        <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary shrink-0 border border-primary/20">
-          {item.name
-            .split(" ")
-            .map((n: string) => n[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2)}
-        </div>
+        {item.avatar && !imageError ? (
+          <img
+            src={item.avatar}
+            alt={item.name}
+            onError={() => setImageError(true)}
+            className="size-10 rounded-full object-cover shrink-0 border border-primary/20 group-hover:grayscale-0 grayscale"
+          />
+        ) : (
+          <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary shrink-0 border border-primary/20">
+            {item.name
+              .split(" ")
+              .map((n: string) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2)}
+          </div>
+        )}
         <div className="min-w-0">
-          <h4 className="text-[13px] font-bold text-foreground truncate">
+          <h4 className="text-[13px] font-bold text-foreground truncate grayscale group-hover:grayscale-0">
             {item.name}
           </h4>
           <p className="text-[11px] text-muted-foreground font-medium truncate">

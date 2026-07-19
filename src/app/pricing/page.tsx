@@ -321,7 +321,7 @@ export default function PricingPage() {
             </p>
           </div>
           <div className="md:col-span-8">
-            <div className="p-8 rounded-3xl bg-background border border-border shadow-lg">
+            <div className="p-8 rounded-xl bg-background border border-border shadow-lg">
               <FeeSavingsCalculator t={t} />
             </div>
           </div>

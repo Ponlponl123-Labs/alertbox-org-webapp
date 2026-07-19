@@ -363,40 +363,32 @@
           "subtitle": "What Creators Say",
           "items": [
             {
-              "name": "Alex Rivera",
-              "handle": "@alexstreams",
-              "role": "Twitch Partner",
-              "quote": "Switching to AlertBox was a no-brainer. Zero fees, full privacy, and my alerts look incredible. I wish I'd found this sooner."
-            },
-            {
-              "name": "Mina K.",
-              "handle": "@mina_vt",
-              "role": "VTuber",
-              "quote": "As a VTuber, privacy is everything. AlertBox lets my fans support me without ever exposing my real identity. It's exactly what I needed."
-            },
-            {
-              "name": "Jordan Chen",
-              "handle": "@jordanplays",
+              "name": "Dear-zero-one",
+              "handle": "@dearzenone",
               "role": "YouTube Streamer",
-              "quote": "The fact that it's open-source and self-hostable sold me immediately. No vendor lock-in, no hidden fees, just clean donation alerts."
+              "quote": "Very interesting for me you guy have to try it too",
+              "avatar": "/promoted/avatar/dearzenone.png"
             },
             {
-              "name": "Samira Patel",
-              "handle": "@samiragames",
-              "role": "Kick Streamer",
-              "quote": "Setting up webhooks took less than two minutes. The latency is practically non-existent on OBS!"
+              "name": "Petekung",
+              "handle": "@petekung",
+              "role": "Legend of Youtuber",
+              "quote": "The privacy guard feature is a game changer for me.",
+              "avatar": "/promoted/avatar/petekung.png"
             },
             {
-              "name": "Liam Vance",
-              "handle": "@liamv_dev",
-              "role": "Tech Streamer",
-              "quote": "No middleman cuts means 100% of fan tips go directly to my Stripe account. Absolute game-changer."
+              "name": "lookmoo🐷",
+              "handle": "@lukmhoo_10",
+              "role": "Tiktok Streamer",
+              "quote": "This app saved my life; it gave me the money to feed myself.",
+              "avatar": "/promoted/avatar/lukmhoo_10.png"
             },
             {
-              "name": "Elena Rostova",
-              "handle": "@elena_cosplay",
-              "role": "Variety Creator",
-              "quote": "The customizable overlay templates matched my stream theme flawlessly right out of the box."
+              "name": "Ponlponl123",
+              "handle": "@ponlponl123",
+              "role": "Developer",
+              "quote": "This project is for streamers who want 100% control over their donations.",
+              "avatar": "/promoted/avatar/ponlponl123-osu-avatar.png"
             }
           ]
         },
@@ -1102,11 +1094,11 @@
     "usage_items": [
       {
         "title": "Server Infrastructure",
-        "desc": "Web servers, databases, and secure SSL/TLS certificate renewals to ensure 100% uptime for alert relays."
+        "desc": "Web servers, API, databases, and secure SSL/TLS certificate renewals to ensure 100% uptime for alert relays."
       },
       {
-        "title": "Webhook Processing",
-        "desc": "Routing instant donation alerts from Stripe, Ko-fi, and Buy Me a Coffee to your OBS in real-time."
+        "title": "Research",
+        "desc": "Researching new payment gateways, security enhancements, and real-time streaming tools."
       },
       {
         "title": "Continuous Maintenance",
@@ -1120,12 +1112,12 @@
     },
     "allocations": {
       "servers": {
-        "title": "Servers",
-        "desc": "Web servers, databases & SSL/TLS certificates"
+        "title": "Servers & API",
+        "desc": "Web servers, API, databases & SSL/TLS certificates"
       },
       "webhooks": {
-        "title": "Webhooks",
-        "desc": "Real-time alert relay processing"
+        "title": "Research",
+        "desc": "Real-time alert relay processing & gateway research"
       },
       "dev": {
         "title": "Development",
