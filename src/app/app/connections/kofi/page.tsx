@@ -179,7 +179,6 @@ function KofiPage() {
 
   return (
     <div className="w-full mx-auto flex flex-col min-h-0 flex-1 py-4 animate-fade-in duration-300">
-      {/* Back button */}
       <Link
         href="/app/connections?t=payment"
         className="flex items-center gap-1 text-sm font-semibold text-foreground/50 hover:text-foreground/80 w-max mb-6 mt-3 transition-colors font-sans"
@@ -201,7 +200,6 @@ function KofiPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start font-sans">
-        {/* Left Column: Instructions */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-card/40 p-4 md:p-6 rounded-3xl">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -279,7 +277,6 @@ function KofiPage() {
           </div>
         </div>
 
-        {/* Right Column: Setup Form */}
         <div className="lg:col-span-5 space-y-6">
           <div className="bg-card/40 p-4 md:p-6 rounded-3xl">
             <div className="flex items-center justify-between mb-6">

@@ -278,14 +278,17 @@ function StreamlabsPage() {
     if (bmacEnabled) val |= StreamlabsOption.BMAC_DONATION_SUCCESS;
 
     try {
-      const res = await fetch(getApiUrl("/api/v1/me/connection/integration/streamlabs"), {
-        method: "PATCH",
-        headers: {
-          Authorization: "Bearer " + atob(token || ""),
-          "Content-Type": "application/json",
+      const res = await fetch(
+        getApiUrl("/api/v1/me/connection/integration/streamlabs"),
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: "Bearer " + atob(token || ""),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ options: val }),
         },
-        body: JSON.stringify({ options: val }),
-      });
+      );
 
       if (res.ok) {
         toast.success(setupLang.success_save);
@@ -304,12 +307,15 @@ function StreamlabsPage() {
     const token = getCookie("USRSS");
 
     try {
-      const res = await fetch(getApiUrl("/api/v1/me/connection/integration/streamlabs"), {
-        method: "DELETE",
-        headers: {
-          Authorization: "Bearer " + atob(token || ""),
+      const res = await fetch(
+        getApiUrl("/api/v1/me/connection/integration/streamlabs"),
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: "Bearer " + atob(token || ""),
+          },
         },
-      });
+      );
 
       if (res.ok) {
         toast.success(setupLang.success_disconnect);
@@ -379,7 +385,6 @@ function StreamlabsPage() {
 
   return (
     <div className="w-full mx-auto flex flex-col min-h-0 flex-1 py-4 animate-fade-in duration-300">
-      {/* Back button */}
       <Link
         href="/app/connections?t=trigger"
         className="flex items-center gap-1 text-sm font-semibold text-foreground/50 hover:text-foreground/80 w-max mb-6 mt-3 transition-colors font-sans"
@@ -388,7 +393,6 @@ function StreamlabsPage() {
         {setupLang.back}
       </Link>
 
-      {/* Header section */}
       <div className="flex items-center gap-4 mb-8 font-sans">
         <div className="p-3 bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 rounded-2xl">
           <Streamlabs className="size-10" />
@@ -402,7 +406,6 @@ function StreamlabsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start font-sans">
-        {/* Left Column: Option Toggles */}
         <div className="lg:col-span-6 space-y-6">
           <div className="bg-card/40 p-4 md:p-6 rounded-3xl">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -501,7 +504,6 @@ function StreamlabsPage() {
           </div>
         </div>
 
-        {/* Right Column: Relay Event Logs */}
         <div className="lg:col-span-6 space-y-6">
           <div className="bg-card/40 p-4 md:p-6 rounded-3xl">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -528,7 +530,6 @@ function StreamlabsPage() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        {/* Status dot indicator */}
                         <span
                           className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                             log.status === "COMPLETED"
@@ -561,7 +562,6 @@ function StreamlabsPage() {
                       </div>
                     </div>
 
-                    {/* Supporter message or error */}
                     {(log.message || log.errorMessage || log.createdAt) && (
                       <div className="flex items-center justify-between gap-4 text-[11px]">
                         <div className="truncate text-foreground/50 leading-normal flex-1">
@@ -595,7 +595,6 @@ function StreamlabsPage() {
         </div>
       </div>
 
-      {/* Disconnect Confirmation Modal */}
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <AlertDialogContent size="sm" className="rounded-3xl">
           <AlertDialogHeader>

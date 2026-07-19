@@ -974,7 +974,45 @@
     "team_title": "The Idea",
     "team_desc": "Alertbox.org was built by a small group of developers who wanted to support their favorite creators securely and privately. If you find our tool useful, please consider supporting the project to help us cover server infrastructure costs.",
     "faq_question": "If you don't collect any service charge, how do you survive?",
-    "faq_answer": "We don't. Alertbox.org is not a commercial enterprise or a venture-backed startup. It is a public utility run entirely on volunteer contributions and personal pocket funds. We survive solely on donations from the streamers and viewers who use our tools to keep the servers running."
+    "faq_answer": "We don't. Alertbox.org is not a commercial enterprise or a venture-backed startup. It is a public utility run entirely on volunteer contributions and personal pocket funds. We survive solely on donations from the streamers and viewers who use our tools to keep the servers running.",
+    "core_values_title": "Core Values",
+    "get_started": "Get Started",
+    "stats": {
+      "fees": "Fees",
+      "latency": "Latency",
+      "open_source": "Open Source"
+    },
+    "live_demo": {
+      "badge": "Live Preview",
+      "title": "See alerts in action.",
+      "desc": "Real-time donation, subscription and cheer alerts that appear instantly on your stream overlay.",
+      "tags": {
+        "donation": "DONATION",
+        "sub": "SUBSCRIBER",
+        "cheer": "CHEER"
+      },
+      "messages": {
+        "donation": "\"Keep it up! 🔥\"",
+        "sub": "\"Love the content, subbing!\"",
+        "cheer": "\"GG! What a play! 🎉\""
+      },
+      "privacy_tag": "Privacy-first"
+    },
+    "explore": {
+      "subtitle": "Explore More",
+      "pricing": {
+        "title": "Pricing",
+        "desc": "See why we're free forever."
+      },
+      "donate": {
+        "title": "Donate",
+        "desc": "Help keep the servers running."
+      },
+      "dashboard": {
+        "title": "Dashboard",
+        "desc": "Set up your streamer profile now."
+      }
+    }
   },
   "pricing": {
     "title": "Zero platform fees. Forever.",
@@ -1016,7 +1054,41 @@
     },
     "help_title": "Support Alertbox.org",
     "help_desc": "Since we do not charge any fees, we rely entirely on donations from our community to cover server bills, domain registrations, and development costs. If you find our service useful, please consider helping us keep it running.",
-    "help_action": "Support the Platform"
+    "help_action": "Support the Platform",
+    "support_us": "Support Us",
+    "get_started": "Get Started",
+    "calculator": {
+      "subtitle": "Calculator",
+      "title": "See how much you save.",
+      "desc": "Drag the slider to compare your savings against platforms that charge 10% platform fees.",
+      "others": "Others",
+      "volume_label": "Monthly Volume",
+      "you_save": "You save",
+      "per_mo": "mo"
+    },
+    "features_grid": {
+      "subtitle": "What's Included",
+      "privacy": {
+        "title": "Privacy-First",
+        "desc": "We never access your banking credentials."
+      },
+      "alerts": {
+        "title": "Instant Alerts",
+        "desc": "Donations appear on stream in <50ms."
+      },
+      "open_source": {
+        "title": "Open Source",
+        "desc": "Fully transparent, auditable by anyone."
+      }
+    },
+    "cta_bottom": {
+      "badge": "Start Now",
+      "title": "Start streaming for free.",
+      "desc": "Claim your profile name and set up alerts in minutes. No credit card required.",
+      "placeholder": "Your name",
+      "claim": "Claim",
+      "footnote": "No credit card · Setup in 2 minutes"
+    }
   },
   "donate": {
     "title": "Support Alertbox.org",
@@ -1040,7 +1112,33 @@
         "title": "Continuous Maintenance",
         "desc": "Updating integration APIs, fixing stream overlay bugs, and building new features requested by streamers."
       }
-    ]
+    ],
+    "stats": {
+      "fees": "Platform Fees",
+      "open_source": "Open Source",
+      "uptime": "Uptime"
+    },
+    "allocations": {
+      "servers": {
+        "title": "Servers",
+        "desc": "Web servers, databases & SSL/TLS certificates"
+      },
+      "webhooks": {
+        "title": "Webhooks",
+        "desc": "Real-time alert relay processing"
+      },
+      "dev": {
+        "title": "Development",
+        "desc": "API updates, bug fixes & new features"
+      }
+    },
+    "cta_bottom": {
+      "badge": "Free forever",
+      "title": "See what we've built.",
+      "desc": "Explore the dashboard, create your streamer profile, and set up alerts in minutes.",
+      "get_started": "Get Started",
+      "view_pricing": "View Pricing"
+    }
   },
   "footer": {
     "description": "Alertbox.org is an open-source alert box service featuring custom streamer profiles, zero platform fees, and robust privacy protection. \nPowered by trusted payment gateways like Buy Me a Coffee, Ko-fi, and Stripe.",

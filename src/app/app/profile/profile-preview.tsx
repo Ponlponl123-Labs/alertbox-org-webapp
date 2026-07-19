@@ -406,7 +406,6 @@ export default function ProfilePreview({
         isDashboardPreview ? "min-h-[450px]" : "min-h-screen",
       )}
     >
-      {/* View Toggle */}
       {viewMode !== "responsive" && (
         <div className="absolute top-4 right-4 z-20 flex bg-foreground/5 p-1 rounded-xl border border-foreground/10 gap-0.5">
           <button

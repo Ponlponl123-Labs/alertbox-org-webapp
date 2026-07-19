@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import clsx from "clsx";
 import { coreStore } from "@/hooks/store/core";
 import {
@@ -11,6 +11,8 @@ import {
 } from "@phosphor-icons/react";
 import { useStore } from "zustand";
 import { AnimatePresence, motion } from "motion/react";
+
+const STEP_DURATION = 5000;
 
 function Step1VisualViewer({ lang }: { lang: any }) {
   const m = lang.data.pages.index.sections.howitworks.mockups;
@@ -195,6 +197,11 @@ function Step3VisualViewer({ lang }: { lang: any }) {
   );
 }
 
+/**
+ * HowItWorkViewer component displays interactive viewer steps with automatic countdown advancement.
+ *
+ * @returns JSX element representing the viewer how-it-works section.
+ */
 export default function HowItWorkViewer() {
   const lang = useStore(coreStore, (state) => state.lang);
   const [activeStep, setActiveStep] = useState(0);
@@ -229,6 +236,14 @@ export default function HowItWorkViewer() {
     },
   ];
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % steps.length);
+    }, STEP_DURATION);
+
+    return () => clearInterval(timer);
+  }, [steps.length, activeStep]);
+
   return (
     <div className="w-full mx-auto flex flex-col md:flex-row gap-8">
       <div className="flex-1 min-w-0 flex flex-col justify-between h-auto">
@@ -260,14 +275,38 @@ export default function HowItWorkViewer() {
                   key={idx}
                   onClick={() => setActiveStep(idx)}
                   className={clsx(
-                    "text-left p-0 flex items-center uppercase gap-3 transition-all cursor-pointer",
-                    !isActive && "text-foreground/40",
+                    "text-left relative transition-all cursor-pointer flex items-center gap-3",
+                    isActive
+                      ? "text-foreground"
+                      : "text-foreground/40 hover:text-foreground/70",
                   )}
                 >
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold font-mono tracking-wide leading-snug">
+                  <div className="flex-1 flex gap-2 min-w-0 items-center">
+                    <h3 className="text-sm font-bold font-mono tracking-wide leading-snug uppercase">
                       {step.title}
                     </h3>
+                    {isActive && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                          duration: 0.15,
+                        }}
+                        className="flex-1 bg-muted relative h-0.5 rounded-2xl ml-auto"
+                      >
+                        <motion.div
+                          key={`progress-${activeStep}`}
+                          initial={{ width: "0%" }}
+                          animate={{ width: "100%" }}
+                          transition={{
+                            duration: STEP_DURATION / 1000,
+                            ease: "linear",
+                          }}
+                          className="absolute bottom-0 left-0 h-full bg-primary"
+                        />
+                      </motion.div>
+                    )}
                   </div>
                 </button>
               );

@@ -25,7 +25,6 @@ export default function BackendLivenessBanner() {
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="fixed top-0 left-0 right-0 w-full bg-rose-950 supports-backdrop-filter:bg-linear-to-r supports-backdrop-filter:from-rose-950/40 supports-backdrop-filter:via-amber-950/40 supports-backdrop-filter:to-rose-950/40 border-b border-rose-500/20 supports-backdrop-filter:backdrop-blur-xl z-999 py-2.5 px-4 flex items-center justify-center gap-3 shadow-lg select-none"
         >
-          {/* Blinking status dot */}
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>

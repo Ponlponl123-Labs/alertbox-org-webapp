@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "zustand";
 import { Button } from "./ui/button";
 import ThemeSwitcher from "./theme-switcher";
@@ -94,6 +94,10 @@ function Header() {
     coreStore,
     (state) => state.setSidebarHiddenOnMobile,
   );
+
+  useEffect(() => {
+    setIsNavActive(false);
+  }, [pathname]);
 
   return (
     <>

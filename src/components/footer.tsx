@@ -138,8 +138,8 @@ const Footer = memo(function Footer() {
             ))}
           </div>
         </div>
-        <div className="flex items-center justify-between w-full max-w-5xl mx-auto mt-4">
-          <div className="text-foreground/10 font-mono text-xs">
+        <div className="flex sm:items-center sm:justify-between w-full max-w-5xl mx-auto max-sm:flex-col max-sm:gap-4 mt-4">
+          <div className="text-foreground/10 font-mono text-xs max-sm:mx-auto">
             <Tooltip>
               <TooltipTrigger delay={2000}>
                 <Link href="/donate">
@@ -169,7 +169,7 @@ const Footer = memo(function Footer() {
               </TooltipContent>
             </Tooltip>
           </div>
-          <div className="flex flex-col gap-2 text-end">
+          <div className="flex flex-col gap-2 text-end max-sm:text-center">
             <span className="text-foreground/10 font-mono text-[10px] mt-2 tracking-widest">
               Made with ❤︎ by Ponlponl123 Labs
             </span>
