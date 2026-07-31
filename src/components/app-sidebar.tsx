@@ -9,6 +9,7 @@ import {
   CaretDownIcon,
   ChartLineIcon,
   GearSixIcon,
+  HandCoinsIcon,
   HandWavingIcon,
   HeartIcon,
   PlugsIcon,
@@ -17,6 +18,7 @@ import {
   StorefrontIcon,
   UserGearIcon,
   UserIcon,
+  UsersIcon,
   WarningOctagonIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
@@ -30,7 +32,13 @@ import {
 import { useDisclosure } from "./animate-ui/primitives/headless/disclosure";
 import { useEffect, useMemo, useState } from "react";
 
-function AccordionStateSync({ hydrated, onToggle }: { hydrated: boolean; onToggle: (isOpen: boolean) => void }) {
+function AccordionStateSync({
+  hydrated,
+  onToggle,
+}: {
+  hydrated: boolean;
+  onToggle: (isOpen: boolean) => void;
+}) {
   const { isOpen } = useDisclosure();
   useEffect(() => {
     if (hydrated) {
@@ -59,7 +67,10 @@ function AppSidebar() {
     (state) => state.setSidebarCollapsed,
   );
   const openAccordions = useStore(coreStore, (state) => state.openAccordions);
-  const setAccordionOpen = useStore(coreStore, (state) => state.setAccordionOpen);
+  const setAccordionOpen = useStore(
+    coreStore,
+    (state) => state.setAccordionOpen,
+  );
   const hydrateSidebar = useStore(coreStore, (state) => state.hydrateSidebar);
   const pathname = usePathname();
   const [sidebarHydrated, setSidebarHydrated] = useState(false);
@@ -94,11 +105,21 @@ function AppSidebar() {
         href: "/app/connections",
       },
       {
+        id: "member",
+        text: "Members",
+        icon: <UsersIcon className="rotate-0!" weight="bold" size={16} />,
+        links: [
+          {
+            text: "Donation history",
+            icon: <HandCoinsIcon weight="bold" size={16} />,
+            href: "/app/member/history",
+          },
+        ],
+      },
+      {
         id: "alertbox",
         text: lang.data.app.sidebar.links.alertbox.title,
-        icon: (
-          <BellRingingIcon className="rotate-0!" weight="bold" size={16} />
-        ),
+        icon: <BellRingingIcon className="rotate-0!" weight="bold" size={16} />,
         links: [
           {
             text: lang.data.app.sidebar.links.alertbox.donation,
@@ -159,13 +180,16 @@ function AppSidebar() {
           !l.href ? (
             <Accordion key={`${l.id}-${sidebarHydrated}`}>
               <AccordionItem defaultOpen={openAccordions[l.id] ?? true}>
-                <AccordionStateSync hydrated={sidebarHydrated} onToggle={(isOpen) => setAccordionOpen(l.id, isOpen)} />
+                <AccordionStateSync
+                  hydrated={sidebarHydrated}
+                  onToggle={(isOpen) => setAccordionOpen(l.id, isOpen)}
+                />
                 <AccordionButton
                   className={cn(
                     "rounded-lg whitespace-nowrap group overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start items-center flex no-underline!",
                     "hover:bg-primary/5 hover:text-primary",
                     isSidebarCollapsed &&
-                    "aria-expanded:bg-background/80 aria-expanded:rounded-b-none",
+                      "aria-expanded:bg-background/80 aria-expanded:rounded-b-none",
                   )}
                   showArrow={false}
                 >
