@@ -14,7 +14,9 @@ import {
   ChartBarIcon,
 } from "@phosphor-icons/react";
 
-function MaskingReceipt({ t }: { t: any }) {
+type PrivacyGuardData = NonNullable<ReturnType<typeof coreStore.getState>["lang"]["data"]["pages"]["index"]["sections"]["privacy_guard"]>;
+
+function MaskingReceipt({ t }: { t: PrivacyGuardData }) {
   const [isProtected, setIsProtected] = useState(true);
 
   const receiptData = [
@@ -133,8 +135,10 @@ function MaskingReceipt({ t }: { t: any }) {
 }
 
 export default function PrivacyGuard() {
-  const lang = useStore(coreStore, (state) => state.lang);
-  const t = lang.data.pages.index.sections.privacy_guard;
+  const t = useStore(
+    coreStore,
+    (state) => state.lang.data.pages.index.sections.privacy_guard,
+  );
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 

@@ -28,8 +28,14 @@ const staggerContainer = {
 };
 
 export default function PricingHighlight() {
-  const lang = useStore(coreStore, (state) => state.lang);
-  const t = lang.data.pages.index.sections.pricing_highlight;
+  const t = useStore(
+    coreStore,
+    (state) => state.lang.data.pages.index.sections.pricing_highlight,
+  );
+  const pricingLink = useStore(
+    coreStore,
+    (state) => state.lang.data.header.links.pricing,
+  );
 
   return (
     <section className="w-full py-24 bg-background border-t border-border relative overflow-hidden">
@@ -103,7 +109,7 @@ export default function PricingHighlight() {
             href="/pricing"
             className="text-xs text-muted-foreground hover:text-foreground font-semibold underline underline-offset-4 transition-colors"
           >
-            {lang.data.header.links.pricing} →
+            {pricingLink} →
           </Link>
         </motion.div>
       </motion.div>

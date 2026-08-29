@@ -25,50 +25,59 @@ import BackendLivenessBanner from "@/components/backend-liveness-banner";
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
+  display: "swap",
 });
 
 const afacadSans = Afacad({
   variable: "--font-afacad",
   weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
+  display: "swap",
 });
 
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700", "800"],
   subsets: ["latin"],
+  display: "swap",
 });
 
 const fredokaSans = Fredoka({
   variable: "--font-fredoka",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const notoSarifThai = Noto_Serif_Thai({
   variable: "--font-noto-sarif-thai",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const lexendExa = Lexend_Exa({
   variable: "--font-lexend-exa",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const sarabun = Sarabun({
   variable: "--font-sarabun",
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
+  display: "swap",
 });
 
 const baiJamJuree = Bai_Jamjuree({
   variable: "--font-bai-jamjuree",
-  weight: ["200", "300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {

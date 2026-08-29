@@ -259,7 +259,27 @@ const DotField = memo(
 
         ctx!.fill();
 
-        rafRef.current = requestAnimationFrame(tick);
+        if (isVisible) {
+          rafRef.current = requestAnimationFrame(tick);
+        }
+      }
+
+      let isVisible = true;
+      const io = new IntersectionObserver(
+        (entries) => {
+          const [entry] = entries;
+          const nextVis = entry?.isIntersecting ?? false;
+          if (nextVis && !isVisible) {
+            isVisible = true;
+            rafRef.current = requestAnimationFrame(tick);
+          } else {
+            isVisible = nextVis;
+          }
+        },
+        { threshold: 0.05 },
+      );
+      if (canvas.parentElement) {
+        io.observe(canvas.parentElement);
       }
 
       doResize();
@@ -273,6 +293,7 @@ const DotField = memo(
       };
 
       return () => {
+        io.disconnect();
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         clearInterval(speedInterval);
         clearTimeout(resizeTimer);

@@ -85,7 +85,7 @@ function BmacPage() {
       setIsCopied(true);
       toast.success(t.copied);
       setTimeout(() => setIsCopied(false), 2000);
-    } catch (err) {
+    } catch {
       // ignore
     }
   };
@@ -126,7 +126,7 @@ function BmacPage() {
         const errorText = await res.text();
         toast.error(errorText || t.error_save);
       }
-    } catch (err) {
+    } catch {
       toast.error(t.error_network);
     } finally {
       setIsSaving(false);
@@ -159,7 +159,7 @@ function BmacPage() {
       } else {
         toast.error(t.error_disconnect);
       }
-    } catch (err) {
+    } catch {
       toast.error(t.error_network);
     } finally {
       setIsSaving(false);

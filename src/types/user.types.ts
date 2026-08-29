@@ -39,6 +39,18 @@ export interface Profile {
   updatedAt: string;
 }
 
+export interface LiveProfileData {
+  displayName?: string;
+  bio?: string | null;
+  twitch?: string | null;
+  youtube?: string | null;
+  twitter?: string | null;
+  facebook?: string | null;
+  reddit?: string | null;
+  discord?: string | null;
+  accentColor?: number;
+}
+
 export interface Widget {
   id: string;
   type: "ALERTBOX" | "TIPJAR" | "GOALBAR";

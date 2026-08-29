@@ -63,27 +63,29 @@ function Slot<T extends HTMLElement = HTMLElement>({
   ref,
   ...props
 }: SlotProps<T>) {
+  if (!React.isValidElement(children)) return null;
+
   const isAlreadyMotion =
     typeof children.type === 'object' &&
     children.type !== null &&
     isMotionComponent(children.type);
 
-  const Base = React.useMemo(
-    () =>
-      isAlreadyMotion
-        ? (children.type as React.ElementType)
-        : motion.create(children.type as React.ElementType),
-    [isAlreadyMotion, children.type],
-  );
-
-  if (!React.isValidElement(children)) return null;
-
   const { ref: childRef, ...childProps } = children.props as AnyProps;
-
   const mergedProps = mergeProps(childProps, props);
+  const finalRef = mergeRefs(childRef as React.Ref<T>, ref);
+
+  if (isAlreadyMotion) {
+    return React.cloneElement(
+      children as React.ReactElement<Record<string, unknown>>,
+      {
+        ...mergedProps,
+        ref: finalRef,
+      },
+    );
+  }
 
   return (
-    <Base {...mergedProps} ref={mergeRefs(childRef as React.Ref<T>, ref)} />
+    <motion.div {...mergedProps} ref={finalRef as React.Ref<HTMLDivElement>} />
   );
 }
 

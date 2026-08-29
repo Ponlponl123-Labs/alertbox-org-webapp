@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "bun test"
   },
   "dependencies": {
     "@base-ui-components/react": "^1.0.0-rc.0",
@@ -44,6 +45,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.184.1",
+    "bun-types": "^1.4.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",

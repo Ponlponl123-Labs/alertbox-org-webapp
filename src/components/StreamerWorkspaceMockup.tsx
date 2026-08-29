@@ -8,9 +8,11 @@ import {
   PaperPlaneRightIcon,
 } from "@phosphor-icons/react";
 
+import { type Language } from "@/types/i18n.types";
+
 interface StreamerWorkspaceMockupProps {
   username: string;
-  lang: any;
+  lang: Language;
 }
 
 export default function StreamerWorkspaceMockup({
@@ -22,15 +24,16 @@ export default function StreamerWorkspaceMockup({
   const isThai = lang?.key === "th-TH";
   const name = username.trim() || (isThai ? "ผู้สนับสนุน" : "Anonymous Fan");
 
-  const triggerTip = () => {
-    if (isSending || isAlerting) return;
-    setIsSending(true);
-
-    setTimeout(() => {
-      setIsSending(false);
-      setIsAlerting(true);
-    }, 850);
-  };
+  const triggerTip = React.useCallback(() => {
+    setIsSending((prevSending) => {
+      if (prevSending || isAlerting) return prevSending;
+      setTimeout(() => {
+        setIsSending(false);
+        setIsAlerting(true);
+      }, 850);
+      return true;
+    });
+  }, [isAlerting]);
 
   useEffect(() => {
     if (isAlerting) {
@@ -46,7 +49,7 @@ export default function StreamerWorkspaceMockup({
       triggerTip();
     }, 1500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [triggerTip]);
 
   return (
     <div className="relative w-full h-[400px] flex items-center justify-center pointer-events-auto">

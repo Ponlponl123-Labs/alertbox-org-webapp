@@ -23,7 +23,6 @@ function Connection({
   secret,
   skey,
   soon,
-  connections: _,
   setConnections,
 }: {
   api_endpoint: string;

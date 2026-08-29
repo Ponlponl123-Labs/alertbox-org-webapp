@@ -11,7 +11,7 @@ import {
   AccordionPanel,
 } from "./animate-ui/components/headless/accordion";
 
-export default () => {
+export default function EzdnOffer() {
   const lang = useStore(coreStore, (state) => state.lang);
 
   return (

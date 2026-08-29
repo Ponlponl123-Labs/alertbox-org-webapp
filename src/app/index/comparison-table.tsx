@@ -61,8 +61,10 @@ function CellValue({
 }
 
 export default function ComparisonTable() {
-  const lang = useStore(coreStore, (state) => state.lang);
-  const t = lang.data.pages.index.sections.comparison;
+  const t = useStore(
+    coreStore,
+    (state) => state.lang.data.pages.index.sections.comparison,
+  );
 
   return (
     <section className="w-full py-24 relative">

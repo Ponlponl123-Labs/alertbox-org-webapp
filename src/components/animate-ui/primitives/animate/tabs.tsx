@@ -268,6 +268,7 @@ function TabsContents({
   React.useLayoutEffect(() => {
     if (height === 0 && activeIndex >= 0) {
       const next = measure(activeIndex);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (next !== 0) setHeight(next);
     }
   }, [activeIndex, height, measure]);

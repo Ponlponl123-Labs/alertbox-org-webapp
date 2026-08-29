@@ -32,10 +32,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   const bannerUrl = userInfo?.profile?.banner;
   const [isBannerLoaded, setIsBannerLoaded] = useState(false);
+  const [prevBannerUrl, setPrevBannerUrl] = useState(bannerUrl);
 
-  React.useEffect(() => {
+  if (prevBannerUrl !== bannerUrl) {
+    setPrevBannerUrl(bannerUrl);
     setIsBannerLoaded(false);
-  }, [bannerUrl]);
+  }
 
   return (
     <div

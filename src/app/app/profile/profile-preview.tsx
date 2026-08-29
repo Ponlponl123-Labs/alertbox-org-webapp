@@ -28,17 +28,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export interface LiveProfileData {
-  displayName?: string;
-  bio?: string | null;
-  twitch?: string | null;
-  youtube?: string | null;
-  twitter?: string | null;
-  facebook?: string | null;
-  reddit?: string | null;
-  discord?: string | null;
-  accentColor?: number;
-}
+import { type Profile, type LiveProfileData } from "@/types/user.types";
+
+export type { LiveProfileData };
 
 export default function ProfilePreview({
   liveData,
@@ -46,7 +38,7 @@ export default function ProfilePreview({
   defaultViewMode = "mobile",
 }: {
   liveData?: LiveProfileData;
-  publicProfile?: any;
+  publicProfile?: Profile | null;
   defaultViewMode?: "mobile" | "desktop" | "responsive";
 }) {
   const { userInfo } = useUserContext();
@@ -68,7 +60,7 @@ export default function ProfilePreview({
     ...liveData,
   };
   const isDashboardPreview = !publicProfile;
-  const allBadges = getActiveBadges(profile.badges);
+  const allBadges = getActiveBadges(profile.badges || 0);
   const isVerified = allBadges.some((b) => b.name === "verified");
   const badges = allBadges.filter((b) => b.name !== "verified");
   const accentHex = profile.accentColor
@@ -76,7 +68,6 @@ export default function ProfilePreview({
     : "#6366f1";
   const accentForegroundHex = getAccentForeground(accentHex);
 
-  // Define social links and their corresponding icons/colors
   const socialList = [
     {
       value: profile.twitch,

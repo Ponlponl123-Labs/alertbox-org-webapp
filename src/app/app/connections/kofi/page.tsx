@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useStore } from "zustand";
 import { getCookie } from "cookies-next/client";
 import { useUserContext } from "@/contexts/user";
@@ -36,7 +35,6 @@ import { Connections } from "@/types/user.types";
 function KofiPage() {
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo, logout } = useUserContext();
-  const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -63,19 +61,22 @@ function KofiPage() {
       .then((res) => {
         if (res.status === 401) {
           logout();
-          return null;
+          return;
         }
-        return res.json();
+        if (res.ok) return res.json();
+        throw new Error("Failed to fetch connections");
       })
-      .then((data) => {
+      .then((data: Connections) => {
         setConnections(data);
-        if (data?.kofi) {
+        if (data.kofi) {
           setUsername(data.kofi.username || "");
           setSecret(data.kofi.secret || "");
         }
-        setIsLoading(false);
       })
       .catch(() => {
+        // ignore
+      })
+      .finally(() => {
         setIsLoading(false);
       });
   }, [logout, userInfo]);
@@ -86,7 +87,7 @@ function KofiPage() {
       setIsCopied(true);
       toast.success(t.copied);
       setTimeout(() => setIsCopied(false), 2000);
-    } catch (err) {
+    } catch {
       // ignore
     }
   };
@@ -127,7 +128,7 @@ function KofiPage() {
         const errorText = await res.text();
         toast.error(errorText || t.error_save);
       }
-    } catch (err) {
+    } catch {
       toast.error(t.error_network);
     } finally {
       setIsSaving(false);
@@ -160,7 +161,7 @@ function KofiPage() {
       } else {
         toast.error(t.error_disconnect);
       }
-    } catch (err) {
+    } catch {
       toast.error(t.error_network);
     } finally {
       setIsSaving(false);

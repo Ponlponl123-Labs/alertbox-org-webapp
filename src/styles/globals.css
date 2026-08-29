@@ -13,10 +13,16 @@
     @apply border-border outline-ring/50 font-sans;
   }
 
-  *:not([data-default-transition="false"])
-    *:not([data-default-transition="false"]),
-  [data-default-transition="true"] {
-    transition: 0.16s cubic-bezier(0.165, 0.84, 0.44, 1);
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  .transition-interactive {
+    transition-property: color, background-color, border-color, opacity, transform, box-shadow;
+    transition-timing-function: cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition-duration: 0.16s;
   }
 
   p {

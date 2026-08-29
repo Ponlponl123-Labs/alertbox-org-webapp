@@ -9,12 +9,13 @@ import {
   HandCoinsIcon,
   SealCheckIcon,
 } from "@phosphor-icons/react";
+import { type Language } from "@/lib/i18n";
 import { useStore } from "zustand";
 import { AnimatePresence, motion } from "motion/react";
 
 const STEP_DURATION = 5000;
 
-function Step1VisualViewer({ lang }: { lang: any }) {
+function Step1VisualViewer({ lang }: { lang: Language }) {
   const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] rounded-2xl border border-border bg-card overflow-hidden shadow-xl font-sans text-left transition-all duration-300">
@@ -93,7 +94,7 @@ function Step1VisualViewer({ lang }: { lang: any }) {
   );
 }
 
-function Step2VisualViewer({ lang }: { lang: any }) {
+function Step2VisualViewer({ lang }: { lang: Language }) {
   const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left flex flex-col gap-3">
@@ -152,7 +153,7 @@ function Step2VisualViewer({ lang }: { lang: any }) {
   );
 }
 
-function Step3VisualViewer({ lang }: { lang: any }) {
+function Step3VisualViewer({ lang }: { lang: Language }) {
   const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-background border border-border rounded-2xl overflow-hidden shadow-lg text-left relative aspect-video flex flex-col justify-between">

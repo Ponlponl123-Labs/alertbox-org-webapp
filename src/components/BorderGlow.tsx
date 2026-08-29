@@ -82,16 +82,33 @@ function animateValue({
   ease = easeOutCubic,
   onUpdate,
   onEnd,
-}: AnimateOpts) {
+}: AnimateOpts): () => void {
+  let rafId = 0;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let isCancelled = false;
+
   const t0 = performance.now() + delay;
   function tick() {
+    if (isCancelled) return;
     const elapsed = performance.now() - t0;
     const t = Math.min(elapsed / duration, 1);
     onUpdate(start + (end - start) * ease(t));
-    if (t < 1) requestAnimationFrame(tick);
-    else if (onEnd) onEnd();
+    if (t < 1) {
+      rafId = requestAnimationFrame(tick);
+    } else if (onEnd) {
+      onEnd();
+    }
   }
-  setTimeout(() => requestAnimationFrame(tick), delay);
+
+  timeoutId = setTimeout(() => {
+    if (!isCancelled) rafId = requestAnimationFrame(tick);
+  }, delay);
+
+  return () => {
+    isCancelled = true;
+    if (timeoutId) clearTimeout(timeoutId);
+    if (rafId) cancelAnimationFrame(rafId);
+  };
 }
 
 const GRADIENT_POSITIONS = [
@@ -133,9 +150,9 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const [cursorAngle, setCursorAngle] = useState(45);
+  const [cursorAngle, setCursorAngle] = useState(() => (animated ? 110 : 45));
   const [edgeProximity, setEdgeProximity] = useState(0);
-  const [sweepActive, setSweepActive] = useState(false);
+  const [sweepActive, setSweepActive] = useState(animated);
 
   const getCenterOfElement = useCallback((el: HTMLElement) => {
     const { width, height } = el.getBoundingClientRect();
@@ -162,10 +179,7 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
       const dx = x - cx;
       const dy = y - cy;
       if (dx === 0 && dy === 0) return 0;
-      const radians = Math.atan2(dy, dx);
-      let degrees = radians * (180 / Math.PI) + 90;
-      if (degrees < 0) degrees += 360;
-      return degrees;
+      return (Math.atan2(dy, dx) * (180 / Math.PI) + 90 + 360) % 360;
     },
     [getCenterOfElement],
   );
@@ -187,11 +201,9 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
     if (!animated) return;
     const angleStart = 110;
     const angleEnd = 465;
-    setSweepActive(true);
-    setCursorAngle(angleStart);
 
-    animateValue({ duration: 500, onUpdate: (v) => setEdgeProximity(v / 100) });
-    animateValue({
+    const c1 = animateValue({ duration: 500, onUpdate: (v) => setEdgeProximity(v / 100) });
+    const c2 = animateValue({
       ease: easeInCubic,
       duration: 1500,
       end: 50,
@@ -199,7 +211,7 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
         setCursorAngle((angleEnd - angleStart) * (v / 100) + angleStart);
       },
     });
-    animateValue({
+    const c3 = animateValue({
       ease: easeOutCubic,
       delay: 1500,
       duration: 2250,
@@ -209,7 +221,7 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
         setCursorAngle((angleEnd - angleStart) * (v / 100) + angleStart);
       },
     });
-    animateValue({
+    const c4 = animateValue({
       ease: easeInCubic,
       delay: 2500,
       duration: 1500,
@@ -218,6 +230,13 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
       onUpdate: (v) => setEdgeProximity(v / 100),
       onEnd: () => setSweepActive(false),
     });
+
+    return () => {
+      c1();
+      c2();
+      c3();
+      c4();
+    };
   }, [animated]);
 
   const colorSensitivity = edgeSensitivity + 20;

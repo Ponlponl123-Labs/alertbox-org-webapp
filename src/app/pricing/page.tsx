@@ -12,9 +12,9 @@ import {
 } from "@phosphor-icons/react";
 import { BuyMeACoffee } from "@thesvg/react";
 import BorderGlow from "@/components/BorderGlow";
-import { motion, useInView } from "motion/react";
+import { motion } from "motion/react";
 import { Input } from "react-smooth-input";
-import { useRef, useEffect, useState } from "react";
+import { useState } from "react";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 16 },
@@ -51,7 +51,9 @@ function GridOverlay() {
   );
 }
 
-function FeeSavingsCalculator({ t }: { t: any }) {
+import { type PricingPageData, type PricingProviderItem } from "@/types/landing.types";
+
+function FeeSavingsCalculator({ t }: { t: PricingPageData }) {
   const [volume, setVolume] = useState(1500);
   const competitorFee = Math.round(volume * 0.1);
   const saved = competitorFee;
@@ -121,43 +123,6 @@ function FeeSavingsCalculator({ t }: { t: any }) {
         <span>$5,000 / {t.calculator?.per_mo}</span>
       </div>
     </div>
-  );
-}
-
-function AnimatedCounter({
-  value,
-  suffix = "",
-  prefix = "",
-  duration = 1.5,
-}: {
-  value: number;
-  suffix?: string;
-  prefix?: string;
-  duration?: number;
-}) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
-  const [display, setDisplay] = useState(0);
-
-  useEffect(() => {
-    if (!isInView) return;
-    const start = performance.now();
-    const animate = (now: number) => {
-      const elapsed = (now - start) / 1000;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(eased * value));
-      if (progress < 1) requestAnimationFrame(animate);
-    };
-    requestAnimationFrame(animate);
-  }, [isInView, value, duration]);
-
-  return (
-    <span ref={ref} className="tabular-nums">
-      {prefix}
-      {display}
-      {suffix}
-    </span>
   );
 }
 
@@ -277,7 +242,7 @@ export default function PricingPage() {
               </p>
 
               <div className="flex flex-col gap-6">
-                {t.gateway_fees.providers.map((prov: any, idx: number) => (
+                {t.gateway_fees.providers.map((prov: PricingProviderItem, idx: number) => (
                   <div
                     key={idx}
                     className="border-b border-border pb-6 last:border-0 last:pb-0"

@@ -5,9 +5,11 @@ import { AnimatePresence, motion } from "motion/react";
 import { BellRingingIcon, PlayIcon, PaletteIcon } from "@phosphor-icons/react";
 import { Button } from "./ui/button";
 
+import { type Language } from "@/types/i18n.types";
+
 interface AlertSimulatorProps {
   username: string;
-  lang: any;
+  lang: Language;
 }
 
 type TemplateType = "modern" | "glow" | "minimal";
@@ -30,24 +32,18 @@ export default function AlertSimulator({ username, lang }: AlertSimulatorProps) 
   const [activeTemplate, setActiveTemplate] = useState<TemplateType>("modern");
   const [activeColor, setActiveColor] = useState("#F43F5E");
   const [isAlerting, setIsAlerting] = useState(false);
-  const [alertText, setAlertText] = useState("");
   const isThai = lang?.key === "th-TH";
 
-  const triggerAlert = () => {
-    if (isAlerting) return;
-    const name = username.trim() || (isThai ? "ผู้สนับสนุน" : "Anonymous Fan");
-    const amount = "50.00";
-    const msg = isThai ? "สู้ๆ นะครับพี่สตรีมเมอร์! ติดตามอยู่เสมอครับ ❤️" : "Keep up the awesome streams! Best streamer ever ❤️";
-    setAlertText(`${name} donated $${amount}`);
+  const triggerAlert = React.useCallback(() => {
     setIsAlerting(true);
-  };
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       triggerAlert();
     }, 800);
     return () => clearTimeout(timer);
-  }, [username]);
+  }, [username, triggerAlert]);
 
   useEffect(() => {
     if (isAlerting) {

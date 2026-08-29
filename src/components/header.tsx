@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useStore } from "zustand";
 import { Button } from "./ui/button";
 import ThemeSwitcher from "./theme-switcher";
@@ -77,10 +77,6 @@ function Nav({
 
 function Header() {
   const pathname = usePathname();
-  const { userInfo } = useUserContext();
-
-  if (pathname.startsWith("/@")) return null;
-
   const [isNavActive, setIsNavActive] = useState(false);
   const isSidebarCollapsed = useStore(
     coreStore,
@@ -95,9 +91,13 @@ function Header() {
     (state) => state.setSidebarHiddenOnMobile,
   );
 
-  useEffect(() => {
+  const [prevPath, setPrevPath] = useState(pathname);
+  if (prevPath !== pathname) {
+    setPrevPath(pathname);
     setIsNavActive(false);
-  }, [pathname]);
+  }
+
+  if (pathname.startsWith("/@")) return null;
 
   return (
     <>

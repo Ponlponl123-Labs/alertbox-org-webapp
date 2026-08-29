@@ -1,4 +1,5 @@
 "use client";
+import React, { useState, useEffect, useMemo } from "react";
 import { coreStore } from "@/hooks/store/core";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
@@ -30,7 +31,6 @@ import {
   AccordionPanel,
 } from "./animate-ui/components/headless/accordion";
 import { useDisclosure } from "./animate-ui/primitives/headless/disclosure";
-import { useEffect, useMemo, useState } from "react";
 
 function AccordionStateSync({
   hydrated,
@@ -73,16 +73,22 @@ function AppSidebar() {
   );
   const hydrateSidebar = useStore(coreStore, (state) => state.hydrateSidebar);
   const pathname = usePathname();
-  const [sidebarHydrated, setSidebarHydrated] = useState(false);
+
+  const sidebarHydrated = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   useEffect(() => {
     hydrateSidebar();
-    setSidebarHydrated(true);
   }, [hydrateSidebar]);
 
-  useEffect(() => {
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
     setSidebarHiddenOnMobile(true);
-  }, [pathname, setSidebarHiddenOnMobile]);
+  }
 
   const sidebarItems = useMemo(() => {
     return [

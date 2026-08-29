@@ -91,7 +91,9 @@ function AnimatedCounter({
   );
 }
 
-function LiveAlertDemo({ t }: { t: any }) {
+import { type AboutPageData } from "@/types/landing.types";
+
+function LiveAlertDemo({ t }: { t: AboutPageData }) {
   const [activeAlert, setActiveAlert] = useState<"donation" | "sub" | "cheer">(
     "donation",
   );

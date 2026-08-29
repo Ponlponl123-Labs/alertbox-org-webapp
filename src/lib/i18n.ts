@@ -1,21 +1,15 @@
 import thTH from "@/data/langs/th.json";
 import enUS from "@/data/langs/en.json";
+import type { Language, LanguageKey } from "@/types/i18n.types";
 
-export type languageKeys = "th-TH" | "en-US";
+export type languageKeys = LanguageKey;
+export type { Language };
 
-const validKeys: languageKeys[] = ["th-TH", "en-US"];
+const validKeys: LanguageKey[] = ["th-TH", "en-US"];
 
-export const isValidLanguageKey = (key: string): key is languageKeys => {
-  return validKeys.includes(key as languageKeys);
+export const isValidLanguageKey = (key: string): key is LanguageKey => {
+  return validKeys.includes(key as LanguageKey);
 };
-
-export interface Language {
-  key: languageKeys;
-  label: string;
-  country: string;
-  flag: string;
-  data: typeof enUS;
-}
 
 const langMap: Record<languageKeys, typeof enUS> = {
   "th-TH": thTH,

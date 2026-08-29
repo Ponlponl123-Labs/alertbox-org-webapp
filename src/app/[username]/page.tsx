@@ -2,7 +2,6 @@ import React from "react";
 import { Metadata } from "next";
 import { getApiUrl } from "@/lib/api";
 import PublicProfileClient, { PublicProfileData } from "./PublicProfileClient";
-import Link from "next/link";
 import Footer from "./footer";
 
 type Props = {

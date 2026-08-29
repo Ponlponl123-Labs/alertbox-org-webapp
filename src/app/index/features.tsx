@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import clsx from "clsx";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
@@ -15,7 +15,9 @@ import {
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
-function VisualFeeCalculator({ t }: { t: any }) {
+type FeaturesSectionData = NonNullable<ReturnType<typeof coreStore.getState>["lang"]["data"]["pages"]["index"]["sections"]["features"]>;
+
+function VisualFeeCalculator({ t }: { t: FeaturesSectionData }) {
   const [volume, setVolume] = useState(1500);
   const competitorFee = Math.round(volume * 0.1);
 
@@ -80,7 +82,7 @@ function VisualFeeCalculator({ t }: { t: any }) {
   );
 }
 
-function VisualCustomization({ t }: { t: any }) {
+function VisualCustomization({ t }: { t: FeaturesSectionData }) {
   const [accent, setAccent] = useState<
     "foreground" | "rose" | "purple" | "cyan"
   >("foreground");
@@ -213,7 +215,7 @@ function VisualCustomization({ t }: { t: any }) {
   );
 }
 
-function VisualWebhooks({ t }: { t: any }) {
+function VisualWebhooks({ t }: { t: FeaturesSectionData }) {
   const [status, setStatus] = useState<"idle" | "firing" | "done">("idle");
   const [lines, setLines] = useState<{ text: string; color: string }[]>([
     { text: "$ alertbox listen --port 3000", color: "text-foreground/40" },
@@ -298,16 +300,13 @@ function VisualWebhooks({ t }: { t: any }) {
   );
 }
 
-function VisualOpenSource({ t }: { t: any }) {
+function VisualOpenSource({ t }: { t: FeaturesSectionData }) {
   const [starred, setStarred] = useState(false);
   const [stars, setStars] = useState(1324);
-  const [cells, setCells] = useState<number[]>([]);
+  const [cells] = useState<number[]>(() =>
+    Array.from({ length: 60 }, (_, i) => ((i * 17 + 7) % 100) / 100),
+  );
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    const levels = Array.from({ length: 60 }, () => Math.random());
-    setCells(levels);
-  }, []);
 
   const handleStar = () => {
     setStarred(!starred);

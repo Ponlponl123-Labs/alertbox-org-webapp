@@ -42,16 +42,17 @@ const LightPillar: React.FC<LightPillarProps> = ({
   const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2(0, 0));
   const timeRef = useRef(0);
   const rotationSpeedRef = useRef(rotationSpeed);
-  const [webGLSupported, setWebGLSupported] = useState<boolean>(true);
-
-  // Check WebGL support
-  useEffect(() => {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) {
-      setWebGLSupported(false);
+  const [webGLSupported] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      const canvas = document.createElement("canvas");
+      return !!(
+        canvas.getContext("webgl") || canvas.getContext("experimental-webgl")
+      );
+    } catch {
+      return false;
     }
-  }, []);
+  });
 
   useEffect(() => {
     if (!containerRef.current || !webGLSupported) return;
@@ -81,7 +82,6 @@ const LightPillar: React.FC<LightPillarProps> = ({
 
     const settings = qualitySettings[effectiveQuality] || qualitySettings.medium;
 
-    // Scene setup
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -95,11 +95,9 @@ const LightPillar: React.FC<LightPillarProps> = ({
         powerPreference: effectiveQuality === 'low' ? 'low-power' : 'high-performance',
         precision: settings.precision,
         stencil: false,
-        depth: false
+        depth: false,
       });
-    } catch (error) {
-      console.error('Failed to create WebGL renderer:', error);
-      setWebGLSupported(false);
+    } catch {
       return;
     }
 
@@ -108,13 +106,11 @@ const LightPillar: React.FC<LightPillarProps> = ({
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Convert hex colors to RGB
     const parseColor = (hex: string): THREE.Vector3 => {
       const color = new THREE.Color(hex);
       return new THREE.Vector3(color.r, color.g, color.b);
     };
 
-    // Shader material
     const vertexShader = `
       varying vec2 vUv;
       void main() {
@@ -246,7 +242,6 @@ const LightPillar: React.FC<LightPillarProps> = ({
       }
     `;
 
-    // Pre-compute wave rotation values
     const waveAngle = 0.4;
     const waveSinValues = new Float32Array(4);
     const waveCosValues = new Float32Array(4);
@@ -255,7 +250,6 @@ const LightPillar: React.FC<LightPillarProps> = ({
       waveCosValues[i] = Math.cos(waveAngle);
     }
 
-    // Pre-compute pillar rotation
     const pillarRotRad = (pillarRotation * Math.PI) / 180.0;
     const pillarRotCos = Math.cos(pillarRotRad);
     const pillarRotSin = Math.sin(pillarRotRad);
@@ -294,7 +288,6 @@ const LightPillar: React.FC<LightPillarProps> = ({
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
-    // Mouse interaction - throttled for performance
     let mouseMoveTimeout: number | null = null;
     const handleMouseMove = (event: MouseEvent) => {
       if (!interactive) return;
@@ -303,7 +296,7 @@ const LightPillar: React.FC<LightPillarProps> = ({
 
       mouseMoveTimeout = window.setTimeout(() => {
         mouseMoveTimeout = null;
-      }, 16); // ~60fps throttle
+      }, 16);
 
       const rect = container.getBoundingClientRect();
       const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -315,12 +308,13 @@ const LightPillar: React.FC<LightPillarProps> = ({
       container.addEventListener('mousemove', handleMouseMove, { passive: true });
     }
 
-    // Animation loop with fixed timestep
     let lastTime = performance.now();
     const targetFPS = effectiveQuality === 'low' ? 30 : 60;
     const frameTime = 1000 / targetFPS;
+    let isVisible = true;
 
     const animate = (currentTime: number) => {
+      if (!isVisible) return;
       if (!materialRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) return;
 
       const deltaTime = currentTime - lastTime;
@@ -329,7 +323,6 @@ const LightPillar: React.FC<LightPillarProps> = ({
         timeRef.current += 0.016 * rotationSpeedRef.current;
         materialRef.current.uniforms.uTime.value = timeRef.current;
 
-        // Pre-compute rotation on CPU
         const rotAngle = timeRef.current * 0.3;
         materialRef.current.uniforms.uRotCos.value = Math.cos(rotAngle);
         materialRef.current.uniforms.uRotSin.value = Math.sin(rotAngle);
@@ -340,9 +333,21 @@ const LightPillar: React.FC<LightPillarProps> = ({
 
       rafRef.current = requestAnimationFrame(animate);
     };
+
+    const io = new IntersectionObserver((entries) => {
+      const [entry] = entries;
+      const nextVis = entry?.isIntersecting ?? false;
+      if (nextVis && !isVisible) {
+        isVisible = true;
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        isVisible = nextVis;
+      }
+    }, { threshold: 0.05 });
+    io.observe(container);
+
     rafRef.current = requestAnimationFrame(animate);
 
-    // Handle resize with debouncing
     let resizeTimeout: number | null = null;
     const handleResize = () => {
       if (resizeTimeout) {
@@ -360,8 +365,8 @@ const LightPillar: React.FC<LightPillarProps> = ({
 
     window.addEventListener('resize', handleResize, { passive: true });
 
-    // Cleanup
     return () => {
+      io.disconnect();
       window.removeEventListener('resize', handleResize);
       if (interactive) {
         container.removeEventListener('mousemove', handleMouseMove);
@@ -390,6 +395,7 @@ const LightPillar: React.FC<LightPillarProps> = ({
       geometryRef.current = null;
       rafRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [webGLSupported, quality]);
 
   useEffect(() => {

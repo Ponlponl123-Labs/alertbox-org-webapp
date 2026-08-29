@@ -6,7 +6,7 @@ import { Streamlabs } from "@thesvg/react";
 import Link from "next/link";
 import { useStore } from "zustand";
 
-export default () => {
+export default function Soon() {
   const lang = useStore(coreStore, (state) => state.lang);
 
   return (

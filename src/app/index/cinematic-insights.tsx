@@ -11,8 +11,10 @@ import {
 } from "@phosphor-icons/react";
 
 export default function CinematicInsights() {
-  const lang = useStore(coreStore, (state) => state.lang);
-  const t = lang.data.pages.index.sections.good_to_know;
+  const t = useStore(
+    coreStore,
+    (state) => state.lang.data.pages.index.sections.good_to_know,
+  );
 
   const icons = [ShieldCheckIcon, HandCoinsIcon, CodeBlockIcon];
   const glowColors = ["40 80 80", "60 90 90", "80 80 80"];

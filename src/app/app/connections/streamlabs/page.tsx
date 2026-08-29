@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "zustand";
@@ -85,121 +85,7 @@ function StreamlabsPage() {
   const t = lang.data.app.connections.providers.streamlabs;
   const setupLang = lang.data.app.connections.streamlabs_setup;
 
-  // Handle OAuth code exchange flow if code & state exist in URL
-  useEffect(() => {
-    if (code && state) {
-      setIsLoading(false);
-      setOauthStatus("connecting");
-      const token = getCookie("USRSS");
-      fetch(getApiUrl("/api/v1/me/connection/integration/streamlabs"), {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + atob(token || ""),
-        },
-        body: code,
-      })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error("Failed to connect");
-          }
-          setOauthStatus("success");
-          setTimeout(() => {
-            router.push("/app/connections?t=trigger");
-          }, 2400);
-        })
-        .catch(() => {
-          setOauthStatus("failed");
-          setTimeout(() => {
-            router.push("/app/connections?t=trigger");
-          }, 2400);
-        });
-    } else {
-      // Configuration mode: load connection status and logs
-      if (isFetched.current || !userInfo) return;
-      isFetched.current = true;
-      loadSettingsAndLogs();
-    }
-  }, [code, state, router, userInfo]);
-
-  // Handle realtime logs WebSocket connection
-  useEffect(() => {
-    if (code && state) return; // Don't connect WS in OAuth mode
-
-    const token = getCookie("USRSS");
-    if (!isConnected || !token) return;
-
-    let ws: WebSocket | null = null;
-    let reconnectTimeout: any = null;
-
-    const connectWS = () => {
-      try {
-        const decodedToken = atob(token);
-        const apiEndpoint = getApiUrl("/");
-        let wsHost = window.location.host;
-        let wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-
-        try {
-          if (apiEndpoint.includes("://")) {
-            const url = new URL(apiEndpoint);
-            wsHost = url.host;
-            wsProtocol = url.protocol === "https:" ? "wss:" : "ws:";
-          } else {
-            if (
-              window.location.hostname === "localhost" ||
-              window.location.hostname === "127.0.0.1"
-            ) {
-              wsHost = `${window.location.hostname}:3001`;
-            }
-          }
-        } catch (e) {
-          // ignore
-        }
-
-        const wsUrl = `${wsProtocol}//${wsHost}/v1/me/connection/integration/streamlabs/ws?token=${encodeURIComponent(decodedToken)}`;
-
-        ws = new WebSocket(wsUrl);
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.event === "created") {
-              setLogs((prev) => [data.log, ...prev]);
-            } else if (data.event === "updated") {
-              setLogs((prev) =>
-                prev.map((log) => (log.id === data.log.id ? data.log : log)),
-              );
-            }
-          } catch (e) {
-            // ignore
-          }
-        };
-
-        ws.onclose = () => {
-          reconnectTimeout = setTimeout(connectWS, 3000);
-        };
-
-        ws.onerror = () => {
-          ws?.close();
-        };
-      } catch (err) {
-        // ignore
-      }
-    };
-
-    connectWS();
-
-    return () => {
-      if (ws) {
-        ws.onclose = null;
-        ws.close();
-      }
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-    };
-  }, [isConnected, code, state]);
-
-  const loadSettingsAndLogs = async () => {
+  const loadSettingsAndLogs = useCallback(async () => {
     setIsLoading(true);
     const token = getCookie("USRSS");
     const headers = {
@@ -207,7 +93,6 @@ function StreamlabsPage() {
     };
 
     try {
-      // Load settings
       const settingsRes = await fetch(
         getApiUrl("/api/v1/me/connection/integration/streamlabs"),
         { headers },
@@ -223,7 +108,6 @@ function StreamlabsPage() {
 
         if (optionsVal !== null) {
           if (optionsVal === 0) {
-            // Option 0 represents default / all enabled
             setStripeEnabled(true);
             setBmacMembershipEnabled(true);
             setKofiDonationEnabled(true);
@@ -249,7 +133,6 @@ function StreamlabsPage() {
         }
       }
 
-      // Load logs
       const logsRes = await fetch(
         getApiUrl("/api/v1/me/connection/integration/streamlabs/logs"),
         { headers },
@@ -258,12 +141,123 @@ function StreamlabsPage() {
         const logsData = await logsRes.json();
         setLogs(logsData);
       }
-    } catch (err) {
+    } catch {
       toast.error(setupLang.error_load);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [logout, setupLang.error_load]);
+
+  // Handle OAuth code exchange flow if code & state exist in URL
+  useEffect(() => {
+    if (code && state) {
+      const token = getCookie("USRSS");
+      fetch(getApiUrl("/api/v1/me/connection/integration/streamlabs"), {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + atob(token || ""),
+        },
+        body: code,
+      })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error("Failed to connect");
+          }
+          setOauthStatus("success");
+          setTimeout(() => {
+            router.push("/app/connections?t=trigger");
+          }, 2400);
+        })
+        .catch(() => {
+          setOauthStatus("failed");
+          setTimeout(() => {
+            router.push("/app/connections?t=trigger");
+          }, 2400);
+        });
+    } else {
+      if (isFetched.current || !userInfo) return;
+      isFetched.current = true;
+      loadSettingsAndLogs();
+    }
+  }, [code, state, router, userInfo, loadSettingsAndLogs]);
+
+  // Handle realtime logs WebSocket connection
+  useEffect(() => {
+    if (code && state) return;
+
+    const token = getCookie("USRSS");
+    if (!isConnected || !token) return;
+
+    let ws: WebSocket | null = null;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const connectWS = () => {
+      try {
+        const decodedToken = atob(token);
+        const apiEndpoint = getApiUrl("/");
+        let wsHost = window.location.host;
+        let wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+
+        try {
+          if (apiEndpoint.includes("://")) {
+            const url = new URL(apiEndpoint);
+            wsHost = url.host;
+            wsProtocol = url.protocol === "https:" ? "wss:" : "ws:";
+          } else {
+            if (
+              window.location.hostname === "localhost" ||
+              window.location.hostname === "127.0.0.1"
+            ) {
+              wsHost = `${window.location.hostname}:3001`;
+            }
+          }
+        } catch {
+          // ignore
+        }
+
+        const wsUrl = `${wsProtocol}//${wsHost}/v1/me/connection/integration/streamlabs/ws?token=${encodeURIComponent(decodedToken)}`;
+
+        ws = new WebSocket(wsUrl);
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.event === "created") {
+              setLogs((prev) => [data.log, ...prev]);
+            } else if (data.event === "updated") {
+              setLogs((prev) =>
+                prev.map((log) => (log.id === data.log.id ? data.log : log)),
+              );
+            }
+          } catch {
+            // ignore
+          }
+        };
+
+        ws.onclose = () => {
+          reconnectTimeout = setTimeout(connectWS, 3000);
+        };
+
+        ws.onerror = () => {
+          ws?.close();
+        };
+      } catch {
+        // ignore
+      }
+    };
+
+    connectWS();
+
+    return () => {
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
+  }, [isConnected, code, state]);
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -295,7 +289,7 @@ function StreamlabsPage() {
       } else {
         toast.error(setupLang.error_save);
       }
-    } catch (err) {
+    } catch {
       toast.error(setupLang.error_network);
     } finally {
       setIsSaving(false);
@@ -323,7 +317,7 @@ function StreamlabsPage() {
       } else {
         toast.error(setupLang.error_disconnect);
       }
-    } catch (err) {
+    } catch {
       toast.error(setupLang.error_network);
     } finally {
       setIsSaving(false);

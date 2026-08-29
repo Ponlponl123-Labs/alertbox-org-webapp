@@ -86,7 +86,9 @@ function AnimatedCounter({
   );
 }
 
-function FundAllocationBar({ t }: { t: any }) {
+import { type DonatePageData } from "@/types/landing.types";
+
+function FundAllocationBar({ t }: { t: DonatePageData }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);

@@ -1,7 +1,5 @@
 "use client";
 
-import { useStore } from "zustand";
-import { coreStore } from "@/hooks/store/core";
 import { motion } from "motion/react";
 import LogoLoop from "@/components/LogoLoop";
 import {
@@ -84,9 +82,6 @@ const staggerContainer = {
 };
 
 export default function SocialProof() {
-  const lang = useStore(coreStore, (state) => state.lang);
-  const t = lang.data.pages.index.sections.social_proof;
-
   return (
     <section className="w-full max-w-[90vw] relative overflow-hidden">
       <motion.div

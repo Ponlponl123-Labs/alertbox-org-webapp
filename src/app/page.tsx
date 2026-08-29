@@ -1,33 +1,24 @@
 "use client";
 
-import Link from "next/link";
-import Aurora from "@/components/Aurora";
 import { coreStore } from "@/hooks/store/core";
 import { AnimatePresence, motion } from "motion/react";
 import { useStore } from "zustand";
-import {
-  BellRingingIcon,
-  HandCoinsIcon,
-  ShieldCheckIcon,
-  CodeBlockIcon,
-  CaretRightIcon,
-} from "@phosphor-icons/react";
-import { Input } from "react-smooth-input";
 import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import BorderGlow from "@/components/BorderGlow";
-import HowItWorkStreamer from "./index/how-it-work-streamer";
-import HowItWorkViewer from "./index/how-it-work-viewer";
+import dynamic from "next/dynamic";
 import HeroSection from "./index/hero-section";
 import SocialProof from "./index/social-proof";
 import PrivacyGuard from "./index/privacy-guard";
-import Features from "./index/features";
-import Testimonials from "./index/testimonials";
-import ComparisonTable from "./index/comparison-table";
-import PricingHighlight from "./index/pricing-highlight";
-import FAQSection from "./index/faq-section";
-import CTABanner from "./index/cta-banner";
-import CinematicInsights from "./index/cinematic-insights";
+
+const HowItWorkStreamer = dynamic(() => import("./index/how-it-work-streamer"));
+const HowItWorkViewer = dynamic(() => import("./index/how-it-work-viewer"));
+const Features = dynamic(() => import("./index/features"));
+const Testimonials = dynamic(() => import("./index/testimonials"));
+const ComparisonTable = dynamic(() => import("./index/comparison-table"));
+const FAQSection = dynamic(() => import("./index/faq-section"));
+const CTABanner = dynamic(() => import("./index/cta-banner"));
+const CinematicInsights = dynamic(() => import("./index/cinematic-insights"));
 import { cn } from "@/lib/utils";
 
 const fadeInUp = {
@@ -50,7 +41,10 @@ const staggerContainer = {
 };
 
 export default function Home() {
-  const lang = useStore(coreStore, (state) => state.lang);
+  const hiw = useStore(
+    coreStore,
+    (state) => state.lang.data.pages.index.sections.howitworks,
+  );
   const [isHIWStreamer, setIsHIWStreamer] = useState(true);
   const sectionHIW = useRef<HTMLDivElement>(null);
 
@@ -80,7 +74,7 @@ export default function Home() {
                 variants={fadeInUp}
                 className="text-3xl md:text-6xl text-center md:text-start mb-3 tracking-tight text-black dark:text-zinc-50"
               >
-                {lang.data.pages.index.sections.howitworks.title}
+                {hiw.title}
               </motion.h2>
               <motion.div variants={fadeInUp}>
                 <BorderGlow
@@ -119,10 +113,7 @@ export default function Home() {
                             : "text-foreground/60",
                         )}
                       >
-                        {
-                          lang.data.pages.index.sections.howitworks.selectors
-                            .streamer
-                        }
+                        {hiw.selectors.streamer}
                       </span>
                     </Button>
                     <Button
@@ -151,10 +142,7 @@ export default function Home() {
                             : "text-foreground/60",
                         )}
                       >
-                        {
-                          lang.data.pages.index.sections.howitworks.selectors
-                            .viewer
-                        }
+                        {hiw.selectors.viewer}
                       </span>
                     </Button>
                   </div>

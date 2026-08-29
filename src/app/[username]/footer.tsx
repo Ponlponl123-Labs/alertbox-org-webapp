@@ -6,10 +6,9 @@ import { coreStore } from "@/hooks/store/core";
 import { PublicProfileData } from "./PublicProfileClient";
 
 export default function Footer({
-  username,
   initialData,
 }: {
-  username: string;
+  username?: string;
   initialData: PublicProfileData | null;
 }) {
   const lang = useStore(coreStore, (state) => state.lang);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { motion } from "motion/react";
@@ -33,9 +34,12 @@ function TestimonialCard({
       </p>
       <div className="flex items-center gap-3 mt-2">
         {item.avatar && !imageError ? (
-          <img
+          <Image
             src={item.avatar}
             alt={item.name}
+            width={40}
+            height={40}
+            unoptimized
             onError={() => setImageError(true)}
             className="size-10 rounded-full object-cover shrink-0 border border-primary/20 group-hover:grayscale-0 grayscale"
           />
@@ -63,8 +67,10 @@ function TestimonialCard({
 }
 
 export default function Testimonials() {
-  const lang = useStore(coreStore, (state) => state.lang);
-  const t = lang.data.pages.index.sections.testimonials;
+  const t = useStore(
+    coreStore,
+    (state) => state.lang.data.pages.index.sections.testimonials,
+  );
 
   const items: TestimonialItem[] = t.items;
   const halfLength = Math.ceil(items.length / 2);

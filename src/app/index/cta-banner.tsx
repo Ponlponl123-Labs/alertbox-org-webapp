@@ -49,8 +49,18 @@ function SubtleGrid() {
 }
 
 export default function CTABanner() {
-  const lang = useStore(coreStore, (state) => state.lang);
-  const t = lang.data.pages.index.sections.cta_banner;
+  const t = useStore(
+    coreStore,
+    (state) => state.lang.data.pages.index.sections.cta_banner,
+  );
+  const claimText = useStore(
+    coreStore,
+    (state) => state.lang.data.pages.index.actions.claim,
+  );
+  const yourNameText = useStore(
+    coreStore,
+    (state) => state.lang.data.pages.index.actions.yourname,
+  );
   const [username, setUsername] = useState("");
 
   return (
@@ -114,7 +124,7 @@ export default function CTABanner() {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder={lang.data.pages.index.actions.yourname}
+            placeholder={yourNameText}
             className="relative flex-1 bg-transparent border-none focus:ring-0 text-foreground pl-5 z-10"
             classNames={{
               base: "p-1 rounded-full backdrop-blur-xs border-2",
@@ -136,9 +146,9 @@ export default function CTABanner() {
                     ? `/app/profile?username=${username}`
                     : "/app/profile"
                 }
-                className="relative h-full px-5 py-3 rounded-full bg-foreground text-background font-black text-xs flex items-center justify-center gap-1.5 hover:bg-foreground/90 active:scale-95 ml-2 shadow-md z-10 cursor-pointer"
+                className="relative h-full px-5 py-2.5 rounded-full bg-foreground text-background font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-foreground/90 active:scale-95 shadow-md z-10 cursor-pointer"
               >
-                <span>{t.cta}</span>
+                <span>{claimText}</span>
                 <ArrowRightIcon weight="bold" size={13} />
               </Link>
             }

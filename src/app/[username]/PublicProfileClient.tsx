@@ -1,5 +1,5 @@
 "use client";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { useStore } from "zustand";
@@ -98,11 +98,9 @@ export default function PublicProfileClient({
   const lang = useStore(coreStore, (state) => state.lang);
   const decodedUsername = decodeURIComponent(username);
 
-  if (!decodedUsername.startsWith("@")) {
-    notFound();
-  }
-
-  const uri = decodedUsername.slice(1);
+  const uri = decodedUsername.startsWith("@")
+    ? decodedUsername.slice(1)
+    : decodedUsername;
   const [profileData, setProfileData] = useState<PublicProfileData | null>(
     initialData,
   );
@@ -115,19 +113,18 @@ export default function PublicProfileClient({
   });
   const [donorName, setDonorName] = useState<string>("");
   const [donorMessage, setDonorMessage] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<
-    "stripe" | "xendit" | "omise" | "2c2p" | "feelfreepay" | "kofi" | "bmac"
-  >(() => {
+  type PaymentMethodType =
+    | "stripe"
+    | "xendit"
+    | "omise"
+    | "2c2p"
+    | "feelfreepay"
+    | "kofi"
+    | "bmac";
+
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>(() => {
     if (initialData?.integrations) {
-      const methodsOrder: (
-        | "stripe"
-        | "xendit"
-        | "omise"
-        | "2c2p"
-        | "feelfreepay"
-        | "kofi"
-        | "bmac"
-      )[] = [
+      const methodsOrder: PaymentMethodType[] = [
         "stripe",
         "xendit",
         "omise",
@@ -148,34 +145,18 @@ export default function PublicProfileClient({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
-  useEffect(() => {
+  const [prevInitialData, setPrevInitialData] = useState(initialData);
+  if (prevInitialData !== initialData) {
+    setPrevInitialData(initialData);
     if (initialData) {
       setProfileData(initialData);
       setLoading(false);
       setError(null);
-
-      const isThai = lang.key === "th-TH";
-      setTipAmount(isThai ? "100" : "10");
-
-      if (initialData.integrations) {
-        const methodsOrder: (typeof paymentMethod)[] = [
-          "stripe",
-          "xendit",
-          "omise",
-          "2c2p",
-          "feelfreepay",
-          "kofi",
-          "bmac",
-        ];
-        const firstActive = methodsOrder.find(
-          (m) => initialData.integrations?.[m],
-        );
-        if (firstActive) {
-          setPaymentMethod(firstActive);
-        }
-      }
-      return;
     }
+  }
+
+  useEffect(() => {
+    if (initialData) return;
 
     async function fetchProfile() {
       try {
@@ -208,7 +189,7 @@ export default function PublicProfileClient({
             setPaymentMethod(firstActive);
           }
         }
-      } catch (err) {
+      } catch {
         setError("error");
       } finally {
         setLoading(false);
@@ -225,7 +206,7 @@ export default function PublicProfileClient({
     );
   }
 
-  if (error === "not_found") {
+  if (!decodedUsername.startsWith("@") || error === "not_found") {
     notFound();
   }
 
@@ -241,7 +222,7 @@ export default function PublicProfileClient({
               Streamer not ready
             </h2>
             <p className="text-sm text-foreground/50">
-              This streamer hasn't quite set up their page yet.
+              This streamer hasn&apos;t quite set up their page yet.
             </p>
           </div>
         </div>
@@ -689,7 +670,7 @@ export default function PublicProfileClient({
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => setPaymentMethod(item.id as any)}
+                          onClick={() => setPaymentMethod(item.id as PaymentMethodType)}
                           className={cn(
                             "py-2.5 px-1 rounded-lg flex flex-col items-center justify-center border-2 transition-all duration-200 cursor-pointer gap-1",
                             paymentMethod === item.id
@@ -700,10 +681,13 @@ export default function PublicProfileClient({
                           {ProviderIcon ? (
                             <ProviderIcon className="h-4.5 max-w-[80%] shrink-0 text-foreground" />
                           ) : item.logo ? (
-                            <img
+                            <Image
                               src={item.logo}
                               alt={item.label}
-                              className="h-4.5 max-w-[80%] object-contain shrink-0 dark:invert"
+                              width={80}
+                              height={18}
+                              unoptimized
+                              className="h-4.5 max-w-[80%] w-auto object-contain shrink-0 dark:invert"
                             />
                           ) : null}
                           <span className="text-[8px] font-bold tracking-wide uppercase mt-0.5 text-foreground">

@@ -1,37 +1,50 @@
-# Dependencies
+# Dependencies & Package Managers
 node_modules
 /node_modules
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# Next.js Build Output
+# Next.js Build & Outputs
 .next
 out
+build
+dist
+coverage
+.nyc_output
 
-# Git
+# Git & GitHub
 .git
+.github
 .gitignore
+.dockerignore
 
-# Environment files
-.env*.local
+# Docker & CI
+Dockerfile*
+docker-compose*
+Jenkinsfile
 
-# Editor configs and metadata
+# Environment & Secrets
+.env*
+*.pem
+
+# Editor & System
 .vscode
 .idea
 .gitattributes
+.DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# Project files and configuration files not needed at build time
+# Documentation & Development Artifacts
 README.md
+*.md
 LICENSE
-Jenkinsfile
-Dockerfile
-.dockerignore
-task.md
-implementation_plan.md
-walkthrough.md
+*.tsbuildinfo
+*.js.map
+*.zip
+*.tar.gz

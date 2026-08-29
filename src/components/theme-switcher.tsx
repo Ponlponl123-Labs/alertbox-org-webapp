@@ -8,7 +8,6 @@ export default function ThemeSwitcher() {
   const [isDark, setIsDark] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Use transition to avoid synchronous setState warning and signal non-urgent update
     startTransition(() => {
       setIsDark(document.documentElement.classList.contains("dark"));
     });
@@ -21,7 +20,6 @@ export default function ThemeSwitcher() {
     localStorage.setItem("theme", next ? "dark" : "light");
   };
 
-  // Render a placeholder skeleton during hydration
   if (isDark === null) {
     return (
       <Button

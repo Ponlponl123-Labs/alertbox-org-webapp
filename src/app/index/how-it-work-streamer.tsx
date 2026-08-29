@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import clsx from "clsx";
-import { Button } from "@/components/ui/button";
 import { coreStore } from "@/hooks/store/core";
+import { type Language } from "@/lib/i18n";
 import {
   CodeBlockIcon,
   ConfettiIcon,
@@ -12,7 +12,6 @@ import {
   UserRectangleIcon,
   WebhooksLogoIcon,
   ArrowRightIcon,
-  ArrowLeftIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useStore } from "zustand";
@@ -21,7 +20,7 @@ import { AnimatePresence, motion } from "motion/react";
 
 const STEP_DURATION = 5000;
 
-function Step1Visual({ lang }: { lang: any }) {
+function Step1Visual({ lang }: { lang: Language }) {
   const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] border border-border bg-background rounded-2xl p-4 shadow-lg text-left group/preview">
@@ -55,7 +54,7 @@ function Step1Visual({ lang }: { lang: any }) {
   );
 }
 
-function Step2Visual({ lang }: { lang: any }) {
+function Step2Visual({ lang }: { lang: Language }) {
   const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left">
@@ -102,7 +101,7 @@ function Step2Visual({ lang }: { lang: any }) {
   );
 }
 
-function Step3Visual({ lang }: { lang: any }) {
+function Step3Visual({ lang }: { lang: Language }) {
   const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left">
@@ -133,7 +132,7 @@ function Step3Visual({ lang }: { lang: any }) {
   );
 }
 
-function Step4Visual({ lang }: { lang: any }) {
+function Step4Visual({ lang }: { lang: Language }) {
   const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left flex flex-col gap-3">
@@ -174,7 +173,7 @@ function Step4Visual({ lang }: { lang: any }) {
   );
 }
 
-function Step5Visual({ lang }: { lang: any }) {
+function Step5Visual({ lang }: { lang: Language }) {
   const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left">
@@ -233,7 +232,7 @@ function Step5Visual({ lang }: { lang: any }) {
   );
 }
 
-function Step6Visual({ lang }: { lang: any }) {
+function Step6Visual({ lang }: { lang: Language }) {
   const m = lang.data.pages.index.sections.howitworks.mockups;
   return (
     <div className="w-full max-w-[340px] bg-card border border-border rounded-2xl p-4 shadow-lg text-left">

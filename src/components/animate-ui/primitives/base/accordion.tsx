@@ -49,13 +49,14 @@ type AccordionItemProps = React.ComponentProps<typeof AccordionPrimitive.Item>;
 
 function AccordionItem(props: AccordionItemProps) {
   const { value } = useAccordion();
-  const [isOpen, setIsOpen] = React.useState(
-    value?.includes(props?.value) ?? false,
-  );
+  const computedIsOpen = value?.includes(props?.value) ?? false;
+  const [isOpen, setIsOpen] = React.useState(computedIsOpen);
+  const [prevComputed, setPrevComputed] = React.useState(computedIsOpen);
 
-  React.useEffect(() => {
-    setIsOpen(value?.includes(props?.value) ?? false);
-  }, [value, props?.value]);
+  if (prevComputed !== computedIsOpen) {
+    setPrevComputed(computedIsOpen);
+    setIsOpen(computedIsOpen);
+  }
 
   return (
     <AccordionItemProvider value={{ isOpen, setIsOpen }}>

@@ -65,8 +65,10 @@ function FAQItem({
 }
 
 export default function FAQSection() {
-  const lang = useStore(coreStore, (state) => state.lang);
-  const t = lang.data.pages.index.sections.faq;
+  const t = useStore(
+    coreStore,
+    (state) => state.lang.data.pages.index.sections.faq,
+  );
   const [openIndex, setOpenIndex] = useState<number>(0);
 
   return (

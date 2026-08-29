@@ -4,10 +4,7 @@ import { coreStore } from "@/hooks/store/core";
 import {
   CraneIcon,
   DiscordLogoIcon,
-  MegaphoneSimpleIcon,
-  PlanetIcon,
   RocketLaunchIcon,
-  WarningIcon,
 } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { useStore } from "zustand";

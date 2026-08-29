@@ -22,8 +22,6 @@ import { coreStore } from "@/hooks/store/core";
 import { cn } from "@/lib/utils";
 import {
   ArrowUpRightIcon,
-  CoinVerticalIcon,
-  FloppyDiskIcon,
   PaletteIcon,
   PersonIcon,
   SparkleIcon,
