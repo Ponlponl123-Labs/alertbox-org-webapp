@@ -77,4 +77,44 @@
     background: rgba(9, 9, 11, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
+
+  .old-browser * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
+  .old-browser [class*="blur-3xl"],
+  .old-browser [class*="blur-2xl"],
+  .old-browser [class*="blur-xl"],
+  .old-browser [class*="blur-lg"],
+  .old-browser [class*="blur-[1"],
+  .old-browser [class*="blur-[9"],
+  .old-browser [class*="blur-[12"],
+  .old-browser [class*="blur-[13"],
+  .old-browser [class*="blur-[14"],
+  .old-browser [class*="blur-[15"],
+  .old-browser .blur-decoration,
+  .old-browser .aurora-canvas,
+  .old-browser [data-blur-decorative] {
+    display: none !important;
+  }
+
+  .old-browser .glass-card,
+  .old-browser [class*="backdrop-blur-"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .old-browser .glass-card {
+    background: #ffffff !important;
+    border: 1px solid #e4e4e7 !important;
+  }
+
+  .old-browser.dark .glass-card,
+  .old-browser .dark .glass-card {
+    background: #18181b !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
 }
