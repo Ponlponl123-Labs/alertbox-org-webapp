@@ -18,24 +18,42 @@ export function isValidUri(input: string): boolean {
 export function getSocialUrl(platform: string, value: string): string {
   if (!value) return "";
   const trimmed = value.trim();
-  if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed;
+
+  // Block malicious protocols
+  if (/^(javascript|data|vbscript):/i.test(trimmed)) {
+    return "";
   }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed);
+      if (url.protocol === "http:" || url.protocol === "https:") {
+        return url.toString();
+      }
+    } catch {
+      return "";
+    }
+    return "";
+  }
+
+  const cleanHandle = encodeURIComponent(trimmed.replace(/^[@/]/, ""));
+  if (!cleanHandle) return "";
+
   switch (platform.toLowerCase()) {
     case "twitch":
-      return `https://twitch.tv/${trimmed}`;
+      return `https://twitch.tv/${cleanHandle}`;
     case "youtube":
-      return `https://youtube.com/${trimmed.startsWith("@") ? trimmed : "@" + trimmed}`;
+      return `https://youtube.com/@${cleanHandle}`;
     case "twitter":
-      return `https://x.com/${trimmed.replace(/^@/, "")}`;
+      return `https://x.com/${cleanHandle}`;
     case "facebook":
-      return `https://facebook.com/${trimmed}`;
+      return `https://facebook.com/${cleanHandle}`;
     case "reddit":
-      return `https://reddit.com/user/${trimmed}`;
+      return `https://reddit.com/user/${cleanHandle}`;
     case "discord":
-      return `https://discord.gg/${trimmed}`;
+      return `https://discord.gg/${cleanHandle}`;
     default:
-      return trimmed;
+      return "";
   }
 }
 

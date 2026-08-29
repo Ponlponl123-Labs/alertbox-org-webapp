@@ -59,6 +59,13 @@ describe("Frontend General Utilities", () => {
     it("should preserve full URLs as-is", () => {
       expect(getSocialUrl("twitch", "https://twitch.tv/custom")).toBe("https://twitch.tv/custom");
     });
+
+    it("should block dangerous javascript: and data: protocols", () => {
+      expect(getSocialUrl("custom", "javascript:alert(1)")).toBe("");
+      expect(getSocialUrl("twitch", "javascript:alert(1)")).toBe("");
+      expect(getSocialUrl("youtube", "data:text/html,<script>alert(1)</script>")).toBe("");
+      expect(getSocialUrl("twitter", "vbscript:msgbox(1)")).toBe("");
+    });
   });
 
   describe("clamp", () => {
