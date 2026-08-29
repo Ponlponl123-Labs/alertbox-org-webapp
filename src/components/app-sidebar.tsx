@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { coreStore } from "@/hooks/store/core";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
@@ -11,6 +11,7 @@ import {
   ChartLineIcon,
   GearSixIcon,
   HandCoinsIcon,
+  HandHeartIcon,
   HandWavingIcon,
   HeartIcon,
   PlugsIcon,
@@ -21,6 +22,7 @@ import {
   UserIcon,
   UsersIcon,
   WarningOctagonIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -31,6 +33,18 @@ import {
   AccordionPanel,
 } from "./animate-ui/components/headless/accordion";
 import { useDisclosure } from "./animate-ui/primitives/headless/disclosure";
+
+function useIsMobile() {
+  return React.useSyncExternalStore(
+    (callback) => {
+      const mql = window.matchMedia("(max-width: 767px)");
+      mql.addEventListener("change", callback);
+      return () => mql.removeEventListener("change", callback);
+    },
+    () => window.matchMedia("(max-width: 767px)").matches,
+    () => false,
+  );
+}
 
 function AccordionStateSync({
   hydrated,
@@ -73,6 +87,8 @@ function AppSidebar() {
   );
   const hydrateSidebar = useStore(coreStore, (state) => state.hydrateSidebar);
   const pathname = usePathname();
+  const isMobile = useIsMobile();
+  const isCollapsed = isSidebarCollapsed && !isMobile;
 
   const sidebarHydrated = React.useSyncExternalStore(
     () => () => {},
@@ -168,18 +184,55 @@ function AppSidebar() {
   }, [lang]);
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, maxWidth: 0 }}
-        animate={{ opacity: 1, maxWidth: isSidebarCollapsed ? 52 : 232 }}
-        exit={{ opacity: 0, maxWidth: 0 }}
+    <>
+      <AnimatePresence>
+        {!isSidebarHiddenOnMobile && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={() => setSidebarHiddenOnMobile(true)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 md:hidden"
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.aside
+        animate={{
+          width: isMobile ? 256 : (isCollapsed ? 52 : 232),
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 400,
+          damping: 34,
+        }}
         className={cn(
-          "sticky top-0 h-screen z-40 w-58 p-1.5 pt-14 bg-sidebar flex flex-col text-foreground gap-1",
-          isSidebarCollapsed && "w-13",
-          "max-md:fixed",
-          isSidebarHiddenOnMobile && "max-md:-translate-x-full",
+          "sticky top-0 h-screen z-30 p-1.5 md:pt-14 max-md:pt-2 bg-sidebar flex flex-col text-foreground gap-1 select-none overflow-x-hidden",
+          "transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:translate-x-0!",
+          "max-md:fixed max-md:top-0 max-md:left-0 max-md:w-64! max-md:z-60 max-md:shadow-2xl max-md:border-r max-md:border-border/40",
+          isSidebarHiddenOnMobile ? "max-md:-translate-x-full" : "max-md:translate-x-0",
         )}
       >
+        <div className="md:hidden flex items-center justify-between px-2.5 py-2.5 mb-1.5 border-b border-border/40 shrink-0">
+          <div className="flex items-center gap-2">
+            <HandHeartIcon size={22} weight="fill" className="text-foreground" />
+            <span className="text-sm font-semibold font-sans">
+              AlertBox<span className="text-xs opacity-60 ml-0.5 font-light tracking-wider">.org</span>
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 rounded-lg text-foreground/50 hover:text-foreground"
+            onClick={() => setSidebarHiddenOnMobile(true)}
+            aria-label="Close sidebar"
+          >
+            <XIcon size={18} weight="bold" />
+          </Button>
+        </div>
+
         {sidebarItems.map((l) =>
           !l.href ? (
             <Accordion key={`${l.id}-${sidebarHydrated}`}>
@@ -191,31 +244,53 @@ function AppSidebar() {
                 <AccordionButton
                   className={cn(
                     "rounded-lg whitespace-nowrap group overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start items-center flex no-underline!",
-                    "hover:bg-primary/5 hover:text-primary",
-                    isSidebarCollapsed &&
+                    "hover:bg-primary/5 hover:text-primary transition-colors",
+                    isCollapsed &&
                       "aria-expanded:bg-background/80 aria-expanded:rounded-b-none",
                   )}
                   showArrow={false}
                 >
-                  <div className="size-4">{l.icon}</div>
-                  {!isSidebarCollapsed && (
-                    <span className="text-xs">{l.text}</span>
-                  )}
-                  <CaretDownIcon
-                    className="group-[data-headlessui-state]:rotate-180 ml-auto"
-                    weight="bold"
-                    size={12}
-                  />
+                  <div className="size-4 shrink-0 flex items-center justify-center">{l.icon}</div>
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {!isCollapsed && (
+                      <motion.span
+                        initial={{ opacity: 0, x: -6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -6 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="text-xs truncate flex-1 text-left"
+                      >
+                        {l.text}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {!isCollapsed && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        className="ml-auto flex items-center"
+                      >
+                        <CaretDownIcon
+                          className="group-[data-headlessui-state]:rotate-180 transition-transform duration-200"
+                          weight="bold"
+                          size={12}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </AccordionButton>
                 <AccordionPanel
                   data-default-transition="false"
                   className={cn(
                     "py-0 flex flex-row gap-3 relative h-max",
-                    !isSidebarCollapsed && "pl-4.75 pr-0",
-                    isSidebarCollapsed && "bg-background/40 rounded-b-xl",
+                    !isCollapsed && "pl-4.75 pr-0",
+                    isCollapsed && "bg-background/40 rounded-b-xl",
                   )}
                 >
-                  {!isSidebarCollapsed && (
+                  {!isCollapsed && (
                     <div className="h-auto w-px bg-foreground/10" />
                   )}
                   <div className="flex flex-col relative gap-0.5 flex-1 min-w-0">
@@ -224,7 +299,7 @@ function AppSidebar() {
                         <Link key={ii} href={ll.href}>
                           <Button
                             className={cn(
-                              "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative",
+                              "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative overflow-hidden",
                               pathname === ll.href && "text-foreground",
                             )}
                             variant="ghost"
@@ -242,10 +317,20 @@ function AppSidebar() {
                                 />
                               )}
                             </AnimatePresence>
-                            {ll.icon}
-                            {!isSidebarCollapsed && (
-                              <span className="text-xs">{ll.text}</span>
-                            )}
+                            <div className="size-4 shrink-0 flex items-center justify-center">{ll.icon}</div>
+                            <AnimatePresence initial={false} mode="popLayout">
+                              {!isCollapsed && (
+                                <motion.span
+                                  initial={{ opacity: 0, x: -6 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  exit={{ opacity: 0, x: -6 }}
+                                  transition={{ duration: 0.15, ease: "easeOut" }}
+                                  className="text-xs truncate"
+                                >
+                                  {ll.text}
+                                </motion.span>
+                              )}
+                            </AnimatePresence>
                           </Button>
                         </Link>
                       ))}
@@ -257,7 +342,7 @@ function AppSidebar() {
             <Link key={l.id} href={l.href}>
               <Button
                 className={cn(
-                  "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative",
+                  "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative overflow-hidden",
                   pathname === l.href && "text-foreground",
                 )}
                 variant="ghost"
@@ -275,28 +360,58 @@ function AppSidebar() {
                     />
                   )}
                 </AnimatePresence>
-                {l.icon}
-                {!isSidebarCollapsed && (
-                  <span className="text-xs">{l.text}</span>
-                )}
+                <div className="size-4 shrink-0 flex items-center justify-center">{l.icon}</div>
+                <AnimatePresence initial={false} mode="popLayout">
+                  {!isCollapsed && (
+                    <motion.span
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -6 }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
+                      className="text-xs truncate"
+                    >
+                      {l.text}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </Button>
             </Link>
           ),
         )}
         <Button
           className={cn(
-            "rounded-lg overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start mt-auto",
+            "rounded-lg overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start mt-auto shrink-0 max-md:hidden",
+            "hover:bg-primary/5 hover:text-primary transition-colors",
           )}
           variant="ghost"
           onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
         >
-          <SidebarSimpleIcon weight="bold" size={12} />
-          {!isSidebarCollapsed && (
-            <span className="text-xs">{lang.data.app.sidebar.collapse}</span>
-          )}
+          <div className="size-4 shrink-0 flex items-center justify-center">
+            <SidebarSimpleIcon
+              weight="bold"
+              size={14}
+              className={cn(
+                "transition-transform duration-300 ease-out",
+                isSidebarCollapsed && "rotate-180",
+              )}
+            />
+          </div>
+          <AnimatePresence initial={false} mode="popLayout">
+            {!isCollapsed && (
+              <motion.span
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -6 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="text-xs truncate"
+              >
+                {lang.data.app.sidebar.collapse}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </Button>
-      </motion.div>
-    </AnimatePresence>
+      </motion.aside>
+    </>
   );
 }
 
