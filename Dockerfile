@@ -1,7 +1,6 @@
 # Stage 1: Install dependencies
-FROM oven/bun:1-alpine AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+FROM oven/bun:1.3-alpine AS deps
+RUN apk add --no-cache libc6-compat tar ca-certificates
 WORKDIR /app
 
 # Copy package.json and bun.lock to install dependencies
@@ -9,7 +8,8 @@ COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 # Stage 2: Build the Next.js application
-FROM oven/bun:1-alpine AS builder
+FROM oven/bun:1.3-alpine AS builder
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
