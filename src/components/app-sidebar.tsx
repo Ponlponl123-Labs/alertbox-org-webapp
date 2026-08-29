@@ -84,11 +84,9 @@ function AppSidebar() {
     hydrateSidebar();
   }, [hydrateSidebar]);
 
-  const [prevPathname, setPrevPathname] = useState(pathname);
-  if (prevPathname !== pathname) {
-    setPrevPathname(pathname);
+  useEffect(() => {
     setSidebarHiddenOnMobile(true);
-  }
+  }, [pathname, setSidebarHiddenOnMobile]);
 
   const sidebarItems = useMemo(() => {
     return [
