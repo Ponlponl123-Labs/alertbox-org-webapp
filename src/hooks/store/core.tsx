@@ -3,11 +3,26 @@
 import lang, { Language, isValidLanguageKey, languageKeys } from "@/lib/i18n";
 import { createStore } from "zustand";
 
+export type SystemStatusLevel = "down" | "degraded" | "maintenance" | "operational";
+
+export type SystemStatus = {
+  id?: string;
+  level: SystemStatusLevel;
+  title?: string | null;
+  message?: string | null;
+  details?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  link?: string | null;
+};
+
 type CoreStoreState = {
   lang: Language;
   isSidebarHiddenOnMobile: boolean;
   isSidebarCollapsed: boolean;
   isBackendAlive: boolean | null;
+  systemStatus: SystemStatus | null;
+  systemStatuses: SystemStatus[];
   openAccordions: Record<string, boolean>;
 };
 
@@ -17,6 +32,8 @@ type CoreStoreActions = {
   setLang: (nextLang: languageKeys) => void;
   hydrateLang: () => void;
   setBackendAlive: (alive: boolean | null) => void;
+  setSystemStatus: (status: SystemStatus | null) => void;
+  setSystemStatuses: (statuses: SystemStatus[]) => void;
   setAccordionOpen: (key: string, isOpen: boolean) => void;
   hydrateSidebar: () => void;
 };
@@ -30,6 +47,8 @@ export const coreStore = createStore<CoreStore>()((set) => ({
   isSidebarHiddenOnMobile: false,
   isSidebarCollapsed: false,
   isBackendAlive: null,
+  systemStatus: null,
+  systemStatuses: [],
   openAccordions: {
     alertbox: true,
     settings: true,
@@ -59,6 +78,12 @@ export const coreStore = createStore<CoreStore>()((set) => ({
   },
   setBackendAlive: (alive) => {
     set({ isBackendAlive: alive });
+  },
+  setSystemStatus: (status) => {
+    set({ systemStatus: status, systemStatuses: status ? [status] : [] });
+  },
+  setSystemStatuses: (statuses) => {
+    set({ systemStatuses: statuses, systemStatus: statuses[0] || null });
   },
   setAccordionOpen: (key, isOpen) => {
     set((state) => {

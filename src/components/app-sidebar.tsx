@@ -91,7 +91,7 @@ function AppSidebar() {
   const isCollapsed = isSidebarCollapsed && !isMobile;
 
   const sidebarHydrated = React.useSyncExternalStore(
-    () => () => {},
+    () => () => { },
     () => true,
     () => false,
   );
@@ -209,9 +209,9 @@ function AppSidebar() {
           damping: 34,
         }}
         className={cn(
-          "sticky top-0 h-screen z-30 p-1.5 md:pt-14 max-md:pt-2 bg-sidebar flex flex-col text-foreground gap-1 select-none overflow-x-hidden",
+          "sticky top-(--status-banner-height,0px) h-[calc(100vh-var(--status-banner-height,0))] z-30 p-1.5 md:pt-14 max-md:pt-2 bg-sidebar flex flex-col text-foreground gap-1 select-none overflow-x-hidden",
           "transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:translate-x-0!",
-          "max-md:fixed max-md:top-0 max-md:left-0 max-md:w-64! max-md:z-60 max-md:shadow-2xl max-md:border-r max-md:border-border/40",
+          "max-md:fixed max-md:top-(--status-banner-height,0px) max-md:left-0 max-md:w-64! max-md:z-60 max-md:shadow-2xl max-md:border-r max-md:border-border/40 max-md:h-[calc(100vh-var(--status-banner-height,0))]",
           isSidebarHiddenOnMobile ? "max-md:-translate-x-full" : "max-md:translate-x-0",
         )}
       >
@@ -246,7 +246,7 @@ function AppSidebar() {
                     "rounded-lg whitespace-nowrap group overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start items-center flex no-underline!",
                     "hover:bg-primary/5 hover:text-primary transition-colors",
                     isCollapsed &&
-                      "aria-expanded:bg-background/80 aria-expanded:rounded-b-none",
+                    "aria-expanded:bg-background/80 aria-expanded:rounded-b-none",
                   )}
                   showArrow={false}
                 >

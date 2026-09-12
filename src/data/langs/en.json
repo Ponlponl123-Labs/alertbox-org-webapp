@@ -11,7 +11,11 @@
     "go_live": "Go Live",
     "overlay_url": "Get Overlay URL",
     "comming_soon": "Coming soon",
-    "backend_offline": "API backend is currently offline. Trying to reconnect..."
+    "backend_offline": "API backend is currently offline. Trying to reconnect...",
+    "backend_degraded": "System performance is currently degraded.",
+    "backend_maintenance": "System is currently undergoing scheduled maintenance.",
+    "status_page": "Status Page",
+    "read_more": "Read more"
   },
   "header": {
     "links": {

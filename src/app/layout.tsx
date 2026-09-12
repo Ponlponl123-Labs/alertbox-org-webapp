@@ -112,7 +112,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: preload }} />
       </head>
-      <body className="min-h-full flex flex-col overflow-y-auto overflow-x-hidden">
+      <body className="min-h-full flex flex-col overflow-y-auto overflow-x-hidden relative transition-[margin-top] duration-200 ease-out">
         <Toaster />
         <UserContextProvider>
           <BackendLivenessChecker />
