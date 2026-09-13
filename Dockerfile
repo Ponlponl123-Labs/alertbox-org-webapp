@@ -1,14 +1,13 @@
 # Stage 1: Install dependencies
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
+FROM oven/bun:1.3-alpine AS deps
 WORKDIR /app
 
 # Copy package manifests
-COPY package.json package-lock.json* ./
-RUN npm install --legacy-peer-deps
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 # Stage 2: Build the Next.js application
-FROM node:20-alpine AS builder
+FROM oven/bun:1.3-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -16,7 +15,7 @@ COPY . .
 # Disable telemetry during the build
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build
+RUN bun run build
 
 # Stage 3: Production runner
 FROM node:20-alpine AS runner
