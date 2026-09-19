@@ -22,9 +22,7 @@
   textarea,
   [role="button"],
   .transition-interactive {
-    transition-property: color, background-color, border-color, opacity, transform, box-shadow;
-    transition-timing-function: cubic-bezier(0.165, 0.84, 0.44, 1);
-    transition-duration: 0.16s;
+    transition: all 0.64s cubic-bezier(0, 0, .065, 1.55);
   }
 
   p {
@@ -32,9 +30,10 @@
   }
 
   button:active,
-  a:active {
+  a:active,
+  .transition-interactive:active {
     @apply opacity-80 scale-98;
-    transition-duration: 0.08s;
+    transition: all 2s cubic-bezier(.075, .82, .165, 1);
   }
 
   body {

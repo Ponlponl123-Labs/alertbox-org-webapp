@@ -194,23 +194,23 @@ function Header() {
                     <Image
                       src="/alertbox-colored.png"
                       alt="AlertBox Logo"
-                      className="w-6 h-6 object-contain"
-                      width={24}
-                      height={24}
+                      className="w-7 h-7 object-contain"
+                      width={28}
+                      height={28}
                     />
                   ) : (
-                    <HandHeartIcon size={24} weight="fill" />
+                    <HandHeartIcon size={pathname.startsWith("/app") ? 24 : 28} weight="fill" />
                   )}
                   <motion.h1
                     initial={{
-                      fontWeight: pathname.startsWith("/app") ? 500 : 600,
+                      fontWeight: pathname.startsWith("/app") ? 500 : 500,
                       opacity: pathname.startsWith("/app") ? 0.8 : 1,
                     }}
                     animate={{
-                      fontWeight: pathname.startsWith("/app") ? 500 : 600,
+                      fontWeight: pathname.startsWith("/app") ? 500 : 500,
                       opacity: pathname.startsWith("/app") ? 0.8 : 1,
                     }}
-                    className="text-base font-semibold font-sans flex items-center"
+                    className="text-base font-semibold tracking-wider -ml-0.5 font-sans flex items-center"
                   >
                     AlertBox
                     <span className="text-sm opacity-60 ml-0.5 font-light tracking-wider">
