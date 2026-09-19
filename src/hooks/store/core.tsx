@@ -18,6 +18,7 @@ export type SystemStatus = {
 
 type CoreStoreState = {
   lang: Language;
+  isDark: boolean;
   isSidebarHiddenOnMobile: boolean;
   isSidebarCollapsed: boolean;
   isBackendAlive: boolean | null;
@@ -27,6 +28,9 @@ type CoreStoreState = {
 };
 
 type CoreStoreActions = {
+  toggleTheme: () => void;
+  setTheme: (isDark: boolean) => void;
+  hydrateTheme: () => void;
   setSidebarHiddenOnMobile: (state: boolean) => void;
   setSidebarCollapsed: (state: boolean) => void;
   setLang: (nextLang: languageKeys) => void;
@@ -44,6 +48,7 @@ const STORAGE_KEY = "alertbox-org-webapp-lang";
 
 export const coreStore = createStore<CoreStore>()((set) => ({
   lang: lang("en-US"),
+  isDark: typeof document !== "undefined" ? document.documentElement.classList.contains("dark") : true,
   isSidebarHiddenOnMobile: false,
   isSidebarCollapsed: false,
   isBackendAlive: null,
@@ -52,6 +57,28 @@ export const coreStore = createStore<CoreStore>()((set) => ({
   openAccordions: {
     alertbox: true,
     settings: true,
+  },
+  toggleTheme: () => {
+    set((state) => {
+      const next = !state.isDark;
+      if (typeof window !== "undefined") {
+        document.documentElement.classList.toggle("dark", next);
+        localStorage.setItem("theme", next ? "dark" : "light");
+      }
+      return { isDark: next };
+    });
+  },
+  setTheme: (isDark) => {
+    if (typeof window !== "undefined") {
+      document.documentElement.classList.toggle("dark", isDark);
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    }
+    set({ isDark });
+  },
+  hydrateTheme: () => {
+    if (typeof window === "undefined") return;
+    const isDark = document.documentElement.classList.contains("dark");
+    set({ isDark });
   },
   setSidebarHiddenOnMobile: (b) => {
     set({ isSidebarHiddenOnMobile: b });

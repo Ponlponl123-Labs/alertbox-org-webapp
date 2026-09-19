@@ -17,6 +17,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import CurrentUserChip from "./current-user-chip";
 import { useUserContext } from "@/contexts/user";
+import Image from "next/image";
 
 function Nav({
   classNames,
@@ -90,6 +91,9 @@ function Header() {
     coreStore,
     (state) => state.setSidebarHiddenOnMobile,
   );
+  const isApp = pathname.startsWith("/app");
+  const isDocs = pathname.startsWith("/docs");
+  const isFullHeaderWidth = isApp || isDocs;
 
   const [prevPath, setPrevPath] = useState(pathname);
   if (prevPath !== pathname) {
@@ -103,18 +107,21 @@ function Header() {
     <>
       <motion.header
         initial={{
-          height: pathname.startsWith("/app") ? 48 : 64,
-          padding: pathname.startsWith("/app") ? 8 : 16,
+          height: isFullHeaderWidth ? 48 : 64,
+          padding: isFullHeaderWidth ? 8 : 16,
         }}
         animate={{
-          height: pathname.startsWith("/app") ? 48 : 64,
-          padding: pathname.startsWith("/app") ? 8 : 16,
+          height: isFullHeaderWidth ? 48 : 64,
+          padding: isFullHeaderWidth ? 8 : 16,
         }}
         className={cn(
-          "h-16 flex items-center justify-between px-4 absolute top-0 left-0 right-0 z-50",
+          "flex items-center justify-between px-4 top-0 left-0 right-0 z-50",
+          isDocs
+            ? "fixed h-12 bg-background/80 backdrop-blur-md border-b border-border"
+            : "absolute h-16",
           pathname === "/"
             ? "border-transparent"
-            : "supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur-sm border-border border-b border-solid ",
+            : !isDocs && "supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur-sm border-border border-b border-solid ",
           pathname.startsWith("/app") &&
           "border-0 bg-transparent bg-none supports-backdrop-filter:bg-transparent/80 supports-backdrop-filter:backdrop-blur-none",
         )}
@@ -122,14 +129,14 @@ function Header() {
         <AnimatePresence>
           <motion.div
             initial={{
-              maxWidth: pathname.startsWith("/app") ? "100vw" : 1448,
+              maxWidth: isFullHeaderWidth ? "100vw" : 1448,
             }}
             animate={{
-              maxWidth: pathname.startsWith("/app") ? "100vw" : 1448,
+              maxWidth: isFullHeaderWidth ? "100vw" : 1448,
             }}
             className={cn(
               "flex-1 min-w-0 max-w-362 mx-auto w-full flex items-center justify-between gap-4",
-              pathname.startsWith("/app") && "max-w-none",
+              isFullHeaderWidth && "max-w-none",
             )}
             id="header-main"
           >
@@ -183,7 +190,17 @@ function Header() {
                   href={pathname.startsWith("/app") ? "/app" : "/"}
                   className={cn("flex items-center gap-2.5")}
                 >
-                  <HandHeartIcon size={24} weight="fill" />
+                  {pathname.startsWith("/docs") ? (
+                    <Image
+                      src="/alertbox-colored.png"
+                      alt="AlertBox Logo"
+                      className="w-6 h-6 object-contain"
+                      width={24}
+                      height={24}
+                    />
+                  ) : (
+                    <HandHeartIcon size={24} weight="fill" />
+                  )}
                   <motion.h1
                     initial={{
                       fontWeight: pathname.startsWith("/app") ? 500 : 600,
@@ -193,12 +210,17 @@ function Header() {
                       fontWeight: pathname.startsWith("/app") ? 500 : 600,
                       opacity: pathname.startsWith("/app") ? 0.8 : 1,
                     }}
-                    className="text-base font-semibold font-sans"
+                    className="text-base font-semibold font-sans flex items-center"
                   >
                     AlertBox
                     <span className="text-sm opacity-60 ml-0.5 font-light tracking-wider">
                       .org
                     </span>
+                    {pathname.startsWith("/docs") && (
+                      <span className="ml-2 text-sm font-extralight font-sans tracking-wider border-l border-foreground/40 pl-2">
+                        Developers
+                      </span>
+                    )}
                   </motion.h1>
                 </Link>
                 <div className="mt-0.75 -ml-1.5">

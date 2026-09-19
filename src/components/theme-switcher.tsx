@@ -1,26 +1,19 @@
 "use client";
 
-import { useEffect, useState, startTransition } from "react";
+import { useSyncExternalStore } from "react";
 import { CircleIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { Button } from "./ui/button";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
+
+const emptySubscribe = () => () => {};
 
 export default function ThemeSwitcher() {
-  const [isDark, setIsDark] = useState<boolean | null>(null);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const isDark = useStore(coreStore, (state) => state.isDark);
+  const toggleTheme = coreStore.getState().toggleTheme;
 
-  useEffect(() => {
-    startTransition(() => {
-      setIsDark(document.documentElement.classList.contains("dark"));
-    });
-  }, []);
-
-  const toggleTheme = () => {
-    const next = !isDark;
-    setIsDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("theme", next ? "dark" : "light");
-  };
-
-  if (isDark === null) {
+  if (!mounted) {
     return (
       <Button
         variant="ghost"
