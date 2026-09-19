@@ -6,7 +6,11 @@
  * @returns The resolved absolute API URL
  */
 export const getApiUrl = (path: string): string => {
-  let endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT || "";
+  let endpoint =
+    process.env.NEXT_PUBLIC_API_ENDPOINT ||
+    (process.env.NODE_ENV !== "production"
+      ? "http://localhost:3001/"
+      : "https://api.alertbox.org/");
 
   if (process.env.NODE_ENV === "production") {
     endpoint = "https://api.alertbox.org/";
