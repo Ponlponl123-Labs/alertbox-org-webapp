@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useStore } from "zustand";
 import { Button } from "./ui/button";
 import ThemeSwitcher from "./theme-switcher";
@@ -14,7 +14,7 @@ import {
   HandHeartIcon,
   ListIcon,
 } from "@phosphor-icons/react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import CurrentUserChip from "./current-user-chip";
 import { useUserContext } from "@/contexts/user";
 import Image from "next/image";
@@ -28,7 +28,6 @@ function Nav({
   };
 }) {
   const lang = useStore(coreStore, (state) => state.lang);
-  const { userInfo } = useUserContext();
   return (
     <>
       <Link href={"/about"}>
@@ -50,6 +49,22 @@ function Nav({
         </Button>
       </Link>
       <div className="md:hidden my-auto" />
+    </>
+  );
+}
+
+function NavActions({
+  classNames,
+}: {
+  classNames?: {
+    link?: string;
+    button?: string;
+  };
+}) {
+  const lang = useStore(coreStore, (state) => state.lang);
+  const { userInfo } = useUserContext();
+  return (
+    <>
       <Link
         href={"https://github.com/Ponlponl123-Labs/alertbox-org"}
         target="_blank"
@@ -79,6 +94,11 @@ function Nav({
 function Header() {
   const pathname = usePathname();
   const [isNavActive, setIsNavActive] = useState(false);
+  const { scrollY } = useScroll();
+  const [isScrolled, setIsScrolled] = useState(false);
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setIsScrolled(latest > 0);
+  });
   const isSidebarCollapsed = useStore(
     coreStore,
     (state) => state.isSidebarCollapsed,
@@ -91,10 +111,19 @@ function Header() {
     coreStore,
     (state) => state.setSidebarHiddenOnMobile,
   );
+  const isIndex = pathname === "/";
   const isApp = pathname.startsWith("/app");
   const isDocs = pathname.startsWith("/docs");
   const isFullHeaderWidth = isApp || isDocs;
 
+  const windowWidth = useSyncExternalStore(
+    (cb) => {
+      window.addEventListener("resize", cb);
+      return () => window.removeEventListener("resize", cb);
+    },
+    () => window.innerWidth,
+    () => 1448,
+  );
   const [prevPath, setPrevPath] = useState(pathname);
   if (prevPath !== pathname) {
     setPrevPath(pathname);
@@ -107,21 +136,34 @@ function Header() {
     <>
       <motion.header
         initial={{
-          height: isFullHeaderWidth ? 48 : 64,
+          height: isFullHeaderWidth ? 48 : isIndex && isScrolled ? 48 : 64,
           padding: isFullHeaderWidth ? 8 : 16,
+          top: isIndex && isScrolled ? "8px" : "0px",
+          maxWidth: isIndex && isScrolled ? 760 : windowWidth,
         }}
         animate={{
-          height: isFullHeaderWidth ? 48 : 64,
+          height: isFullHeaderWidth ? 48 : isIndex && isScrolled ? 48 : 64,
           padding: isFullHeaderWidth ? 8 : 16,
+          top: isIndex && isScrolled ? "8px" : "0px",
+          maxWidth: isIndex && isScrolled ? 760 : windowWidth,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 30,
         }}
         className={cn(
-          "flex items-center justify-between px-4 top-0 left-0 right-0 z-50",
+          "flex items-center justify-between px-4 inset-x-0 mx-auto z-50 w-full",
           isDocs
             ? "fixed h-12 bg-background/80 backdrop-blur-md border-b border-border"
-            : "absolute h-16",
-          pathname === "/"
+            : isIndex
+              ? "md:fixed max-md:-mb-2 h-16"
+              : "absolute h-16",
+          isIndex
             ? "border-transparent"
             : !isDocs && "supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur-sm border-border border-b border-solid ",
+          isIndex && isScrolled && "md:bg-muted/60 md:backdrop-blur-lg md:rounded-3xl",
+          isNavActive && "fixed",
           pathname.startsWith("/app") &&
           "border-0 bg-transparent bg-none supports-backdrop-filter:bg-transparent/80 supports-backdrop-filter:backdrop-blur-none",
         )}
@@ -129,10 +171,10 @@ function Header() {
         <AnimatePresence>
           <motion.div
             initial={{
-              maxWidth: isFullHeaderWidth ? "100vw" : 1448,
+              maxWidth: isFullHeaderWidth || isIndex ? "100dvw" : 1448,
             }}
             animate={{
-              maxWidth: isFullHeaderWidth ? "100vw" : 1448,
+              maxWidth: isFullHeaderWidth || isIndex ? "100dvw" : 1448,
             }}
             className={cn(
               "flex-1 min-w-0 max-w-362 mx-auto w-full flex items-center justify-between gap-4",
@@ -140,7 +182,7 @@ function Header() {
             )}
             id="header-main"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex flex-1 items-center gap-3">
               <AnimatePresence>
                 {pathname.startsWith("/app") && (
                   <motion.div
@@ -187,7 +229,7 @@ function Header() {
               </AnimatePresence>
               <motion.div className="flex items-center gap-3">
                 <Link
-                  href={pathname.startsWith("/app") ? "/app" : "/"}
+                  href={isApp ? "/app" : "/"}
                   className={cn("flex items-center gap-2.5")}
                 >
                   {pathname.startsWith("/docs") ? (
@@ -199,16 +241,16 @@ function Header() {
                       height={28}
                     />
                   ) : (
-                    <HandHeartIcon size={pathname.startsWith("/app") ? 24 : 28} weight="fill" />
+                    <HandHeartIcon size={isApp ? 24 : isIndex ? 20 : 28} className={cn(isIndex && "ml-1")} weight="fill" />
                   )}
                   <motion.h1
                     initial={{
-                      fontWeight: pathname.startsWith("/app") ? 500 : 500,
-                      opacity: pathname.startsWith("/app") ? 0.8 : 1,
+                      fontWeight: isApp ? 500 : 500,
+                      opacity: isApp ? 0.8 : 1,
                     }}
                     animate={{
-                      fontWeight: pathname.startsWith("/app") ? 500 : 500,
-                      opacity: pathname.startsWith("/app") ? 0.8 : 1,
+                      fontWeight: isApp ? 500 : 500,
+                      opacity: isApp ? 0.8 : 1,
                     }}
                     className="text-base font-semibold tracking-wider -ml-0.5 font-sans flex items-center"
                   >
@@ -216,7 +258,7 @@ function Header() {
                     <span className="text-sm opacity-60 ml-0.5 font-light tracking-wider">
                       .org
                     </span>
-                    {pathname.startsWith("/docs") && (
+                    {isDocs && (
                       <span className="ml-2 text-sm font-extralight font-sans tracking-wider border-l border-foreground/40 pl-2">
                         Developers
                       </span>
@@ -228,9 +270,24 @@ function Header() {
                 </div>
               </motion.div>
             </div>
-            <div className="flex items-center gap-2">
+            <AnimatePresence>
+              {!isApp && !isIndex && (
+                <div className="flex flex-4 mx-auto justify-center items-center gap-2">
+                  <motion.div
+                    id="header-nav"
+                    exit={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0 }}
+                    className="max-md:hidden flex items-center gap-2"
+                  >
+                    <Nav />
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
+            <div className="flex flex-1 justify-end items-center gap-2">
               <AnimatePresence>
-                {!pathname.startsWith("/app") && (
+                {!isApp && isIndex && (
                   <motion.div
                     id="header-nav"
                     exit={{ opacity: 0 }}
@@ -242,6 +299,7 @@ function Header() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              <NavActions />
               <CurrentUserChip />
               <ThemeSwitcher />
               <Button
@@ -267,14 +325,21 @@ function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             id="header-nav-mobile"
-            className="fixed flex flex-col gap-3 top-(--status-banner-height,0px) left-0 w-full h-[calc(100vh-var(--status-banner-height,0))] bg-background supports-backdrop-filter:bg-background/60 supports-backdrop-filter:backdrop-blur-3xl z-40 p-6 pt-22 overflow-y-auto"
+            className={
+              cn(
+                "fixed md:hidden! flex flex-col gap-3 top-(--status-banner-height,0px) left-0 w-full h-[calc(100dvh-var(--status-banner-height,0))] bg-background supports-backdrop-filter:bg-background/60 supports-backdrop-filter:backdrop-blur-3xl z-40 p-6 pt-22 overflow-y-auto",
+                isDocs && "pt-32"
+              )
+            }
           >
             <Nav
               classNames={{
                 link: "justify-start p-6",
-                button: "p-6",
               }}
             />
+            <NavActions classNames={{
+              button: "p-6",
+            }} />
           </motion.nav>
         )}
       </AnimatePresence>

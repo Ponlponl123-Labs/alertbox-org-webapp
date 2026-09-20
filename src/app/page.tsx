@@ -1,199 +1,41 @@
 "use client";
 
-import { coreStore } from "@/hooks/store/core";
-import { AnimatePresence, motion } from "motion/react";
-import { useStore } from "zustand";
-import React, { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import BorderGlow from "@/components/BorderGlow";
 import dynamic from "next/dynamic";
-import HeroSection from "./index/hero-section";
+import HeroStudio from "./index/hero-studio";
 import SocialProof from "./index/social-proof";
-import PrivacyGuard from "./index/privacy-guard";
+import CentralizedHub from "./index/centralized-hub";
 
-const HowItWorkStreamer = dynamic(() => import("./index/how-it-work-streamer"));
-const HowItWorkViewer = dynamic(() => import("./index/how-it-work-viewer"));
-const Features = dynamic(() => import("./index/features"));
-const Testimonials = dynamic(() => import("./index/testimonials"));
-const ComparisonTable = dynamic(() => import("./index/comparison-table"));
-const FAQSection = dynamic(() => import("./index/faq-section"));
-const CTABanner = dynamic(() => import("./index/cta-banner"));
-const CinematicInsights = dynamic(() => import("./index/cinematic-insights"));
-import { cn } from "@/lib/utils";
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as never },
-  },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-    },
-  },
-};
+const Features = dynamic(() => import("./index/features"), {
+  ssr: true,
+});
+const ComparisonTable = dynamic(() => import("./index/comparison-table"), {
+  ssr: true,
+});
+const Testimonials = dynamic(() => import("./index/testimonials"), {
+  ssr: true,
+});
+const CinematicInsights = dynamic(() => import("./index/cinematic-insights"), {
+  ssr: true,
+});
+const FAQSection = dynamic(() => import("./index/faq-section"), {
+  ssr: true,
+});
+const CTABanner = dynamic(() => import("./index/cta-banner"), {
+  ssr: true,
+});
 
 export default function Home() {
-  const hiw = useStore(
-    coreStore,
-    (state) => state.lang.data.pages.index.sections.howitworks,
-  );
-  const [isHIWStreamer, setIsHIWStreamer] = useState(true);
-  const sectionHIW = useRef<HTMLDivElement>(null);
-
   return (
-    <>
-      <HeroSection />
+    <div className="relative w-full overflow-x-hidden">
+      <HeroStudio />
       <SocialProof />
-
-      <PrivacyGuard />
-
-      <section
-        ref={sectionHIW}
-        className="w-full min-h-screen py-24 px-6 font-sans flex flex-col items-center justify-center relative"
-      >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,var(--foreground)_0%,transparent_20%)] blur-[128px] opacity-40 pointer-events-none" />
-        <div className="w-full max-w-362 mx-auto flex flex-col items-center z-10">
-          <div className="flex gap-8 w-full">
-            <div className="flex-1 min-w-0 max-md:hidden" />
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-              className="md:ml-auto min-w-0 md:flex-2 flex-1 flex flex-col max-md:items-center mb-10"
-            >
-              <motion.h2
-                variants={fadeInUp}
-                className="text-3xl md:text-6xl text-center md:text-start mb-3 tracking-tight text-black dark:text-zinc-50"
-              >
-                {hiw.title}
-              </motion.h2>
-              <motion.div variants={fadeInUp}>
-                <BorderGlow
-                  edgeSensitivity={20}
-                  glowColor="40 80 80"
-                  borderRadius={9999}
-                  glowRadius={25}
-                  glowIntensity={0.6}
-                  colors={["#F43F5E", "#38bdf8", "#ec4899"]}
-                  className="bg-foreground/5 p-px rounded-full w-max"
-                >
-                  <div className="flex bg-white dark:bg-zinc-950 rounded-full p-0.75 shadow-inner">
-                    <Button
-                      className="rounded-full relative text-xs font-semibold px-5 h-8"
-                      variant={"ghost"}
-                      onClick={() => setIsHIWStreamer(true)}
-                    >
-                      <AnimatePresence>
-                        {isHIWStreamer && (
-                          <motion.div
-                            id="HIW-Selector-Active"
-                            layoutId="HIW-Selector-Active"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="size-full top-0 left-0 rounded-full absolute bg-foreground pointer-events-none"
-                            data-default-transition="false"
-                          />
-                        )}
-                      </AnimatePresence>
-                      <span
-                        className={cn(
-                          "z-10 transition-colors",
-                          isHIWStreamer
-                            ? "text-background"
-                            : "text-foreground/60",
-                        )}
-                      >
-                        {hiw.selectors.streamer}
-                      </span>
-                    </Button>
-                    <Button
-                      className="rounded-full relative text-xs font-semibold px-5 h-8"
-                      variant={"ghost"}
-                      onClick={() => setIsHIWStreamer(false)}
-                    >
-                      <AnimatePresence>
-                        {!isHIWStreamer && (
-                          <motion.div
-                            id="HIW-Selector-Active"
-                            layoutId="HIW-Selector-Active"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="size-full top-0 left-0 rounded-full absolute bg-foreground pointer-events-none"
-                            data-default-transition="false"
-                          />
-                        )}
-                      </AnimatePresence>
-                      <span
-                        className={cn(
-                          "z-10 transition-colors",
-                          !isHIWStreamer
-                            ? "text-background"
-                            : "text-foreground/60",
-                        )}
-                      >
-                        {hiw.selectors.viewer}
-                      </span>
-                    </Button>
-                  </div>
-                </BorderGlow>
-              </motion.div>
-            </motion.div>
-          </div>
-
-          <div className="w-full z-10 bg-transparent relative flex justify-center">
-            <AnimatePresence mode="wait">
-              {isHIWStreamer ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.25 }}
-                  className="w-full"
-                  key="HIW-Streamer"
-                >
-                  <HowItWorkStreamer />
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.25 }}
-                  className="w-full"
-                  key="HIW-Viewer"
-                >
-                  <HowItWorkViewer />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </section>
-
+      <CentralizedHub />
       <Features />
-
-      <Testimonials />
-
       <ComparisonTable />
-
-      {/* <PricingHighlight /> */}
-
-      <FAQSection />
-
+      <Testimonials />
       <CinematicInsights />
-
+      <FAQSection />
       <CTABanner />
-    </>
+    </div>
   );
 }

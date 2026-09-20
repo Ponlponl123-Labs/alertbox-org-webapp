@@ -21,6 +21,7 @@
   select,
   textarea,
   [role="button"],
+  .apply-smooth-transition,
   .transition-interactive {
     transition: all 0.64s cubic-bezier(0, 0, .065, 1.55);
   }

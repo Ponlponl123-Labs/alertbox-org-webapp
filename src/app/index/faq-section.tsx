@@ -72,10 +72,9 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number>(0);
 
   return (
-    <section className="w-full py-24 md:py-40 relative">
-      <div className="max-w-368 mx-auto px-6 relative z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,var(--foreground)_0%,transparent_20%)] blur-[128px] opacity-40 pointer-events-none" />
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24">
+    <section className="w-full py-24 md:py-32 relative border-t border-foreground/10">
+      <div className="max-w-6xl mx-auto px-6 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           <div className="lg:col-span-4 flex flex-col text-left">
             <div className="lg:sticky lg:top-32">
               <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4 block font-mono">

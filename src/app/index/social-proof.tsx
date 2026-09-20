@@ -83,7 +83,7 @@ const staggerContainer = {
 
 export default function SocialProof() {
   return (
-    <section className="w-full max-w-[90vw] relative overflow-hidden">
+    <section className="w-full relative overflow-hidden">
       <motion.div
         variants={staggerContainer}
         initial="hidden"

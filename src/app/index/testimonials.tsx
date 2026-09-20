@@ -26,7 +26,7 @@ function TestimonialCard({
   return (
     <div
       key={itemKey}
-      className="w-[350px] shrink-0 p-6 rounded-3xl bg-card/60 backdrop-blur-xl border border-border/50 shadow-xl flex flex-col gap-4 relative group"
+      className="w-87.5 shrink-0 p-6 rounded-3xl bg-card/60 backdrop-blur-xl border border-border/50 shadow-xl flex flex-col gap-4 relative group"
     >
       <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none" />
       <p className="text-sm text-foreground/80 leading-relaxed font-read font-medium">
@@ -99,8 +99,7 @@ export default function Testimonials() {
   ];
 
   return (
-    <section className="w-full py-32 relative flex flex-col items-center">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,var(--foreground)_0%,transparent_20%)] blur-[148px] opacity-40 pointer-events-none" />
+    <section className="w-full py-24 md:py-32 relative flex flex-col items-center border-t border-foreground/10 overflow-hidden">
 
       <div className="text-center mb-16 z-10">
         <motion.p

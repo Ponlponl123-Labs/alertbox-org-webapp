@@ -3,12 +3,32 @@
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { motion } from "motion/react";
-import BorderGlow from "@/components/BorderGlow";
 import {
-  HandCoinsIcon,
   ShieldCheckIcon,
+  HandCoinsIcon,
   CodeBlockIcon,
 } from "@phosphor-icons/react";
+
+const LEDGER_META = [
+  {
+    kicker: "Anonymity",
+    principle: "Zero Intermediary",
+    detail: "Billing statement settles directly between donor and your gateway.",
+    icon: ShieldCheckIcon,
+  },
+  {
+    kicker: "Chargeback Risk",
+    principle: "Native Radar Rules",
+    detail: "Stripe Radar blocks high-risk cards; alert buffer intercepts trolls.",
+    icon: HandCoinsIcon,
+  },
+  {
+    kicker: "Sovereignty",
+    principle: "Client-Side Code",
+    detail: "Deploy anywhere. Zero telemetry, zero tracking, zero vendor lock-in.",
+    icon: CodeBlockIcon,
+  },
+];
 
 export default function CinematicInsights() {
   const t = useStore(
@@ -16,82 +36,75 @@ export default function CinematicInsights() {
     (state) => state.lang.data.pages.index.sections.good_to_know,
   );
 
-  const icons = [ShieldCheckIcon, HandCoinsIcon, CodeBlockIcon];
-  const glowColors = ["40 80 80", "60 90 90", "80 80 80"];
-  const gradientColors = [
-    ["#F43F5E", "#38bdf8"],
-    ["#ec4899", "#38bdf8"],
-    ["#22c55e", "#c084fc"],
-  ];
-
   return (
-    <section className="w-full font-sans py-24 md:py-32 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_50%,var(--foreground)_0%,transparent_20%)] blur-[128px] opacity-40 pointer-events-none" />
-
-      <div className="max-w-368 mx-auto px-6 relative z-10">
-        <div className="max-w-3xl mb-16 md:mb-24">
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4 block font-mono"
-          >
-            {t.title}
-          </motion.span>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl md:text-6xl lg:text-7xl tracking-tighter leading-tight mb-6 text-foreground"
-          >
-            {t.subtitle}
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="text-lg text-foreground/50 leading-relaxed font-medium"
-          >
+    <section className="w-full font-sans py-24 md:py-36 relative border-t border-border/40 overflow-hidden">
+      <div className="mx-auto px-6 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 md:mb-20 pb-8 border-b border-border/40">
+          <div>
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-widest text-foreground/40 mb-3 block">
+              {t.title}
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium tracking-tighter leading-[1.05] text-foreground">
+              {t.subtitle}
+            </h2>
+          </div>
+          <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-md font-normal md:text-right">
             {t.description}
-          </motion.p>
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="divide-y divide-border/60 border-b border-border/60">
           {t.insights.map(
             (insight: { title: string; desc: string }, idx: number) => {
-              const Icon = icons[idx];
+              const cleanTitle = insight.title.replace(/^\d+\.\s*/, "");
+              const indexStr = `0${idx + 1}`;
+              const meta = LEDGER_META[idx] || LEDGER_META[0];
+              const Icon = meta.icon;
+
               return (
                 <motion.div
                   key={idx}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: 0.2 + idx * 0.1 }}
+                  transition={{ delay: 0.08 * idx, duration: 0.4 }}
+                  className="group py-12 md:py-16 grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-start duration-300 hover:bg-foreground hover:text-background px-2 md:px-4 -mx-2 md:-mx-4"
                 >
-                  <BorderGlow
-                    edgeSensitivity={30}
-                    glowColor={glowColors[idx]}
-                    borderRadius={24}
-                    glowRadius={35}
-                    glowIntensity={0.8}
-                    colors={gradientColors[idx]}
-                    backgroundColor="var(--card)"
-                    className="flex flex-col h-full gap-5 p-8 rounded-3xl bg-card border-0 shadow-xl"
-                  >
-                    <div className="size-12 rounded-xl bg-foreground flex items-center justify-center text-background mb-6">
-                      <Icon size={24} weight="fill" />
+                  <div className="md:col-span-3 flex md:flex-col justify-between items-baseline md:items-start gap-3">
+                    <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-light tracking-tight text-foreground/25 group-hover:text-background transition-colors">
+                      {indexStr}
+                    </span>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <Icon
+                          size={14}
+                          className="text-foreground/50 group-hover:text-background transition-colors"
+                        />
+                        <span className="font-mono text-[11px] font-semibold tracking-wider uppercase text-foreground/70 group-hover:text-background">
+                          {meta.kicker}
+                        </span>
+                      </div>
+                      <span className="text-xs font-mono text-muted-foreground/60 group-hover:text-background">
+                        {meta.principle}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="text-xl lg:text-2xl text-foreground mb-3">
-                        {insight.title}
-                      </h3>
-                      <p className="text-sm text-foreground/50 leading-relaxed font-medium">
-                        {insight.desc}
-                      </p>
+                  </div>
+
+                  <div className="md:col-span-4 lg:col-span-4">
+                    <h3 className="text-xl sm:text-2xl font-medium tracking-tight text-foreground leading-snug group-hover:text-background transition-colors">
+                      {cleanTitle}
+                    </h3>
+                  </div>
+
+                  <div className="md:col-span-5 lg:col-span-5 flex flex-col justify-between gap-5">
+                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed font-normal group-hover:text-background transition-colors">
+                      {insight.desc}
+                    </p>
+                    <div className="flex items-center gap-2 pt-3 border-t border-border/30 text-xs font-mono text-foreground/70 group-hover:text-background">
+                      <span className="size-1.5 rounded-full bg-foreground/40 group-hover:bg-background shrink-0" />
+                      <span>{meta.detail}</span>
                     </div>
-                  </BorderGlow>
+                  </div>
                 </motion.div>
               );
             },
@@ -101,3 +114,4 @@ export default function CinematicInsights() {
     </section>
   );
 }
+

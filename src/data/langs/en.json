@@ -78,6 +78,11 @@
             "description": "with an open-source codebase you can inspect and self-host."
           }
         ],
+        "studio": {
+          "connected": "Now we're connected with Streamlabs!",
+          "headline": "Centralize your stream stack. Connect platforms, route live alerts, and control every overlay.",
+          "continue_streamlabs": "Continue with Streamlabs"
+        },
         "simulator": {
           "live": "OBS STREAM LIVE",
           "latency": "Latency: ~12ms",
@@ -106,6 +111,12 @@
         }
       },
       "sections": {
+        "centralized_hub": {
+          "badge": "Seamless Integrations",
+          "title": "Connect your favorite tools and streamline alerts effortlessly",
+          "description": "Integrate your favorite payment gateways and OBS software to keep everything unified across your stream.",
+          "cta": "Start integrating"
+        },
         "howitworks": {
           "title": "How it Works?",
           "description": "Direct, Secure, & Private",
@@ -308,58 +319,40 @@
           }
         },
         "features": {
-          "title": "Packed with Features",
-          "subtitle": "Streamer Toolbox",
-          "description": "Everything you need to receive donations privately and display real-time alerts without middleman platform cuts.",
-          "items": [
-            {
-              "title": "0% Platform Fees",
-              "desc": "Keep 100% of your viewer donations. We process webhooks directly, meaning we never take a cut of your earnings."
-            },
-            {
-              "title": "Privacy Protection",
-              "desc": "Donors pay your standard gateway (Stripe/Ko-fi). Your private personal details, name, and bank info are never exposed."
-            },
-            {
-              "title": "Bespoke Overlay Design",
-              "desc": "Design alerts to match your channel. Edit animation types, colors, timers, templates, and layouts with real-time preview."
-            },
-            {
-              "title": "Instant Webhook Sync",
-              "desc": "Get notified on screen immediately when a viewer subscribes or donates. Near zero-latency alert rendering."
-            },
-            {
-              "title": "Open Source & Private",
-              "desc": "Total ownership of your widgets. Host it yourself or run our free cloud deployment. Auditable and tracking-free."
-            },
-            {
-              "title": "OBS & Studio Ready",
-              "desc": "Copy a single secure overlay browser source URL and paste it directly into OBS Studio, Streamlabs, or Prism."
-            }
-          ],
-          "demos": {
-            "calculator": {
-              "others": "Others (10%)",
-              "alertbox": "AlertBox (0%)",
-              "volume": "Monthly Volume"
-            },
-            "customizer": {
-              "tip_received": "TIP RECEIVED",
-              "sent": "sent"
-            },
-            "webhooks": {
-              "listening": "📡 Webhook server ready on port 3000...",
-              "ingesting": "» POST /webhooks/stripe - Ingesting payload...",
-              "success": "✓ 200 OK - Alert synced in 14ms",
-              "simulate": "Simulate Payment Webhook",
-              "processing": "Broadcasting...",
-              "done": "Alert Synced ✓"
-            },
-            "opensource": {
-              "license": "Ponlponl123 Labs License (MIT)",
-              "contributions": "CONTRIBUTIONS",
-              "copied": "COPIED"
-            }
+          "headline": "Modern creators use our platform to elevate every stream alert, routing support directly through open primitives in a unified system that eliminates escrow middlemen.",
+          "card_onboarding": {
+            "title": "Guided Onboarding For Every Stream",
+            "description": "Get your broadcast overlay up and running in minutes with unified multi-gateway walkthroughs.",
+            "mockup_title": "Your overlay is ready!",
+            "mockup_desc": "Add this source to OBS Studio or Streamlabs to start receiving live alerts.",
+            "mockup_badge": "Alertbox Live",
+            "mockup_url": "overlay.alertbox.org/live",
+            "mockup_meta_left": "OBS • 60 FPS",
+            "mockup_meta_right": "● LIVE"
+          },
+          "card_realtime": {
+            "title": "Real-time Data",
+            "description": "Monitor webhook latency, gateway sync, and broadcast triggers instantly.",
+            "search_placeholder": "Search gateways...",
+            "gateways_label": "Active gateways",
+            "gateways_count": "4 running",
+            "sync_status_label": "Sync status",
+            "sync_status_value": "All passing",
+            "sync_rate": "✓ 100%"
+          },
+          "card_escrow": {
+            "kicker": "ZERO-ESCROW",
+            "title": "Direct P2P Settlement",
+            "description": "Funds settle directly into your own accounts with zero platform escrow.",
+            "footer": "100% Non-Custodial Architecture"
+          },
+          "card_scale": {
+            "title": "Built to Scale",
+            "description": "Broadcast-ready infrastructure designed to never drop an alert.",
+            "alerts_synced_label": "Alerts Synced",
+            "alerts_synced_value": "+99.9%",
+            "latency_label": "Edge Latency",
+            "latency_value": "<15ms"
           }
         },
         "testimonials": {
@@ -397,7 +390,7 @@
           ]
         },
         "comparison": {
-          "title": "Why AlertBox?",
+          "title": "Why AlertBox.org?",
           "subtitle": "Feature Comparison",
           "description": "See how AlertBox.org stacks up against typical donation alert platforms.",
           "headers": [

@@ -67,40 +67,52 @@ export default function ComparisonTable() {
   );
 
   return (
-    <section className="w-full py-24 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,var(--foreground)_0%,transparent_20%)] blur-[128px] opacity-40 pointer-events-none" />
+    <section className="w-full py-24 md:py-32 relative border-t border-foreground/10 bg-foreground/1">
       <motion.div
         variants={staggerContainer}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
-        className="max-w-368 mx-auto px-6 z-10 relative"
+        className="max-w-5xl mx-auto px-6 z-10 relative"
       >
-        <div className="max-w-3xl mb-12 text-left">
-          <motion.p
+        <div className="max-w-2xl mx-auto mb-14 text-center">
+          <motion.div
             variants={fadeInUp}
-            className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3 font-mono"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-foreground/10 bg-foreground/3 mb-4"
           >
-            {t.subtitle}
-          </motion.p>
+            <span className="text-xs font-mono font-medium tracking-wider text-foreground/70 uppercase">
+              {t.subtitle || "The Difference"}
+            </span>
+          </motion.div>
           <motion.h2
             variants={fadeInUp}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-tight text-foreground mb-4"
+            className="text-3xl sm:text-4xl md:text-5xl font-medium tracking-tight text-foreground mb-4"
           >
-            {t.title}
+            {t.title.split(/(alertbox(?:\.org)?)/i).map((part, idx) =>
+              /alertbox(?:\.org)?/i.test(part) ? (
+                <span
+                  key={idx}
+                  className="bg-linear-to-r from-rose-300 to-foreground bg-clip-text text-transparent"
+                >
+                  {part}
+                </span>
+              ) : (
+                part
+              ),
+            )}
           </motion.h2>
           <motion.p
             variants={fadeInUp}
-            className="text-sm md:text-base text-foreground/50 leading-relaxed font-medium"
+            className="text-sm md:text-base text-foreground/60 leading-relaxed font-normal"
           >
             {t.description}
           </motion.p>
         </div>
         <motion.div
           variants={fadeInUp}
-          className="w-full overflow-x-auto rounded-3xl border border-border shadow-lg"
+          className="w-full overflow-x-auto rounded-3xl border border-foreground/15 bg-card/80 backdrop-blur-md shadow-xl"
         >
-          <table className="w-full border-collapse **:font-heading **:tracking-wider min-w-[500px]">
+          <table className="w-full border-collapse **:font-heading **:tracking-wider min-w-125">
             <thead>
               <tr className="bg-background">
                 {t.headers.map((header: string, idx: number) => (
