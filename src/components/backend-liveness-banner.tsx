@@ -19,48 +19,64 @@ import { ScrollArea } from "./ui/scroll-area";
 const CONFIG: Record<
   Exclude<SystemStatusLevel, "operational">,
   {
-    bg: string;
+    gradient: string;
+    glowLine: string;
+    liquidBlob: string;
+    border: string;
     ping: string;
     dot: string;
     iconColor: string;
     textColor: string;
-    linkColor: string;
     badgeBg: string;
     badgeText: string;
+    badgeBorder: string;
+    actionBg: string;
     Icon: typeof WarningIcon;
   }
 > = {
   down: {
-    bg: "bg-rose-950 supports-backdrop-filter:bg-linear-to-r supports-backdrop-filter:from-rose-950/70 supports-backdrop-filter:via-rose-900/60 supports-backdrop-filter:to-rose-950/70 border-rose-500/20",
+    gradient: "from-rose-950/80 via-rose-900/40 to-rose-950/80",
+    glowLine: "from-transparent via-rose-500/50 to-transparent",
+    liquidBlob: "bg-rose-500/30",
+    border: "border-rose-500/20",
     ping: "bg-rose-400",
     dot: "bg-rose-500",
     iconColor: "text-rose-400",
-    textColor: "text-rose-200/90",
-    linkColor: "text-rose-300 hover:text-rose-100",
-    badgeBg: "bg-rose-500/10 border-rose-500/30",
-    badgeText: "text-rose-400",
+    textColor: "text-rose-100/90",
+    badgeBg: "bg-rose-500/15",
+    badgeText: "text-rose-300",
+    badgeBorder: "border-rose-500/30",
+    actionBg: "bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 hover:text-white border-rose-500/30",
     Icon: WarningIcon,
   },
   degraded: {
-    bg: "bg-amber-950 supports-backdrop-filter:bg-linear-to-r supports-backdrop-filter:from-amber-950/70 supports-backdrop-filter:via-amber-900/60 supports-backdrop-filter:to-amber-950/70 border-amber-500/20",
+    gradient: "from-amber-950/80 via-amber-900/40 to-amber-950/80",
+    glowLine: "from-transparent via-amber-500/50 to-transparent",
+    liquidBlob: "bg-amber-500/30",
+    border: "border-amber-500/20",
     ping: "bg-amber-400",
     dot: "bg-amber-500",
     iconColor: "text-amber-400",
-    textColor: "text-amber-200/90",
-    linkColor: "text-amber-300 hover:text-amber-100",
-    badgeBg: "bg-amber-500/10 border-amber-500/30",
-    badgeText: "text-amber-400",
+    textColor: "text-amber-100/90",
+    badgeBg: "bg-amber-500/15",
+    badgeText: "text-amber-300",
+    badgeBorder: "border-amber-500/30",
+    actionBg: "bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 hover:text-white border-amber-500/30",
     Icon: WarningIcon,
   },
   maintenance: {
-    bg: "bg-sky-950 supports-backdrop-filter:bg-linear-to-r supports-backdrop-filter:from-sky-950/70 supports-backdrop-filter:via-sky-900/60 supports-backdrop-filter:to-sky-950/70 border-sky-500/20",
+    gradient: "from-sky-950/80 via-sky-900/40 to-sky-950/80",
+    glowLine: "from-transparent via-sky-500/50 to-transparent",
+    liquidBlob: "bg-sky-500/30",
+    border: "border-sky-500/20",
     ping: "bg-sky-400",
     dot: "bg-sky-500",
     iconColor: "text-sky-400",
-    textColor: "text-sky-200/90",
-    linkColor: "text-sky-300 hover:text-sky-100",
-    badgeBg: "bg-sky-500/10 border-sky-500/30",
-    badgeText: "text-sky-400",
+    textColor: "text-sky-100/90",
+    badgeBg: "bg-sky-500/15",
+    badgeText: "text-sky-300",
+    badgeBorder: "border-sky-500/30",
+    actionBg: "bg-sky-500/15 hover:bg-sky-500/25 text-sky-200 hover:text-white border-sky-500/30",
     Icon: WrenchIcon,
   },
 };
@@ -126,6 +142,7 @@ export default function BackendLivenessBanner() {
     const el = containerRef.current;
     const updateHeight = () => {
       const h = el && banners.length > 0 ? el.offsetHeight : 0;
+      coreStore.getState().setStatusBannerHeight(h);
       document.documentElement.style.setProperty(
         "--status-banner-height",
         `${h}px`,
@@ -144,6 +161,7 @@ export default function BackendLivenessBanner() {
 
     return () => {
       observer.disconnect();
+      coreStore.getState().setStatusBannerHeight(0);
       document.documentElement.style.setProperty(
         "--status-banner-height",
         "0px",
@@ -158,7 +176,7 @@ export default function BackendLivenessBanner() {
     <>
       <div
         ref={containerRef}
-        className="fixed top-0 left-0 right-0 z-999 flex flex-col pointer-events-none select-none"
+        className="fixed top-0 left-0 right-0 z-20999 flex flex-col pointer-events-none select-none"
       >
         <AnimatePresence>
           {banners.map((banner) => {
@@ -170,48 +188,73 @@ export default function BackendLivenessBanner() {
               <motion.div
                 key={banner.id}
                 layout
-                initial={{ y: -50, opacity: 0 }}
+                initial={{ y: -48, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -50, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className={`w-full ${conf.bg} border-b supports-backdrop-filter:backdrop-blur-xl pointer-events-auto py-2 px-4 flex items-center justify-center gap-3 shadow-md`}
+                exit={{ y: -48, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                className={`pointer-events-auto relative w-full overflow-hidden bg-zinc-950/80 supports-backdrop-filter:bg-zinc-950/50 supports-backdrop-filter:backdrop-blur-2xl bg-linear-to-r ${conf.gradient} border-b ${conf.border} shadow-[0_8px_32px_rgba(0,0,0,0.36)] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-white/20 before:to-transparent after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-linear-to-r ${conf.glowLine}`}
               >
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span
-                    className={`animate-ping absolute inline-flex h-full w-full rounded-full ${conf.ping} opacity-75`}
-                  />
-                  <span
-                    className={`relative inline-flex rounded-full h-2 w-2 ${conf.dot}`}
-                  />
-                </span>
-                <Icon className={`${conf.iconColor} size-4 shrink-0 animate-pulse`} weight="fill" />
-                <span
-                  className={`text-xs font-semibold tracking-wider ${conf.textColor} font-sans truncate max-w-xl`}
-                >
-                  {banner.message}
-                </span>
+                <div
+                  className={`absolute -top-10 left-1/4 -translate-x-1/2 w-80 h-20 rounded-full blur-3xl pointer-events-none opacity-40 ${conf.liquidBlob}`}
+                />
+                <div
+                  className={`absolute -bottom-8 right-1/4 translate-x-1/2 w-80 h-16 rounded-full blur-3xl pointer-events-none opacity-30 ${conf.liquidBlob}`}
+                />
+                <motion.div
+                  animate={{ x: ["-100%", "200%"] }}
+                  transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+                  className="absolute inset-0 w-1/2 bg-linear-to-r from-transparent via-white/8 to-transparent pointer-events-none"
+                />
 
-                {hasDetails && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedBanner(banner)}
-                    className={`text-xs font-semibold underline underline-offset-2 shrink-0 cursor-pointer ${conf.linkColor}`}
-                  >
-                    <span>{lang.data.common.read_more}</span>
-                  </button>
-                )}
+                <div className="relative max-w-7xl mx-auto px-4 py-2 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-6">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                    <div className="relative flex items-center justify-center size-2.5 shrink-0">
+                      <span
+                        className={`animate-ping absolute inline-flex size-full rounded-full ${conf.ping} opacity-75`}
+                      />
+                      <span
+                        className={`relative inline-flex rounded-full size-2 ${conf.dot} shadow-[0_0_8px_currentColor]`}
+                      />
+                    </div>
 
-                {banner.link && (
-                  <a
-                    href={banner.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`text-xs font-semibold underline underline-offset-2 flex items-center gap-1 shrink-0 ${conf.linkColor}`}
-                  >
-                    <span>{lang.data.common.status_page}</span>
-                    <ArrowUpRightIcon className="size-3" weight="bold" />
-                  </a>
-                )}
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${conf.badgeBg} ${conf.badgeText} border ${conf.badgeBorder} shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] shrink-0`}
+                    >
+                      <Icon className="size-3 shrink-0 animate-pulse" weight="fill" />
+                      <span>{banner.level}</span>
+                    </span>
+
+                    <span
+                      className={`text-xs font-medium tracking-wide ${conf.textColor} font-sans truncate`}
+                    >
+                      {banner.message}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {hasDetails && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedBanner(banner)}
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${conf.actionBg} backdrop-blur-md transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95`}
+                      >
+                        <span>{lang.data.common.read_more}</span>
+                      </button>
+                    )}
+
+                    {banner.link && (
+                      <a
+                        href={banner.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${conf.actionBg} backdrop-blur-md transition-all shadow-xs hover:scale-105 active:scale-95`}
+                      >
+                        <span>{lang.data.common.status_page}</span>
+                        <ArrowUpRightIcon className="size-3" weight="bold" />
+                      </a>
+                    )}
+                  </div>
+                </div>
               </motion.div>
             );
           })}

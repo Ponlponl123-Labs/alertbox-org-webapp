@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useStore } from "zustand";
 import { Button } from "./ui/button";
 import ThemeSwitcher from "./theme-switcher";
@@ -94,6 +94,20 @@ function NavActions({
 function Header() {
   const pathname = usePathname();
   const [isNavActive, setIsNavActive] = useState(false);
+  const [instantTop, setInstantTop] = useState(false);
+
+  useEffect(() => {
+    if (instantTop) {
+      const raf = requestAnimationFrame(() => setInstantTop(false));
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [instantTop]);
+
+  const toggleNav = () => {
+    setInstantTop(true);
+    setIsNavActive((prev) => !prev);
+  };
+
   const { scrollY } = useScroll();
   const [isScrolled, setIsScrolled] = useState(false);
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -115,6 +129,17 @@ function Header() {
   const isApp = pathname.startsWith("/app");
   const isDocs = pathname.startsWith("/docs");
   const isFullHeaderWidth = isApp || isDocs;
+  const statusBannerHeight = useStore(
+    coreStore,
+    (state) => state.statusBannerHeight,
+  );
+
+  const headerTop =
+    !isNavActive && isIndex && isScrolled
+      ? statusBannerHeight + 8
+      : isIndex || isDocs || isNavActive
+        ? statusBannerHeight
+        : 0;
 
   const windowWidth = useSyncExternalStore(
     (cb) => {
@@ -128,7 +153,18 @@ function Header() {
   if (prevPath !== pathname) {
     setPrevPath(pathname);
     setIsNavActive(false);
+    setInstantTop(true);
   }
+
+  const rootMaxWidth =
+    isIndex && isScrolled && windowWidth >= 768 ? 760 : windowWidth;
+
+  const childMaxWidth =
+    isFullHeaderWidth || (isIndex && !isScrolled)
+      ? windowWidth
+      : isIndex && isScrolled && windowWidth >= 768
+        ? 760
+        : Math.min(windowWidth, 1448);
 
   if (pathname.startsWith("/@")) return null;
 
@@ -138,22 +174,29 @@ function Header() {
         initial={{
           height: isFullHeaderWidth ? 48 : isIndex && isScrolled ? 48 : 64,
           padding: isFullHeaderWidth ? 8 : 16,
-          top: isIndex && isScrolled ? "8px" : "0px",
-          maxWidth: isIndex && isScrolled ? 760 : windowWidth,
+          top: headerTop,
+          maxWidth: rootMaxWidth,
         }}
         animate={{
           height: isFullHeaderWidth ? 48 : isIndex && isScrolled ? 48 : 64,
           padding: isFullHeaderWidth ? 8 : 16,
-          top: isIndex && isScrolled ? "8px" : "0px",
-          maxWidth: isIndex && isScrolled ? 760 : windowWidth,
+          top: headerTop,
+          maxWidth: rootMaxWidth,
         }}
         transition={{
           type: "spring",
-          stiffness: 200,
+          stiffness: 300,
           damping: 30,
+          top: instantTop
+            ? { duration: 0 }
+            : { type: "spring", stiffness: 300, damping: 30 },
+          maxWidth: {
+            duration: 0.5,
+            ease: [0.16, 1, 0.3, 1],
+          },
         }}
         className={cn(
-          "flex items-center justify-between px-4 inset-x-0 mx-auto z-50 w-full",
+          "flex items-center justify-between px-4 inset-x-0 mx-auto z-20001 w-full",
           isDocs
             ? "fixed h-12 bg-background/80 backdrop-blur-md border-b border-border"
             : isIndex
@@ -171,15 +214,16 @@ function Header() {
         <AnimatePresence>
           <motion.div
             initial={{
-              maxWidth: isFullHeaderWidth || isIndex ? "100dvw" : 1448,
+              maxWidth: childMaxWidth,
             }}
             animate={{
-              maxWidth: isFullHeaderWidth || isIndex ? "100dvw" : 1448,
+              maxWidth: childMaxWidth,
             }}
-            className={cn(
-              "flex-1 min-w-0 max-w-362 mx-auto w-full flex items-center justify-between gap-4",
-              isFullHeaderWidth && "max-w-none",
-            )}
+            transition={{
+              duration: 0.5,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            className="flex-1 min-w-0 mx-auto w-full flex items-center justify-between gap-4"
             id="header-main"
           >
             <div className="flex flex-1 items-center gap-3">
@@ -272,7 +316,7 @@ function Header() {
             </div>
             <AnimatePresence>
               {!isApp && !isIndex && (
-                <div className="flex flex-4 mx-auto justify-center items-center gap-2">
+                <div className="flex flex-2 mx-auto justify-center items-center gap-2 max-md:hidden">
                   <motion.div
                     id="header-nav"
                     exit={{ opacity: 0 }}
@@ -310,7 +354,7 @@ function Header() {
                   pathname.startsWith("/app") && "hidden",
                 )}
                 aria-hidden="true"
-                onClick={() => setIsNavActive((prev) => !prev)}
+                onClick={toggleNav}
               >
                 <ListIcon size={20} weight="bold" />
               </Button>
@@ -327,7 +371,7 @@ function Header() {
             id="header-nav-mobile"
             className={
               cn(
-                "fixed md:hidden! flex flex-col gap-3 top-(--status-banner-height,0px) left-0 w-full h-[calc(100dvh-var(--status-banner-height,0))] bg-background supports-backdrop-filter:bg-background/60 supports-backdrop-filter:backdrop-blur-3xl z-40 p-6 pt-22 overflow-y-auto",
+                "fixed md:hidden! flex flex-col gap-3 top-(--status-banner-height,0px) left-0 w-full h-[calc(100dvh-var(--status-banner-height,0))] bg-background supports-backdrop-filter:bg-background/60 supports-backdrop-filter:backdrop-blur-3xl z-20000 p-6 pt-22 overflow-y-auto",
                 isDocs && "pt-32"
               )
             }

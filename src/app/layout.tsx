@@ -119,7 +119,7 @@ export default function RootLayout({
           <BackendLivenessBanner />
           <TooltipProvider>
             <Header />
-            <main id="app" className="flex-1 min-h-screen flex flex-col">
+            <main id="app" className="flex-1 min-h-[calc(100dvh-var(--status-banner-height,0))] flex flex-col">
               {children}
             </main>
             <Footer />

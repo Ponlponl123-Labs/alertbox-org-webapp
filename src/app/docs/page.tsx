@@ -13,7 +13,7 @@ export default function DocsPage() {
   return (
     <div
       className={cn(
-        "flex-1 min-h-[calc(100vh-3rem)] flex flex-col pt-12",
+        "flex-1 h-[calc(100dvh-3rem-var(--status-banner-height,0))] flex flex-col pt-12",
         isDark ? "dark-mode" : "light-mode",
       )}
     >
@@ -29,6 +29,7 @@ export default function DocsPage() {
           searchHotKey: "k",
           customCss: `
             :root, .dark-mode, .scalar-app {
+              height: calc(100dvh - 3rem - var(--status-banner-height, 0)) !important;
               --scalar-custom-header-height: 48px;
             }
 
@@ -50,10 +51,14 @@ export default function DocsPage() {
               backdrop-filter: blur(12px) !important;
             }
 
+            .scalar-app .t-doc__sidebar {
+              height: calc(100dvh - 3rem - var(--status-banner-height, 0)) !important;
+            }
+
             /* Prevent search bar & sticky elements from sticking under fixed header */
             .scalar-app .sticky,
             .scalar-app .top-0 {
-              top: 48px !important;
+              top: calc(3rem + var(--status-banner-height, 0)) !important;
             }
 
             /* Desktop: hide redundant Scalar top header */
@@ -76,7 +81,7 @@ export default function DocsPage() {
               }
               .scalar-app .t-doc__sidebar {
                 top: 48px !important;
-                height: calc(100dvh - 48px) !important;
+                height: calc(100dvh - 48px - var(--status-banner-height, 0px)) !important;
                 z-index: 45 !important;
               }
             }

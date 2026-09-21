@@ -25,6 +25,7 @@ type CoreStoreState = {
   systemStatus: SystemStatus | null;
   systemStatuses: SystemStatus[];
   openAccordions: Record<string, boolean>;
+  statusBannerHeight: number;
 };
 
 type CoreStoreActions = {
@@ -38,6 +39,7 @@ type CoreStoreActions = {
   setBackendAlive: (alive: boolean | null) => void;
   setSystemStatus: (status: SystemStatus | null) => void;
   setSystemStatuses: (statuses: SystemStatus[]) => void;
+  setStatusBannerHeight: (height: number) => void;
   setAccordionOpen: (key: string, isOpen: boolean) => void;
   hydrateSidebar: () => void;
 };
@@ -54,6 +56,7 @@ export const coreStore = createStore<CoreStore>()((set) => ({
   isBackendAlive: null,
   systemStatus: null,
   systemStatuses: [],
+  statusBannerHeight: 0,
   openAccordions: {
     alertbox: true,
     settings: true,
@@ -111,6 +114,9 @@ export const coreStore = createStore<CoreStore>()((set) => ({
   },
   setSystemStatuses: (statuses) => {
     set({ systemStatuses: statuses, systemStatus: statuses[0] || null });
+  },
+  setStatusBannerHeight: (statusBannerHeight) => {
+    set({ statusBannerHeight });
   },
   setAccordionOpen: (key, isOpen) => {
     set((state) => {

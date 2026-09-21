@@ -10,15 +10,31 @@ type ChargeBuffer = StorageBuffer & { destroy(): void };
 const SHAPE_MODES = { mixed: 0, squares: 1, circles: 2, triangles: 3 } as const;
 
 export type ShapeWavesShapes = keyof typeof SHAPE_MODES;
-const MAX_DPR = 2;
 const MAX_MASK_SIZE = 1024;
+const isLowDevice = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    if (typeof navigator !== 'undefined' &&
+        ((navigator.hardwareConcurrency ?? 8) <= 4 ||
+            ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) <= 4)) {
+        return true;
+    }
+    try {
+        const gl = document.createElement('canvas').getContext('webgl');
+        if (!gl) return false;
+        const debug = gl.getExtension('WEBGL_debug_renderer_info');
+        const renderer = debug ? (gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) as string) : '';
+        return /intel|uhd|hd graphics|iris|mali|adreno|powervr|apple m[1-9] (?!max|ultra)|radeon (vega|graphics|\d{3}m)/i.test(renderer);
+    } catch {
+        return false;
+    }
+};
 const NOISE_CELLS = 32;
 const TIME_RATE = 0.1;
 const SIMULATION_STEP = 1 / 60;
 const WAVE_SPEED = 0.42;
 const WAVE_FRICTION = 0.94;
 const WAVE_DECAY = 0.972;
-const SETTLED_THRESHOLD = 0.01;
+const SETTLED_THRESHOLD = 0.005;
 const INTRO_BAND = 0.2;
 const INTRO_WARP = 0.3;
 const INTRO_JITTER = 0.16;
@@ -176,12 +192,21 @@ fn hash21(p: vec2f) -> f32 {
     return vec4f(background, select(0.0, 1.0, toSurface));
   }
 
+  let aa = 2.0 / cellPx;
+  let maxShape = select(min(1.0, dotSize * 1.35 + aa * 2.0), 1.0, params.placement.w < ${INTRO_END.toFixed(2)});
+  if (max(abs(local.x), abs(local.y)) > maxShape) {
+    return vec4f(background, select(0.0, 1.0, toSurface));
+  }
+
   var level = 1.0;
   let fade = params.motion.w;
   if (fade > 0.0) {
     let q = abs(uv * 2.0 - 1.0);
     let radius = pow(pow(q.x, 2.5) + pow(q.y, 2.5), 1.0 / 2.5) / pow(2.0, 1.0 / 2.5);
     level = 1.0 - smoothstep(max(0.0, 1.0 - fade * 2.2), 1.0, radius);
+    if (level <= 0.001) {
+      return vec4f(background, select(0.0, 1.0, toSurface));
+    }
   }
   let noise = fbm(vec3f((center + params.motion.xy) / params.field.x + SEED, params.field.w));
   let tone = clamp((noise * 0.5 + 0.5 - params.field.y) * params.field.z + 0.5, 0.0, 1.0);
@@ -214,7 +239,6 @@ fn hash21(p: vec2f) -> f32 {
     size = max(size * (1.0 + 2.70158 * back * back * back + 1.70158 * back * back), 0.02);
     front = 1.0 - smoothstep(0.0, 1.0, abs(introProgress - spread) / band);
   }
-  let aa = 2.0 / cellPx;
   let coverage = smoothstep(aa, -aa, shapeDistance(local, shape, size));
 
   let tint = mix(params.color.rgb, params.hover.rgb, max(smoothstep(0.15, 0.85, charge), front * 0.35));
@@ -235,12 +259,13 @@ struct Blur { direction: vec4f }
 
 @fragment fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let sigma = blur.direction.z;
-  let radius = i32(ceil(3.0 * sigma));
+  let radius = i32(ceil(2.0 * sigma));
+  let invTwoSigmaSq = 1.0 / (2.0 * sigma * sigma);
   var sum = vec3f(0.0);
   var weight = 0.0;
   for (var i = -radius; i <= radius; i++) {
     let offset = f32(i);
-    let w = exp(-(offset * offset) / (2.0 * sigma * sigma));
+    let w = exp(-offset * offset * invTwoSigmaSq);
     let sample = textureSampleLevel(sourceTexture, sourceSampler, uv + offset * blur.direction.xy, 0.0);
     sum += select(sample.rgb, sample.rgb * sample.a, blur.direction.w > 0.5) * w;
     weight += w;
@@ -361,12 +386,7 @@ export default function ShapeWaves({
     const rootRef = useRef<HTMLDivElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [ready, setReady] = useState(false);
-    const settingsRef = useRef<ShapeWavesSettings>(null as unknown as ShapeWavesSettings);
-    const applySettingsRef = useRef<() => void>(() => { });
-    const applyMaskRef = useRef<() => void>(() => { });
-    const onErrorRef = useRef<ShapeWavesProps['onError']>(onError);
-
-    settingsRef.current = {
+    const currentSettings: ShapeWavesSettings = {
         text: String(text ?? ''),
         fontFamily,
         fontWeight,
@@ -393,7 +413,15 @@ export default function ShapeWaves({
         introKey,
         paused
     };
-    onErrorRef.current = onError;
+    const settingsRef = useRef<ShapeWavesSettings>(currentSettings);
+    const applySettingsRef = useRef<() => void>(() => { });
+    const applyMaskRef = useRef<() => void>(() => { });
+    const onErrorRef = useRef<ShapeWavesProps['onError']>(onError);
+
+    useEffect(() => {
+        settingsRef.current = currentSettings;
+        onErrorRef.current = onError;
+    });
 
     const settingsSignature = [
         shapes,
@@ -437,6 +465,8 @@ export default function ShapeWaves({
         const canvas = canvasRef.current;
         if (!root || !canvas) return undefined;
 
+        const isLow = isLowDevice();
+        const minFrameDelta = 14;
         let disposed = false;
         let failed = false;
         let gpu: Gpu | undefined;
@@ -485,11 +515,16 @@ export default function ShapeWaves({
             const maxRow = Math.min(rows - 1, Math.ceil(centerRow + reach));
             const minCol = Math.max(0, Math.floor(centerCol - reach));
             const maxCol = Math.min(cols - 1, Math.ceil(centerCol + reach));
+            const invTwoSigmaSq = 1 / (2 * sigma * sigma);
+            const reachSq = reach * reach;
             for (let row = minRow; row <= maxRow; row++) {
                 const dy = row - centerRow;
+                const dySq = dy * dy;
                 for (let col = minCol; col <= maxCol; col++) {
                     const dx = col - centerCol;
-                    const bump = strength * Math.exp(-(dx * dx + dy * dy) / (2 * sigma * sigma));
+                    const distSq = dx * dx + dySq;
+                    if (distSq > reachSq) continue;
+                    const bump = strength * Math.exp(-distSq * invTwoSigmaSq);
                     const index = row * cols + col;
                     heights[index] = Math.min(1.2, heights[index] + bump);
                 }
@@ -505,6 +540,7 @@ export default function ShapeWaves({
             const y = event.clientY - bounds.top;
             const inside = x >= 0 && y >= 0 && x <= bounds.width && y <= bounds.height;
             if (inside) {
+                if (now - pointer.at < (isLow ? 24 : 12)) return;
                 const elapsed = pointer.inside ? Math.max(8, now - pointer.at) : 16;
                 const travelled = pointer.inside ? Math.hypot(x - pointer.x, y - pointer.y) : 0;
                 const speed = (travelled / elapsed) * 1000;
@@ -535,7 +571,7 @@ export default function ShapeWaves({
         };
 
         const measureSurface = (): [number, number] => {
-            dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+            dpr = Math.min(window.devicePixelRatio || 1, isLow ? 1.25 : 1.5);
             return [Math.max(1, Math.round(canvas.clientWidth * dpr)), Math.max(1, Math.round(canvas.clientHeight * dpr))];
         };
 
@@ -588,8 +624,8 @@ export default function ShapeWaves({
                 });
                 const sceneTarget = target(activeGpu, { size: initialSize, format: 'rgba8unorm', label: 'shape-waves-scene' });
                 const glowSize = (size: readonly [number, number]): [number, number] => [
-                    Math.max(1, Math.ceil(size[0] / 2)),
-                    Math.max(1, Math.ceil(size[1] / 2))
+                    Math.max(1, Math.ceil(size[0] / 4)),
+                    Math.max(1, Math.ceil(size[1] / 4))
                 ];
                 const glowA = target(activeGpu, {
                     size: glowSize(initialSize),
@@ -601,8 +637,8 @@ export default function ShapeWaves({
                     format: 'rgba8unorm',
                     label: 'shape-waves-glow-b'
                 });
-                const blurParamsX = uniforms(activeGpu, { direction: [0, 0, 4, 1] });
-                const blurParamsY = uniforms(activeGpu, { direction: [0, 0, 4, 0] });
+                const blurParamsX = uniforms(activeGpu, { direction: [0, 0, 2.5, 1] });
+                const blurParamsY = uniforms(activeGpu, { direction: [0, 0, 2.5, 0] });
                 const blurX = effect(activeGpu, BLUR_SHADER, {
                     label: 'shape-waves-glow-x',
                     set: { blur: blurParamsX, sourceTexture: sceneTarget, sourceSampler: linearSampler }
@@ -631,7 +667,8 @@ export default function ShapeWaves({
                 const configureGrid = () => {
                     const settings = settingsRef.current;
                     const [width, height] = output.size;
-                    const nextCols = Math.max(1, Math.round(width / (settings.cellSize * dpr)));
+                    const minCell = isLow ? Math.max(settings.cellSize, 4.5) : settings.cellSize;
+                    const nextCols = Math.max(1, Math.round(width / (minCell * dpr)));
                     cellPx = width / nextCols;
                     const nextRows = Math.max(1, Math.floor(height / cellPx));
                     gridOrigin = [0, (height - nextRows * cellPx) / 2];
@@ -679,7 +716,7 @@ export default function ShapeWaves({
 
                 const updateCharges = (deltaSeconds: number) => {
                     if (!chargesActive) return false;
-                    simulationBacklog = Math.min(simulationBacklog + deltaSeconds, SIMULATION_STEP * 4);
+                    simulationBacklog = Math.min(simulationBacklog + deltaSeconds, SIMULATION_STEP * (isLow ? 2 : 4));
                     let peak = 1;
                     while (simulationBacklog >= SIMULATION_STEP) {
                         simulationBacklog -= SIMULATION_STEP;
@@ -703,6 +740,12 @@ export default function ShapeWaves({
                 const render = (now: number) => {
                     frameId = 0;
                     if (disposed || failed) return;
+                    if (lastFrameTime && now - lastFrameTime < minFrameDelta) {
+                        if (isAnimating() || chargesActive || introProgress < INTRO_END) {
+                            frameId = requestAnimationFrame(render);
+                        }
+                        return;
+                    }
                     const settings = settingsRef.current;
                     const deltaSeconds = lastFrameTime ? Math.min(0.1, (now - lastFrameTime) / 1000) : 0;
                     lastFrameTime = now;
@@ -766,7 +809,8 @@ export default function ShapeWaves({
                     const content = settings.text.trim();
                     const [surfaceWidth, surfaceHeight] = output.size;
                     const hasText = content.length > 0;
-                    const maskScale = hasText ? Math.min(1, MAX_MASK_SIZE / Math.max(surfaceWidth, surfaceHeight)) : 0;
+                    const maxMask = isLow ? 512 : MAX_MASK_SIZE;
+                    const maskScale = hasText ? Math.min(1, maxMask / Math.max(surfaceWidth, surfaceHeight)) : 0;
                     const maskWidth = hasText ? Math.max(1, Math.round(surfaceWidth * maskScale)) : 1;
                     const maskHeight = hasText ? Math.max(1, Math.round(surfaceHeight * maskScale)) : 1;
 
@@ -852,8 +896,8 @@ export default function ShapeWaves({
                     const half = glowSize([width, height]);
                     glowA.resize(half);
                     glowB.resize(half);
-                    blurParamsX.set({ direction: [1 / half[0], 0, 4, 1] });
-                    blurParamsY.set({ direction: [0, 1 / half[1], 4, 0] });
+                    blurParamsX.set({ direction: [1 / half[0], 0, 2.5, 1] });
+                    blurParamsY.set({ direction: [0, 1 / half[1], 2.5, 0] });
                     params.set({ resolution: [width, height, 1 / width, 1 / height] });
                     drawMask();
                     applySettings();
