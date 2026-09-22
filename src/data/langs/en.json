@@ -18,6 +18,7 @@
     "read_more": "Read more"
   },
   "header": {
+    "developers": "Developers",
     "links": {
       "about": "Good to know",
       "pricing": "Pricing"
@@ -39,6 +40,20 @@
     "description": "Alertbox.org is a free, open-source alert box creator for streamers. Enjoy custom profiles, zero platform fees, and total privacy. Powered by Stripe, Ko-fi, and Buy Me a Coffee."
   },
   "pages": {
+    "docs": {
+      "devtools": "DevTools",
+      "use_header_credential": "Use My Header Credential",
+      "login_tooltip": "Please login to use your header credential",
+      "edit_page": "Edit this page",
+      "github": "GitHub",
+      "dialog": {
+        "title": "Use live account credentials?",
+        "description": "Interactive requests will execute with your active session token and affect real account data.",
+        "warning": "Do not enable while streaming or screen sharing.",
+        "cancel": "Cancel",
+        "confirm": "Enable with live token"
+      }
+    },
     "notfound": {
       "title": "Looks like you're lost.",
       "description": "The page you requested doesn't exist.",

@@ -28,8 +28,7 @@ export default function HeroStudio() {
   const hero = lang.data.pages.index.hero;
 
   return (
-    <section className="relative bg-linear-to-t from-foreground/10 to-foreground/5 m-2 h-[calc(100dvh-4.5rem)] md:h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] rounded-xl pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden">
-
+    <section className="relative bg-linear-to-t from-foreground/10 to-foreground/5 m-2 h-[calc(100dvh-4.5rem-var(--status-banner-height,0))] md:h-[calc(100dvh-1rem-var(--status-banner-height,0))] w-[calc(100%-1rem)] rounded-xl pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden">
       <div className="w-full flex justify-center items-center select-none pb-20 md:pb-16 lg:pb-42 -z-10 pointer-events-none">
         <h1 className="text-[13dvw] md:text-[12dvw] font-medium tracking-tight leading-none text-foreground text-center uppercase font-sans">
           ALERTBOX<span className="text-[6dvw] font-light text-foreground/60">.org</span>

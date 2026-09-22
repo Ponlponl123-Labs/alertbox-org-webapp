@@ -93,6 +93,7 @@ function NavActions({
 
 function Header() {
   const pathname = usePathname();
+  const lang = useStore(coreStore, (state) => state.lang);
   const [isNavActive, setIsNavActive] = useState(false);
   const [instantTop, setInstantTop] = useState(false);
 
@@ -304,7 +305,7 @@ function Header() {
                     </span>
                     {isDocs && (
                       <span className="ml-2 text-sm font-extralight font-sans tracking-wider border-l border-foreground/40 pl-2">
-                        Developers
+                        {lang.data.header.developers}
                       </span>
                     )}
                   </motion.h1>
@@ -343,7 +344,9 @@ function Header() {
                   </motion.div>
                 )}
               </AnimatePresence>
-              <NavActions />
+              <div className="max-md:hidden contents">
+                <NavActions />
+              </div>
               <CurrentUserChip />
               <ThemeSwitcher />
               <Button

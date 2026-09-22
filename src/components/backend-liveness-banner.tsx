@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { AutoHeight } from "./animate-ui/primitives/effects/auto-height";
 import { ScrollArea } from "./ui/scroll-area";
+import Link from "next/link";
 
 const CONFIG: Record<
   Exclude<SystemStatusLevel, "operational">,
@@ -233,25 +234,26 @@ export default function BackendLivenessBanner() {
 
                   <div className="flex items-center gap-2 shrink-0">
                     {hasDetails && (
-                      <button
-                        type="button"
+                      <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => setSelectedBanner(banner)}
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${conf.actionBg} backdrop-blur-md transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95`}
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${conf.actionBg} backdrop-blur-md transition-interactive shadow-xs`}
                       >
                         <span>{lang.data.common.read_more}</span>
-                      </button>
+                      </Button>
                     )}
 
                     {banner.link && (
-                      <a
+                      <Link
                         href={banner.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${conf.actionBg} backdrop-blur-md transition-all shadow-xs hover:scale-105 active:scale-95`}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${conf.actionBg} backdrop-blur-md transition-interactive shadow-xs`}
                       >
                         <span>{lang.data.common.status_page}</span>
                         <ArrowUpRightIcon className="size-3" weight="bold" />
-                      </a>
+                      </Link>
                     )}
                   </div>
                 </div>
