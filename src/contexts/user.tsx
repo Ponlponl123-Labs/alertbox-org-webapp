@@ -11,6 +11,7 @@ import {
 } from "react";
 import { setCookie, getCookie, deleteCookie } from "cookies-next";
 import { getApiUrl } from "@/lib/api";
+import { allowedLocalhostWhen } from "@/consts/statement";
 
 export interface UserContext {
   userInfo: User | null;
@@ -22,8 +23,8 @@ export interface UserContext {
 const userContext = createContext<UserContext>({
   userInfo: null,
   login: async () => false,
-  logout: () => {},
-  patchUserInfo: () => {},
+  logout: () => { },
+  patchUserInfo: () => { },
 });
 
 export const UserContextProvider = ({ children }: { children: ReactNode }) => {
@@ -39,7 +40,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       const params = new URLSearchParams({
         code,
         redirect_uri:
-          process.env.NODE_ENV === "development"
+          allowedLocalhostWhen.includes(process.env.NODE_ENV || "")
             ? "http://localhost:3000/app/login/discord"
             : "https://alertbox.org/app/login/discord",
       });

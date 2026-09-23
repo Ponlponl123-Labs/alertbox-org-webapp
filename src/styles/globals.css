@@ -26,6 +26,10 @@
     transition: all 0.64s cubic-bezier(0, 0, .065, 1.55);
   }
 
+  [data-base-ui-portal] {
+    z-index: 30000;
+  }
+
   p {
     @apply font-read;
   }

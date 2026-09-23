@@ -1,27 +1,30 @@
 "use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
-import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "motion/react";
 import {
   CheckIcon,
-  ArrowRightIcon,
-  ShieldCheckIcon,
-  LightningIcon,
-  CodeBlockIcon,
+  ArrowUpRightIcon,
+  PlusIcon,
+  MinusIcon,
+  RocketLaunchIcon,
+  StarIcon,
+  FireIcon,
 } from "@phosphor-icons/react";
-import { BuyMeACoffee } from "@thesvg/react";
-import BorderGlow from "@/components/BorderGlow";
-import { motion } from "motion/react";
-import { Input } from "react-smooth-input";
-import { useState } from "react";
+import { Stripe, BuyMeACoffee, KoFi } from "@thesvg/react";
+import type { PricingPageData } from "@/types/landing.types";
+import CTABanner from "../index/cta-banner";
+import { Button } from "@/components/ui/button";
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as never },
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] as never },
   },
 };
 
@@ -35,426 +38,327 @@ const staggerContainer = {
   },
 };
 
-function GridOverlay() {
-  return (
-    <div
-      className="pointer-events-none absolute inset-0 opacity-[0.4]"
-      aria-hidden="true"
-      style={{
-        backgroundImage:
-          "linear-gradient(to right, var(--border) 1px, transparent 1px), linear-gradient(to bottom, var(--border) 1px, transparent 1px)",
-        backgroundSize: "64px 64px",
-        maskImage:
-          "linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)",
-      }}
-    />
-  );
-}
-
-import { type PricingPageData, type PricingProviderItem } from "@/types/landing.types";
-
-function FeeSavingsCalculator({ t }: { t: PricingPageData }) {
-  const [volume, setVolume] = useState(1500);
-  const competitorFee = Math.round(volume * 0.1);
-  const saved = competitorFee;
-
-  return (
-    <div className="w-full">
-      <div className="flex items-end gap-16 pb-10 pl-2 pt-4">
-        <div className="flex flex-col items-center gap-3">
-          <motion.div
-            className="relative w-14 overflow-hidden rounded-t-sm bg-foreground/10"
-            animate={{ height: Math.max(20, (competitorFee / 500) * 150) }}
-            transition={{ type: "spring", stiffness: 260, damping: 22 }}
-          >
-            <motion.span
-              key={competitorFee}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[11px] font-medium tabular-nums text-foreground/40"
-            >
-              -${competitorFee}
-            </motion.span>
-          </motion.div>
-          <span className="font-mono text-[9px] font-medium uppercase tracking-widest text-foreground/35">
-            {t.calculator?.others}
-          </span>
-        </div>
-
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative h-[3px] w-14 rounded-t-sm bg-foreground">
-            <span className="absolute -top-6 left-1/2 -translate-x-1/2 font-mono text-[11px] font-semibold tabular-nums text-foreground">
-              $0
-            </span>
-          </div>
-          <span className="font-mono text-[9px] font-semibold uppercase tracking-widest text-foreground">
-            AlertBox
-          </span>
-        </div>
-
-        <div className="flex-1 border-l border-foreground/10 pl-8">
-          <p className="font-mono text-[9px] uppercase tracking-widest text-foreground/30">
-            {t.calculator?.volume_label}
-          </p>
-          <p className="mt-1 font-mono text-3xl font-semibold tabular-nums text-foreground">
-            ${volume.toLocaleString()}
-          </p>
-          <p className="mt-2 font-mono text-[10px] text-foreground/50">
-            {t.calculator?.you_save}{" "}
-            <span className="text-foreground font-bold">
-              ${saved.toLocaleString()}
-            </span>
-            /{t.calculator?.per_mo}
-          </p>
-        </div>
-      </div>
-
-      <input
-        type="range"
-        min="100"
-        max="5000"
-        step="100"
-        value={volume}
-        onChange={(e) => setVolume(Number(e.target.value))}
-        className="h-px w-full cursor-pointer appearance-none rounded-full bg-foreground/10 accent-foreground"
-      />
-      <div className="mt-2 flex justify-between font-mono text-[9px] text-foreground/25">
-        <span>$100</span>
-        <span>$5,000 / {t.calculator?.per_mo}</span>
-      </div>
-    </div>
-  );
-}
+const planIcons: Record<
+  string,
+  React.ComponentType<{ size: number; weight: "fill" | "bold" | "regular"; className?: string }>
+> = {
+  rocket: RocketLaunchIcon,
+  star: StarIcon,
+  fire: FireIcon,
+};
 
 export default function PricingPage() {
   const lang = useStore(coreStore, (state) => state.lang);
-  const t = lang.data.pricing;
-  const [username, setUsername] = useState("");
+  const t: PricingPageData = lang.data.pricing;
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  const toggleFaq = (idx: number) => {
+    setOpenFaq((prev) => (prev === idx ? null : idx));
+  };
 
   return (
-    <div className="w-full min-h-screen bg-background font-sans pt-32 pb-24 text-foreground relative">
-      <GridOverlay />
-
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_15%,var(--foreground)_0%,transparent_20%)] blur-[128px] opacity-40 pointer-events-none" />
-
-      <div className="max-w-368 mx-auto px-6 relative z-10">
+    <div className="w-full min-h-screen bg-background font-sans pt-48 text-foreground relative overflow-hidden select-none">
+      <div className="max-w-6xl mx-auto px-6 relative z-10">
         <motion.header
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="max-w-3xl mb-16"
+          className="text-center max-w-3xl mx-auto pb-12"
         >
-          <motion.p
-            variants={fadeInUp}
-            className="font-mono text-[11px] font-medium uppercase tracking-widest text-foreground/40 mb-4"
-          >
-            {t.subtitle}
-          </motion.p>
+          <motion.span variants={fadeInUp} className="text-xs sm:text-sm md:text-base tracking-wide font-medium font-mono mb-12">
+            {t.kicker}
+          </motion.span>
+
           <motion.h1
             variants={fadeInUp}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tighter leading-tight mb-6 text-foreground"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-medium tracking-tight text-foreground leading-[1.08] mb-5 text-balance"
           >
             {t.title}
           </motion.h1>
+
           <motion.p
             variants={fadeInUp}
-            className="text-sm md:text-base text-foreground/50 leading-relaxed font-medium max-w-2xl"
+            className="text-sm sm:text-base md:text-lg text-foreground/60 font-normal font-sans leading-relaxed max-w-2xl mx-auto mb-8 text-pretty"
           >
             {t.description}
           </motion.p>
         </motion.header>
 
-        <hr className="border-t border-border mb-16" />
-
         <motion.div
           variants={staggerContainer}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-20"
+          animate="visible"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch mb-24"
         >
-          <motion.div
-            variants={fadeInUp}
-            className="md:col-span-6 flex flex-col justify-between"
-          >
-            <BorderGlow
-              edgeSensitivity={30}
-              glowColor="40 80 80"
-              backgroundColor="var(--card)"
-              borderRadius={24}
-              glowRadius={40}
-              glowIntensity={0.8}
-              coneSpread={25}
-              animated={false}
-              colors={["#c084fc", "#f472b6", "#38bdf8"]}
-              className="w-full h-full flex flex-col justify-between p-8 bg-card border-0 rounded-3xl shadow-xl"
-            >
-              <div>
-                <span className="font-mono text-[11px] font-medium uppercase tracking-widest text-foreground/40 mb-6 block">
-                  {t.free_plan.title}
-                </span>
-                <div className="flex items-baseline gap-2 mb-6">
-                  <span className="text-5xl font-black tracking-tighter text-foreground">
-                    {t.free_plan.price}
-                  </span>
-                  <span className="text-sm font-medium text-foreground/40">
-                    / {t.free_plan.period}
-                  </span>
-                </div>
-                <p className="text-sm text-foreground/50 mb-8 font-medium leading-relaxed">
-                  {t.free_plan.desc}
-                </p>
+          {t.plans.map((plan) => {
+            const Icon = planIcons[plan.icon] || RocketLaunchIcon;
+            const isHighlighted = plan.highlighted;
 
-                <ul className="flex flex-col gap-4 mb-8">
-                  {t.free_plan.features.map((feature: string, idx: number) => (
-                    <li
-                      key={idx}
-                      className="flex items-center gap-3 text-sm text-foreground/70"
-                    >
-                      <CheckIcon
-                        className="size-4 text-foreground shrink-0"
-                        weight="bold"
-                      />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <Link href="/app" className="w-full">
-                <Button className="w-full h-11 rounded-full px-6 text-xs font-bold uppercase tracking-wider cursor-pointer bg-foreground text-background hover:bg-foreground/90 transition-all">
-                  {t.get_started}
-                </Button>
-              </Link>
-            </BorderGlow>
-          </motion.div>
-
-          <motion.div
-            variants={fadeInUp}
-            className="md:col-span-6 flex flex-col justify-center"
-          >
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight text-foreground mb-4">
-                {t.gateway_fees.title}
-              </h2>
-              <p className="text-sm text-foreground/50 mb-8 leading-relaxed font-medium">
-                {t.gateway_fees.desc}
-              </p>
-
-              <div className="flex flex-col gap-6">
-                {t.gateway_fees.providers.map((prov: PricingProviderItem, idx: number) => (
-                  <div
-                    key={idx}
-                    className="border-b border-border pb-6 last:border-0 last:pb-0"
-                  >
-                    <div className="flex justify-between items-baseline mb-2">
-                      <h3 className="font-semibold text-sm text-foreground">
-                        {prov.name}
-                      </h3>
-                      <span className="text-sm font-bold font-mono text-foreground">
-                        {prov.fee}
+            if (isHighlighted) {
+              return (
+                <motion.div
+                  key={plan.id}
+                  variants={fadeInUp}
+                  className="rounded-3xl bg-rose-900 text-white p-8 sm:p-9 flex flex-col justify-between relative overflow-hidden apply-smooth-transition hover:scale-[1.01]"
+                >
+                  <div>
+                    <div className="inline-flex items-center gap-2.5 mb-5">
+                      <div className="size-8 rounded-xl bg-white/20 text-white flex items-center justify-center">
+                        <Icon size={16} weight="fill" />
+                      </div>
+                      <span className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+                        {plan.badge}
                       </span>
                     </div>
-                    <p className="text-xs text-foreground/50 leading-relaxed font-medium">
-                      {prov.desc}
+
+                    <p className="text-xs sm:text-sm text-white/80 font-medium leading-relaxed mb-6">
+                      {plan.desc}
                     </p>
+
+                    <div className="flex items-baseline gap-1.5 mb-8 pb-6 border-b border-white/15">
+                      <span className="text-4xl sm:text-5xl font-sans font-bold tracking-tight text-white">
+                        {plan.price}
+                      </span>
+                      <span className="text-xs font-mono text-white/75 font-semibold">
+                        {plan.period}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-3.5 mb-8">
+                      {plan.features.map((feature, fIdx) => (
+                        <li
+                          key={fIdx}
+                          className="flex items-start gap-3 text-xs sm:text-[13px] text-white/95 font-medium leading-snug"
+                        >
+                          <div className="size-4 rounded-full bg-white/20 text-white flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckIcon size={10} weight="bold" />
+                          </div>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
+
+                  <Link
+                    href={plan.href}
+                    className="w-full mt-auto block"
+                    target={plan.href.startsWith("http") ? "_blank" : undefined}
+                    rel={plan.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  >
+                    <Button
+                      type="button"
+                      variant={"default"}
+                      size={"lg"}
+                      className="w-full p-6 rounded-full text-xs font-mono font-bold uppercase tracking-wider"
+                    >
+                      {plan.button}
+                    </Button>
+                  </Link>
+                </motion.div>
+              );
+            }
+
+            return (
+              <motion.div
+                key={plan.id}
+                variants={fadeInUp}
+                className="rounded-3xl bg-foreground/5 backdrop-blur-xl p-8 sm:p-9 flex flex-col justify-between transition-all duration-300 hover:border-foreground/20 hover:bg-card/80"
+              >
+                <div>
+                  <div className="inline-flex items-center gap-2.5 mb-5">
+                    <div className="size-8 rounded-xl bg-rose-500/15 text-rose-500 flex items-center justify-center">
+                      <Icon size={16} weight="fill" />
+                    </div>
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
+                      {plan.badge}
+                    </span>
+                  </div>
+
+                  <p className="text-xs sm:text-sm text-foreground/60 leading-relaxed mb-6">
+                    {plan.desc}
+                  </p>
+
+                  <div className="flex items-baseline gap-1.5 mb-8 pb-6 border-b border-foreground/8">
+                    <span className="text-3xl sm:text-4xl font-sans font-bold tracking-tight text-foreground">
+                      {plan.price}
+                    </span>
+                    <span className="text-xs font-mono text-foreground/50">
+                      {plan.period}
+                    </span>
+                  </div>
+
+                  <ul className="space-y-3.5 mb-8">
+                    {plan.features.map((feature, fIdx) => (
+                      <li
+                        key={fIdx}
+                        className="flex items-start gap-3 text-xs sm:text-[13px] text-foreground/80 leading-snug"
+                      >
+                        <div className="size-4 rounded-full bg-foreground/10 text-foreground flex items-center justify-center shrink-0 mt-0.5">
+                          <CheckIcon size={10} weight="bold" />
+                        </div>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <Link
+                  href={plan.href}
+                  className="w-full mt-auto block"
+                  target={plan.href.startsWith("http") ? "_blank" : undefined}
+                  rel={plan.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                >
+                  <Button
+                    type="button"
+                    variant={"outline"}
+                    size={"lg"}
+                    className="w-full p-6 rounded-full text-xs font-mono font-bold uppercase tracking-wider"
+                  >
+                    {plan.button}
+                  </Button>
+                </Link>
+              </motion.div>
+            );
+          })}
         </motion.div>
 
-        <hr className="border-t border-border mb-16" />
-
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6 }}
-          className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-20"
-        >
-          <div className="md:col-span-4 flex flex-col justify-center">
-            <span className="font-mono text-[11px] font-medium uppercase tracking-widest text-foreground/40 mb-4 block">
-              {t.calculator?.subtitle}
-            </span>
-            <h2 className="text-2xl md:text-3xl tracking-tighter text-foreground mb-3">
-              {t.calculator?.title}
-            </h2>
-            <p className="text-sm text-foreground/50 leading-relaxed font-medium">
-              {t.calculator?.desc}
-            </p>
-          </div>
-          <div className="md:col-span-8">
-            <div className="p-8 rounded-xl bg-background border border-border shadow-lg">
-              <FeeSavingsCalculator t={t} />
-            </div>
-          </div>
-        </motion.section>
-
-        <motion.section
-          variants={staggerContainer}
+          variants={fadeInUp}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          className="mb-20"
+          viewport={{ once: true, margin: "-40px" }}
+          className="mb-24 rounded-3xl bg-foreground/5 p-8 sm:p-12"
         >
-          <motion.p
-            variants={fadeInUp}
-            className="font-mono text-[11px] font-medium uppercase tracking-widest text-foreground/40 mb-8"
-          >
-            {t.features_grid?.subtitle}
-          </motion.p>
+          <div className="max-w-2xl mb-10">
+            <span className="text-xs font-mono uppercase tracking-widest text-rose-500 block mb-2 font-semibold">
+              {t.gateway_fees.kicker}
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-sans font-medium tracking-tight text-foreground mb-3">
+              {t.gateway_fees.title}
+            </h2>
+            <p className="text-sm text-foreground/60 leading-relaxed">
+              {t.gateway_fees.desc}
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[
-              {
-                icon: ShieldCheckIcon,
-                title: t.features_grid?.privacy?.title,
-                desc: t.features_grid?.privacy?.desc,
-              },
-              {
-                icon: LightningIcon,
-                title: t.features_grid?.alerts?.title,
-                desc: t.features_grid?.alerts?.desc,
-              },
-              {
-                icon: CodeBlockIcon,
-                title: t.features_grid?.open_source?.title,
-                desc: t.features_grid?.open_source?.desc,
-              },
-            ].map((feature, idx) => (
-              <motion.div
+            {t.gateway_fees.providers.map((provider, idx) => (
+              <div
                 key={idx}
-                variants={fadeInUp}
-                className="flex flex-col gap-3 p-6 rounded-xl bg-foreground/5 hover:bg-foreground/8 backdrop-blur-sm transition-colors duration-300"
+                className="p-6 rounded-2xl bg-card flex flex-col justify-between"
               >
-                <div className="size-10 rounded-lg bg-foreground/10 flex items-center justify-center text-foreground">
-                  <feature.icon size={20} weight="fill" />
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm font-semibold text-foreground">
+                      {provider.name}
+                    </span>
+                    {provider.name === "Stripe" && <Stripe className="h-5 w-auto" />}
+                    {provider.name === "Buy Me a Coffee" && <BuyMeACoffee className="size-5" />}
+                    {provider.name === "Ko-fi" && <KoFi className="size-5" />}
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-foreground mb-2">
+                    {provider.fee}
+                  </div>
+                  <p className="text-xs text-foreground/60 leading-relaxed">
+                    {provider.desc}
+                  </p>
                 </div>
-                <h3 className="text-sm font-semibold text-foreground">
-                  {feature.title}
-                </h3>
-                <p className="text-xs text-foreground/50 leading-relaxed font-medium">
-                  {feature.desc}
-                </p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </motion.section>
 
-        <hr className="border-t border-border mb-16" />
-
-        <motion.section
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-20"
-        >
-          <motion.div variants={fadeInUp} className="md:col-span-4">
-            <span className="font-mono text-[11px] font-medium uppercase tracking-widest text-foreground/40">
-              {t.support_us}
-            </span>
-          </motion.div>
-          <motion.div variants={fadeInUp} className="md:col-span-8">
-            <h3 className="text-lg font-semibold text-foreground mb-3">
-              {t.help_title}
-            </h3>
-            <p className="text-base text-foreground/50 leading-relaxed font-medium mb-8">
-              {t.help_desc}
-            </p>
-            <Link
-              href="https://buymeacoffee.com/ponlponl123"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block"
+        <section className="mb-24">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-50px" }}
+              variants={fadeInUp}
+              className="lg:col-span-5 lg:sticky lg:top-36"
             >
-              <Button className="h-11 rounded-full px-6 text-xs font-bold uppercase tracking-wider cursor-pointer bg-amber-100 hover:bg-amber-50 text-black transition-all flex items-center gap-2">
-                <BuyMeACoffee className="size-4" />
-                {t.help_action}
-              </Button>
-            </Link>
-          </motion.div>
-        </motion.section>
+              <span className="font-mono text-xs uppercase tracking-widest text-rose-500 block mb-2 font-semibold">
+                {t.faq.kicker}
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-sans font-medium tracking-tight text-foreground mb-4">
+                {t.faq.title}
+              </h2>
+              <p className="text-sm text-foreground/60 leading-relaxed font-normal mb-6">
+                {t.faq.subtitle}
+              </p>
+              <Link
+                href="/docs"
+                className="font-mono text-xs uppercase tracking-widest text-foreground/80 hover:text-foreground inline-flex items-center gap-1.5 transition-colors group"
+              >
+                <span>{t.faq.docs_link}</span>
+                <ArrowUpRightIcon
+                  size={14}
+                  weight="bold"
+                  className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                />
+              </Link>
+            </motion.div>
 
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6 }}
-          className="text-center py-20 border-t border-border"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-foreground/10 bg-foreground/[0.03] mb-6">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-foreground opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-foreground" />
-            </span>
-            <span className="text-xs font-mono tracking-widest text-foreground/50 uppercase">
-              {t.cta_bottom?.badge}
-            </span>
+            <div className="lg:col-span-7 divide-y divide-border border-y border-border">
+              {t.faq.items.map((item, idx: number) => {
+                const isOpen = openFaq === idx;
+                return (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-30px" }}
+                    transition={{
+                      delay: idx * 0.05,
+                      duration: 0.45,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleFaq(idx)}
+                      className="w-full py-5 flex items-start justify-between text-left gap-4 cursor-pointer group"
+                    >
+                      <span className="text-sm sm:text-base font-normal text-foreground/85 group-hover:text-foreground transition-colors">
+                        {item.q}
+                      </span>
+                      <div className="shrink-0 mt-0.5 text-foreground/40 group-hover:text-foreground transition-colors">
+                        {isOpen ? (
+                          <MinusIcon size={16} weight="bold" />
+                        ) : (
+                          <PlusIcon size={16} weight="bold" />
+                        )}
+                      </div>
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          key="faq-content"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{
+                            duration: 0.3,
+                            ease: [0.16, 1, 0.3, 1],
+                          }}
+                          className="overflow-hidden"
+                        >
+                          <p className="text-xs sm:text-sm text-foreground/60 leading-relaxed pb-6 font-normal">
+                            {item.a}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
+        </section>
 
-          <h2 className="text-3xl md:text-5xl lg:text-6xl tracking-tighter text-foreground mb-5 leading-none">
-            {t.cta_bottom?.title}
-          </h2>
-          <p className="text-sm md:text-base text-foreground/40 font-medium mb-10 max-w-lg mx-auto">
-            {t.cta_bottom?.desc}
-          </p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{
-              duration: 0.8,
-              delay: 0.2,
-              ease: [0.16, 1, 0.3, 1],
-            }}
-            className="w-full max-w-md relative group mx-auto"
-          >
-            <div className="absolute -inset-px rounded-full bg-linear-to-r from-rose-500/20 to-purple-500/20 opacity-0 group-focus-within:opacity-100 group-hover:opacity-60 blur-md transition-all duration-500 pointer-events-none" />
-
-            <Input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder={t.cta_bottom?.placeholder}
-              className="relative flex-1 bg-transparent border-none focus:ring-0 text-foreground pl-5 z-10"
-              classNames={{
-                base: "p-1 rounded-full backdrop-blur-xs border-2",
-              }}
-              fontStyle={{
-                fontFamily: "var(--font-sans)",
-                fontWeight: "600",
-                fontSize: "14px",
-              }}
-              startContent={
-                <span className="text-sm font-semibold text-foreground/50 ml-3 -mr-2.5 hidden sm:block">
-                  tip-to.me/@
-                </span>
-              }
-              endContent={
-                <Link
-                  href={
-                    username.trim()
-                      ? `/app/profile?username=${username}`
-                      : "/app/profile"
-                  }
-                  className="relative h-full px-5 py-3 rounded-full bg-foreground text-background font-black text-xs flex items-center justify-center gap-1.5 hover:bg-foreground/90 active:scale-95 ml-2 shadow-md z-10 cursor-pointer"
-                >
-                  <span>{t.cta_bottom?.claim}</span>
-                  <ArrowRightIcon weight="bold" size={13} />
-                </Link>
-              }
-            />
-          </motion.div>
-
-          <p className="text-[9px] font-mono tracking-widest text-foreground/25 uppercase mt-10">
-            {t.cta_bottom?.footnote}
-          </p>
-        </motion.section>
       </div>
+      <CTABanner />
     </div>
   );
 }

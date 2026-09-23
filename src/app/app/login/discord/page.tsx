@@ -5,6 +5,7 @@ import { useUserContext } from "@/contexts/user";
 import { useEffect, useRef, useState, Suspense } from "react";
 import Error from "../error";
 import Success from "../success";
+import { allowedLocalhostWhen } from "@/consts/statement";
 
 function DiscordLoginContent() {
   const { login } = useUserContext();
@@ -24,7 +25,7 @@ function DiscordLoginContent() {
       urlBuilder.searchParams.append("scope", "email identify");
       urlBuilder.searchParams.append(
         "redirect_uri",
-        process.env.NODE_ENV === "development"
+        allowedLocalhostWhen.includes(process.env.NODE_ENV || "")
           ? "http://localhost:3000/app/login/discord"
           : "https://alertbox.org/app/login/discord",
       );

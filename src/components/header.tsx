@@ -28,26 +28,47 @@ function Nav({
   };
 }) {
   const lang = useStore(coreStore, (state) => state.lang);
+  const pathname = usePathname();
+  const isMobile = !!classNames?.link;
+
+  const links = [
+    { href: "/about", label: lang.data.header.links.about },
+    { href: "/pricing", label: lang.data.header.links.pricing },
+  ];
+
   return (
     <>
-      <Link href={"/about"}>
-        <Button
-          variant="ghost"
-          size={"sm"}
-          className={cn("rounded-lg p-2 w-full", classNames?.link)}
-        >
-          {lang.data.header.links.about}
-        </Button>
-      </Link>
-      <Link href={"/pricing"}>
-        <Button
-          variant="ghost"
-          size={"sm"}
-          className={cn("rounded-lg p-2 w-full", classNames?.link)}
-        >
-          {lang.data.header.links.pricing}
-        </Button>
-      </Link>
+      {links.map((link) => {
+        const isActive = pathname === link.href;
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={cn("relative", isMobile && "w-full")}
+          >
+            <Button
+              variant="ghost"
+              size={"sm"}
+              className={cn(
+                "rounded-lg p-2 w-full relative z-10 transition-colors",
+                isActive
+                  ? "text-foreground font-semibold"
+                  : "text-foreground/60 hover:text-foreground",
+                classNames?.link,
+              )}
+            >
+              {link.label}
+            </Button>
+            {isActive && !isMobile && (
+              <motion.div
+                layoutId="header-nav-active"
+                className="absolute inset-0 bg-foreground/6 rounded-lg z-0"
+                transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              />
+            )}
+          </Link>
+        );
+      })}
       <div className="md:hidden my-auto" />
     </>
   );
@@ -130,6 +151,7 @@ function Header() {
   const isApp = pathname.startsWith("/app");
   const isDocs = pathname.startsWith("/docs");
   const isFullHeaderWidth = isApp || isDocs;
+  const isTranslucentHeader = pathname.startsWith("/about");
   const statusBannerHeight = useStore(
     coreStore,
     (state) => state.statusBannerHeight,
@@ -197,7 +219,7 @@ function Header() {
           },
         }}
         className={cn(
-          "flex items-center justify-between px-4 inset-x-0 mx-auto z-20001 w-full",
+          "flex items-center justify-between px-4 inset-x-0 mx-auto z-20001 w-full apply-smooth-transition",
           isDocs
             ? "fixed h-12 bg-background/80 backdrop-blur-md border-b border-border"
             : isIndex
@@ -208,6 +230,7 @@ function Header() {
             : !isDocs && "supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur-sm border-border border-b border-solid ",
           isIndex && isScrolled && "md:bg-muted/60 md:backdrop-blur-lg md:rounded-3xl",
           isNavActive && "fixed",
+          isTranslucentHeader && "border-transparent bg-transparent",
           pathname.startsWith("/app") &&
           "border-0 bg-transparent bg-none supports-backdrop-filter:bg-transparent/80 supports-backdrop-filter:backdrop-blur-none",
         )}
@@ -315,35 +338,35 @@ function Header() {
                 </div>
               </motion.div>
             </div>
-            <AnimatePresence>
-              {!isApp && !isIndex && (
-                <div className="flex flex-2 mx-auto justify-center items-center gap-2 max-md:hidden">
-                  <motion.div
-                    id="header-nav"
-                    exit={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    initial={{ opacity: 0 }}
-                    className="max-md:hidden flex items-center gap-2"
-                  >
-                    <Nav />
-                  </motion.div>
-                </div>
-              )}
-            </AnimatePresence>
+            {!isApp && !isIndex && (
+              <div className="flex flex-2 mx-auto justify-center items-center gap-2 max-md:hidden">
+                <motion.div
+                  layoutId="header-nav"
+                  transition={{
+                    type: "spring",
+                    stiffness: 350,
+                    damping: 30,
+                  }}
+                  className="max-md:hidden flex items-center gap-1.5"
+                >
+                  <Nav />
+                </motion.div>
+              </div>
+            )}
             <div className="flex flex-1 justify-end items-center gap-2">
-              <AnimatePresence>
-                {!isApp && isIndex && (
-                  <motion.div
-                    id="header-nav"
-                    exit={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    initial={{ opacity: 0 }}
-                    className="max-md:hidden flex items-center gap-2"
-                  >
-                    <Nav />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {!isApp && isIndex && (
+                <motion.div
+                  layoutId="header-nav"
+                  transition={{
+                    type: "spring",
+                    stiffness: 350,
+                    damping: 30,
+                  }}
+                  className="max-md:hidden flex items-center gap-1.5"
+                >
+                  <Nav />
+                </motion.div>
+              )}
               <div className="max-md:hidden contents">
                 <NavActions />
               </div>

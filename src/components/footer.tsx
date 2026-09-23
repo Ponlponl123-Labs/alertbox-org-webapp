@@ -66,38 +66,6 @@ const Footer = memo(function Footer() {
 
   return (
     <>
-      {/* {["/", "/pricing", "/about", "/docs"].includes(pathname) && (
-        <section className="py-16 p-6 bg-zinc-50 font-sans dark:bg-black flex flex-col items-center justify-center gap-3">
-          <div className="p-6 rounded-3xl flex flex-col gap-3 bg-foreground/5 bg-linear-150 from-rose-950 to-rose-300 w-full max-w-xl">
-            <h1 className="text-lg font-semibold text-white">
-              <HandHeartIcon
-                className="inline mr-1.5"
-                size={26}
-                weight="fill"
-              />{" "}
-              {lang.data.helpus.title}
-            </h1>
-            <p className="text-xs text-white/40">
-              {lang.data.helpus.description}
-            </p>
-            <Link
-              href={"https://buymeacoffee.com/ponlponl123"}
-              target="_blank"
-              className="w-max"
-            >
-              <Button
-                className={
-                  "rounded-xl bg-amber-100 hover:bg-amber-50 text-black"
-                }
-              >
-                <BuyMeACoffee className="mr-0.5 size-3" />
-                {lang.data.helpus.button}
-              </Button>
-            </Link>
-          </div>
-        </section>
-      )} */}
-
       <footer className="w-full min-w-0 flex-1 p-6 flex flex-col items-center relative bg-sidebar">
         {!pathname.startsWith("/app") && (
           <div className="absolute top-0 left-0 -translate-y-full w-full min-w-0 flex-1 bg-linear-0 to-transparent from-sidebar h-40 z-10 pointer-events-none" />
@@ -138,7 +106,7 @@ const Footer = memo(function Footer() {
             ))}
           </div>
         </div>
-        <div className="flex sm:items-center sm:justify-between w-full max-w-5xl mx-auto max-sm:flex-col max-sm:gap-4 mt-4">
+        <div className="flex sm:items-center sm:justify-between w-full max-w-5xl mx-auto max-sm:flex-col max-sm:gap-4 mt-8 border-t border-border/60 pt-8">
           <div className="text-foreground/10 font-mono text-xs max-sm:mx-auto">
             <Tooltip>
               <TooltipTrigger delay={2000}>

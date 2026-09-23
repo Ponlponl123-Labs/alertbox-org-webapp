@@ -1,3 +1,5 @@
+import { allowedLocalhostWhen } from "@/consts/statement";
+
 /**
  * Helper to resolve absolute API URLs dynamically using NEXT_PUBLIC_API_ENDPOINT.
  * Automatically handles trailing/leading slashes and strips the `/api` prefix.
@@ -8,7 +10,7 @@
 export const getApiUrl = (path: string): string => {
   let endpoint =
     process.env.NEXT_PUBLIC_API_ENDPOINT ||
-    (process.env.NODE_ENV !== "production"
+    (allowedLocalhostWhen.includes(process.env.NODE_ENV || "")
       ? "http://localhost:3001/"
       : "https://api.alertbox.org/");
 

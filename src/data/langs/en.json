@@ -72,13 +72,6 @@
         "claim": "Claim"
       },
       "hero": {
-        "badge": "Zero Platform Fees • 100% Private",
-        "stats": {
-          "alerts": "Alerts Synced",
-          "streamers": "Active Streamers",
-          "latency": "Webhook Latency",
-          "uptime": "Edge Uptime"
-        },
         "features": [
           {
             "title": "By Creators",
@@ -97,32 +90,6 @@
           "connected": "Now we're connected with Streamlabs!",
           "headline": "Centralize your stream stack. Connect platforms, route live alerts, and control every overlay.",
           "continue_streamlabs": "Continue with Streamlabs"
-        },
-        "simulator": {
-          "live": "OBS STREAM LIVE",
-          "latency": "Latency: ~12ms",
-          "select_trigger": "Select simulated trigger below",
-          "privacy_tag": "Masked Beneficiary Routing",
-          "event_stream": "Live Event Stream",
-          "overlay_settings": "Overlay Settings",
-          "alert_volume": "Alert Volume",
-          "overlay_scaling": "Overlay Scaling",
-          "anonymous_donor": "Anonymous Donor",
-          "donation": {
-            "tag": "DONATION",
-            "title": "Sarah gifted $25.00",
-            "message": "Love the stream! 💜"
-          },
-          "sub": {
-            "tag": "SUBSCRIBER",
-            "title": "Zenith_Live subscribed",
-            "message": "Tier 3 • 6 month streak"
-          },
-          "cheer": {
-            "tag": "BITS CHEER",
-            "title": "GamerGuy cheered 1,000 Bits",
-            "message": "Hype train is here!"
-          }
         }
       },
       "sections": {
@@ -135,10 +102,6 @@
         "howitworks": {
           "title": "How it Works?",
           "description": "Direct, Secure, & Private",
-          "selectors": {
-            "streamer": "For Streamer",
-            "viewer": "For Fans"
-          },
           "donated": "donated",
           "test_message": "This is a test message.",
           "steps_title": "Steps",
@@ -535,8 +498,7 @@
           "danger": "Danger Zone"
         }
       },
-      "collapse": "Collapse",
-      "expand": "Expand"
+      "collapse": "Collapse"
     },
     "login": {
       "title": "Sign in",
@@ -594,10 +556,7 @@
       "get_started": {
         "title": "Claim Your Profile URL",
         "description": "Choose a unique username for your donation page. This will be the link you share with your fans.",
-        "input_placeholder": "yourname",
         "regis": "Claim URL",
-        "invalid_format": "Invalid format. Please use only letters, numbers, and underscores.",
-        "already_taken": "This username is already taken. Please choose another one.",
         "reset_in": "You will be able to change your profile link after {time}.",
         "change": "Change Profile URL"
       },
@@ -618,10 +577,6 @@
         "facebook": "Facebook",
         "reddit": "Reddit",
         "discord": "Discord"
-      },
-      "live": {
-        "onair": "Your Profile Page is Live!",
-        "prepairing": "Your Profile Page is Hidden"
       },
       "preview": {
         "official_account": "Official Account",
@@ -668,7 +623,6 @@
       "title": "Account Security",
       "description": "Manage your account security settings, such as changing your password, two-factor authentication, and recent login activity to ensure your account is safe and properly protected.",
       "registered": "Registered On",
-      "last_login": "Last Logged In",
       "registered_with": "Registered With",
       "email": {
         "title": "Linked Email",
@@ -682,14 +636,7 @@
         "unselected_map": "Please select the device to view map",
         "info": {
           "browser": "Browser",
-          "browser_version": "Browser Version",
-          "browser_type": "Browser Type",
-          "browser_major": "Browser Major",
-          "device_type": "Device Type",
-          "device_model": "Device Model",
-          "device_vendor": "Device Vendor",
           "os": "Operating System",
-          "os_version": "OS Version",
           "cpu_architecture": "CPU architecture",
           "ip": "IP Address",
           "location": "Approximate Location",
@@ -707,20 +654,11 @@
         },
         "manage": {
           "title": "Manage this",
-          "forgot_device": "Don't recognize this device?",
           "revoke": "Revoke Access",
           "cant_selfrevoke": "Self-access cannot be revoked.",
           "disable": "End this session",
-          "disabled": "This session has been disabled",
-          "disabled_at": "Session disabled at"
+          "disabled": "This session has been disabled"
         },
-        "errors": {
-          "cant_load_devices": "Unable to load active devices. Please try again later.",
-          "cant_revoke_session": "Failed to revoke this session. Please try again."
-        },
-        "unknown_device": "Unknown Device",
-        "current_device": "Current Device",
-        "other_device": "Other Devices",
         "unknown_location": "Unknown Location"
       }
     },
@@ -918,9 +856,7 @@
         "success_disconnect": "Disconnected successfully",
         "error_disconnect": "Failed to disconnect",
         "error_load": "Error loading integration settings",
-        "error_network": "Network error",
-        "success_connected": "Successfully connected with Streamlabs",
-        "error_connected": "Failed to connect with Streamlabs"
+        "error_network": "Network error"
       }
     },
     "danger": {
@@ -962,187 +898,182 @@
     "button": "Buy Me a Coffee"
   },
   "about": {
-    "title": "Built by creators, for creators.",
-    "subtitle": "About Us",
     "description": "Alertbox.org is a free, open-source, and private alert box designed for streamers. We believe that true innovation flourishes when knowledge is free.",
-    "mission_title": "Our Mission",
-    "mission_desc": "Most platforms charge high fees or force you to disclose your personal identity to receive tips. We created Alertbox.org to give streamers a privacy-first alternative with absolutely zero platform fees. Your support alerts appear live instantly, while your funds go directly to your personal payment gateways.",
-    "values": {
-      "privacy_title": "100% Private",
-      "privacy_desc": "We never access your banking credentials or sensitive transaction data. We only process webhook events to trigger alerts on your stream.",
-      "fee_title": "Zero Platform Fees",
-      "fee_desc": "We charge absolutely zero fees for using Alertbox.org. The only fees you incur are standard card processor fees directly from Stripe or Ko-fi.",
-      "open_source_title": "Open Source",
-      "open_source_desc": "Our code is fully open-source and reviewable by anyone. You are in complete control of your data and overlay integrations."
-    },
-    "team_title": "The Idea",
-    "team_desc": "Alertbox.org was built by a small group of developers who wanted to support their favorite creators securely and privately. If you find our tool useful, please consider supporting the project to help us cover server infrastructure costs.",
     "faq_question": "If you don't collect any service charge, how do you survive?",
     "faq_answer": "We don't. Alertbox.org is not a commercial enterprise or a venture-backed startup. It is a public utility run entirely on volunteer contributions and personal pocket funds. We survive solely on donations from the streamers and viewers who use our tools to keep the servers running.",
-    "core_values_title": "Core Values",
-    "get_started": "Get Started",
-    "stats": {
-      "fees": "Fees",
-      "latency": "Latency",
-      "open_source": "Open Source"
-    },
-    "live_demo": {
-      "badge": "Live Preview",
-      "title": "See alerts in action.",
-      "desc": "Real-time donation, subscription and cheer alerts that appear instantly on your stream overlay.",
-      "tags": {
-        "donation": "DONATION",
-        "sub": "SUBSCRIBER",
-        "cheer": "CHEER"
+    "hero_title": "We're a group of people who want to make the world a better place.",
+    "motto": "Knowledge · Innovative · For Human / Earth",
+    "about_us_tag": "About Us",
+    "about_us_desc": "We are a team of passionate developers who want to make a difference in the world.",
+    "quote": "True innovation flourishes when knowledge is free",
+    "journey_tag": "Our journey",
+    "journey_title": "Our journey to serving the community",
+    "journey_desc": "From early days of Ponlponl123 Labs, we always put our heart into the communities we serve. Alertbox.org is a testament to that commitment, born from a desire to provide a seamless and reliable alerting system for content creators worldwide.",
+    "journey_milestones": [
+      {
+        "time": "Early 2025",
+        "description": "Started Ponlponl123 Labs with a vision to build purposeful open-source technology."
       },
-      "messages": {
-        "donation": "\"Keep it up! 🔥\"",
-        "sub": "\"Love the content, subbing!\"",
-        "cheer": "\"GG! What a play! 🎉\""
+      {
+        "time": "Late 2025",
+        "description": "Shipped ultra-lightweight infra utilities and optimized real-time microservices."
       },
-      "privacy_tag": "Privacy-first"
-    },
-    "explore": {
-      "subtitle": "Explore More",
-      "pricing": {
-        "title": "Pricing",
-        "desc": "See why we're free forever."
+      {
+        "time": "Mid 2026",
+        "description": "Built Alertbox.org — a free, private, modern alerting platform for streamers worldwide."
       },
-      "donate": {
-        "title": "Donate",
-        "desc": "Help keep the servers running."
-      },
-      "dashboard": {
-        "title": "Dashboard",
-        "desc": "Set up your streamer profile now."
+      {
+        "time": "Today",
+        "description": "Continuously innovating and serving creator communities with free, accessible tools."
       }
-    }
+    ],
+    "faq_title": "FAQ.",
+    "faq_desc": "Clear answers regarding privacy, zero-platform fees, and architecture.",
+    "faqs": [
+      {
+        "q": "If you don't collect any service charge, how do you survive?",
+        "a": "We don't. Alertbox.org is not a commercial enterprise or a venture-backed startup. It is a public utility run entirely on volunteer contributions and personal pocket funds. We survive solely on donations from the streamers and viewers who use our tools to keep the servers running."
+      },
+      {
+        "q": "How does Alertbox protect creator and donor privacy?",
+        "a": "Unlike closed platforms that hold financial accounts, Alertbox is an event router. Donors pay your payment gateway (Stripe, Ko-fi, BMAC) directly. We never store bank cards, accounts, or financial trails — we only receive signed webhooks to trigger overlays."
+      },
+      {
+        "q": "Are there really zero hidden fees or premium paywalls?",
+        "a": "Yes. Alertbox charges 0% fees, forever. You only pay standard merchant processing fees directly to payment processors like Stripe (2.9% + $0.30) without any markup from Alertbox."
+      },
+      {
+        "q": "Can I self-host Alertbox or run it locally?",
+        "a": "Yes. Alertbox is 100% open source under the MIT License. The entire API, webapp, and webhook engine can be audited, modified, or self-hosted via Docker."
+      }
+    ]
   },
   "pricing": {
-    "title": "Zero platform fees. Forever.",
-    "subtitle": "Pricing",
-    "description": "Alertbox.org is a free public utility. We do not take a cut of your donations or charge subscription fees. What you earn is yours to keep.",
-    "free_plan": {
-      "title": "Free Tier",
-      "price": "$0",
-      "period": "forever",
-      "desc": "Everything you need to set up a private, professional alert box.",
-      "features": [
-        "Unlimited real-time alerts",
-        "Customizable streamer profile",
-        "Stripe, Ko-fi & Buy Me a Coffee webhooks",
-        "100% private and open-source",
-        "Zero platform service charges"
-      ]
-    },
+    "kicker": "PRICING",
+    "title": "Flexible Plans Built for Every Stage of Growth",
+    "description": "Whether you're streaming your first session or running custom self-hosted infra, Alertbox provides free, transparent primitives.",
+    "cta_button": "Get Started",
+    "plans": [
+      {
+        "id": "starter",
+        "badge": "STARTER PLAN",
+        "icon": "rocket",
+        "name": "Cloud Hosted",
+        "desc": "Perfect for creators starting out who want instant, zero-cut alerts.",
+        "price": "$0",
+        "period": "/forever",
+        "features": [
+          "0% platform fee on all creator tips",
+          "Ultra-lightweight OBS browser overlay (<50ms)",
+          "Direct Stripe, Ko-fi & BMAC webhooks",
+          "Custom HTML, CSS, and sound triggers",
+          "Zero telemetry and zero viewer tracking"
+        ],
+        "button": "Get Started",
+        "href": "/app",
+        "highlighted": false
+      },
+      {
+        "id": "growth",
+        "badge": "GROWTH PLAN",
+        "icon": "star",
+        "name": "Self-Hosted Stack",
+        "desc": "For developers and power streamers demanding full infrastructure control.",
+        "price": "$0",
+        "period": "/MIT License",
+        "features": [
+          "100% open-source Docker Compose deployment",
+          "Dedicated self-hosted API and background workers",
+          "Local Redis queue and persistent storage",
+          "Unlimited overlay profiles and scenes",
+          "Complete sovereignty over all data streams"
+        ],
+        "button": "Deploy with Docker",
+        "href": "https://github.com/Ponlponl123-Labs/alertbox-org",
+        "highlighted": true
+      },
+      {
+        "id": "enterprise",
+        "badge": "ENTERPRISE PLAN",
+        "icon": "fire",
+        "name": "Community Sponsor",
+        "desc": "For backers and organizations helping sustain free public software.",
+        "price": "Any",
+        "period": "/voluntary",
+        "features": [
+          "Fund free public infrastructure for streamers",
+          "Direct input on community feature roadmap",
+          "Exclusive GitHub Sponsor supporter badge",
+          "Priority developer support on Discord",
+          "Zero contracts, cancel or adjust anytime"
+        ],
+        "button": "Become a Sponsor",
+        "href": "/donate",
+        "highlighted": false
+      }
+    ],
     "gateway_fees": {
-      "title": "Payment Gateway Fees",
-      "desc": "While we charge 0%, payment gateway providers charge their own standard transaction processing fees to transfer money to your bank account:",
+      "kicker": "TRANSPARENCY",
+      "title": "Payment Gateway Processing Fees",
+      "desc": "While Alertbox charges 0%, payment gateways charge standard transaction processing fees to transfer money to your bank account:",
       "providers": [
         {
           "name": "Stripe",
           "fee": "2.9% + $0.30",
-          "desc": "Standard card processing fee. Varies slightly by region."
+          "desc": "Standard direct card processing. Deposited directly to your bank."
         },
         {
           "name": "Buy Me a Coffee",
           "fee": "5.0%",
-          "desc": "Platform fee taken by BMAC. Free accounts have no transaction fee except for card processing."
+          "desc": "Platform fee taken by BMAC for their tipping and page features."
         },
         {
           "name": "Ko-fi",
           "fee": "0% / 5.0%",
-          "desc": "0% for direct donations. 5% fee applies for memberships, shop, or commissions unless using Ko-fi Gold."
+          "desc": "0% fee for direct donations; 5% applies for shop items or memberships."
         }
       ]
     },
-    "help_title": "Support Alertbox.org",
-    "help_desc": "Since we do not charge any fees, we rely entirely on donations from our community to cover server bills, domain registrations, and development costs. If you find our service useful, please consider helping us keep it running.",
-    "help_action": "Support the Platform",
-    "support_us": "Support Us",
-    "get_started": "Get Started",
-    "calculator": {
-      "subtitle": "Calculator",
-      "title": "See how much you save.",
-      "desc": "Drag the slider to compare your savings against platforms that charge 10% platform fees.",
-      "others": "Others",
-      "volume_label": "Monthly Volume",
-      "you_save": "You save",
-      "per_mo": "mo"
-    },
-    "features_grid": {
-      "subtitle": "What's Included",
-      "privacy": {
-        "title": "Privacy-First",
-        "desc": "We never access your banking credentials."
-      },
-      "alerts": {
-        "title": "Instant Alerts",
-        "desc": "Donations appear on stream in <50ms."
-      },
-      "open_source": {
-        "title": "Open Source",
-        "desc": "Fully transparent, auditable by anyone."
-      }
-    },
-    "cta_bottom": {
-      "badge": "Start Now",
-      "title": "Start streaming for free.",
-      "desc": "Claim your profile name and set up alerts in minutes. No credit card required.",
-      "placeholder": "Your name",
-      "claim": "Claim",
-      "footnote": "No credit card · Setup in 2 minutes"
+    "faq": {
+      "kicker": "FAQ",
+      "title": "Frequently Asked Questions",
+      "subtitle": "Everything you need to know about our zero-fee streaming platform.",
+      "docs_link": "View Documentation",
+      "items": [
+        {
+          "q": "How can Alertbox remain 0% fee forever?",
+          "a": "Alertbox is an open-source public utility. Because we use a non-custodial webhook architecture, we don't hold wallets or process financial transactions directly, keeping our server overhead minimal. The project is sustained by voluntary developer donations."
+        },
+        {
+          "q": "Where does the donation money go?",
+          "a": "Straight to your own connected Stripe, Ko-fi, or Buy Me a Coffee account. Alertbox never touches, delays, or holds your money."
+        },
+        {
+          "q": "Do I need a credit card to use Alertbox?",
+          "a": "No. You never have to enter any credit card or billing details to use Alertbox."
+        },
+        {
+          "q": "Can I self-host Alertbox on my own hardware?",
+          "a": "Yes. Our repository includes a complete Docker Compose template with the web UI, API, Redis queue, and database."
+        }
+      ]
     }
   },
   "donate": {
-    "title": "Support Alertbox.org",
-    "subtitle": "Donate",
-    "description": "We run this platform as a free public utility with 0% fees. Your contributions help us keep the servers running and maintain the code for everyone.",
-    "cta_title": "Choose How to Support",
-    "cta_desc": "Support our small independent team of developers directly through our donation gateway.",
-    "button": "Buy Me a Coffee",
+    "title_prefix": "Keep",
+    "title_highlight": "Alertbox.org",
+    "title_suffix": "Free Forever",
+    "description": "We never take a cut from your tips. If Alertbox powers your stream, chip in to keep our infrastructure fast, reliable, and free.",
+    "button_bmac": "Support on Buy Me a Coffee",
+    "button_bmac_tier": "Support with {amount}",
     "button_github": "Sponsor on GitHub",
-    "usage_title": "Where Your Donations Go",
-    "usage_items": [
-      {
-        "title": "Server Infrastructure",
-        "desc": "Web servers, API, databases, and secure SSL/TLS certificate renewals to ensure 100% uptime for alert relays."
-      },
-      {
-        "title": "Research",
-        "desc": "Researching new payment gateways, security enhancements, and real-time streaming tools."
-      },
-      {
-        "title": "Continuous Maintenance",
-        "desc": "Updating integration APIs, fixing stream overlay bugs, and building new features requested by streamers."
-      }
-    ],
-    "stats": {
-      "fees": "Platform Fees",
-      "open_source": "Open Source",
-      "uptime": "Uptime"
-    },
-    "allocations": {
-      "servers": {
-        "title": "Servers & API",
-        "desc": "Web servers, API, databases & SSL/TLS certificates"
-      },
-      "webhooks": {
-        "title": "Research",
-        "desc": "Real-time alert relay processing & gateway research"
-      },
-      "dev": {
-        "title": "Development",
-        "desc": "API updates, bug fixes & new features"
-      }
-    },
-    "cta_bottom": {
-      "badge": "Free forever",
-      "title": "See what we've built.",
-      "desc": "Explore the dashboard, create your streamer profile, and set up alerts in minutes.",
-      "get_started": "Get Started",
-      "view_pricing": "View Pricing"
-    }
+    "footnote": "Zero obligations • All features free forever • 100% open source",
+    "tiers": [
+      { "amount": 1, "label": "Coffee! ☕" },
+      { "amount": 5, "label": "Shortcake! 🍰" },
+      { "amount": 10, "label": "Add some rice! 🍚" },
+      { "amount": null, "label": "Buffet! 🍱" }
+    ]
   },
   "footer": {
     "description": "Alertbox.org is an open-source alert box service featuring custom streamer profiles, zero platform fees, and robust privacy protection. \nPowered by trusted payment gateways like Buy Me a Coffee, Ko-fi, and Stripe.",

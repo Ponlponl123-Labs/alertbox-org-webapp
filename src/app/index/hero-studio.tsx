@@ -117,7 +117,7 @@ export default function HeroStudio() {
                 delay: 1.15,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="w-full max-w-md mb-4 backdrop-blur-xs"
+              className="w-full max-w-md mb-4 backdrop-blur-xs rounded-4xl"
             >
               <Input
                 type="text"

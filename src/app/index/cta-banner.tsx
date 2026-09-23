@@ -62,7 +62,7 @@ export default function CTABanner() {
     : ["Free forever", "No credit card", "Open source"];
 
   return (
-    <section className="relative w-full py-28 md:py-36 bg-background text-foreground flex flex-col items-center justify-center overflow-hidden border-t border-foreground/8">
+    <section className="relative w-full py-28 md:py-36 text-foreground flex flex-col items-center justify-center overflow-hidden border-t border-foreground/8">
       <HorizonArc />
 
       <div className="z-10 relative flex flex-col items-center text-center w-full max-w-3xl px-6">
