@@ -1058,6 +1058,106 @@
           "a": "ได้แน่นอน ซอร์สโค้ดของเรามาพร้อมเทมเพลต Docker Compose ที่สมบูรณ์ ทั้งเว็บอินเทอร์เฟซ, API, คิว Redis และฐานข้อมูล"
         }
       ]
+    },
+    "comparison": {
+      "features_col": "ฟีเจอร์การใช้งาน",
+      "starter_badge": "แนะนำ",
+      "growth_badge": "เหมาะสำหรับลูกค้าองค์กร",
+      "categories": [
+        {
+          "name": "การแจ้งเตือนและโอเวอร์เลย์",
+          "features": [
+            {
+              "name": "ค่าธรรมเนียมแพลตฟอร์ม",
+              "starter": "0%",
+              "growth": "0%",
+              "enterprise": "0%"
+            },
+            {
+              "name": "ความหน่วงโอเวอร์เลย์ OBS",
+              "starter": "<50ms",
+              "growth": "<5ms (เครื่องตนเอง)",
+              "enterprise": "<50ms"
+            },
+            {
+              "name": "เชื่อมต่อ Stripe, Ko-fi & BMAC",
+              "starter": true,
+              "growth": true,
+              "enterprise": true
+            },
+            {
+              "name": "ปรับแต่ง HTML, CSS และเสียงแจ้งเตือน",
+              "starter": true,
+              "growth": true,
+              "enterprise": true
+            },
+            {
+              "name": "การติดตามและการเก็บข้อมูล Telemetry",
+              "starter": "ไม่มี",
+              "growth": "ไม่มี",
+              "enterprise": "ไม่มี"
+            }
+          ]
+        },
+        {
+          "name": "โครงสร้างพื้นฐานและการโฮสต์",
+          "features": [
+            {
+              "name": "รูปแบบการติดตั้ง",
+              "starter": "คลาวด์แล็บส่วนตัว",
+              "growth": "เซิร์ฟเวอร์ส่วนตัว",
+              "enterprise": "คลาวด์แล็บส่วนตัว"
+            },
+            {
+              "name": "ติดตั้งผ่าน Docker Compose",
+              "starter": false,
+              "growth": true,
+              "enterprise": false
+            },
+            {
+              "name": "คิวงาน Redis และ Worker ส่วนตัว",
+              "starter": false,
+              "growth": true,
+              "enterprise": false
+            },
+            {
+              "name": "สิทธิ์การควบคุมข้อมูล 100%",
+              "starter": false,
+              "growth": true,
+              "enterprise": false
+            }
+          ]
+        },
+        {
+          "name": "การสนับสนุนและชุมชน",
+          "features": [
+            {
+              "name": "ช่องทางการช่วยเหลือ",
+              "starter": "ชุมชนทั่วไป",
+              "growth": "GitHub / ชุมชน",
+              "enterprise": "Discord พิเศษส่วนตัว"
+            },
+            {
+              "name": "มีส่วนร่วมเสนอทิศทางฟีเจอร์",
+              "starter": false,
+              "growth": "GitHub PRs",
+              "enterprise": true
+            },
+            {
+              "name": "เหรียญตรา GitHub Sponsor",
+              "starter": false,
+              "growth": false,
+              "enterprise": true
+            },
+            {
+              "name": "ข้อผูกมัด / ลิขสิทธิ์",
+              "starter": "ฟรีตลอดชีพ",
+              "growth": "โอเพนซอร์ส MIT",
+              "enterprise": "ตามความสมัครใจ"
+            }
+          ]
+        }
+      ]
     }
   },
   "donate": {

@@ -1057,6 +1057,106 @@
           "a": "Yes. Our repository includes a complete Docker Compose template with the web UI, API, Redis queue, and database."
         }
       ]
+    },
+    "comparison": {
+      "features_col": "FEATURES",
+      "starter_badge": "Recommended",
+      "growth_badge": "Ideal for Organizations",
+      "categories": [
+        {
+          "name": "ALERTS & OVERLAYS",
+          "features": [
+            {
+              "name": "Platform fee",
+              "starter": "0%",
+              "growth": "0%",
+              "enterprise": "0%"
+            },
+            {
+              "name": "OBS overlay latency",
+              "starter": "<50ms",
+              "growth": "<5ms (Local)",
+              "enterprise": "<50ms"
+            },
+            {
+              "name": "Stripe, Ko-fi & BMAC webhooks",
+              "starter": true,
+              "growth": true,
+              "enterprise": true
+            },
+            {
+              "name": "Custom HTML, CSS & sound triggers",
+              "starter": true,
+              "growth": true,
+              "enterprise": true
+            },
+            {
+              "name": "Telemetry & viewer tracking",
+              "starter": "Zero",
+              "growth": "Zero",
+              "enterprise": "Zero"
+            }
+          ]
+        },
+        {
+          "name": "INFRASTRUCTURE & HOSTING",
+          "features": [
+            {
+              "name": "Hosting environment",
+              "starter": "Our Private Lab Cloud",
+              "growth": "Self-Hosted",
+              "enterprise": "Our Private Lab Cloud"
+            },
+            {
+              "name": "Docker Compose 1-click deployment",
+              "starter": false,
+              "growth": true,
+              "enterprise": false
+            },
+            {
+              "name": "Dedicated Redis queue & workers",
+              "starter": false,
+              "growth": true,
+              "enterprise": false
+            },
+            {
+              "name": "Complete data sovereignty",
+              "starter": false,
+              "growth": true,
+              "enterprise": false
+            }
+          ]
+        },
+        {
+          "name": "SUPPORT & COMMUNITY",
+          "features": [
+            {
+              "name": "Support channel",
+              "starter": "Community",
+              "growth": "GitHub / Community",
+              "enterprise": "Priority Discord"
+            },
+            {
+              "name": "Direct roadmap input & voting",
+              "starter": false,
+              "growth": "GitHub PRs",
+              "enterprise": true
+            },
+            {
+              "name": "GitHub Sponsor supporter badge",
+              "starter": false,
+              "growth": false,
+              "enterprise": true
+            },
+            {
+              "name": "License / Commitment",
+              "starter": "Free Forever",
+              "growth": "MIT License",
+              "enterprise": "Voluntary"
+            }
+          ]
+        }
+      ]
     }
   },
   "donate": {

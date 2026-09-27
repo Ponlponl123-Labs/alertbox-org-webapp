@@ -51,7 +51,7 @@ function CurrentUserChip() {
   if (!userInfo) return null;
 
   return (
-    <Popover onOpenChange={setOpen} open={open} key={pathname}>
+    <Popover data-force-visible="true" onOpenChange={setOpen} open={open} key={pathname}>
       <PopoverTrigger
         render={
           <Button
@@ -60,6 +60,8 @@ function CurrentUserChip() {
               open && "translate-y-6 blur-lg scale-110",
               !open && "backdrop-blur-sm"
             )}
+            data-force-visible="true"
+            style={{ display: "flex !important" }}
             variant="outline"
           />
         }
@@ -81,6 +83,7 @@ function CurrentUserChip() {
             animate={{ y: -24, opacity: 1, filter: "blur(0px)" }}
             exit={{ y: -32, opacity: 0, filter: "blur(12px)" }}
             className="select-none"
+            data-force-visible="true"
             transition={{
               height: { type: "spring", stiffness: 320, damping: 26, mass: 0.8 },
               opacity: { duration: 0.16 },

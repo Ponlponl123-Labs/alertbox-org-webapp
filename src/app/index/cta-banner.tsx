@@ -71,7 +71,7 @@ export default function CTABanner() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-foreground/10 bg-foreground/3 dark:bg-white/4 backdrop-blur-md mb-6"
+          className="inline-flex items-center gap-2 px-3 py-1 mb-6"
         >
           <HandCoinsIcon weight="bold" />
           <span className="text-xs text-foreground/80 font-semibold tracking-wider">
@@ -164,7 +164,7 @@ export default function CTABanner() {
             href="https://github.com/ponlponl123-labs/alertbox-org"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium text-foreground/50 hover:text-foreground bg-foreground/3 hover:bg-foreground/6 border border-foreground/8 transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium text-foreground/50 hover:text-foreground bg-foreground/3 hover:bg-foreground/6 apply-smooth-transition"
           >
             <GithubLogoIcon weight="fill" size={14} />
             <span>{t.secondary || "View on GitHub"}</span>

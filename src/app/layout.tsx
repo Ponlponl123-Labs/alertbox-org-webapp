@@ -112,7 +112,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: preload }} />
       </head>
-      <body className="min-h-full flex flex-col relative transition-[margin-top] duration-200 ease-out"
+      <body className="min-h-[calc(100dvh-var(--status-banner-height,0))] flex flex-col relative transition-[margin-top] duration-200 ease-out"
         style={{
           overflow: "initial"
         }}
@@ -123,7 +123,7 @@ export default function RootLayout({
           <BackendLivenessBanner />
           <TooltipProvider>
             <Header />
-            <main id="app" className="flex-1 min-h-[calc(100dvh-var(--status-banner-height,0))] flex flex-col">
+            <main id="app" className="w-dvw min-h-[calc(100dvh-var(--status-banner-height,0))] flex flex-col">
               {children}
             </main>
             <Footer />

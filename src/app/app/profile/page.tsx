@@ -194,7 +194,7 @@ function Page() {
   const isUriCooldown =
     (userInfo?.profile?.uriCooldownEnd &&
       new Date(userInfo?.profile?.uriCooldownEnd).getTime() >
-        new Date().getTime()) ||
+      new Date().getTime()) ||
     false;
 
   const handlePublish = async () => {
@@ -335,8 +335,8 @@ function Page() {
           </Button>
         )}
       </div>
-      <div className="flex gap-1.5 min-h-0 flex-1 mt-3">
-        <div className="w-64 flex flex-col h-max z-10 relative gap-1.5">
+      <div className="flex max-md:flex-col gap-1.5 min-h-0 flex-1 mt-3">
+        <div className="md:w-64 flex flex-col h-max z-10 relative gap-1.5">
           <Accordion className="w-full bg-card rounded-2xl">
             <AccordionItem defaultOpen={true}>
               <AccordionButton
@@ -352,7 +352,7 @@ function Page() {
                   weight="fill"
                   className="rotate-0! text-foreground/40 group-data-open:text-foreground"
                 />
-                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-0.25">
+                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
                   {lang.data.app.profile.basic_info}
                 </h1>
               </AccordionButton>
@@ -455,7 +455,7 @@ function Page() {
                   weight="fill"
                   className="rotate-0! text-foreground/40 group-data-open:text-foreground"
                 />
-                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-0.25">
+                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
                   {lang.data.app.profile.socials.title}
                 </h1>
               </AccordionButton>
@@ -570,7 +570,7 @@ function Page() {
                   weight="fill"
                   className="rotate-0! text-foreground/40 group-data-open:text-foreground"
                 />
-                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-0.25">
+                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
                   {lang.data.app.profile.accent_color}
                 </h1>
               </AccordionButton>
@@ -616,7 +616,7 @@ function Page() {
             </AccordionItem>
           </Accordion>
         </div>
-        <div className="w-full flex flex-col overflow-hidden min-h-0 bg-foreground/5 rounded-4xl flex-1 border-2 border-dashed border-foreground/10 z-10 relative">
+        <div className="w-full max-md:-order-1 flex flex-col overflow-hidden min-h-0 bg-foreground/5 rounded-4xl flex-1 border-2 border-dashed border-foreground/10 z-10 relative">
           <ProfilePreview
             liveData={{
               displayName,

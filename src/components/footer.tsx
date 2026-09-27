@@ -10,11 +10,22 @@ import { usePathname } from "next/navigation";
 import BorderGlow from "./BorderGlow";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-const Footer = memo(function Footer() {
+const Footer = memo(function Footer({
+  force,
+}: {
+  force?: boolean;
+} = {}) {
   const pathname = usePathname();
   const lang = useStore(coreStore, (state) => state.lang);
 
-  if (pathname.startsWith("/@") || pathname.startsWith("/docs")) return null;
+  if (
+    !force &&
+    (pathname.startsWith("/@") ||
+      pathname.startsWith("/docs") ||
+      pathname.startsWith("/app"))
+  ) {
+    return <></>;
+  }
 
   const FOOTER_LINKS = [
     {

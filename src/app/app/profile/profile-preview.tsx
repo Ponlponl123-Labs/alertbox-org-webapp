@@ -112,8 +112,8 @@ export default function ProfilePreview({
       className={cn(
         "bg-background border border-foreground/10 shadow-2xl overflow-hidden flex flex-col relative",
         isDashboardPreview
-          ? "w-full max-w-[280px] rounded-[2rem] aspect-9/16 max-h-[500px]"
-          : "w-full max-w-[360px] rounded-3xl min-h-[520px]",
+          ? "w-full max-w-70 rounded-[2rem] aspect-9/16 max-h-125"
+          : "w-full max-w-90 rounded-3xl min-h-130",
       )}
     >
       {isDashboardPreview && (
@@ -253,7 +253,7 @@ export default function ProfilePreview({
   );
 
   const renderDesktopCard = () => (
-    <div className="w-full max-w-[560px] bg-background border border-foreground/10 rounded-[1.5rem] shadow-2xl overflow-hidden flex flex-col relative min-h-[350px]">
+    <div className="w-full max-w-140 bg-background border border-foreground/10 rounded-[1.5rem] shadow-2xl overflow-hidden flex flex-col relative min-h-87.5">
       {profile.avatar && (
         <Image
           src={profile.avatar}
@@ -394,7 +394,7 @@ export default function ProfilePreview({
     <div
       className={cn(
         "flex flex-col items-center justify-center p-6 size-full bg-linear-to-br from-zinc-50/50 to-zinc-100/50 dark:from-zinc-950/20 dark:to-zinc-900/20 relative",
-        isDashboardPreview ? "min-h-[450px]" : "min-h-screen",
+        isDashboardPreview ? "min-h-112.5" : "min-h-screen",
       )}
     >
       {viewMode !== "responsive" && (

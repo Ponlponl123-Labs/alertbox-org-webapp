@@ -50,7 +50,7 @@ function Nav({
               variant="ghost"
               size={"sm"}
               className={cn(
-                "rounded-lg p-2 w-full relative z-10 transition-colors",
+                "rounded-lg p-2 w-full relative z-10 md:bg-transparent! transition-colors",
                 isActive
                   ? "text-foreground font-semibold"
                   : "text-foreground/60 hover:text-foreground",
@@ -150,8 +150,11 @@ function Header() {
   const isIndex = pathname === "/";
   const isApp = pathname.startsWith("/app");
   const isDocs = pathname.startsWith("/docs");
+  const isPricing = pathname.startsWith("/pricing");
   const isFullHeaderWidth = isApp || isDocs;
-  const isTranslucentHeader = pathname.startsWith("/about");
+  const isGridLineHeader = isPricing;
+  const isTranslucentHeader = pathname.startsWith("/about") || isPricing;
+  const is6xlChildHeader = isPricing;
   const statusBannerHeight = useStore(
     coreStore,
     (state) => state.statusBannerHeight,
@@ -187,7 +190,7 @@ function Header() {
       ? windowWidth
       : isIndex && isScrolled && windowWidth >= 768
         ? 760
-        : Math.min(windowWidth, 1448);
+        : is6xlChildHeader ? Math.min(windowWidth, 1120) : Math.min(windowWidth, 1448);
 
   if (pathname.startsWith("/@")) return null;
 
@@ -227,10 +230,11 @@ function Header() {
               : "absolute h-16",
           isIndex
             ? "border-transparent"
-            : !isDocs && "supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur-sm border-border border-b border-solid ",
+            : (!isDocs && !isTranslucentHeader) && "supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur-sm border-border border-b border-solid ",
           isIndex && isScrolled && "md:bg-muted/60 md:backdrop-blur-lg md:rounded-3xl",
           isNavActive && "fixed",
           isTranslucentHeader && "border-transparent bg-transparent",
+          isGridLineHeader && "border-b border-border bg-transparent backdrop-blur-none",
           pathname.startsWith("/app") &&
           "border-0 bg-transparent bg-none supports-backdrop-filter:bg-transparent/80 supports-backdrop-filter:backdrop-blur-none",
         )}

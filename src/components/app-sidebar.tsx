@@ -211,7 +211,7 @@ function AppSidebar() {
         className={cn(
           "sticky top-(--status-banner-height,0px) h-[calc(100vh-var(--status-banner-height,0))] z-30 p-1.5 md:pt-14 max-md:pt-2 bg-sidebar flex flex-col text-foreground gap-1 select-none overflow-x-hidden",
           "transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:translate-x-0!",
-          "max-md:fixed max-md:top-(--status-banner-height,0px) max-md:left-0 max-md:w-64! max-md:z-60 max-md:shadow-2xl max-md:border-r max-md:border-border/40 max-md:h-[calc(100vh-var(--status-banner-height,0))]",
+          "max-md:fixed max-md:top-(--status-banner-height,0px) max-md:left-0 max-md:w-64! max-md:z-20030 max-md:shadow-2xl max-md:border-r max-md:border-border/40 max-md:h-[calc(100vh-var(--status-banner-height,0))]",
           isSidebarHiddenOnMobile ? "max-md:-translate-x-full" : "max-md:translate-x-0",
         )}
       >

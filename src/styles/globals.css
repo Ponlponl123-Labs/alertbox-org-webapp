@@ -91,16 +91,16 @@
     box-shadow: none !important;
   }
 
-  .old-browser [class*="blur-3xl"],
-  .old-browser [class*="blur-2xl"],
-  .old-browser [class*="blur-xl"],
-  .old-browser [class*="blur-lg"],
-  .old-browser [class*="blur-[1"],
-  .old-browser [class*="blur-[9"],
-  .old-browser [class*="blur-[12"],
-  .old-browser [class*="blur-[13"],
-  .old-browser [class*="blur-[14"],
-  .old-browser [class*="blur-[15"],
+  .old-browser [class*="blur-3xl"]:not([data-force-visible]),
+  .old-browser [class*="blur-2xl"]:not([data-force-visible]),
+  .old-browser [class*="blur-xl"]:not([data-force-visible]),
+  .old-browser [class*="blur-lg"]:not([data-force-visible]),
+  .old-browser [class*="blur-[1"]:not([data-force-visible]),
+  .old-browser [class*="blur-[9"]:not([data-force-visible]),
+  .old-browser [class*="blur-[12"]:not([data-force-visible]),
+  .old-browser [class*="blur-[13"]:not([data-force-visible]),
+  .old-browser [class*="blur-[14"]:not([data-force-visible]),
+  .old-browser [class*="blur-[15"]:not([data-force-visible]),
   .old-browser .blur-decoration,
   .old-browser .aurora-canvas,
   .old-browser [data-blur-decorative] {

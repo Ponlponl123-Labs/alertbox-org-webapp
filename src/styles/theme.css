@@ -82,6 +82,32 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --background-rgb: 255, 255, 255;
+  --foreground-rgb: 10, 10, 10;
+  --card-rgb: 255, 255, 255;
+  --card-foreground-rgb: 10, 10, 10;
+  --popover-rgb: 255, 255, 255;
+  --popover-foreground-rgb: 10, 10, 10;
+  --primary-rgb: 23, 23, 23;
+  --primary-foreground-rgb: 250, 250, 250;
+  --secondary-rgb: 245, 245, 245;
+  --secondary-foreground-rgb: 23, 23, 23;
+  --muted-rgb: 245, 245, 245;
+  --muted-foreground-rgb: 115, 115, 115;
+  --accent-rgb: 245, 245, 245;
+  --accent-foreground-rgb: 23, 23, 23;
+  --destructive-rgb: 228, 0, 22;
+  --border-rgb: 229, 229, 229;
+  --input-rgb: 229, 229, 229;
+  --ring-rgb: 161, 161, 161;
+  --sidebar-rgb: 250, 250, 250;
+  --sidebar-foreground-rgb: 10, 10, 10;
+  --sidebar-primary-rgb: 23, 23, 23;
+  --sidebar-primary-foreground-rgb: 250, 250, 250;
+  --sidebar-accent-rgb: 245, 245, 245;
+  --sidebar-accent-foreground-rgb: 23, 23, 23;
+  --sidebar-border-rgb: 229, 229, 229;
+  --sidebar-ring-rgb: 161, 161, 161;
 }
 
 .dark {
@@ -117,6 +143,32 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --background-rgb: 0, 0, 0;
+  --foreground-rgb: 250, 250, 250;
+  --card-rgb: 6, 6, 6;
+  --card-foreground-rgb: 250, 250, 250;
+  --popover-rgb: 23, 23, 23;
+  --popover-foreground-rgb: 250, 250, 250;
+  --primary-rgb: 229, 229, 229;
+  --primary-foreground-rgb: 23, 23, 23;
+  --secondary-rgb: 38, 38, 38;
+  --secondary-foreground-rgb: 250, 250, 250;
+  --muted-rgb: 38, 38, 38;
+  --muted-foreground-rgb: 161, 161, 161;
+  --accent-rgb: 38, 38, 38;
+  --accent-foreground-rgb: 250, 250, 250;
+  --destructive-rgb: 255, 101, 104;
+  --border-rgb: 255, 255, 255;
+  --input-rgb: 255, 255, 255;
+  --ring-rgb: 115, 115, 115;
+  --sidebar-rgb: 0, 0, 0;
+  --sidebar-foreground-rgb: 250, 250, 250;
+  --sidebar-primary-rgb: 20, 71, 230;
+  --sidebar-primary-foreground-rgb: 250, 250, 250;
+  --sidebar-accent-rgb: 38, 38, 38;
+  --sidebar-accent-foreground-rgb: 250, 250, 250;
+  --sidebar-border-rgb: 255, 255, 255;
+  --sidebar-ring-rgb: 115, 115, 115;
 }
 
 .old-browser,
@@ -152,6 +204,32 @@
   --sidebar-accent-foreground: #18181b;
   --sidebar-border: #e4e4e7;
   --sidebar-ring: #a1a1aa;
+  --background-rgb: 255, 255, 255;
+  --foreground-rgb: 24, 24, 27;
+  --card-rgb: 255, 255, 255;
+  --card-foreground-rgb: 24, 24, 27;
+  --popover-rgb: 255, 255, 255;
+  --popover-foreground-rgb: 24, 24, 27;
+  --primary-rgb: 24, 24, 27;
+  --primary-foreground-rgb: 250, 250, 250;
+  --secondary-rgb: 244, 244, 245;
+  --secondary-foreground-rgb: 24, 24, 27;
+  --muted-rgb: 244, 244, 245;
+  --muted-foreground-rgb: 113, 113, 122;
+  --accent-rgb: 244, 244, 245;
+  --accent-foreground-rgb: 24, 24, 27;
+  --destructive-rgb: 239, 68, 68;
+  --border-rgb: 228, 228, 231;
+  --input-rgb: 228, 228, 231;
+  --ring-rgb: 161, 161, 170;
+  --sidebar-rgb: 250, 250, 250;
+  --sidebar-foreground-rgb: 24, 24, 27;
+  --sidebar-primary-rgb: 24, 24, 27;
+  --sidebar-primary-foreground-rgb: 250, 250, 250;
+  --sidebar-accent-rgb: 244, 244, 245;
+  --sidebar-accent-foreground-rgb: 24, 24, 27;
+  --sidebar-border-rgb: 228, 228, 231;
+  --sidebar-ring-rgb: 161, 161, 170;
 }
 
 .old-browser.dark,
@@ -188,4 +266,30 @@
   --sidebar-accent-foreground: #fafafa;
   --sidebar-border: rgba(255, 255, 255, 0.1);
   --sidebar-ring: #71717a;
+  --background-rgb: 0, 0, 0;
+  --foreground-rgb: 250, 250, 250;
+  --card-rgb: 24, 24, 27;
+  --card-foreground-rgb: 250, 250, 250;
+  --popover-rgb: 24, 24, 27;
+  --popover-foreground-rgb: 250, 250, 250;
+  --primary-rgb: 228, 228, 231;
+  --primary-foreground-rgb: 24, 24, 27;
+  --secondary-rgb: 39, 39, 42;
+  --secondary-foreground-rgb: 250, 250, 250;
+  --muted-rgb: 39, 39, 42;
+  --muted-foreground-rgb: 161, 161, 170;
+  --accent-rgb: 39, 39, 42;
+  --accent-foreground-rgb: 250, 250, 250;
+  --destructive-rgb: 248, 113, 113;
+  --border-rgb: 255, 255, 255;
+  --input-rgb: 255, 255, 255;
+  --ring-rgb: 113, 113, 122;
+  --sidebar-rgb: 0, 0, 0;
+  --sidebar-foreground-rgb: 250, 250, 250;
+  --sidebar-primary-rgb: 59, 130, 246;
+  --sidebar-primary-foreground-rgb: 250, 250, 250;
+  --sidebar-accent-rgb: 39, 39, 42;
+  --sidebar-accent-foreground-rgb: 250, 250, 250;
+  --sidebar-border-rgb: 255, 255, 255;
+  --sidebar-ring-rgb: 113, 113, 122;
 }
