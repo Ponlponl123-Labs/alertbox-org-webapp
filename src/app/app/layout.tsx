@@ -13,6 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GithubLogoIcon, HandHeartIcon } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
 
 const protectedPaths = [
   "/app/connections",
@@ -20,6 +22,48 @@ const protectedPaths = [
   "/app/connections/bmac",
   "/app/account/security",
 ];
+
+export function AppFooter() {
+  const lang = useStore(coreStore, (state) => state.lang);
+
+  return (
+    <footer className="flex flex-col sm:flex-row items-center gap-2 opacity-30 p-4 sm:p-6 lg:p-12 select-none">
+      <div className="flex flex-col justify-start max-sm:items-center gap-1">
+        <div className="inline-flex gap-2">
+          <HandHeartIcon size={22} weight="fill" className="text-foreground" />
+          <span className="text-sm font-semibold font-sans">
+            AlertBox<span className="text-xs opacity-60 ml-0.5 font-light tracking-wider">.org</span>
+          </span>
+        </div>
+        <span className="text-xs font-light opacity-50">
+          {lang.data.footer.author}
+        </span>
+      </div>
+      <div className="flex flex-1 gap-2 justify-end">
+        <Link href={"https://law.ponlponl123.com/tos"} target="_blank">
+          <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
+            {lang.data.footer.links.legal.tos}
+          </Button>
+        </Link>
+        <Link href={"https://law.ponlponl123.com/privacy"} target="_blank">
+          <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
+            {lang.data.footer.links.legal.privacy}
+          </Button>
+        </Link>
+        <Link href={"https://law.ponlponl123.com/additional/alertbox.org"} target="_blank">
+          <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
+            {lang.data.footer.links.legal.additional}
+          </Button>
+        </Link>
+        <Link href={"https://github.com/ponlponl123-labs/alertbox-org"} target="_blank">
+          <Button size="icon" variant="ghost" className={"rounded-lg"}>
+            <GithubLogoIcon size={22} weight="fill" className="text-foreground" />
+          </Button>
+        </Link>
+      </div>
+    </footer>
+  )
+}
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const [scrollarea, setScrollarea] = useState<HTMLDivElement | null>(null);
@@ -108,39 +152,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                 {children}
               </div>
             </div>
-            <footer className="flex flex-col sm:flex-row items-center gap-2 opacity-30 p-4 sm:p-6 lg:p-12 select-none">
-              <div className="flex flex-col justify-start max-sm:items-center gap-1">
-                <div className="inline-flex gap-2">
-                  <HandHeartIcon size={22} weight="fill" className="text-foreground" />
-                  <span className="text-sm font-semibold font-sans">
-                    AlertBox<span className="text-xs opacity-60 ml-0.5 font-light tracking-wider">.org</span>
-                  </span>
-                </div>
-                <span className="text-xs font-light opacity-50">Designed & Developed by Ponlponl123</span>
-              </div>
-              <div className="flex flex-1 gap-2 justify-end">
-                <Link href={"https://law.ponlponl123.com/tos"} target="_blank">
-                  <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
-                    Terms of Service
-                  </Button>
-                </Link>
-                <Link href={"https://law.ponlponl123.com/privacy"} target="_blank">
-                  <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
-                    Privacy Policy
-                  </Button>
-                </Link>
-                <Link href={"https://law.ponlponl123.com/additional/alertbox.org"} target="_blank">
-                  <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
-                    Additional Terms
-                  </Button>
-                </Link>
-                <Link href={"https://github.com/ponlponl123-labs/alertbox-org"} target="_blank">
-                  <Button size="icon" variant="ghost" className={"rounded-lg"}>
-                    <GithubLogoIcon size={22} weight="fill" className="text-foreground" />
-                  </Button>
-                </Link>
-              </div>
-            </footer>
+            <AppFooter />
           </ScrollArea>
         )}
       </motion.main>

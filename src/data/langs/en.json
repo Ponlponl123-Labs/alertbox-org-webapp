@@ -1179,6 +1179,7 @@
     "description": "Alertbox.org is an open-source alert box service featuring custom streamer profiles, zero platform fees, and robust privacy protection. \nPowered by trusted payment gateways like Buy Me a Coffee, Ko-fi, and Stripe.",
     "copyright": "Copyright {year} @ {name}.",
     "powered_by": "Powered by ",
+    "author": "Designed & Developed by Ponlponl123",
     "links": {
       "legal": {
         "title": "Legal",
