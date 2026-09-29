@@ -180,6 +180,13 @@ function Page() {
         const updatedUser = await res.json();
         patchUserInfo(updatedUser);
         toast.success(lang.data.app.account.success);
+      } else if (res.status === 451) {
+        const detail = await res.text().catch(() => "");
+        toast.error(
+          detail
+            ? `${detail}. ${lang.data.app.account.illegal_content}`
+            : lang.data.app.account.illegal_content,
+        );
       } else {
         toast.error(lang.data.app.account.error);
       }

@@ -536,6 +536,7 @@
       "save": "Save Settings",
       "success": "Account settings updated!",
       "error": "Failed to update settings",
+      "illegal_content": "Your content contains illegal, NSFW, or prohibited material that is not allowed.",
       "fatal": "An error occurred",
       "change_banner": "Change Banner",
       "change_avatar": "Change Avatar",

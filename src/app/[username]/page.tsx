@@ -60,7 +60,7 @@ export default async function PublicProfilePage({ params }: Props) {
 
   return (
     <>
-      <section className="min-h-screen">
+      <section className="w-screen min-h-dvh">
         <PublicProfileClient username={username} initialData={initialData} />
       </section>
       <Footer username={username} initialData={initialData} />

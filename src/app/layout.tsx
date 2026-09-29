@@ -108,6 +108,9 @@ export default function RootLayout({
         afacadSans.variable,
       )}
       suppressHydrationWarning
+      style={{
+        overflowX: "hidden"
+      }}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: preload }} />
@@ -123,7 +126,7 @@ export default function RootLayout({
           <BackendLivenessBanner />
           <TooltipProvider>
             <Header />
-            <main id="app" className="w-dvw min-h-[calc(100dvh-var(--status-banner-height,0))] flex flex-col">
+            <main id="app" className="w-[calc(100dvw-var(--scrollbar-margin,0))] min-h-[calc(100dvh-var(--status-banner-height,0))] flex flex-col">
               {children}
             </main>
             <Footer />
