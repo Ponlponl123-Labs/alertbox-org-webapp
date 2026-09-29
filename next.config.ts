@@ -29,6 +29,17 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_API_ENDPOINT: process.env["API_ENDPOINT"],
   },
+  async headers() {
+    return [
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, HEAD, OPTIONS" },
+        ],
+      },
+    ];
+  },
   allowedDevOrigins,
   images: {
     dangerouslyAllowLocalIP: allowedLocalhostWhen.includes(process.env.NODE_ENV || ""),
