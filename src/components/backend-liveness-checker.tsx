@@ -41,6 +41,8 @@ export default function BackendLivenessChecker() {
     activeRef.current = true;
 
     const checkLiveness = async (): Promise<void> => {
+      if (typeof document !== "undefined" && document.hidden) return;
+
       let isAlive = false;
       try {
         const res = await fetch(getApiUrl("/api/health"));
@@ -149,12 +151,20 @@ export default function BackendLivenessChecker() {
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        checkLiveness();
+      }
+    };
+
     checkLiveness();
-    const interval = setInterval(checkLiveness, 15000);
+    const interval = setInterval(checkLiveness, 60000);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       activeRef.current = false;
       clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [setBackendAlive, setSystemStatuses]);
 
