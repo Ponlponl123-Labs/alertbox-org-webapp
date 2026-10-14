@@ -7,10 +7,10 @@ import { BankIcon, LockKeyIcon } from "@phosphor-icons/react";
 import { AnimatePresence } from "motion/react";
 import { Input } from "react-smooth-input";
 import { Connections } from "@/types/user.types";
-import { getCookie } from "cookies-next/client";
 import { Spinner } from "./ui/spinner";
 import Link from "next/link";
 import { getApiUrl } from "@/lib/api";
+import { useUserContext } from "@/contexts/user";
 
 function Connection({
   api_endpoint,
@@ -23,6 +23,7 @@ function Connection({
   secret,
   skey,
   soon,
+  href,
   setConnections,
 }: {
   api_endpoint: string;
@@ -35,12 +36,18 @@ function Connection({
   secret: unknown;
   skey: string;
   soon?: boolean;
+  href?: string;
   connections: Connections | null;
   setConnections: Dispatch<SetStateAction<Connections | null>>;
 }) {
   const lang = useStore(coreStore, (state) => state.lang);
+  const { authFetch, activeOrg, activeStreamer } = useUserContext();
   const [isLoading, setIsLoading] = useState(false);
   const [isShowSecret, setIsShowSecret] = useState(isConnected && !!secret);
+
+  const orgKey = activeOrg?.slug || activeOrg?.id;
+  const streamerKey = activeStreamer?.name || activeStreamer?.id;
+  const targetHref = href || (orgKey && streamerKey ? `/app/${orgKey}/${streamerKey}/connections/${skey}` : `/app/connections/${skey}`);
 
   const isUserSecretFlow = skey === "kofi" || skey === "bmac";
 
@@ -66,10 +73,7 @@ function Connection({
 
   const update = async (endpoint: string, key: string) => {
     setIsLoading(true);
-    const token = getCookie("USRSS");
-    const headers: Record<string, string> = {
-      Authorization: "Bearer " + atob(token || ""),
-    };
+    const headers: Record<string, string> = {};
     let body: string;
     if (isUserSecretFlow) {
       headers["Content-Type"] = "application/json";
@@ -78,7 +82,7 @@ function Connection({
       body = currentSecret || "";
     }
 
-    const r = await fetch(getApiUrl(endpoint), {
+    const r = await authFetch(getApiUrl(endpoint), {
       method: "POST",
       headers,
       body,
@@ -100,12 +104,8 @@ function Connection({
 
   const disconnect = async (endpoint: string, key: string) => {
     setIsLoading(true);
-    const token = getCookie("USRSS");
-    const r = await fetch(getApiUrl(endpoint), {
+    const r = await authFetch(getApiUrl(endpoint), {
       method: "DELETE",
-      headers: {
-        Authorization: "Bearer " + atob(token || ""),
-      },
     });
     if (r.ok) {
       setConnections((prev) => {
@@ -179,7 +179,7 @@ function Connection({
             </Button>
           ) : isUserSecretFlow ? (
             <Link
-              href={"/app/connections/" + skey}
+              href={targetHref}
               className="w-full min-w-0 flex-1"
             >
               <Button
@@ -198,12 +198,8 @@ function Connection({
                   className="rounded-xl p-4 min-w-0 flex-1 w-full border-2 border-dashed"
                   onClick={async () => {
                     setIsLoading(true);
-                    const token = getCookie("USRSS");
-                    const r = await fetch(getApiUrl(api_endpoint + "/oauth2"), {
+                    const r = await authFetch(getApiUrl(api_endpoint + "/oauth2"), {
                       method: "GET",
-                      headers: {
-                        Authorization: "Bearer " + atob(token || ""),
-                      },
                     });
                     if (r.ok) {
                       const oauth2_link = await r.text();
@@ -220,7 +216,7 @@ function Connection({
                 </Button>
               ) : (
                 <Link
-                  href={"/app/connections/" + skey}
+                  href={targetHref}
                   className="w-full min-w-0 flex-1"
                 >
                   <Button
@@ -312,7 +308,7 @@ function Connection({
                       {lang.data.app.connections.status.connect}
                     </Button>
                     <Link
-                      href={"/app/connections/" + skey}
+                      href={targetHref}
                       className="min-w-0 flex-1 w-full"
                     >
                       <Button variant="secondary" className="rounded-xl p-4 w-full">

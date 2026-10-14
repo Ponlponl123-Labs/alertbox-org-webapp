@@ -1,0 +1,330 @@
+"use client";
+import Connection from "@/components/connection";
+import { Spinner } from "@/components/ui/spinner";
+import { useUserContext } from "@/contexts/user";
+import { getApiUrl } from "@/lib/api";
+import { coreStore } from "@/hooks/store/core";
+import { Connections } from "@/types/user.types";
+import { useEffect, useRef, useState } from "react";
+import { useStore } from "zustand";
+import {
+  Stripe,
+  BuyMeACoffee,
+  KoFi,
+  Youtube,
+  Streamlabs,
+  Twitch,
+  Patreon,
+  Xendit,
+} from "@thesvg/react";
+import { FeelFreePay } from "@/components/icons";
+import {
+  Tabs,
+  TabsContent,
+  TabsContents,
+  TabsList,
+  TabsTrigger,
+} from "@/components/animate-ui/components/animate/tabs";
+import {
+  ContactlessPaymentIcon,
+  FacebookLogoIcon,
+  WebhooksLogoIcon,
+} from "@phosphor-icons/react";
+import { useParams, useSearchParams } from "next/navigation";
+import Image from "next/image";
+
+function Page() {
+  const [connections, setConnections] = useState<Connections | null>(null);
+  const lang = useStore(coreStore, (state) => state.lang);
+  const { userInfo, logout, authFetch, activeOrg, activeStreamer } = useUserContext();
+  const searchParams = useSearchParams();
+  const routeParams = useParams();
+  const selectedTab = searchParams.get("t");
+  const lastFetchedKey = useRef("");
+
+  const targetOrg = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
+  const targetStreamer = activeStreamer?.id || activeStreamer?.name || (routeParams?.streamer as string);
+
+  useEffect(() => {
+    if (!userInfo || !targetOrg || !targetStreamer) return;
+    const fetchKey = `${targetOrg}:${targetStreamer}`;
+    if (lastFetchedKey.current === fetchKey) return;
+    lastFetchedKey.current = fetchKey;
+
+    const endpoint = getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}/connections`);
+
+    authFetch(endpoint)
+      .then((res) => {
+        if (res.status === 401) {
+          logout();
+          return null;
+        }
+        if (!res.ok) {
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data) setConnections(data);
+      })
+      .catch(() => {});
+  }, [logout, userInfo, authFetch, targetOrg, targetStreamer]);
+
+  return (
+    <>
+      <h1 className="font-semibold text-3xl mt-1.5">
+        {lang.data.app.connections.title}
+      </h1>
+      <p className="mt-1.5 text-sm text-foreground/40">
+        {lang.data.app.connections.description}
+      </p>
+      <div className="w-full flex flex-col min-h-0 mt-6 flex-1 gap-1.5">
+        {!connections && (
+          <div className="w-full flex items-center justify-center min-h-0 bg-foreground/5 rounded-4xl py-6 flex-1 border-2 border-dashed border-foreground/10">
+            <Spinner className="size-6 text-foreground/40 mx-auto my-8" />
+          </div>
+        )}
+        {connections && (
+          <Tabs
+            defaultValue={
+              typeof selectedTab === "string"
+                ? selectedTab.toLowerCase()
+                : "payment"
+            }
+          >
+            <TabsList className="w-full h-max p-0 bg-transparent gap-1.5">
+              <TabsTrigger value="payment" className="xl:p-2.5 p-5">
+                <ContactlessPaymentIcon weight="bold" size={32} />
+                {lang.data.app.connections.tabs.payment}
+              </TabsTrigger>
+              <TabsTrigger value="trigger" className="xl:p-2.5 p-5">
+                <WebhooksLogoIcon weight="bold" size={32} />
+                {lang.data.app.connections.tabs.trigger}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContents className="rounded-2xl">
+              <TabsContent
+                value="payment"
+                className="flex flex-col xl:grid xl:grid-cols-2 gap-1.5"
+              >
+                {[
+                  {
+                    api_endpoint: "/api/v1/me/connection/stripe",
+                    icon: <Stripe className="size-8" />,
+                    name: lang.data.app.connections.providers.stripe.name,
+                    description:
+                      lang.data.app.connections.providers.stripe.description,
+                    privacy: lang.data.app.connections.providers.stripe.privacy,
+                    payout: lang.data.app.connections.providers.stripe.payout,
+                    isConnected: connections?.stripe ? true : false,
+                    key: "stripe",
+                    soon: true,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/kofi",
+                    icon: <KoFi className="size-8" />,
+                    name: lang.data.app.connections.providers.kofi.name,
+                    description:
+                      lang.data.app.connections.providers.kofi.description,
+                    privacy: lang.data.app.connections.providers.kofi.privacy,
+                    payout: lang.data.app.connections.providers.kofi.payout,
+                    isConnected: connections?.kofi ? true : false,
+                    key: "kofi",
+                    soon: false,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/buymeacoffee",
+                    icon: <BuyMeACoffee className="size-8" />,
+                    name: lang.data.app.connections.providers.bmac.name,
+                    description:
+                      lang.data.app.connections.providers.bmac.description,
+                    privacy: lang.data.app.connections.providers.bmac.privacy,
+                    payout: lang.data.app.connections.providers.bmac.payout,
+                    isConnected: connections?.bmac ? true : false,
+                    key: "bmac",
+                    soon: false,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/xendit",
+                    icon: <Xendit className="size-8" />,
+                    name: lang.data.app.connections.providers.xendit.name,
+                    description:
+                      lang.data.app.connections.providers.xendit.description,
+                    privacy: lang.data.app.connections.providers.xendit.privacy,
+                    payout: lang.data.app.connections.providers.xendit.payout,
+                    isConnected: connections?.xendit ? true : false,
+                    key: "xendit",
+                    soon: true,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/omise",
+                    icon: (
+                      <Image
+                        src={"/omise.webp"}
+                        width={32}
+                        height={32}
+                        className="rounded-md"
+                        alt="omise"
+                      />
+                    ),
+                    name: lang.data.app.connections.providers.omise.name,
+                    description:
+                      lang.data.app.connections.providers.omise.description,
+                    privacy: lang.data.app.connections.providers.omise.privacy,
+                    payout: lang.data.app.connections.providers.omise.payout,
+                    isConnected: false,
+                    key: "omise",
+                    soon: true,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/2c2p",
+                    icon: (
+                      <Image
+                        src={"/2c2p.webp"}
+                        width={32}
+                        height={32}
+                        className="rounded-md"
+                        alt="omise"
+                      />
+                    ),
+                    name: lang.data.app.connections.providers["2c2p"].name,
+                    description:
+                      lang.data.app.connections.providers["2c2p"].description,
+                    privacy:
+                      lang.data.app.connections.providers["2c2p"].privacy,
+                    payout: lang.data.app.connections.providers["2c2p"].payout,
+                    isConnected: false,
+                    key: "2c2p",
+                    soon: true,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/youtube",
+                    icon: <Youtube className="size-8" />,
+                    name: lang.data.app.connections.providers.youtube.name,
+                    description:
+                      lang.data.app.connections.providers.youtube.description,
+                    privacy:
+                      lang.data.app.connections.providers.youtube.privacy,
+                    payout: lang.data.app.connections.providers.youtube.payout,
+                    isConnected: connections?.youtube ? true : false,
+                    key: "youtube",
+                    soon: true,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/facebook",
+                    icon: (
+                      <FacebookLogoIcon
+                        weight="fill"
+                        className="size-8 text-blue-600"
+                      />
+                    ),
+                    name: lang.data.app.connections.providers.facebook.name,
+                    description:
+                      lang.data.app.connections.providers.facebook.description,
+                    privacy:
+                      lang.data.app.connections.providers.facebook.privacy,
+                    payout: lang.data.app.connections.providers.facebook.payout,
+                    isConnected: connections?.facebook ? true : false,
+                    key: "facebook",
+                    soon: true,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/twitch",
+                    icon: <Twitch className="size-8" />,
+                    name: lang.data.app.connections.providers.twitch.name,
+                    description:
+                      lang.data.app.connections.providers.twitch.description,
+                    privacy: lang.data.app.connections.providers.twitch.privacy,
+                    payout: lang.data.app.connections.providers.twitch.payout,
+                    isConnected: connections?.twitch ? true : false,
+                    key: "twitch",
+                    soon: true,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/patreon",
+                    icon: <Patreon className="size-8" />,
+                    name: lang.data.app.connections.providers.patreon.name,
+                    description:
+                      lang.data.app.connections.providers.patreon.description,
+                    privacy:
+                      lang.data.app.connections.providers.patreon.privacy,
+                    payout: lang.data.app.connections.providers.patreon.payout,
+                    isConnected: connections?.patreon ? true : false,
+                    key: "patreon",
+                    soon: true,
+                  },
+                  {
+                    api_endpoint: "/api/v1/me/connection/feelfreepay",
+                    icon: <FeelFreePay className="size-8" />,
+                    name: lang.data.app.connections.providers.feelfreepay.name,
+                    description:
+                      lang.data.app.connections.providers.feelfreepay
+                        .description,
+                    privacy:
+                      lang.data.app.connections.providers.feelfreepay.privacy,
+                    payout:
+                      lang.data.app.connections.providers.feelfreepay.payout,
+                    isConnected: connections?.ffp ? true : false,
+                    key: "ffp",
+                    soon: true,
+                  },
+                ].map((c, i) => (
+                  <Connection
+                    key={i}
+                    api_endpoint={c.api_endpoint}
+                    icon={c.icon}
+                    name={c.name}
+                    description={c.description}
+                    privacy={c.privacy}
+                    payout={c.payout}
+                    isConnected={c.isConnected}
+                    secret={connections?.[c.key as keyof Connections] || null}
+                    connections={connections}
+                    setConnections={setConnections}
+                    skey={c.key}
+                    soon={c.soon}
+                  />
+                ))}
+              </TabsContent>
+              <TabsContent value="trigger" className="flex flex-col gap-1.5">
+                {[
+                  {
+                    api_endpoint:
+                      "/api/v1/me/connection/integration/streamlabs",
+                    icon: <Streamlabs className="size-8" />,
+                    name: lang.data.app.connections.providers.streamlabs.name,
+                    description:
+                      lang.data.app.connections.providers.streamlabs
+                        .description,
+                    privacy:
+                      lang.data.app.connections.providers.streamlabs.privacy,
+                    isConnected: connections?.streamlabs,
+                    key: "streamlabs",
+                    soon: false,
+                  },
+                ].map((c, i) => (
+                  <Connection
+                    key={i}
+                    api_endpoint={c.api_endpoint}
+                    icon={c.icon}
+                    name={c.name}
+                    description={c.description}
+                    privacy={c.privacy}
+                    isConnected={c.isConnected}
+                    secret={c.isConnected}
+                    connections={connections}
+                    setConnections={setConnections}
+                    skey={c.key}
+                    soon={c.soon}
+                  />
+                ))}
+              </TabsContent>
+            </TabsContents>
+          </Tabs>
+        )}
+      </div>
+    </>
+  );
+}
+
+export default Page;

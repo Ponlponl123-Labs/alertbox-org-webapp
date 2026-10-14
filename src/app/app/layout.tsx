@@ -5,23 +5,15 @@ import Login from "./login";
 import { usePathname } from "next/navigation";
 import AppSidebar from "@/components/app-sidebar";
 import { motion, useScroll, useTransform } from "motion/react";
-import { clamp, cn, getFallbackInitial } from "@/lib/utils";
+import { clamp, cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import StreamerModeProtection from "@/components/streamer-mode-protection";
 import Image from "next/image";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GithubLogoIcon, HandHeartIcon } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
-
-const protectedPaths = [
-  "/app/connections",
-  "/app/connections/kofi",
-  "/app/connections/bmac",
-  "/app/account/security",
-];
 
 export function AppFooter() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -91,7 +83,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       id="webapp-wrapper"
       className={cn("flex min-w-0 h-[calc(100dvh-var(--status-banner-height,0))] -mb-(--status-banner-height,0) w-dvw", userInfo && "bg-sidebar")}
     >
-      {userInfo && <AppSidebar />}
+      {userInfo && pathname !== "/app/onboarding" && <AppSidebar />}
       <motion.main
         id="webapp-main"
         className="flex-1 flex flex-col min-w-0 bg-black/10 dark:bg-background md:rounded-bl-4xl md:border-l md:border-border relative overflow-hidden"
@@ -100,7 +92,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         exit={{ opacity: 0 }}
         transition={{ delay: 0.56 }}
       >
-        {protectedPaths.includes(pathname) && userInfo && (
+        {(pathname.includes("/connections") || pathname.startsWith("/app/account/security")) && userInfo && (
           <StreamerModeProtection />
         )}
         {!userInfo && !pathname.startsWith("/app/login/") ? (
@@ -130,25 +122,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             )}
             <motion.div
               style={{ opacity: headerOpacity }}
-              className="w-full h-24 -mb-12 sticky top-0 bg-background mask-b-from-0% z-20"
+              className="w-full h-24 -mb-12 sticky top-0 bg-background mask-b-from-0% z-20 pointer-events-none"
             />
             <div className="px-12 max-sm:px-4 max-lg:px-6 py-2 flex-1 w-full min-h-[calc(100%-4rem-var(--status-banner-height,0))] flex flex-col z-10 relative">
               <div className="min-h-0 flex-1 w-full flex flex-col pb-8">
-                {userInfo && !["/app/account"].includes(pathname) && (
-                  <div className="flex gap-1.75 items-center">
-                    <Avatar size="sm">
-                      {userInfo.profile?.avatar && (
-                        <AvatarImage src={userInfo.profile.avatar} />
-                      )}
-                      <AvatarFallback>
-                        {getFallbackInitial(userInfo.profile?.name || "?")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-foreground/40">
-                      @{userInfo.profile?.name}
-                    </span>
-                  </div>
-                )}
                 {children}
               </div>
             </div>

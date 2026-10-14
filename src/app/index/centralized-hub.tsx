@@ -58,7 +58,7 @@ export default function CentralizedHub() {
         </p>
 
         <Link
-          href="/app/connections"
+          href="/app"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-foreground text-background font-semibold text-xs transition-all hover:bg-foreground/80 active:scale-95 mb-16 cursor-pointer"
         >
           <span>{t?.cta ?? "Start integrating"}</span>

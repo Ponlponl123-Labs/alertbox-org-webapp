@@ -1,21 +1,43 @@
 "use client";
-import { coreStore } from "@/hooks/store/core";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useUserContext } from "@/contexts/user";
 import { useStore } from "zustand";
+import { orgStore, selectActiveOrg, selectActiveStreamer } from "@/hooks/store/org";
+import { Spinner } from "@/components/ui/spinner";
 
 function Page() {
-  const lang = useStore(coreStore, (state) => state.lang);
+  const router = useRouter();
+  const { userInfo } = useUserContext();
+  const activeOrg = useStore(orgStore, selectActiveOrg);
+  const activeStreamer = useStore(orgStore, selectActiveStreamer);
+  const isOrgMode = useStore(orgStore, (s) => s.isOrgMode);
+
+  useEffect(() => {
+    if (!userInfo) return;
+
+    if (!userInfo.memberships || userInfo.memberships.length === 0) {
+      router.replace("/app/onboarding");
+      return;
+    }
+
+    if (!activeOrg) return;
+
+    const orgKey = activeOrg.slug || activeOrg.id;
+    if (isOrgMode) {
+      router.replace(`/app/${orgKey}`);
+    } else if (activeStreamer) {
+      const streamerKey = activeStreamer.name || activeStreamer.id;
+      router.replace(`/app/${orgKey}/${streamerKey}`);
+    } else {
+      router.replace(`/app/${orgKey}`);
+    }
+  }, [userInfo, activeOrg, activeStreamer, isOrgMode, router]);
 
   return (
-    <>
-      <h1 className="font-semibold text-3xl mt-1.5">
-        {lang.data.app.dashboard.title}
-      </h1>
-      <div className="w-full flex flex-col items-center justify-center min-h-0 bg-foreground/5 mt-6 rounded-4xl flex-1 border-2 border-dashed border-foreground/10">
-        <span className="tracking-wider text-foreground/40">
-          {lang.data.common.comming_soon}
-        </span>
-      </div>
-    </>
+    <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+      <Spinner />
+    </div>
   );
 }
 

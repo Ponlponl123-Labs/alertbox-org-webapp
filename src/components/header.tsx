@@ -130,6 +130,7 @@ function Header() {
     setIsNavActive((prev) => !prev);
   };
 
+  const { userInfo } = useUserContext();
   const { scrollY } = useScroll();
   const [isScrolled, setIsScrolled] = useState(false);
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -192,7 +193,7 @@ function Header() {
         ? 760
         : is6xlChildHeader ? Math.min(windowWidth, 1120) : Math.min(windowWidth, 1448);
 
-  if (pathname.startsWith("/@")) return null;
+  if (pathname.startsWith("/@") || (pathname.startsWith("/app") && userInfo)) return null;
 
   return (
     <>

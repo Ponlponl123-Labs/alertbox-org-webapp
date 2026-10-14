@@ -141,8 +141,8 @@ export default function CTABanner() {
               <Link
                 href={
                   username.trim()
-                    ? `/app/profile?username=${username}`
-                    : "/app/profile"
+                    ? `/app/onboarding?claim=${encodeURIComponent(username.trim())}`
+                    : "/app"
                 }
                 className="relative h-full px-4 py-2 rounded-full bg-foreground text-background font-black text-xs flex items-center justify-center gap-1.5 hover:bg-foreground/90 active:scale-95 ml-2 shadow-md z-10 cursor-pointer"
               >

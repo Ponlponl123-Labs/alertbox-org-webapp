@@ -1,0 +1,17 @@
+"use client";
+import { coreStore } from "@/hooks/store/core";
+import { useStore } from "zustand";
+import Soon from "../soon";
+
+export default function Page() {
+  const lang = useStore(coreStore, (state) => state.lang);
+
+  return (
+    <>
+      <h1 className="font-semibold text-3xl mt-1.5">
+        {lang.data.app.alertbox.purchased.title}
+      </h1>
+      <Soon />
+    </>
+  );
+}

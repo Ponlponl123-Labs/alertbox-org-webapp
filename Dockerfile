@@ -1,5 +1,5 @@
 # Stage 1: Install dependencies
-FROM oven/bun:1.3-alpine AS deps
+FROM oven/bun:1.3-slim AS deps
 WORKDIR /app
 
 # Copy package manifests
@@ -7,7 +7,7 @@ COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 # Stage 2: Build the Next.js application
-FROM oven/bun:1.3-alpine AS builder
+FROM oven/bun:1.3-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -25,6 +25,7 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=384"
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs

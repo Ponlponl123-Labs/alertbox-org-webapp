@@ -501,8 +501,8 @@
       "collapse": "Collapse"
     },
     "login": {
-      "title": "Sign in",
-      "description": "Welcome aboard, Captain!",
+      "title": "Welcome",
+      "description": "Access your account and continue your journey with us",
       "disclaimer": "By signing in, you agree to our Terms of Service, Privacy Policy, and additional policies for our services.",
       "methods": {
         "discord": "Continue with Discord",

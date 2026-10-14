@@ -1,11 +1,41 @@
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  avatar: string | null;
+  banner?: string | null;
+  role?: "OWNER" | "ADMIN" | "MANAGER" | "EDITOR" | "VIEWER" | "MEMBER";
+  permissions?: string;
+  memberCount?: number;
+  streamers: Streamer[];
+  joinedAt?: string;
+}
+
+export interface OrganizationMember {
+  id: string;
+  userId: string;
+  orgId: string;
+  role: "OWNER" | "ADMIN" | "MANAGER" | "EDITOR" | "VIEWER" | "MEMBER";
+  permissions: string;
+  organization: Organization;
+}
+
+export interface Streamer extends Profile {
+  orgId?: string;
+  widgets?: Widget[];
+}
+
 export interface User {
   id: string;
   email: string;
+  name?: string | null;
+  avatar?: string | null;
   createWith: string;
   createdAt: string;
   updatedAt: string;
   disabledAt: string | null;
   deletedAt: string | null;
+  memberships?: OrganizationMember[];
   profile: Profile | null;
   widgets: Widget[];
 }
@@ -42,6 +72,8 @@ export interface Profile {
 export interface LiveProfileData {
   displayName?: string;
   bio?: string | null;
+  avatar?: string | null;
+  banner?: string | null;
   twitch?: string | null;
   youtube?: string | null;
   twitter?: string | null;

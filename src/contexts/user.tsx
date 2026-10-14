@@ -1,11 +1,12 @@
 "use client";
-import { User } from "@/types/user.types";
+import { User, Organization, Streamer, Profile, OrganizationMember } from "@/types/user.types";
 import {
   createContext,
   ReactNode,
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -13,36 +14,160 @@ import { setCookie, getCookie, deleteCookie } from "cookies-next";
 import { getApiUrl } from "@/lib/api";
 import { allowedLocalhostWhen } from "@/consts/statement";
 
+import { useStore } from "zustand";
+import { orgStore, selectActiveOrg, selectActiveStreamer } from "@/hooks/store/org";
+
 export interface UserContext {
   userInfo: User | null;
   login: (code: string) => Promise<boolean>;
   logout: () => void;
-  patchUserInfo: (patch: Partial<User>) => void;
+  patchUserInfo: (patch: Partial<User> | Partial<Streamer>) => void;
+  patchOrg: (patch: Partial<Organization>) => void;
+  organizations: Organization[];
+  activeOrg: Organization | null;
+  activeStreamer: Streamer | null;
+  isOrgMode: boolean;
+  setOrgMode: (enabled: boolean) => void;
+  setActiveOrgId: (id: string) => void;
+  setActiveStreamerId: (id: string | null) => void;
+  authFetch: (url: string, init?: RequestInit) => Promise<Response>;
 }
 
 const userContext = createContext<UserContext>({
   userInfo: null,
   login: async () => false,
-  logout: () => { },
-  patchUserInfo: () => { },
+  logout: () => {},
+  patchUserInfo: () => {},
+  patchOrg: () => {},
+  organizations: [],
+  activeOrg: null,
+  activeStreamer: null,
+  isOrgMode: false,
+  setOrgMode: () => {},
+  setActiveOrgId: () => {},
+  setActiveStreamerId: () => {},
+  authFetch: async () => new Response(),
 });
 
 export const UserContextProvider = ({ children }: { children: ReactNode }) => {
   const [userInfo, setUserInfo] = useState<UserContext["userInfo"]>(null);
   const fetched = useRef(false);
 
-  const patchUserInfo = useCallback((patch: Partial<User>) => {
-    setUserInfo((prev) => (prev ? { ...prev, ...patch } : null));
+  const organizations = useStore(orgStore, (s) => s.organizations);
+  const activeOrg = useStore(orgStore, selectActiveOrg);
+  const activeStreamer = useStore(orgStore, selectActiveStreamer);
+  const isOrgMode = useStore(orgStore, (s) => s.isOrgMode);
+
+  const setActiveOrgId = useCallback((id: string) => {
+    orgStore.getState().setActiveOrgId(id);
   }, []);
+
+  const setActiveStreamerId = useCallback((id: string | null) => {
+    orgStore.getState().setActiveStreamerId(id);
+  }, []);
+
+  const setOrgMode = useCallback((enabled: boolean) => {
+    orgStore.getState().setOrgMode(enabled);
+  }, []);
+
+  const patchUserInfo = useCallback(
+    (patch: Partial<User> | Partial<Streamer> | Record<string, unknown>) => {
+      const p = patch as Record<string, unknown>;
+      const isStreamerPatch =
+        Boolean(p) &&
+        (p.displayName !== undefined ||
+          p.accentColor !== undefined ||
+          p.bio !== undefined ||
+          p.banner !== undefined ||
+          (p.id !== undefined && !p.email && !p.memberships));
+      const effectiveProfilePatch = (isStreamerPatch ? p : p.profile) as Partial<Streamer> | undefined;
+
+      const activeOrgState = selectActiveOrg(orgStore.getState());
+      const activeStreamerState = selectActiveStreamer(orgStore.getState());
+      const targetStreamerId = (p.id as string | undefined) || activeStreamerState?.id;
+
+      if (effectiveProfilePatch && targetStreamerId) {
+        queueMicrotask(() => {
+          orgStore.getState().updateStreamer(targetStreamerId, effectiveProfilePatch);
+        });
+      }
+      if (Array.isArray(p.memberships)) {
+        queueMicrotask(() => {
+          orgStore.getState().syncFromMemberships(p.memberships as OrganizationMember[]);
+        });
+      }
+
+      setUserInfo((prev) => {
+        if (!prev) return null;
+
+        const updated: User = {
+          ...prev,
+          ...(typeof p.name === "string" ? { name: p.name } : {}),
+          ...(typeof p.avatar === "string" && !isStreamerPatch ? { avatar: p.avatar } : {}),
+          ...(typeof p.email === "string" ? { email: p.email } : {}),
+          ...(Array.isArray(p.memberships) ? { memberships: p.memberships } : {}),
+          profile: prev.profile ? { ...prev.profile } : null,
+        };
+
+        if (p.profile && typeof p.profile === "object") {
+          updated.profile = { ...(prev.profile || {}), ...p.profile } as Profile;
+        }
+
+        if (effectiveProfilePatch) {
+          if (updated.profile) {
+            updated.profile = { ...updated.profile, ...effectiveProfilePatch } as Profile;
+          }
+          if (prev.memberships && activeOrgState && targetStreamerId) {
+            updated.memberships = prev.memberships.map((m) => {
+              if (m.organization?.id === activeOrgState.id) {
+                return {
+                  ...m,
+                  organization: {
+                    ...m.organization,
+                    streamers: (m.organization.streamers || []).map((s) =>
+                      s.id === targetStreamerId ? { ...s, ...effectiveProfilePatch } : s,
+                    ),
+                  },
+                };
+              }
+              return m;
+            });
+          }
+        }
+
+        return updated;
+      });
+    },
+    [],
+  );
+
+  const authFetch = useCallback(
+    async (url: string, init?: RequestInit) => {
+      const authCookie = await getCookie("USRSS");
+      const headers = new Headers(init?.headers);
+      if (authCookie) {
+        headers.set("authorization", "Bearer " + atob(authCookie));
+      }
+      const activeOrgNow = selectActiveOrg(orgStore.getState());
+      const activeStreamerNow = selectActiveStreamer(orgStore.getState());
+      if (activeOrgNow) {
+        headers.set("x-org-id", activeOrgNow.id);
+      }
+      if (activeStreamerNow) {
+        headers.set("x-streamer-id", activeStreamerNow.id);
+      }
+      return fetch(url, { ...init, headers });
+    },
+    [],
+  );
 
   const login = useCallback(async (code: string): Promise<boolean> => {
     try {
       const params = new URLSearchParams({
         code,
-        redirect_uri:
-          allowedLocalhostWhen.includes(process.env.NODE_ENV || "")
-            ? "http://localhost:3000/app/login/discord"
-            : "https://alertbox.org/app/login/discord",
+        redirect_uri: allowedLocalhostWhen.includes(process.env.NODE_ENV || "")
+          ? "http://localhost:3000/app/login/discord"
+          : "https://alertbox.org/app/login/discord",
       });
 
       const r = await fetch(getApiUrl("/api/v1/auth/discord"), {
@@ -78,6 +203,12 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       });
 
       deleteCookie("USRSS");
+      deleteCookie("ab_org_id");
+      deleteCookie("ab_streamer_id");
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("ab_active_org_id");
+        localStorage.removeItem("ab_active_streamer_id");
+      }
       window.location.reload();
 
       return r.ok;
@@ -105,6 +236,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
         if (r.ok) {
           const d = (await r.json()) as User;
           setUserInfo(d);
+          orgStore.getState().syncFromMemberships(d.memberships);
         }
       } catch {
         // Silently catch network errors during initial load
@@ -112,8 +244,40 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     })();
   }, []);
 
+  const effectiveUserInfo = useMemo(() => {
+    if (!userInfo) return null;
+    return {
+      ...userInfo,
+      profile: activeStreamer || userInfo.profile,
+      widgets: activeStreamer?.widgets || userInfo.widgets || [],
+    };
+  }, [userInfo, activeStreamer]);
+
+  const patchOrg = useCallback((patch: Partial<Organization>) => {
+    const active = selectActiveOrg(orgStore.getState());
+    if (active) {
+      orgStore.getState().updateOrganization(active.id, patch);
+    }
+  }, []);
+
   return (
-    <userContext.Provider value={{ userInfo, login, logout, patchUserInfo }}>
+    <userContext.Provider
+      value={{
+        userInfo: effectiveUserInfo,
+        login,
+        logout,
+        patchUserInfo,
+        patchOrg,
+        organizations,
+        activeOrg,
+        activeStreamer,
+        isOrgMode,
+        setOrgMode,
+        setActiveOrgId,
+        setActiveStreamerId,
+        authFetch,
+      }}
+    >
       {children}
     </userContext.Provider>
   );

@@ -161,7 +161,7 @@ function CurrentUserChip() {
                 },
                 {
                   text: lang.data.header.user_chip.links.profile,
-                  href: userInfo.profile?.uri ? "/@" + userInfo.profile.uri : "/app/profile",
+                  href: userInfo.profile?.uri ? "/@" + userInfo.profile.uri : "/app",
                   icon: <UserRectangleIcon weight="fill" size={16} />,
                 },
                 {
