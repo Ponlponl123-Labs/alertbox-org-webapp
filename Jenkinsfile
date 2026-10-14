@@ -1,6 +1,6 @@
 @Library('ci-cd-jenkins-lib@main') _
 
-standardAppPipelineManaged_Defaulted(
+standardAppPipelineManaged_v2(
   appName: 'alertbox-org-webapp',
   orgName: 'Ponlponl123-Labs',
   gitOpsRepo: 'Ponlponl123/.gitops',
