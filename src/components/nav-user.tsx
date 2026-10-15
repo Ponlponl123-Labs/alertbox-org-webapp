@@ -1,14 +1,22 @@
 "use client";
-import React from "react";
+import React, { useSyncExternalStore } from "react";
 import { useUserContext } from "@/contexts/user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn, getFallbackInitial } from "@/lib/utils";
-import { ChevronsUpDown, LogOut, Settings, ShieldCheck } from "lucide-react";
+import { ChevronsUpDown, LogOut, Settings, ShieldCheck, Moon, Sun } from "lucide-react";
 import Link from "next/link";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
+
+const emptySubscribe = () => () => {};
 
 export function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
   const { userInfo, logout } = useUserContext();
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const isDark = useStore(coreStore, (state) => state.isDark);
+  const toggleTheme = coreStore.getState().toggleTheme;
+
   if (!userInfo) return null;
 
   const displayName = userInfo.name || userInfo.email?.split("@")[0] || "User";
@@ -80,6 +88,23 @@ export function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
               <ShieldCheck className="size-3.5 text-muted-foreground" />
               <span>Security</span>
             </Link>
+            <button
+              type="button"
+              onClick={() => toggleTheme()}
+              className="flex items-center justify-between px-2 py-1.5 rounded-md text-xs hover:bg-accent hover:text-accent-foreground transition-colors w-full text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                {mounted && isDark ? (
+                  <Moon className="size-3.5 text-muted-foreground" />
+                ) : (
+                  <Sun className="size-3.5 text-amber-500" />
+                )}
+                <span>Theme</span>
+              </div>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase font-mono bg-secondary/80 px-1.5 py-0.5 rounded border border-border/60">
+                {mounted ? (isDark ? "Dark" : "Light") : "Theme"}
+              </span>
+            </button>
             <div className="h-px bg-border my-1 -mx-1" />
             <button
               type="button"

@@ -8,11 +8,17 @@ import { BroadcastIcon, PlusIcon, ArrowSquareOutIcon } from "@phosphor-icons/rea
 import { toast } from "sonner";
 import { getFallbackInitial } from "@/lib/utils";
 import Link from "next/link";
+import { hasPermission, OrgPerm } from "@/lib/rbac";
 
 export default function OrgStreamersPage() {
-  const { activeOrg, authFetch, setActiveStreamerId } = useUserContext();
+  const { activeOrg, authFetch, setActiveStreamerId, refreshUserInfo } = useUserContext();
   const [newStreamerName, setNewStreamerName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+
+  const role = (activeOrg?.role || "").toLowerCase();
+  const isOwner = role === "owner";
+  const isOwnerOrAdmin = isOwner || role === "admin";
+  const canCreateStreamer = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.STREAMER_CREATE);
 
   const streamers = activeOrg?.streamers || [];
 
@@ -29,7 +35,7 @@ export default function OrgStreamersPage() {
       if (res.ok) {
         toast.success(`Channel "${newStreamerName}" created!`);
         setNewStreamerName("");
-        window.location.reload();
+        await refreshUserInfo();
       } else {
         const msg = await res.text();
         toast.error(msg || "Failed to create channel");
@@ -56,25 +62,27 @@ export default function OrgStreamersPage() {
         </p>
       </div>
 
-      <div className="p-4 rounded-xl border border-border bg-card text-card-foreground">
-        <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
-          <PlusIcon size={16} weight="bold" className="text-primary" />
-          Create New Channel
-        </h2>
-        <form onSubmit={handleCreateChannel} className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="Channel / Streamer Name"
-            value={newStreamerName}
-            onChange={(e) => setNewStreamerName(e.target.value)}
-            className="flex-1 text-xs"
-            required
-          />
-          <Button type="submit" size="sm" disabled={isCreating || !newStreamerName.trim()}>
-            {isCreating ? "Creating..." : "Create Channel"}
-          </Button>
-        </form>
-      </div>
+      {canCreateStreamer && (
+        <div className="p-4 rounded-xl border border-border bg-card text-card-foreground">
+          <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <PlusIcon size={16} weight="bold" className="text-primary" />
+            Create New Channel
+          </h2>
+          <form onSubmit={handleCreateChannel} className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Channel / Streamer Name"
+              value={newStreamerName}
+              onChange={(e) => setNewStreamerName(e.target.value)}
+              className="flex-1 text-xs"
+              required
+            />
+            <Button type="submit" size="sm" disabled={isCreating || !newStreamerName.trim()}>
+              {isCreating ? "Creating..." : "Create Channel"}
+            </Button>
+          </form>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {streamers.map((s) => (

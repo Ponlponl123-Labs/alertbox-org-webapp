@@ -12,9 +12,14 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getFallbackInitial } from "@/lib/utils";
+import { hasPermission, OrgPerm } from "@/lib/rbac";
 
 export default function OrgOverviewPage() {
   const { activeOrg } = useUserContext();
+
+  const role = (activeOrg?.role || "").toLowerCase();
+  const isOwnerOrAdmin = role === "owner" || role === "admin";
+  const canCreateStreamer = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.STREAMER_CREATE);
 
   const streamers = activeOrg?.streamers || [];
   const orgSlug = activeOrg?.slug || activeOrg?.id || "org";
@@ -34,12 +39,14 @@ export default function OrgOverviewPage() {
             Centralized hub for all streamer channels, staff members, and subscription billing.
           </p>
         </div>
-        <Link href={`/app/${orgSlug}/streamers`}>
-          <Button size="sm" className="gap-2">
-            <BroadcastIcon size={15} weight="bold" />
-            <span>Add Channel</span>
-          </Button>
-        </Link>
+        {canCreateStreamer && (
+          <Link href={`/app/${orgSlug}/streamers`}>
+            <Button size="sm" className="gap-2">
+              <BroadcastIcon size={15} weight="bold" />
+              <span>Add Channel</span>
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

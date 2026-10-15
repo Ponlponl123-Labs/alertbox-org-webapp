@@ -3,9 +3,14 @@ import React from "react";
 import { useUserContext } from "@/contexts/user";
 import { HandCoinsIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { hasPermission, OrgPerm } from "@/lib/rbac";
 
 export default function OrgBillingPage() {
   const { activeOrg } = useUserContext();
+
+  const role = (activeOrg?.role || "").toLowerCase();
+  const isOwnerOrAdmin = role === "owner" || role === "admin";
+  const canManageBilling = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MANAGE);
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl w-full py-4">
@@ -32,9 +37,15 @@ export default function OrgBillingPage() {
             Unlimited channels, 0% platform transaction fees, and team permissions included.
           </p>
         </div>
-        <Button variant="outline" size="sm">
-          Manage Billing Portal
-        </Button>
+        {canManageBilling ? (
+          <Button variant="outline" size="sm">
+            Manage Billing Portal
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" disabled className="opacity-50 cursor-not-allowed">
+            Manage Billing Portal (Read-only)
+          </Button>
+        )}
       </div>
     </div>
   );

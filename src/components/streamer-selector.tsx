@@ -26,7 +26,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
   const [open, setOpen] = useState(false);
 
   const orgKey = activeOrg?.slug || activeOrg?.id || "org";
-  const orgPages = ["/members", "/streamers", "/roles", "/billing", "/transactions"];
+  const orgPages = ["/members", "/streamers", "/billing", "/transactions"];
   const isOrgRoute =
     pathname === `/app/${orgKey}` ||
     orgPages.some((p) => pathname.startsWith(`/app/${orgKey}${p}`));
@@ -34,14 +34,14 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
 
   if (!activeOrg) return null;
 
-  const isOwnerOrAdmin =
-    activeOrg.role === "OWNER" ||
-    activeOrg.role === "ADMIN" ||
-    hasPermission(activeOrg.permissions, OrgPerm.VIEW_ORG);
+  const isOwner = activeOrg.role === "OWNER";
+  const isOwnerOrAdmin = isOwner || activeOrg.role === "ADMIN";
+  const canViewOrg =
+    isOwnerOrAdmin ||
+    hasPermission(activeOrg.permissions, OrgPerm.ORG_VIEW);
   const canCreateStreamer =
-    activeOrg.role === "OWNER" ||
-    activeOrg.role === "ADMIN" ||
-    hasPermission(activeOrg.permissions, OrgPerm.CREATE_STREAMER);
+    isOwnerOrAdmin ||
+    hasPermission(activeOrg.permissions, OrgPerm.STREAMER_CREATE);
 
   const streamers = activeOrg.streamers || [];
 
@@ -104,7 +104,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
               Channel / Workspace
             </div>
 
-            {isOwnerOrAdmin && (
+            {canViewOrg && (
               <button
                 type="button"
                 onClick={() => {
@@ -132,7 +132,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
               </button>
             )}
 
-            {isOwnerOrAdmin && streamers.length > 0 && (
+            {canViewOrg && streamers.length > 0 && (
               <div className="h-px bg-border my-1 -mx-1" />
             )}
 

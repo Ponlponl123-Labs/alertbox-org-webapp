@@ -9,16 +9,20 @@ import {
   GearSixIcon,
   ShieldCheckIcon,
   TrashIcon,
-  CopySimpleIcon,
   CheckIcon,
   WarningOctagonIcon,
   IdentificationCardIcon,
   CameraIcon,
   LockSimpleIcon,
   ImageIcon,
+  ArrowsLeftRightIcon,
+  ArrowRightIcon,
+  ArrowLeftIcon,
+  CaretUpDownIcon,
+  MagnifyingGlassIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { getFallbackInitial } from "@/lib/utils";
+import { cn, getFallbackInitial } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ImageCropperModal } from "@/components/image-cropper-modal";
@@ -30,18 +34,33 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { hasPermission, OrgPerm } from "@/lib/rbac";
 
 export default function OrgSettingsPage() {
   const routeParams = useParams();
   const router = useRouter();
-  const { activeOrg, authFetch, patchOrg } = useUserContext();
+  const { activeOrg, authFetch, patchOrg, removeOrganization, refreshUserInfo } = useUserContext();
   const orgTarget = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
 
   const [name, setName] = useState(activeOrg?.name || "");
   const [avatar, setAvatar] = useState(activeOrg?.avatar || "");
   const [banner, setBanner] = useState(activeOrg?.banner || "");
   const [isSaving, setIsSaving] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
+
+  // Transfer Ownership state
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [members, setMembers] = useState<
+    Array<{ id: string; name: string | null; email: string; avatar: string | null; role: string }>
+  >([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [memberComboboxOpen, setMemberComboboxOpen] = useState(false);
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
+  const [transferStep, setTransferStep] = useState<1 | 2>(1);
+  const [transferAck, setTransferAck] = useState(false);
+  const [confirmPhrase, setConfirmPhrase] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
 
   // Cropper state
   const [cropperOpen, setCropperOpen] = useState(false);
@@ -67,6 +86,8 @@ export default function OrgSettingsPage() {
   }, [activeOrg]);
 
   const isOwner = activeOrg?.role === "OWNER";
+  const isOwnerOrAdmin = isOwner || activeOrg?.role === "ADMIN";
+  const canManageSettings = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MANAGE);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "banner") => {
     const file = e.target.files?.[0];
@@ -180,6 +201,7 @@ export default function OrgSettingsPage() {
       });
 
       if (res.ok) {
+        if (activeOrg) removeOrganization(activeOrg.id);
         toast.success("Organization deleted successfully");
         setIsDeleteOpen(false);
         router.push("/app");
@@ -191,6 +213,61 @@ export default function OrgSettingsPage() {
       toast.error("Network error deleting organization");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const openTransferDialog = async () => {
+    setIsTransferOpen(true);
+    setTransferStep(1);
+    setTransferAck(false);
+    setConfirmPhrase("");
+    setSelectedMemberId("");
+    setMemberComboboxOpen(false);
+    setMemberSearchQuery("");
+    setLoadingMembers(true);
+    try {
+      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}/members`));
+      if (res.ok) {
+        const data = await res.json();
+        const nonOwners = (Array.isArray(data) ? data : []).filter(
+          (m: { role: string }) => m.role !== "OWNER",
+        );
+        setMembers(nonOwners);
+        if (nonOwners.length > 0) {
+          setSelectedMemberId(nonOwners[0].id);
+        }
+      }
+    } catch {
+      toast.error("Failed to load organization members");
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
+
+  const handleTransferOwnership = async () => {
+    if (!selectedMemberId || isTransferring || confirmPhrase !== "TRANSFER" || !transferAck) return;
+    setIsTransferring(true);
+    try {
+      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}/transfer`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetMemberId: selectedMemberId }),
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        toast.error(msg || "Failed to transfer ownership");
+        return;
+      }
+
+      toast.success("Organization ownership transferred successfully!");
+      setIsTransferOpen(false);
+      await refreshUserInfo();
+      router.refresh();
+    } catch {
+      toast.error("Network error while transferring ownership");
+    } finally {
+      setIsTransferring(false);
     }
   };
 
@@ -234,6 +311,13 @@ export default function OrgSettingsPage() {
         </div>
       </div>
 
+      {!canManageSettings && (
+        <div className="flex items-center gap-2.5 p-3.5 rounded-xl border border-border/80 bg-muted/40 text-xs text-muted-foreground">
+          <LockSimpleIcon size={16} weight="bold" className="text-muted-foreground shrink-0" />
+          <span>You are viewing organization settings in read-only mode. Organization management permissions are required to edit branding or settings.</span>
+        </div>
+      )}
+
       <div className="flex flex-col gap-6">
         {/* Branding & Visual Identity Card */}
         <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden flex flex-col">
@@ -254,30 +338,32 @@ export default function OrgSettingsPage() {
             )}
 
             {/* Banner Overlay Actions */}
-            <div className="absolute top-3 right-3 flex items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() => bannerInputRef.current?.click()}
-                className="h-8 px-3 rounded-xl text-xs font-semibold gap-1.5 shadow-md backdrop-blur-md bg-background/80 hover:bg-background border border-border cursor-pointer"
-              >
-                <CameraIcon size={14} weight="bold" />
-                <span>{banner ? "Change Banner" : "Upload Banner"}</span>
-              </Button>
-              {banner && (
+            {canManageSettings && (
+              <div className="absolute top-3 right-3 flex items-center gap-2">
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
-                  onClick={() => handleRemoveMedia("banner")}
-                  className="h-8 px-2.5 rounded-xl text-xs font-semibold text-destructive hover:text-destructive shadow-md backdrop-blur-md bg-background/80 hover:bg-destructive/10 border border-destructive/20 cursor-pointer"
-                  title="Remove banner"
+                  variant="secondary"
+                  onClick={() => bannerInputRef.current?.click()}
+                  className="h-8 px-3 rounded-xl text-xs font-semibold gap-1.5 shadow-md backdrop-blur-md bg-background/80 hover:bg-background border border-border cursor-pointer"
                 >
-                  <TrashIcon size={14} weight="bold" />
+                  <CameraIcon size={14} weight="bold" />
+                  <span>{banner ? "Change Banner" : "Upload Banner"}</span>
                 </Button>
-              )}
-            </div>
+                {banner && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleRemoveMedia("banner")}
+                    className="h-8 px-2.5 rounded-xl text-xs font-semibold text-destructive hover:text-destructive shadow-md backdrop-blur-md bg-background/80 hover:bg-destructive/10 border border-destructive/20 cursor-pointer"
+                    title="Remove banner"
+                  >
+                    <TrashIcon size={14} weight="bold" />
+                  </Button>
+                )}
+              </div>
+            )}
 
             {/* Bottom-left Overlapping Avatar */}
             <div className="absolute -bottom-8 left-6 flex items-end gap-3 z-10">
@@ -291,15 +377,17 @@ export default function OrgSettingsPage() {
                     </AvatarFallback>
                   )}
                 </Avatar>
-                <button
-                  type="button"
-                  onClick={() => avatarInputRef.current?.click()}
-                  className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer border-4 border-transparent"
-                  title="Change Logo"
-                >
-                  <CameraIcon size={18} weight="bold" />
-                  <span className="text-[10px] font-semibold mt-0.5">Edit</span>
-                </button>
+                {canManageSettings && (
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer border-4 border-transparent"
+                    title="Change Logo"
+                  >
+                    <CameraIcon size={18} weight="bold" />
+                    <span className="text-[10px] font-semibold mt-0.5">Edit</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -317,30 +405,32 @@ export default function OrgSettingsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => avatarInputRef.current?.click()}
-                className="h-8 text-xs font-semibold rounded-xl gap-1.5 cursor-pointer"
-              >
-                <CameraIcon size={14} weight="bold" />
-                <span>Upload Logo</span>
-              </Button>
-              {avatar && (
+            {canManageSettings && (
+              <div className="flex items-center gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleRemoveMedia("avatar")}
-                  className="h-8 px-2.5 text-xs rounded-xl text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/10 cursor-pointer"
-                  title="Remove logo"
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="h-8 text-xs font-semibold rounded-xl gap-1.5 cursor-pointer"
                 >
-                  <TrashIcon size={14} weight="bold" />
+                  <CameraIcon size={14} weight="bold" />
+                  <span>Upload Logo</span>
                 </Button>
-              )}
-            </div>
+                {avatar && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRemoveMedia("avatar")}
+                    className="h-8 px-2.5 text-xs rounded-xl text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/10 cursor-pointer"
+                    title="Remove logo"
+                  >
+                    <TrashIcon size={14} weight="bold" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* General Form */}
@@ -356,6 +446,8 @@ export default function OrgSettingsPage() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Pixel Studio"
                   required
+                  disabled={!canManageSettings}
+                  readOnly={!canManageSettings}
                   className="w-full text-xs"
                   classNames={{ base: "h-10 rounded-xl" }}
                 />
@@ -385,16 +477,18 @@ export default function OrgSettingsPage() {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-border/50 flex justify-end">
-              <Button
-                type="submit"
-                disabled={isSaving || !name.trim() || name.trim() === activeOrg?.name}
-                className="gap-2 text-xs font-semibold rounded-xl cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {isSaving ? <Spinner className="size-3.5" /> : <CheckIcon size={14} weight="bold" />}
-                <span>Save Changes</span>
-              </Button>
-            </div>
+            {canManageSettings && (
+              <div className="pt-3 border-t border-border/50 flex justify-end">
+                <Button
+                  type="submit"
+                  disabled={isSaving || !name.trim() || name.trim() === activeOrg?.name}
+                  className="gap-2 text-xs font-semibold rounded-xl cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {isSaving ? <Spinner className="size-3.5" /> : <CheckIcon size={14} weight="bold" />}
+                  <span>Save Changes</span>
+                </Button>
+              </div>
+            )}
           </form>
         </div>
 
@@ -414,26 +508,13 @@ export default function OrgSettingsPage() {
             <div className="p-3.5 rounded-xl border border-border/60 bg-secondary/30 flex items-center justify-between">
               <div>
                 <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                  Organization ID
+                  Workspace Handle
                 </span>
                 <p className="font-mono font-semibold text-foreground mt-0.5">
-                  {activeOrg?.id || "N/A"}
+                  /app/{activeOrg?.slug || "org"}
                 </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(String(activeOrg?.id || ""));
-                  setCopiedId(true);
-                  toast.success("Organization ID copied");
-                  setTimeout(() => setCopiedId(false), 2000);
-                }}
-                className="size-8 p-0 rounded-lg cursor-pointer"
-                title="Copy Org ID"
-              >
-                {copiedId ? <CheckIcon size={14} className="text-emerald-500" /> : <CopySimpleIcon size={14} />}
-              </Button>
+              <ShieldCheckIcon size={20} weight="bold" className="text-primary" />
             </div>
 
             <div className="p-3.5 rounded-xl border border-border/60 bg-secondary/30 flex items-center justify-between">
@@ -449,6 +530,39 @@ export default function OrgSettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Transfer Ownership Card */}
+        {isOwner && (
+          <div className="p-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 shadow-xs flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                <ArrowsLeftRightIcon size={20} weight="bold" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-foreground">Transfer Ownership</h2>
+                <p className="text-xs text-muted-foreground">Transfer primary tenancy and owner rights to another active team member.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+              <div className="max-w-md">
+                <p className="text-xs font-semibold text-foreground">Designate a new organization owner</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                  Each organization can have only a single owner. You will become an Admin with full administrative privileges once transferred.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={openTransferDialog}
+                className="gap-2 text-xs font-semibold rounded-xl cursor-pointer border-amber-500/30 text-amber-500 hover:bg-amber-500/10 shrink-0"
+              >
+                <ArrowsLeftRightIcon size={15} weight="bold" />
+                <span>Transfer Ownership</span>
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Danger Zone */}
         {isOwner && (
@@ -548,6 +662,267 @@ export default function OrgSettingsPage() {
               <span>Delete Permanently</span>
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer Ownership Dialog (with members dropdown and double confirmation) */}
+      <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
+        <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
+          <DialogHeader>
+            <div className="size-11 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-2">
+              <ArrowsLeftRightIcon size={22} weight="bold" />
+            </div>
+            <DialogTitle className="text-lg font-bold text-foreground">
+              Transfer Organization Ownership
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Transfer ownership of <strong>{activeOrg?.name}</strong>. Each organization can only have one single owner.
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingMembers ? (
+            <div className="py-8 flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Spinner className="size-5" />
+              <span>Loading organization members...</span>
+            </div>
+          ) : members.length === 0 ? (
+            <div className="p-4 rounded-2xl bg-muted/50 border border-border text-xs text-muted-foreground flex flex-col gap-2 mt-2">
+              <p className="font-semibold text-foreground">No eligible members found</p>
+              <p>There are no other members in this organization to transfer ownership to. Invite members in Members & Staff first.</p>
+              <DialogFooter className="mt-4">
+                <Button variant="secondary" size="sm" onClick={() => setIsTransferOpen(false)} className="rounded-xl w-full">
+                  Close
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 mt-2">
+              {transferStep === 1 ? (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                      <span>Select New Owner</span>
+                      <span className="text-[10px] text-muted-foreground font-normal">Active Members</span>
+                    </label>
+
+                    <Popover open={memberComboboxOpen} onOpenChange={setMemberComboboxOpen}>
+                      <PopoverTrigger
+                        type="button"
+                        className={cn(
+                          "w-full flex items-center justify-between gap-3 p-2.5 rounded-2xl border border-input bg-background/50 hover:bg-accent/40 text-left transition-all cursor-pointer outline-none focus:ring-1 focus:ring-primary shadow-xs",
+                          memberComboboxOpen && "ring-1 ring-primary border-primary",
+                        )}
+                      >
+                        {(() => {
+                          const selectedMember = members.find((m) => m.id === selectedMemberId);
+                          if (!selectedMember) {
+                            return <span className="text-xs text-muted-foreground pl-1">Select an active team member...</span>;
+                          }
+                          return (
+                            <div className="flex items-center gap-3 min-w-0">
+                              <Avatar className="size-8 rounded-full border border-border shrink-0">
+                                {selectedMember.avatar && <AvatarImage src={selectedMember.avatar} />}
+                                <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
+                                  {getFallbackInitial(selectedMember.name || selectedMember.email)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex flex-col min-w-0 leading-tight">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-semibold text-foreground truncate">
+                                    {selectedMember.name || "Member"}
+                                  </span>
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-md border bg-secondary/80 text-foreground/80 leading-none capitalize">
+                                    {selectedMember.role.toLowerCase()}
+                                  </span>
+                                </div>
+                                <span className="text-[11px] text-muted-foreground truncate">
+                                  {selectedMember.email}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                        <CaretUpDownIcon size={14} weight="bold" className="text-muted-foreground shrink-0 ml-1" />
+                      </PopoverTrigger>
+
+                      <PopoverContent
+                        align="start"
+                        sideOffset={6}
+                        className="w-[calc(100vw-2.5rem)] sm:w-100 p-2 rounded-2xl bg-popover border border-border shadow-xl z-50 flex flex-col gap-2"
+                      >
+                        {/* Search Input */}
+                        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-input bg-background/80">
+                          <MagnifyingGlassIcon size={14} weight="bold" className="text-muted-foreground shrink-0" />
+                          <input
+                            type="text"
+                            placeholder="Search by name, email, or role..."
+                            value={memberSearchQuery}
+                            onChange={(e) => setMemberSearchQuery(e.target.value)}
+                            className="w-full text-xs bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+                            autoFocus
+                          />
+                        </div>
+
+                        {/* Members List */}
+                        <div className="flex flex-col gap-1 max-h-56 overflow-y-auto pr-0.5">
+                          {(() => {
+                            const query = memberSearchQuery.toLowerCase().trim();
+                            const filtered = members.filter((m) => {
+                              if (!query) return true;
+                              return (
+                                (m.name && m.name.toLowerCase().includes(query)) ||
+                                m.email.toLowerCase().includes(query) ||
+                                m.role.toLowerCase().includes(query)
+                              );
+                            });
+
+                            if (filtered.length === 0) {
+                              return (
+                                <div className="py-6 text-center text-xs text-muted-foreground">
+                                  No members match &ldquo;{memberSearchQuery}&rdquo;
+                                </div>
+                              );
+                            }
+
+                            return filtered.map((m) => {
+                              const isSelected = m.id === selectedMemberId;
+                              return (
+                                <button
+                                  key={m.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedMemberId(m.id);
+                                    setMemberComboboxOpen(false);
+                                  }}
+                                  className={cn(
+                                    "flex items-center justify-between gap-3 p-2 rounded-xl text-left transition-colors cursor-pointer",
+                                    isSelected
+                                      ? "bg-primary/10 text-primary border border-primary/20 font-medium"
+                                      : "hover:bg-accent/60 text-foreground",
+                                  )}
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <Avatar className="size-7 rounded-full border border-border shrink-0">
+                                      {m.avatar && <AvatarImage src={m.avatar} />}
+                                      <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
+                                        {getFallbackInitial(m.name || m.email)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col min-w-0 leading-tight">
+                                      <span className="text-xs font-semibold truncate text-foreground">
+                                        {m.name || m.email}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground truncate">
+                                        {m.email}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-md border bg-secondary/80 text-foreground/70 capitalize">
+                                      {m.role.toLowerCase()}
+                                    </span>
+                                    {isSelected && (
+                                      <CheckIcon size={14} weight="bold" className="text-primary" />
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            });
+                          })()}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Confirmation 1: Acknowledgment Checkbox */}
+                  <label className="flex items-start gap-2.5 p-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={transferAck}
+                      onChange={(e) => setTransferAck(e.target.checked)}
+                      className="mt-0.5 rounded border-input size-4 text-primary focus:ring-primary shrink-0"
+                    />
+                    <span className="text-[11px] text-foreground/90 leading-snug">
+                      I understand that transferring ownership will demote my account to <strong>Admin</strong> and grant full control of the organization to the selected member.
+                    </span>
+                  </label>
+
+                  <DialogFooter className="mt-3 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsTransferOpen(false)}
+                      className="text-xs rounded-xl cursor-pointer"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      disabled={!selectedMemberId || !transferAck}
+                      onClick={() => setTransferStep(2)}
+                      className="gap-1.5 text-xs font-semibold rounded-xl cursor-pointer"
+                    >
+                      <span>Continue</span>
+                      <ArrowRightIcon size={14} weight="bold" />
+                    </Button>
+                  </DialogFooter>
+                </>
+              ) : (
+                <>
+                  {/* Step 2: Final Double Confirmation */}
+                  <div className="p-3.5 rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive text-xs flex flex-col gap-1.5 leading-relaxed">
+                    <span className="font-bold flex items-center gap-1.5">
+                      <WarningOctagonIcon size={16} weight="bold" />
+                      Final Confirmation Required
+                    </span>
+                    <p className="text-[11px] text-destructive/90">
+                      Once confirmed, only the new owner can transfer ownership back to you. There can only be one owner at a time.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">
+                      Type <code className="text-destructive font-mono font-bold">TRANSFER</code> to execute:
+                    </label>
+                    <Input
+                      type="text"
+                      value={confirmPhrase}
+                      onChange={(e) => setConfirmPhrase(e.target.value)}
+                      placeholder="TRANSFER"
+                      className="w-full text-xs font-mono"
+                      classNames={{ base: "h-10 rounded-xl" }}
+                      autoFocus
+                    />
+                  </div>
+
+                  <DialogFooter className="mt-3 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setTransferStep(1)}
+                      disabled={isTransferring}
+                      className="text-xs rounded-xl cursor-pointer gap-1"
+                    >
+                      <ArrowLeftIcon size={14} weight="bold" />
+                      <span>Back</span>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleTransferOwnership}
+                      disabled={isTransferring || confirmPhrase !== "TRANSFER"}
+                      className="gap-1.5 text-xs font-semibold rounded-xl cursor-pointer"
+                    >
+                      {isTransferring && <Spinner className="size-3.5" />}
+                      <span>Confirm & Transfer</span>
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -30,10 +30,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { KoFi } from "@thesvg/react";
 import { Connections } from "@/types/user.types";
+import { canAccessStreamer, StreamerPerm, OrgPerm } from "@/lib/rbac";
 
 function KofiPage() {
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo, logout, authFetch, activeOrg, activeStreamer } = useUserContext();
+
+  const canManageIntegrations = canAccessStreamer(
+    activeOrg,
+    activeStreamer,
+    StreamerPerm.STREAMER_INTEGRATION_MANAGE,
+    OrgPerm.INTEGRATION_MANAGE
+  );
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -304,7 +312,7 @@ function KofiPage() {
                     required
                     placeholder="username"
                     value={username}
-                    readOnly={isSaving}
+                    readOnly={isSaving || !canManageIntegrations}
                     maxLength={64}
                     onChange={(e) => setUsername(e.target.value)}
                     startContent={
@@ -338,7 +346,7 @@ function KofiPage() {
                   required
                   placeholder={t.secret_placeholder}
                   value={secret}
-                  readOnly={isSaving}
+                  readOnly={isSaving || !canManageIntegrations}
                   maxLength={255}
                   onChange={(e) => setSecret(e.target.value)}
                   className="text-foreground flex-1 min-w-0 font-sans"
@@ -354,22 +362,33 @@ function KofiPage() {
               </div>
 
               <div className="flex flex-col gap-2 font-sans">
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  disabled={isSaving || !username.trim() || !secret.trim()}
-                  className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSaving ? (
-                    <Spinner className="size-4 text-current" />
-                  ) : isConnected ? (
-                    t.btn_update
-                  ) : (
-                    t.btn_connect
-                  )}
-                </Button>
+                {canManageIntegrations ? (
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    disabled={isSaving || !username.trim() || !secret.trim()}
+                    className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSaving ? (
+                      <Spinner className="size-4 text-current" />
+                    ) : isConnected ? (
+                      t.btn_update
+                    ) : (
+                      t.btn_connect
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled
+                    className="w-full h-12 rounded-xl text-xs font-bold tracking-wider opacity-60 cursor-not-allowed"
+                  >
+                    Read-only (No Permission)
+                  </Button>
+                )}
 
-                {isConnected && (
+                {isConnected && canManageIntegrations && (
                   <Button
                     type="button"
                     variant="destructive"

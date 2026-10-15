@@ -83,7 +83,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       id="webapp-wrapper"
       className={cn("flex min-w-0 h-[calc(100dvh-var(--status-banner-height,0))] -mb-(--status-banner-height,0) w-dvw", userInfo && "bg-sidebar")}
     >
-      {userInfo && pathname !== "/app/onboarding" && <AppSidebar />}
+      {userInfo && <AppSidebar />}
       <motion.main
         id="webapp-main"
         className="flex-1 flex flex-col min-w-0 bg-black/10 dark:bg-background md:rounded-bl-4xl md:border-l md:border-border relative overflow-hidden"

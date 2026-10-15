@@ -9,7 +9,6 @@ import {
   UsersIcon,
   UserPlusIcon,
   TrashIcon,
-  PencilSimpleIcon,
   MagnifyingGlassIcon,
   CheckIcon,
   CopySimpleIcon,
@@ -17,12 +16,19 @@ import {
   ClockCountdownIcon,
   DotsThreeVerticalIcon,
   ShieldCheckIcon,
+  BroadcastIcon,
+  GearSixIcon,
+  BrowsersIcon,
+  PlugsConnectedIcon,
+  ChartLineUpIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { getFallbackInitial, cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { hasPermission, OrgPerm, RolePresets, StreamerPerm } from "@/lib/rbac";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +45,11 @@ interface StreamerMini {
   avatar: string | null;
 }
 
+interface StreamerPermissionAssignment {
+  streamerId: string;
+  permissions: string[];
+}
+
 interface OrgMemberData {
   id: string;
   userId: string;
@@ -49,23 +60,86 @@ interface OrgMemberData {
   email: string;
   name: string | null;
   avatar: string | null;
+  streamerAssignments?: StreamerPermissionAssignment[];
   streamers?: StreamerMini[];
 }
+
+const ORG_PERM_DEFINITIONS = [
+  {
+    category: "Organization Administration",
+    icon: <GearSixIcon size={16} weight="bold" />,
+    color: "text-purple-400 bg-purple-500/10 border-purple-500/20",
+    perms: [
+      { bit: OrgPerm.ORG_VIEW, key: "ORG_VIEW", name: "View Organization", desc: "View organization dashboard, overview & public profile" },
+      { bit: OrgPerm.ORG_MANAGE, key: "ORG_MANAGE", name: "Manage Settings", desc: "Update organization branding, banner, and parameters" },
+      { bit: OrgPerm.ORG_MEMBERS_MANAGE, key: "ORG_MEMBERS_MANAGE", name: "Manage Members", desc: "Send invites, add and remove staff members" },
+      { bit: OrgPerm.ORG_ROLES_MANAGE, key: "ORG_ROLES_MANAGE", name: "Manage Roles & Perms", desc: "Delegate permissions, roles, and channel assignments" },
+    ],
+  },
+  {
+    category: "Streamer Channels",
+    icon: <BroadcastIcon size={16} weight="bold" />,
+    color: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+    perms: [
+      { bit: OrgPerm.STREAMER_VIEW, key: "STREAMER_VIEW", name: "View Streamers", desc: "Access the channels list and channel dashboards" },
+      { bit: OrgPerm.STREAMER_CREATE, key: "STREAMER_CREATE", name: "Create Streamers", desc: "Provision new streaming channels under the organization" },
+      { bit: OrgPerm.STREAMER_MANAGE, key: "STREAMER_MANAGE", name: "Edit Channel Profiles", desc: "Modify handles, display names, bios, and visuals" },
+      { bit: OrgPerm.STREAMER_DELETE, key: "STREAMER_DELETE", name: "Delete Channels", desc: "Permanently delete streaming channels" },
+    ],
+  },
+  {
+    category: "Widgets & Overlays",
+    icon: <BrowsersIcon size={16} weight="bold" />,
+    color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+    perms: [
+      { bit: OrgPerm.WIDGET_VIEW, key: "WIDGET_VIEW", name: "View Overlays", desc: "Access alert overlay previews and OBS browser sources" },
+      { bit: OrgPerm.WIDGET_MANAGE, key: "WIDGET_MANAGE", name: "Manage AlertBox", desc: "Customize alert events, animations, sounds, and TTS" },
+      { bit: OrgPerm.WIDGET_TOKEN_ROTATE, key: "WIDGET_TOKEN_ROTATE", name: "Rotate Widget Tokens", desc: "Invalidate and regenerate OBS browser source tokens" },
+    ],
+  },
+  {
+    category: "Integrations & Gateways",
+    icon: <PlugsConnectedIcon size={16} weight="bold" />,
+    color: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+    perms: [
+      { bit: OrgPerm.INTEGRATION_VIEW, key: "INTEGRATION_VIEW", name: "View Integrations", desc: "Inspect connected payment gateways and relay status" },
+      { bit: OrgPerm.INTEGRATION_MANAGE, key: "INTEGRATION_MANAGE", name: "Manage Gateways", desc: "Connect/disconnect Stripe, Ko-fi, BMAC, and Streamlabs" },
+    ],
+  },
+  {
+    category: "Analytics & Finance",
+    icon: <ChartLineUpIcon size={16} weight="bold" />,
+    color: "text-rose-400 bg-rose-500/10 border-rose-500/20",
+    perms: [
+      { bit: OrgPerm.ANALYTICS_VIEW, key: "ANALYTICS_VIEW", name: "View Analytics", desc: "Access viewer engagement charts and stream metrics" },
+      { bit: OrgPerm.TRANSACTION_VIEW, key: "TRANSACTION_VIEW", name: "View Transactions", desc: "Access financial donation history and supporter receipts" },
+      { bit: OrgPerm.REPORT_EXPORT, key: "REPORT_EXPORT", name: "Export Reports", desc: "Download CSV audit logs and accounting reports" },
+    ],
+  },
+];
+
+const STREAMER_PERM_DEFINITIONS = [
+  { key: "STREAMER_VIEW", bit: StreamerPerm.STREAMER_VIEW, name: "View Channel & OBS", desc: "View channel dashboard and browser source overlay URLs" },
+  { key: "STREAMER_MANAGE", bit: StreamerPerm.STREAMER_MANAGE, name: "Edit Channel Profile", desc: "Edit display name, bio, appearance, banner, and socials" },
+  { key: "STREAMER_WIDGET_MANAGE", bit: StreamerPerm.STREAMER_WIDGET_MANAGE, name: "Manage AlertBox", desc: "Edit alert layouts, events, audio volumes, and TTS" },
+  { key: "STREAMER_INTEGRATION_MANAGE", bit: StreamerPerm.STREAMER_INTEGRATION_MANAGE, name: "Manage Gateways", desc: "Configure Ko-fi, BMAC, Stripe, and Streamlabs relays" },
+  { key: "STREAMER_ANALYTICS_VIEW", bit: StreamerPerm.STREAMER_ANALYTICS_VIEW, name: "View Analytics", desc: "View stream performance charts and viewer statistics" },
+  { key: "STREAMER_TRANSACTION_VIEW", bit: StreamerPerm.STREAMER_TRANSACTION_VIEW, name: "View Transactions", desc: "Inspect donation histories, tips, and supporter records" },
+];
 
 export default function OrgMembersPage() {
   const routeParams = useParams();
   const { activeOrg, authFetch } = useUserContext();
   const [members, setMembers] = useState<OrgMemberData[]>([]);
-  const [customPresets, setCustomPresets] = useState<{
-    id: string;
-    name: string;
-    description: string | null;
-    color: string;
-    permissions: string;
-  }[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const isOwner = activeOrg?.role === "OWNER";
+  const isOwnerOrAdmin = isOwner || activeOrg?.role === "ADMIN";
+  const canManageMembers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBERS_MANAGE);
+  const canManageRoles = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_ROLES_MANAGE);
+
+  // Invite modal states
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("MEMBER");
@@ -78,11 +152,15 @@ export default function OrgMembersPage() {
   } | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
-  const [editingMember, setEditingMember] = useState<OrgMemberData | null>(null);
-  const [newRole, setNewRole] = useState("");
-  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
-  const [actionMenuMemberId, setActionMenuMemberId] = useState<string | null>(null);
+  // Full-screen Permissions & Streamer Assignment Dialog states
+  const [managingMember, setManagingMember] = useState<OrgMemberData | null>(null);
+  const [dialogTab, setDialogTab] = useState<"org" | "streamers">("org");
+  const [dialogRole, setDialogRole] = useState<string>("MEMBER");
+  const [dialogPerms, setDialogPerms] = useState<bigint>(BigInt(0));
+  const [dialogAssignments, setDialogAssignments] = useState<StreamerPermissionAssignment[]>([]);
+  const [isSavingPermissions, setIsSavingPermissions] = useState<boolean>(false);
 
+  const [actionMenuMemberId, setActionMenuMemberId] = useState<string | null>(null);
   const [deletingMember, setDeletingMember] = useState<OrgMemberData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -96,6 +174,7 @@ export default function OrgMembersPage() {
   };
 
   const orgTarget = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
+  const streamers = activeOrg?.streamers || [];
 
   const fetchMembers = useCallback(() => {
     if (!orgTarget) return;
@@ -108,34 +187,176 @@ export default function OrgMembersPage() {
       .finally(() => {
         setLoading(false);
       });
-
-    authFetch(getApiUrl(`/api/v1/org/${orgTarget}/permissions/presets`))
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data) => setCustomPresets(data || []))
-      .catch(() => {});
   }, [orgTarget, authFetch]);
 
   useEffect(() => {
     fetchMembers();
   }, [fetchMembers]);
 
+  const openManageDialog = (m: OrgMemberData) => {
+    if (m.role === "OWNER") {
+      toast.error("Organization Owner cannot be modified here. Ownership must be transferred from Organization Settings.");
+      return;
+    }
+    setManagingMember(m);
+    setDialogTab("org");
+    setDialogRole(m.role);
+    setDialogPerms(BigInt(m.permissions || "0"));
+    if (m.role === "ADMIN") {
+      setDialogAssignments(
+        streamers.map((s) => ({
+          streamerId: s.id,
+          permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key),
+        })),
+      );
+    } else {
+      setDialogAssignments(m.streamerAssignments ? JSON.parse(JSON.stringify(m.streamerAssignments)) : []);
+    }
+  };
+
+  const handleSelectRolePreset = (role: string) => {
+    if (role === "OWNER") return;
+    setDialogRole(role);
+    if (RolePresets[role] !== undefined) {
+      setDialogPerms(RolePresets[role]);
+    }
+    if (role === "ADMIN") {
+      setDialogAssignments(
+        streamers.map((s) => ({
+          streamerId: s.id,
+          permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key),
+        })),
+      );
+    }
+  };
+
+  const toggleOrgPermBit = (bit: bigint) => {
+    setDialogPerms((prev) => prev ^ bit);
+  };
+
+  const isStreamerAssigned = (streamerId: string) => {
+    if (dialogRole === "OWNER" || dialogRole === "ADMIN") return true;
+    return dialogAssignments.some((a) => a.streamerId === streamerId);
+  };
+
+  const toggleStreamerAssignment = (streamerId: string) => {
+    if (dialogRole === "OWNER" || dialogRole === "ADMIN") return;
+    setDialogAssignments((prev) => {
+      const exists = prev.some((a) => a.streamerId === streamerId);
+      if (exists) {
+        return prev.filter((a) => a.streamerId !== streamerId);
+      }
+      return [
+        ...prev,
+        {
+          streamerId,
+          permissions: [
+            "STREAMER_VIEW",
+            "STREAMER_MANAGE",
+          ],
+        },
+      ];
+    });
+  };
+
+  const toggleStreamerPermission = (streamerId: string, permKey: string) => {
+    if (dialogRole === "OWNER" || dialogRole === "ADMIN") return;
+    setDialogAssignments((prev) =>
+      prev.map((a) => {
+        if (a.streamerId !== streamerId) return a;
+        const perms = a.permissions || [];
+        const has = perms.includes(permKey);
+        return {
+          ...a,
+          permissions: has ? perms.filter((p) => p !== permKey) : [...perms, permKey],
+        };
+      }),
+    );
+  };
+
+  const handleAssignAllStreamers = () => {
+    setDialogAssignments(
+      streamers.map((s) => ({
+        streamerId: s.id,
+        permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key),
+      })),
+    );
+  };
+
+  const handleUnassignAllStreamers = () => {
+    setDialogAssignments([]);
+  };
+
+  const handleSavePermissions = async () => {
+    if (!managingMember || !orgTarget) return;
+    setIsSavingPermissions(true);
+
+    try {
+      const isOwnerOrAdmin = dialogRole === "OWNER" || dialogRole === "ADMIN";
+      const finalAssignments = isOwnerOrAdmin
+        ? streamers.map((s) => ({
+            streamerId: s.id,
+            permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key),
+          }))
+        : dialogAssignments;
+
+      const sanitizedPerms = (dialogPerms & ~OrgPerm.ORG_DELETE).toString();
+      const payload = {
+        role: dialogRole,
+        permissions: sanitizedPerms,
+        streamerAssignments: finalAssignments,
+      };
+
+      const res = await authFetch(
+        getApiUrl(`/api/v1/org/${orgTarget}/members/${managingMember.id}`),
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (res.ok) {
+        setMembers((prev) =>
+          prev.map((m) =>
+            m.id === managingMember.id
+              ? {
+                  ...m,
+                  role: dialogRole,
+                  permissions: sanitizedPerms,
+                  streamerAssignments: finalAssignments,
+                  streamers: isOwnerOrAdmin
+                    ? streamers
+                    : streamers.filter((s) =>
+                        finalAssignments.some((a) => a.streamerId === s.id),
+                      ),
+                }
+              : m,
+          ),
+        );
+        toast.success("Permissions & channel assignments saved successfully");
+        setManagingMember(null);
+      } else {
+        const msg = await res.text();
+        toast.error(msg || "Failed to update permissions");
+      }
+    } catch {
+      toast.error("Network error updating permissions");
+    } finally {
+      setIsSavingPermissions(false);
+    }
+  };
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim() || !orgTarget) return;
     setIsInviting(true);
-    const isCustom = inviteRole.startsWith("custom:");
-    const customPreset = isCustom
-      ? customPresets.find((p) => p.id === inviteRole.replace("custom:", ""))
-      : null;
-    const payload = isCustom && customPreset
-      ? { email: inviteEmail.trim(), role: "MEMBER", permissions: customPreset.permissions }
-      : { email: inviteEmail.trim(), role: inviteRole };
 
     try {
       const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}/invites`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -145,7 +366,7 @@ export default function OrgMembersPage() {
           role: data.role,
           expiresAt: data.expiresAt,
         });
-        toast.success(`8-digit invitation code generated!`);
+        toast.success("Invite code generated!");
       } else {
         const msg = await res.text();
         toast.error(msg || "Failed to send invitation");
@@ -164,60 +385,13 @@ export default function OrgMembersPage() {
     setIsCopied(false);
   };
 
-  const handleUpdateRole = async () => {
-    if (!editingMember || !orgTarget || !newRole) return;
-    setIsUpdatingRole(true);
-    const isCustom = newRole.startsWith("custom:");
-    const customPreset = isCustom
-      ? customPresets.find((p) => p.id === newRole.replace("custom:", ""))
-      : null;
-    const payload = isCustom && customPreset
-      ? { role: "MEMBER", permissions: customPreset.permissions }
-      : { role: newRole };
-
-    try {
-      const res = await authFetch(
-        getApiUrl(`/api/v1/org/${orgTarget}/members/${editingMember.id}`),
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
-      if (res.ok) {
-        setMembers((prev) =>
-          prev.map((m) =>
-            m.id === editingMember.id
-              ? {
-                  ...m,
-                  role: payload.role || m.role,
-                  permissions: customPreset ? customPreset.permissions : m.permissions,
-                }
-              : m,
-          ),
-        );
-        toast.success("Member role updated");
-        setEditingMember(null);
-      } else {
-        const msg = await res.text();
-        toast.error(msg || "Failed to update role");
-      }
-    } catch {
-      toast.error("Network error updating role");
-    } finally {
-      setIsUpdatingRole(false);
-    }
-  };
-
   const handleRemoveMember = async () => {
     if (!deletingMember || !orgTarget) return;
     setIsDeleting(true);
     try {
       const res = await authFetch(
         getApiUrl(`/api/v1/org/${orgTarget}/members/${deletingMember.id}`),
-        {
-          method: "DELETE",
-        },
+        { method: "DELETE" },
       );
       if (res.ok) {
         setMembers((prev) => prev.filter((m) => m.id !== deletingMember.id));
@@ -251,102 +425,93 @@ export default function OrgMembersPage() {
       case "ADMIN":
         return "bg-white/10 text-white border-white/20";
       case "MANAGER":
-      case "DEVELOPER":
         return "bg-blue-500/10 text-blue-400 border-blue-500/20";
       case "EDITOR":
-      case "DESIGNER":
         return "bg-amber-500/10 text-amber-400 border-amber-500/20";
       case "VIEWER":
         return "bg-zinc-800 text-zinc-300 border-zinc-700/50";
       default:
-        return "bg-zinc-800/80 text-zinc-400 border-zinc-700/40";
+        return "bg-secondary text-foreground/80 border-border";
     }
   };
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case "OWNER":
-        return "Owner";
-      case "ADMIN":
-        return "Admin";
-      case "MANAGER":
-        return "Manager";
-      case "EDITOR":
-        return "Editor";
-      case "VIEWER":
-        return "Viewer";
-      default:
-        return role.charAt(0) + role.slice(1).toLowerCase();
-    }
-  };
-
-  const getStatusBadgeStyle = (status?: string) => {
+  const getStatusBadgeStyle = (status: string) => {
     switch (status) {
       case "Active":
         return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
       case "Away":
         return "bg-amber-500/10 text-amber-400 border-amber-500/20";
       default:
-        return "bg-zinc-800/80 text-zinc-400 border-zinc-700/40";
+        return "bg-zinc-800 text-zinc-400 border-zinc-700/50";
     }
   };
 
-  const streamers = activeOrg?.streamers || [];
-
   return (
-    <div className="flex flex-col gap-6 max-w-6xl w-full py-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="flex flex-col gap-6 max-w-5xl w-full py-4">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
             <UsersIcon size={16} weight="bold" />
-            <span>Organization Members</span>
+            <span>Team & Delegated Access</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground mt-1">
-            Staff & Permissions
+            Members & Staff
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Manage team roles, staff permissions, and assigned channel access for {activeOrg?.name}.
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Manage teammates, granular bitmask permissions, and channel assignments for {activeOrg?.name}.
           </p>
         </div>
 
-        <Button
-          onClick={() => setIsInviteOpen(true)}
-          className="gap-2 rounded-xl text-xs font-semibold px-4 py-2"
-        >
-          <UserPlusIcon size={16} weight="bold" />
-          <span>Invite Member</span>
-        </Button>
+        {canManageMembers && (
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => setIsInviteOpen(true)}
+              className="gap-2 font-semibold text-xs rounded-xl cursor-pointer"
+            >
+              <UserPlusIcon size={16} weight="bold" />
+              <span>Invite Member</span>
+            </Button>
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center gap-3">
+      {/* Search & Statistics Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-sm">
           <MagnifyingGlassIcon
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
           />
-          <input
+          <Input
             type="text"
             placeholder="Search by name, email, or role..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary/50 transition-colors"
+            className="w-full pl-9 text-xs"
+            classNames={{ base: "h-9 rounded-xl" }}
           />
         </div>
-        <span className="text-xs text-muted-foreground font-mono">
-          {filteredMembers.length} {filteredMembers.length === 1 ? "member" : "members"}
-        </span>
+
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>Total Staff: <strong className="text-foreground">{members.length}</strong></span>
+          <span>•</span>
+          <span>Channels: <strong className="text-foreground">{streamers.length}</strong></span>
+        </div>
       </div>
 
-      <div className="rounded-2xl sm:rounded-3xl border border-border/40 bg-card overflow-hidden shadow-xs">
+      {/* Members Table */}
+      <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-border/40 text-xs font-semibold text-muted-foreground select-none">
-                <th className="py-3.5 px-6 font-semibold">Member</th>
-                <th className="py-3.5 px-6 font-semibold">Role</th>
+              <tr className="border-b border-border text-xs text-muted-foreground bg-secondary/30">
+                <th className="py-3.5 px-6 font-semibold">User</th>
+                <th className="py-3.5 px-6 font-semibold">Role & Permissions</th>
                 <th className="py-3.5 px-6 font-semibold">Status</th>
                 <th className="py-3.5 px-6 font-semibold">Joined Date</th>
-                <th className="py-3.5 px-6 font-semibold">Assigned Streamers</th>
+                <th className="py-3.5 px-6 font-semibold">Assigned Channels</th>
                 <th className="py-3.5 px-6 font-semibold text-right">Actions</th>
               </tr>
             </thead>
@@ -368,7 +533,7 @@ export default function OrgMembersPage() {
                 </tr>
               ) : (
                 filteredMembers.map((m) => {
-                  const assignedStreamers = m.streamers && m.streamers.length > 0 ? m.streamers : streamers;
+                  const isOwnerOrAdmin = m.role === "OWNER" || m.role === "ADMIN";
                   const memberStatus = m.status || "Active";
                   const formattedDate = m.joinedAt
                     ? new Date(m.joinedAt).toLocaleDateString("en-US", {
@@ -378,17 +543,14 @@ export default function OrgMembersPage() {
                       })
                     : "—";
 
+                  const assignedList = isOwnerOrAdmin ? streamers : (m.streamers || []);
+
                   return (
-                    <tr
-                      key={m.id}
-                      className="hover:bg-foreground/2 transition-colors"
-                    >
+                    <tr key={m.id} className="hover:bg-foreground/2 transition-colors">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3.5">
                           <Avatar className="size-10 rounded-full border border-border/40 shrink-0">
-                            {m.avatar ? (
-                              <AvatarImage src={m.avatar} alt={m.name || "Member"} />
-                            ) : null}
+                            {m.avatar ? <AvatarImage src={m.avatar} alt={m.name || "Member"} /> : null}
                             <AvatarFallback className="bg-blue-600/90 text-white font-semibold text-xs">
                               {getFallbackInitial(m.name || m.email || "U")}
                             </AvatarFallback>
@@ -405,41 +567,19 @@ export default function OrgMembersPage() {
                       </td>
 
                       <td className="py-4 px-6 whitespace-nowrap">
-                        {(() => {
-                          const customMatch = customPresets.find((cp) => cp.permissions === m.permissions);
-                          if (customMatch) {
-                            return (
-                              <div className="flex flex-col gap-0.5">
-                                <span
-                                  className={cn(
-                                    "inline-block w-fit px-2.5 py-0.5 rounded-md text-xs font-semibold border leading-normal",
-                                    customMatch.color || "text-primary bg-primary/10 border-primary/20",
-                                  )}
-                                >
-                                  {customMatch.name}
-                                </span>
-                                <span className="text-[11px] text-muted-foreground/80 font-normal">
-                                  {customMatch.description || "Custom Org Preset"}
-                                </span>
-                              </div>
-                            );
-                          }
-                          return (
-                            <div className="flex flex-col gap-0.5">
-                              <span
-                                className={cn(
-                                  "inline-block w-fit px-2.5 py-0.5 rounded-md text-xs font-semibold border leading-normal",
-                                  getRoleBadgeStyle(m.role),
-                                )}
-                              >
-                                {getRoleLabel(m.role)}
-                              </span>
-                              <span className="text-[11px] text-muted-foreground/80 font-normal">
-                                {ROLE_SUMMARIES[m.role] || "Standard Access"}
-                              </span>
-                            </div>
-                          );
-                        })()}
+                        <div className="flex flex-col gap-0.5">
+                          <span
+                            className={cn(
+                              "inline-block w-fit px-2.5 py-0.5 rounded-md text-xs font-semibold border leading-normal",
+                              getRoleBadgeStyle(m.role),
+                            )}
+                          >
+                            {m.role}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground/80 font-normal">
+                            {ROLE_SUMMARIES[m.role] || "Standard Access"}
+                          </span>
+                        </div>
                       </td>
 
                       <td className="py-4 px-6 whitespace-nowrap">
@@ -452,11 +592,7 @@ export default function OrgMembersPage() {
                           <span
                             className={cn(
                               "size-1.5 rounded-full shrink-0",
-                              memberStatus === "Active"
-                                ? "bg-emerald-400"
-                                : memberStatus === "Away"
-                                  ? "bg-amber-400"
-                                  : "bg-zinc-400",
+                              memberStatus === "Active" ? "bg-emerald-400" : "bg-zinc-400",
                             )}
                           />
                           {memberStatus}
@@ -468,19 +604,20 @@ export default function OrgMembersPage() {
                       </td>
 
                       <td className="py-4 px-6 whitespace-nowrap">
-                        {assignedStreamers.length > 0 ? (
+                        {isOwnerOrAdmin ? (
+                          <span className="text-xs text-muted-foreground/80 font-medium">
+                            All channels (Full Access)
+                          </span>
+                        ) : assignedList.length > 0 ? (
                           <div className="flex items-center -space-x-2 overflow-hidden">
-                            {assignedStreamers.slice(0, 3).map((st) => (
+                            {assignedList.slice(0, 3).map((st) => (
                               <Avatar
                                 key={st.id}
                                 className="size-7 ring-2 ring-card border border-border/50 shrink-0"
                                 title={st.displayName || st.name}
                               >
                                 {st.avatar ? (
-                                  <AvatarImage
-                                    src={st.avatar}
-                                    alt={st.displayName || st.name}
-                                  />
+                                  <AvatarImage src={st.avatar} alt={st.displayName || st.name} />
                                 ) : (
                                   <AvatarFallback className="text-[9px] bg-blue-600 text-white font-bold">
                                     {getFallbackInitial(st.displayName || st.name)}
@@ -488,21 +625,18 @@ export default function OrgMembersPage() {
                                 )}
                               </Avatar>
                             ))}
-                            {assignedStreamers.length > 3 && (
+                            {assignedList.length > 3 && (
                               <span
                                 className="size-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground ring-2 ring-card"
-                                title={assignedStreamers
-                                  .slice(3)
-                                  .map((s) => s.displayName || s.name)
-                                  .join(", ")}
+                                title={assignedList.slice(3).map((s) => s.displayName || s.name).join(", ")}
                               >
-                                +{assignedStreamers.length - 3}
+                                +{assignedList.length - 3}
                               </span>
                             )}
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground/50 italic">
-                            All channels
+                            No channels assigned
                           </span>
                         )}
                       </td>
@@ -521,24 +655,23 @@ export default function OrgMembersPage() {
                           <PopoverContent
                             align="end"
                             sideOffset={4}
-                            className="w-48 p-1.5 rounded-2xl border border-border shadow-xl bg-popover"
+                            className="w-56 p-1.5 rounded-2xl border border-border shadow-xl bg-popover"
                           >
                             <div className="flex flex-col gap-0.5 text-xs">
-                              {m.role !== "OWNER" ? (
+                              {canManageRoles && m.role !== "OWNER" && (
                                 <button
                                   type="button"
                                   onClick={() => {
                                     setActionMenuMemberId(null);
-                                    setEditingMember(m);
-                                    const customMatch = customPresets.find((cp) => cp.permissions === m.permissions);
-                                    setNewRole(customMatch ? `custom:${customMatch.id}` : m.role);
+                                    openManageDialog(m);
                                   }}
                                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-accent hover:text-accent-foreground text-foreground transition-colors text-left font-medium cursor-pointer"
                                 >
-                                  <PencilSimpleIcon size={14} weight="bold" className="text-muted-foreground" />
-                                  <span>Edit Role</span>
+                                  <ShieldCheckIcon size={14} weight="bold" className="text-primary" />
+                                  <span>Permissions & Channels</span>
                                 </button>
-                              ) : (
+                              )}
+                              {m.role === "OWNER" && (
                                 <div className="px-2.5 py-1.5 text-[11px] text-muted-foreground/80 font-semibold italic flex items-center gap-1.5">
                                   <ShieldCheckIcon size={14} weight="bold" className="text-amber-500" />
                                   <span>Organization Owner</span>
@@ -556,7 +689,7 @@ export default function OrgMembersPage() {
                                 <CopySimpleIcon size={14} weight="bold" className="text-muted-foreground" />
                                 <span>Copy Email</span>
                               </button>
-                              {m.role !== "OWNER" && (
+                              {canManageMembers && m.role !== "OWNER" && (
                                 <>
                                   <div className="h-px bg-border my-1 -mx-0.5" />
                                   <button
@@ -585,13 +718,395 @@ export default function OrgMembersPage() {
         </div>
       </div>
 
+      {/* FULL-SCREEN / LARGE MODAL: Permissions, Streamer Assignment & Streamer Assigned Permissions */}
       <Dialog
-        open={isInviteOpen}
-        onOpenChange={(open) => {
-          if (!open) handleCloseInvite();
-          else setIsInviteOpen(true);
-        }}
+        open={Boolean(managingMember)}
+        onOpenChange={(open) => !open && setManagingMember(null)}
       >
+        <DialogContent
+          className="sm:max-w-4xl w-[95vw] h-[88vh] max-h-[88vh] p-0 flex flex-col gap-0 rounded-2xl overflow-hidden border border-border bg-card shadow-2xl"
+          showCloseButton={false}
+        >
+          {/* Top Modal Navigation Header */}
+          <DialogHeader className="px-6 py-4 border-b border-border bg-secondary/30 shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar className="size-10 rounded-full border border-border shrink-0">
+                  {managingMember?.avatar ? (
+                    <AvatarImage src={managingMember.avatar} alt={managingMember.name || "Member"} />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                    {getFallbackInitial(managingMember?.name || managingMember?.email || "U")}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0 leading-tight">
+                  <div className="flex items-center gap-2">
+                    <DialogTitle className="text-base font-bold text-foreground truncate">
+                      {managingMember?.name || "Staff Member"}
+                    </DialogTitle>
+                    <span className={cn("px-2 py-0.5 rounded-md text-[10px] font-semibold border", getRoleBadgeStyle(dialogRole))}>
+                      {dialogRole}
+                    </span>
+                  </div>
+                  <DialogDescription className="text-xs text-muted-foreground truncate">
+                    {managingMember?.email}
+                  </DialogDescription>
+                </div>
+              </div>
+
+              {/* Navigation Tabs */}
+              <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-xl border border-border/50">
+                <button
+                  type="button"
+                  onClick={() => setDialogTab("org")}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                    dialogTab === "org"
+                      ? "bg-background text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <ShieldCheckIcon size={14} weight="bold" />
+                  <span>Org Role & Permissions</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDialogTab("streamers")}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                    dialogTab === "streamers"
+                      ? "bg-background text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <BroadcastIcon size={14} weight="bold" />
+                  <span>Channel Assignments</span>
+                  <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] bg-primary/20 text-primary font-bold">
+                    {dialogRole === "OWNER" || dialogRole === "ADMIN" ? streamers.length : dialogAssignments.length}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* Modal Content Scroll Body */}
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+            {dialogTab === "org" ? (
+              <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">
+                {/* Role Preset Selector Card */}
+                <div className="p-5 rounded-2xl border border-border bg-card shadow-xs flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground">Organization Role Preset</h3>
+                      <p className="text-xs text-muted-foreground">Select a standard preset to automatically populate the 64-bit permission bitmask.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 pt-1">
+                    {["ADMIN", "MANAGER", "EDITOR", "VIEWER", "MEMBER"].map((role) => {
+                      const isSelected = dialogRole === role;
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => handleSelectRolePreset(role)}
+                          className={cn(
+                            "flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all cursor-pointer",
+                            isSelected
+                              ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
+                              : "border-border/60 bg-secondary/20 hover:bg-secondary/60 text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          <span className="text-xs font-semibold">{role}</span>
+                          <span className="text-[10px] opacity-70 mt-0.5">{ROLE_SUMMARIES[role]?.split("·")[0] || "Role"}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Granular Permission Categories */}
+                <div className="flex flex-col gap-4">
+                  {ORG_PERM_DEFINITIONS.map((cat) => (
+                    <div
+                      key={cat.category}
+                      className="p-5 rounded-2xl border border-border bg-card shadow-xs flex flex-col gap-3"
+                    >
+                      <div className="flex items-center gap-2.5 pb-2 border-b border-border/50">
+                        <div className={cn("p-1.5 rounded-lg border", cat.color)}>{cat.icon}</div>
+                        <h4 className="text-sm font-bold text-foreground">{cat.category}</h4>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                        {cat.perms.map((p) => {
+                          const isGranted = (dialogPerms & p.bit) === p.bit;
+                          return (
+                            <div
+                              key={p.key}
+                              onClick={() => {
+                                if (dialogRole !== "OWNER") toggleOrgPermBit(p.bit);
+                              }}
+                              className={cn(
+                                "flex items-start justify-between gap-3 p-3 rounded-xl border transition-colors cursor-pointer select-none",
+                                isGranted ? "border-primary/30 bg-primary/5" : "border-border/50 bg-secondary/10 hover:bg-secondary/20",
+                                dialogRole === "OWNER" && "cursor-not-allowed opacity-80",
+                              )}
+                            >
+                              <div className="grid leading-tight min-w-0 pr-2">
+                                <span className="text-xs font-semibold text-foreground">{p.name}</span>
+                                <span className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{p.desc}</span>
+                              </div>
+                              <Switch
+                                checked={isGranted}
+                                onCheckedChange={() => toggleOrgPermBit(p.bit)}
+                                disabled={dialogRole === "OWNER"}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">
+                {/* Banner & Quick Actions */}
+                {dialogRole === "OWNER" || dialogRole === "ADMIN" ? (
+                  <div className="p-5 rounded-2xl border border-blue-500/20 bg-blue-500/10 flex items-center gap-3.5">
+                    <ShieldCheckIcon size={24} weight="bold" className="text-blue-400 shrink-0" />
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground">
+                        Unrestricted Channel Privileges
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                        Organization {dialogRole}s automatically have full access and management permissions across all channels.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-5 rounded-2xl border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <BroadcastIcon size={16} weight="bold" className="text-primary" />
+                        <span>Streamer Channel Assignments & Unique Access</span>
+                      </h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Staff members have <strong>no channels assigned by default</strong>. Assign streaming channels below and select which unique operations this member may execute per channel.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="xs"
+                        onClick={handleAssignAllStreamers}
+                        className="rounded-xl text-xs cursor-pointer font-medium"
+                      >
+                        Assign All
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="xs"
+                        onClick={handleUnassignAllStreamers}
+                        className="rounded-xl text-xs cursor-pointer font-medium text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/10"
+                      >
+                        Unassign All
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Channel Assignment Cards */}
+                {streamers.length === 0 ? (
+                  <div className="p-12 text-center text-xs text-muted-foreground border border-dashed rounded-2xl">
+                    No streaming channels found in this organization. Create a channel first under Organization Channels.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {streamers.map((st) => {
+                      const isOwnerOrAdmin = dialogRole === "OWNER" || dialogRole === "ADMIN";
+                      const assigned = isStreamerAssigned(st.id);
+                      const currentAssign = dialogAssignments.find((a) => a.streamerId === st.id);
+                      const assignedPerms = isOwnerOrAdmin
+                        ? STREAMER_PERM_DEFINITIONS.map((p) => p.key)
+                        : (currentAssign?.permissions || []);
+
+                      return (
+                        <div
+                          key={st.id}
+                          className={cn(
+                            "rounded-2xl border transition-all overflow-hidden bg-card shadow-xs",
+                            assigned ? "border-primary/50 shadow-md ring-1 ring-primary/20" : "border-border/60 opacity-80",
+                          )}
+                        >
+                          {/* Channel Card Header */}
+                          <div
+                            onClick={() => !isOwnerOrAdmin && toggleStreamerAssignment(st.id)}
+                            className={cn(
+                              "p-4 bg-secondary/30 border-b border-border/50 flex items-center justify-between gap-4 select-none",
+                              !isOwnerOrAdmin && "cursor-pointer hover:bg-secondary/50",
+                            )}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <Avatar className="size-10 rounded-xl border border-border shrink-0">
+                                {st.avatar ? (
+                                  <AvatarImage src={st.avatar} alt={st.displayName || st.name} />
+                                ) : null}
+                                <AvatarFallback className="bg-blue-600 text-white font-bold text-xs rounded-xl">
+                                  {getFallbackInitial(st.displayName || st.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="grid min-w-0 leading-tight">
+                                <span className="font-bold text-sm text-foreground truncate">
+                                  {st.displayName || st.name}
+                                </span>
+                                <span className="text-xs text-muted-foreground font-mono truncate">
+                                  @{st.name}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                              <span className="text-xs font-semibold text-foreground/80">
+                                {assigned ? "Assigned" : "Unassigned"}
+                              </span>
+                              <Switch
+                                checked={assigned}
+                                onCheckedChange={() => toggleStreamerAssignment(st.id)}
+                                disabled={isOwnerOrAdmin}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Channel Granular Permissions (Only shown when assigned) */}
+                          {assigned ? (
+                            <div className="p-5 flex flex-col gap-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                  Delegated Channel Permissions
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setDialogAssignments((prev) =>
+                                        prev.map((a) =>
+                                          a.streamerId === st.id
+                                            ? { ...a, permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key) }
+                                            : a,
+                                        ),
+                                      );
+                                    }}
+                                    className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
+                                  >
+                                    Select All
+                                  </button>
+                                  <span className="text-muted-foreground">•</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setDialogAssignments((prev) =>
+                                        prev.map((a) =>
+                                          a.streamerId === st.id ? { ...a, permissions: [] } : a,
+                                        ),
+                                      );
+                                    }}
+                                    className="text-[11px] text-muted-foreground hover:text-foreground font-medium cursor-pointer"
+                                  >
+                                    Clear
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                                {STREAMER_PERM_DEFINITIONS.map((sp) => {
+                                  const isChecked = assignedPerms.includes(sp.key);
+                                  return (
+                                    <button
+                                      key={sp.key}
+                                      type="button"
+                                      onClick={() => toggleStreamerPermission(st.id, sp.key)}
+                                      className={cn(
+                                        "flex flex-col text-left p-3 rounded-xl border transition-all cursor-pointer",
+                                        isChecked
+                                          ? "bg-primary/10 border-primary text-foreground"
+                                          : "bg-secondary/20 border-border/60 text-muted-foreground hover:text-foreground",
+                                      )}
+                                    >
+                                      <div className="flex items-center justify-between w-full">
+                                        <span className="text-xs font-semibold">{sp.name}</span>
+                                        <div
+                                          className={cn(
+                                            "size-4 rounded-md border flex items-center justify-center transition-colors",
+                                            isChecked
+                                              ? "bg-primary border-primary text-primary-foreground"
+                                              : "border-border bg-background",
+                                          )}
+                                        >
+                                          {isChecked && <CheckIcon size={11} weight="bold" />}
+                                        </div>
+                                      </div>
+                                      <span className="text-[10px] text-muted-foreground mt-1 leading-snug">
+                                        {sp.desc}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-4 text-xs text-muted-foreground/60 italic bg-secondary/10">
+                              This channel is currently not assigned. Toggle the switch above to grant access.
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Modal Bottom Footer */}
+          <DialogFooter className="px-6 py-3.5 border-t border-border bg-secondary/20 flex flex-row items-center justify-between shrink-0 sm:justify-between">
+            <span className="text-xs text-muted-foreground">
+              Configuring privileges for <strong className="text-foreground">{managingMember?.name || managingMember?.email}</strong>
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setManagingMember(null)}
+                disabled={isSavingPermissions}
+                className="rounded-xl text-xs cursor-pointer"
+              >
+                Cancel
+              </Button>
+              {canManageRoles && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleSavePermissions}
+                  disabled={isSavingPermissions}
+                  className="gap-2 rounded-xl text-xs font-semibold cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  {isSavingPermissions ? <Spinner className="size-3.5" /> : <CheckIcon size={14} weight="bold" />}
+                  <span>Save Changes</span>
+                </Button>
+              )}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invite Member Dialog */}
+      <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
         <DialogContent className="max-w-md rounded-3xl p-6" showCloseButton={false}>
           {!createdInviteCode ? (
             <>
@@ -625,30 +1140,17 @@ export default function OrgMembersPage() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground/80">
-                    Role & Access Level
-                  </label>
+                  <label className="text-xs font-semibold text-foreground/80">Role & Access Level</label>
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-input bg-background text-foreground outline-none focus:border-primary/50"
                   >
-                    <optgroup label="System Presets">
-                      <option value="MEMBER">Member (Standard staff)</option>
-                      <option value="VIEWER">Viewer (Read-only)</option>
-                      <option value="EDITOR">Editor (Manage streamers & widgets)</option>
-                      <option value="MANAGER">Manager (Manage staff & streams)</option>
-                      <option value="ADMIN">Admin (Full access except owner)</option>
-                    </optgroup>
-                    {customPresets.length > 0 && (
-                      <optgroup label="Custom Organization Presets">
-                        {customPresets.map((cp) => (
-                          <option key={cp.id} value={`custom:${cp.id}`}>
-                            {cp.name} (Custom Preset)
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
+                    <option value="MEMBER">Member (Standard staff)</option>
+                    <option value="VIEWER">Viewer (Read-only)</option>
+                    <option value="EDITOR">Editor (Manage streamers & widgets)</option>
+                    <option value="MANAGER">Manager (Manage staff & streams)</option>
+                    <option value="ADMIN">Admin (Full access except owner)</option>
                   </select>
                 </div>
 
@@ -657,14 +1159,14 @@ export default function OrgMembersPage() {
                     type="button"
                     variant="secondary"
                     onClick={handleCloseInvite}
-                    className="rounded-xl"
+                    className="rounded-xl cursor-pointer"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     disabled={isInviting || !inviteEmail.trim()}
-                    className="rounded-xl gap-2 font-semibold"
+                    className="rounded-xl gap-2 font-semibold cursor-pointer"
                   >
                     {isInviting ? <Spinner /> : <UserPlusIcon size={16} weight="bold" />}
                     <span>Generate Invite Code</span>
@@ -705,7 +1207,7 @@ export default function OrgMembersPage() {
                     toast.success("Code copied to clipboard!");
                     setTimeout(() => setIsCopied(false), 2000);
                   }}
-                  className="rounded-xl text-xs gap-1.5"
+                  className="rounded-xl text-xs gap-1.5 cursor-pointer"
                 >
                   {isCopied ? (
                     <>
@@ -728,9 +1230,7 @@ export default function OrgMembersPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Assigned Role:</span>
-                  <span className="font-semibold text-primary capitalize">
-                    {createdInviteCode.role.toLowerCase()}
-                  </span>
+                  <span className="font-semibold text-primary capitalize">{createdInviteCode.role.toLowerCase()}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Validity:</span>
@@ -741,15 +1241,11 @@ export default function OrgMembersPage() {
                 </div>
               </div>
 
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                The target user should open <strong>Join Organization</strong> and enter this code to confirm and join. Only 1 active code is allowed per organization at any time.
-              </p>
-
               <DialogFooter className="mt-2">
                 <Button
                   type="button"
                   onClick={handleCloseInvite}
-                  className="rounded-xl w-full font-semibold text-xs"
+                  className="rounded-xl w-full font-semibold text-xs cursor-pointer"
                 >
                   Done
                 </Button>
@@ -759,70 +1255,7 @@ export default function OrgMembersPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={Boolean(editingMember)} onOpenChange={(open) => !open && setEditingMember(null)}>
-        <DialogContent className="max-w-md rounded-3xl p-6" showCloseButton={false}>
-          <DialogHeader>
-            <div className="bg-primary/10 p-2.5 size-12 rounded-2xl text-primary flex items-center justify-center mb-2">
-              <PencilSimpleIcon weight="bold" size={22} />
-            </div>
-            <DialogTitle className="text-xl font-bold">Edit Member Role</DialogTitle>
-            <DialogDescription className="text-muted-foreground text-xs">
-              Change the role and permissions for {editingMember?.name || editingMember?.email}.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-4 mt-2">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-foreground/80">
-                Select Role
-              </label>
-              <select
-                value={newRole}
-                onChange={(e) => setNewRole(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-input bg-background text-foreground outline-none focus:border-primary/50"
-              >
-                <optgroup label="System Presets">
-                  <option value="MEMBER">Member (Standard staff)</option>
-                  <option value="VIEWER">Viewer (Read-only)</option>
-                  <option value="EDITOR">Editor (Manage streamers & widgets)</option>
-                  <option value="MANAGER">Manager (Manage staff & streams)</option>
-                  <option value="ADMIN">Admin (Full access except owner)</option>
-                </optgroup>
-                {customPresets.length > 0 && (
-                  <optgroup label="Custom Organization Presets">
-                    {customPresets.map((cp) => (
-                      <option key={cp.id} value={`custom:${cp.id}`}>
-                        {cp.name} (Custom Preset)
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-            </div>
-
-            <DialogFooter className="mt-4 gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setEditingMember(null)}
-                className="rounded-xl"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleUpdateRole}
-                disabled={isUpdatingRole}
-                className="rounded-xl gap-2 font-semibold"
-              >
-                {isUpdatingRole ? <Spinner /> : <CheckIcon size={16} weight="bold" />}
-                <span>Save Changes</span>
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
-
+      {/* Remove Member Confirmation Dialog */}
       <Dialog open={Boolean(deletingMember)} onOpenChange={(open) => !open && setDeletingMember(null)}>
         <DialogContent className="max-w-md rounded-3xl p-6" showCloseButton={false}>
           <DialogHeader>
@@ -830,8 +1263,8 @@ export default function OrgMembersPage() {
               <TrashIcon weight="bold" size={22} />
             </div>
             <DialogTitle className="text-xl font-bold">Remove Member</DialogTitle>
-            <DialogDescription className="text-muted-foreground text-xs">
-              Are you sure you want to remove {deletingMember?.name || deletingMember?.email} from {activeOrg?.name}? They will lose access to all channels immediately.
+            <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
+              Are you sure you want to remove <strong>{deletingMember?.name || deletingMember?.email}</strong> from {activeOrg?.name}? They will lose access to all channels immediately.
             </DialogDescription>
           </DialogHeader>
 
@@ -840,7 +1273,7 @@ export default function OrgMembersPage() {
               type="button"
               variant="secondary"
               onClick={() => setDeletingMember(null)}
-              className="rounded-xl"
+              className="rounded-xl cursor-pointer"
             >
               Cancel
             </Button>
@@ -849,7 +1282,7 @@ export default function OrgMembersPage() {
               variant="destructive"
               onClick={handleRemoveMember}
               disabled={isDeleting}
-              className="rounded-xl gap-2 font-semibold"
+              className="rounded-xl gap-2 font-semibold cursor-pointer"
             >
               {isDeleting ? <Spinner /> : <TrashIcon size={16} weight="bold" />}
               <span>Remove Member</span>

@@ -182,11 +182,6 @@ function Page() {
                 {userInfo.email}
               </span>
             )}
-            <div className="mt-2 flex flex-wrap gap-2 text-xs text-foreground/40">
-              <span className="px-2.5 py-1 rounded-lg bg-foreground/5 font-mono">
-                ID: {userInfo?.id}
-              </span>
-            </div>
           </div>
         </div>
       </div>

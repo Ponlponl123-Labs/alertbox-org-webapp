@@ -333,9 +333,11 @@ export default function JoinOrgPage() {
                   <span className="font-bold text-base text-foreground truncate">
                     {verifiedInfo.organization.name}
                   </span>
-                  <span className="text-xs text-muted-foreground font-mono">
-                    @{verifiedInfo.organization.slug || verifiedInfo.organization.id}
-                  </span>
+                  {verifiedInfo.organization.slug && (
+                    <span className="text-xs text-muted-foreground font-mono">
+                      @{verifiedInfo.organization.slug}
+                    </span>
+                  )}
                 </div>
                 <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary shrink-0 capitalize">
                   <ShieldCheck className="size-3.5" />

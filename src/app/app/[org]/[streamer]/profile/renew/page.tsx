@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation";
 
 function RegisURIPage() {
   const lang = useStore(coreStore, (state) => state.lang);
-  const { userInfo, patchUserInfo, authFetch, activeOrg, activeStreamer } = useUserContext();
+  const { authFetch, activeOrg, activeStreamer, patchStreamer } = useUserContext();
   const router = useRouter();
   const [isRegistrable, setIsRegistrable] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -47,13 +47,10 @@ function RegisURIPage() {
       if (res.ok) {
         const newUri = currentUriInputValue.trim().toLowerCase();
         const nextCooldown = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        if (userInfo?.profile) {
-          patchUserInfo({
-            profile: {
-              ...userInfo.profile,
-              uri: newUri,
-              uriCooldownEnd: nextCooldown.toISOString(),
-            },
+        if (activeStreamer) {
+          patchStreamer(activeStreamer.id, {
+            uri: newUri,
+            uriCooldownEnd: nextCooldown.toISOString(),
           });
         }
         router.push(orgKey && streamerKey ? `/app/${orgKey}/${streamerKey}/profile` : "/app");

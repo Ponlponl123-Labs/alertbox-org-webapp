@@ -25,7 +25,6 @@ import {
   PenIcon,
   ShieldCheckIcon,
 } from "@phosphor-icons/react";
-import { getCookie } from "cookies-next/client";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
@@ -37,18 +36,14 @@ function Page() {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { userInfo, logout } = useUserContext();
+  const { userInfo, logout, authFetch } = useUserContext();
   const isFetched = useRef(false);
 
   const revoke = async (device: Device) => {
     if (isRevoking || device.isThisDevice) return;
     setIsRevoking(true);
-    const access_token = atob(getCookie("USRSS") || "");
-    const r = await fetch(getApiUrl(`/api/v1/me/device/${device.id}`), {
+    const r = await authFetch(getApiUrl(`/api/v1/me/device/${device.id}`), {
       method: "DELETE",
-      headers: {
-        authorization: "Bearer " + access_token,
-      },
     });
     if (r.status === 401) return logout();
     if (!r.ok) {
@@ -69,12 +64,7 @@ function Page() {
     if (isFetched.current || !userInfo || !userInfo.id) return;
     isFetched.current = true;
     (async () => {
-      const access_token = atob(getCookie("USRSS") || "");
-      const r = await fetch(getApiUrl("/api/v1/me/device"), {
-        headers: {
-          authorization: "Bearer " + access_token,
-        },
-      });
+      const r = await authFetch(getApiUrl("/api/v1/me/device"));
       if (r.status === 401) return logout();
       if (!r.ok) {
         setIsLoading(false);
@@ -84,7 +74,7 @@ function Page() {
       setDevices(data as Device[]);
       setIsLoading(false);
     })();
-  }, [isFetched, logout, userInfo]);
+  }, [isFetched, logout, userInfo, authFetch]);
 
   return (
     <>

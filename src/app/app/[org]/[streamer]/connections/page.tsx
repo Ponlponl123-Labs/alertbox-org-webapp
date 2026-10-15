@@ -32,6 +32,7 @@ import {
 } from "@phosphor-icons/react";
 import { useParams, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { OrgPerm, canAccessStreamer, StreamerPerm } from "@/lib/rbac";
 
 function Page() {
   const [connections, setConnections] = useState<Connections | null>(null);
@@ -44,6 +45,25 @@ function Page() {
 
   const targetOrg = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
   const targetStreamer = activeStreamer?.id || activeStreamer?.name || (routeParams?.streamer as string);
+
+  const canManageIntegrations = canAccessStreamer(
+    activeOrg,
+    activeStreamer,
+    StreamerPerm.STREAMER_INTEGRATION_MANAGE,
+    OrgPerm.INTEGRATION_MANAGE,
+  );
+
+  const getProviderEndpoint = (key: string) => {
+    const providerMap: Record<string, string> = {
+      bmac: "buymeacoffee",
+      ffp: "feelfreepay",
+    };
+    const provider = providerMap[key] || key;
+    if (activeOrg && activeStreamer) {
+      return `/api/v1/org/${activeOrg.id}/streamers/${activeStreamer.id}/connections/${provider}`;
+    }
+    return `/api/v1/me/connection/${provider}`;
+  };
 
   useEffect(() => {
     if (!userInfo || !targetOrg || !targetStreamer) return;
@@ -109,7 +129,7 @@ function Page() {
               >
                 {[
                   {
-                    api_endpoint: "/api/v1/me/connection/stripe",
+                    api_endpoint: getProviderEndpoint("stripe"),
                     icon: <Stripe className="size-8" />,
                     name: lang.data.app.connections.providers.stripe.name,
                     description:
@@ -121,7 +141,7 @@ function Page() {
                     soon: true,
                   },
                   {
-                    api_endpoint: "/api/v1/me/connection/kofi",
+                    api_endpoint: getProviderEndpoint("kofi"),
                     icon: <KoFi className="size-8" />,
                     name: lang.data.app.connections.providers.kofi.name,
                     description:
@@ -133,7 +153,7 @@ function Page() {
                     soon: false,
                   },
                   {
-                    api_endpoint: "/api/v1/me/connection/buymeacoffee",
+                    api_endpoint: getProviderEndpoint("bmac"),
                     icon: <BuyMeACoffee className="size-8" />,
                     name: lang.data.app.connections.providers.bmac.name,
                     description:
@@ -145,7 +165,7 @@ function Page() {
                     soon: false,
                   },
                   {
-                    api_endpoint: "/api/v1/me/connection/xendit",
+                    api_endpoint: getProviderEndpoint("xendit"),
                     icon: <Xendit className="size-8" />,
                     name: lang.data.app.connections.providers.xendit.name,
                     description:
@@ -157,7 +177,7 @@ function Page() {
                     soon: true,
                   },
                   {
-                    api_endpoint: "/api/v1/me/connection/omise",
+                    api_endpoint: getProviderEndpoint("omise"),
                     icon: (
                       <Image
                         src={"/omise.webp"}
@@ -177,7 +197,7 @@ function Page() {
                     soon: true,
                   },
                   {
-                    api_endpoint: "/api/v1/me/connection/2c2p",
+                    api_endpoint: getProviderEndpoint("2c2p"),
                     icon: (
                       <Image
                         src={"/2c2p.webp"}
@@ -198,7 +218,7 @@ function Page() {
                     soon: true,
                   },
                   {
-                    api_endpoint: "/api/v1/me/connection/youtube",
+                    api_endpoint: getProviderEndpoint("youtube"),
                     icon: <Youtube className="size-8" />,
                     name: lang.data.app.connections.providers.youtube.name,
                     description:
@@ -211,7 +231,7 @@ function Page() {
                     soon: true,
                   },
                   {
-                    api_endpoint: "/api/v1/me/connection/facebook",
+                    api_endpoint: getProviderEndpoint("facebook"),
                     icon: (
                       <FacebookLogoIcon
                         weight="fill"
@@ -229,7 +249,7 @@ function Page() {
                     soon: true,
                   },
                   {
-                    api_endpoint: "/api/v1/me/connection/twitch",
+                    api_endpoint: getProviderEndpoint("twitch"),
                     icon: <Twitch className="size-8" />,
                     name: lang.data.app.connections.providers.twitch.name,
                     description:
@@ -241,7 +261,7 @@ function Page() {
                     soon: true,
                   },
                   {
-                    api_endpoint: "/api/v1/me/connection/patreon",
+                    api_endpoint: getProviderEndpoint("patreon"),
                     icon: <Patreon className="size-8" />,
                     name: lang.data.app.connections.providers.patreon.name,
                     description:
@@ -254,7 +274,7 @@ function Page() {
                     soon: true,
                   },
                   {
-                    api_endpoint: "/api/v1/me/connection/feelfreepay",
+                    api_endpoint: getProviderEndpoint("ffp"),
                     icon: <FeelFreePay className="size-8" />,
                     name: lang.data.app.connections.providers.feelfreepay.name,
                     description:
@@ -283,14 +303,14 @@ function Page() {
                     setConnections={setConnections}
                     skey={c.key}
                     soon={c.soon}
+                    readOnly={!canManageIntegrations}
                   />
                 ))}
               </TabsContent>
               <TabsContent value="trigger" className="flex flex-col gap-1.5">
                 {[
                   {
-                    api_endpoint:
-                      "/api/v1/me/connection/integration/streamlabs",
+                    api_endpoint: getProviderEndpoint("streamlabs"),
                     icon: <Streamlabs className="size-8" />,
                     name: lang.data.app.connections.providers.streamlabs.name,
                     description:
@@ -316,6 +336,7 @@ function Page() {
                     setConnections={setConnections}
                     skey={c.key}
                     soon={c.soon}
+                    readOnly={!canManageIntegrations}
                   />
                 ))}
               </TabsContent>

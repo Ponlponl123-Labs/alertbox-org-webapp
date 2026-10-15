@@ -5,19 +5,26 @@ import { useUserContext } from "@/contexts/user";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { GalleryVerticalEnd, ChevronsUpDown, Plus, Check, KeyRound } from "lucide-react";
-import { BroadcastIcon } from "@phosphor-icons/react";
 import { JoinOrgDialog } from "@/components/join-org-dialog";
 
 export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
   const router = useRouter();
-  const { userInfo, organizations, activeOrg, activeStreamer, setActiveOrgId, setActiveStreamerId } = useUserContext();
+  const { userInfo, organizations, activeOrg, setActiveOrgId, setActiveStreamerId } = useUserContext();
   const [open, setOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
 
-  const displayName = activeOrg?.name || (userInfo?.name ? `${userInfo.name}'s Org` : "Acme Inc");
+  const displayName =
+    activeOrg?.name ||
+    (organizations.length === 0
+      ? "Workspace"
+      : userInfo?.name
+        ? `${userInfo.name}'s Org`
+        : "Workspace");
   const displayPlan = activeOrg?.role
     ? `${activeOrg.role.charAt(0) + activeOrg.role.slice(1).toLowerCase()} Plan`
-    : "Enterprise";
+    : organizations.length === 0
+      ? "No Organization"
+      : "Enterprise";
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -28,8 +35,17 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
           const targetOrg = organizations[num - 1];
           if (targetOrg && targetOrg.id !== activeOrg?.id) {
             setActiveOrgId(targetOrg.id);
-            if (targetOrg.streamers?.[0]) {
+            const orgKey = targetOrg.slug || targetOrg.id;
+            const isOwnerOrAdmin = targetOrg.role === "OWNER" || targetOrg.role === "ADMIN";
+            if (isOwnerOrAdmin) {
+              setActiveStreamerId("org");
+              router.push(`/app/${orgKey}`);
+            } else if (targetOrg.streamers?.[0]) {
               setActiveStreamerId(targetOrg.streamers[0].id);
+              const streamerKey = targetOrg.streamers[0].name || targetOrg.streamers[0].id;
+              router.push(`/app/${orgKey}/${streamerKey}`);
+            } else {
+              router.push(`/app/${orgKey}`);
             }
           }
         }
@@ -37,7 +53,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [organizations, activeOrg, setActiveOrgId, setActiveStreamerId]);
+  }, [organizations, activeOrg, setActiveOrgId, setActiveStreamerId, router]);
 
   return (
     <div className="w-full shrink-0 mb-1">
@@ -94,7 +110,11 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                       onClick={() => {
                         setActiveOrgId(org.id);
                         const orgKey = org.slug || org.id;
-                        if (org.streamers?.[0]) {
+                        const isOwnerOrAdmin = org.role === "OWNER" || org.role === "ADMIN";
+                        if (isOwnerOrAdmin) {
+                          setActiveStreamerId("org");
+                          router.push(`/app/${orgKey}`);
+                        } else if (org.streamers?.[0]) {
                           setActiveStreamerId(org.streamers[0].id);
                           const streamerKey = org.streamers[0].name || org.streamers[0].id;
                           router.push(`/app/${orgKey}/${streamerKey}`);
@@ -133,51 +153,18 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                 })
               ) : (
                 <div className="flex items-center gap-2.5 w-full p-2 rounded-md text-left text-xs text-muted-foreground">
-                  <div className="flex size-6 items-center justify-center rounded-md bg-blue-600/90 text-white font-semibold text-[10px] shrink-0">
+                  <div className="flex size-6 items-center justify-center rounded-md bg-muted text-muted-foreground font-semibold text-[10px] shrink-0">
                     <GalleryVerticalEnd className="size-3" />
                   </div>
                   <div className="grid flex-1 min-w-0 leading-tight">
-                    <span className="truncate font-medium">{displayName}</span>
-                    <span className="truncate text-[10px] text-muted-foreground">Default</span>
+                    <span className="truncate font-medium">No Organization</span>
+                    <span className="truncate text-[10px] text-muted-foreground">Workspace</span>
                   </div>
-                  <Check className="size-3.5 text-primary shrink-0" />
                 </div>
               )}
             </div>
 
-            {activeOrg && activeOrg.streamers.length > 1 && (
-              <>
-                <div className="h-px bg-border my-1 -mx-1" />
-                <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Channels ({activeOrg.name})
-                </div>
-                <div className="flex flex-col gap-0.5 max-h-36 overflow-y-auto">
-                  {activeOrg.streamers.map((s) => {
-                    const isStreamerSelected = s.id === activeStreamer?.id;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => {
-                          setActiveStreamerId(s.id);
-                          setOpen(false);
-                        }}
-                        className={cn(
-                          "flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-left text-xs transition-colors cursor-pointer",
-                          isStreamerSelected
-                            ? "bg-accent text-accent-foreground font-medium"
-                            : "hover:bg-accent/60 text-foreground/70",
-                        )}
-                      >
-                        <BroadcastIcon size={13} weight={isStreamerSelected ? "fill" : "regular"} className="shrink-0 text-primary" />
-                        <span className="truncate flex-1">{s.displayName || s.name}</span>
-                        {isStreamerSelected && <Check className="size-3.5 text-primary shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+
 
             <div className="h-px bg-border my-1 -mx-1" />
             <button

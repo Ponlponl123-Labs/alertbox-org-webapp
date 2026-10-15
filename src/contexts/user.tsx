@@ -21,7 +21,8 @@ export interface UserContext {
   userInfo: User | null;
   login: (code: string) => Promise<boolean>;
   logout: () => void;
-  patchUserInfo: (patch: Partial<User> | Partial<Streamer>) => void;
+  patchUserInfo: (patch: Partial<User>) => void;
+  patchStreamer: (streamerId: string, patch: Partial<Streamer>) => void;
   patchOrg: (patch: Partial<Organization>) => void;
   organizations: Organization[];
   activeOrg: Organization | null;
@@ -30,6 +31,10 @@ export interface UserContext {
   setOrgMode: (enabled: boolean) => void;
   setActiveOrgId: (id: string) => void;
   setActiveStreamerId: (id: string | null) => void;
+  removeStreamer: (streamerId: string) => void;
+  removeOrganization: (orgId: string) => void;
+  addStreamer: (streamer: Streamer) => void;
+  refreshUserInfo: () => Promise<void>;
   authFetch: (url: string, init?: RequestInit) => Promise<Response>;
 }
 
@@ -38,7 +43,12 @@ const userContext = createContext<UserContext>({
   login: async () => false,
   logout: () => {},
   patchUserInfo: () => {},
+  patchStreamer: () => {},
   patchOrg: () => {},
+  removeStreamer: () => {},
+  removeOrganization: () => {},
+  addStreamer: () => {},
+  refreshUserInfo: async () => {},
   organizations: [],
   activeOrg: null,
   activeStreamer: null,
@@ -70,27 +80,14 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     orgStore.getState().setOrgMode(enabled);
   }, []);
 
+  const patchStreamer = useCallback((streamerId: string, patch: Partial<Streamer>) => {
+    orgStore.getState().updateStreamer(streamerId, patch);
+  }, []);
+
   const patchUserInfo = useCallback(
-    (patch: Partial<User> | Partial<Streamer> | Record<string, unknown>) => {
+    (patch: Partial<User> | Record<string, unknown>) => {
       const p = patch as Record<string, unknown>;
-      const isStreamerPatch =
-        Boolean(p) &&
-        (p.displayName !== undefined ||
-          p.accentColor !== undefined ||
-          p.bio !== undefined ||
-          p.banner !== undefined ||
-          (p.id !== undefined && !p.email && !p.memberships));
-      const effectiveProfilePatch = (isStreamerPatch ? p : p.profile) as Partial<Streamer> | undefined;
 
-      const activeOrgState = selectActiveOrg(orgStore.getState());
-      const activeStreamerState = selectActiveStreamer(orgStore.getState());
-      const targetStreamerId = (p.id as string | undefined) || activeStreamerState?.id;
-
-      if (effectiveProfilePatch && targetStreamerId) {
-        queueMicrotask(() => {
-          orgStore.getState().updateStreamer(targetStreamerId, effectiveProfilePatch);
-        });
-      }
       if (Array.isArray(p.memberships)) {
         queueMicrotask(() => {
           orgStore.getState().syncFromMemberships(p.memberships as OrganizationMember[]);
@@ -103,36 +100,14 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
         const updated: User = {
           ...prev,
           ...(typeof p.name === "string" ? { name: p.name } : {}),
-          ...(typeof p.avatar === "string" && !isStreamerPatch ? { avatar: p.avatar } : {}),
+          ...(typeof p.avatar === "string" ? { avatar: p.avatar } : {}),
           ...(typeof p.email === "string" ? { email: p.email } : {}),
-          ...(Array.isArray(p.memberships) ? { memberships: p.memberships } : {}),
+          ...(Array.isArray(p.memberships) ? { memberships: p.memberships as OrganizationMember[] } : {}),
           profile: prev.profile ? { ...prev.profile } : null,
         };
 
         if (p.profile && typeof p.profile === "object") {
           updated.profile = { ...(prev.profile || {}), ...p.profile } as Profile;
-        }
-
-        if (effectiveProfilePatch) {
-          if (updated.profile) {
-            updated.profile = { ...updated.profile, ...effectiveProfilePatch } as Profile;
-          }
-          if (prev.memberships && activeOrgState && targetStreamerId) {
-            updated.memberships = prev.memberships.map((m) => {
-              if (m.organization?.id === activeOrgState.id) {
-                return {
-                  ...m,
-                  organization: {
-                    ...m.organization,
-                    streamers: (m.organization.streamers || []).map((s) =>
-                      s.id === targetStreamerId ? { ...s, ...effectiveProfilePatch } : s,
-                    ),
-                  },
-                };
-              }
-              return m;
-            });
-          }
         }
 
         return updated;
@@ -248,15 +223,89 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     if (!userInfo) return null;
     return {
       ...userInfo,
-      profile: activeStreamer || userInfo.profile,
-      widgets: activeStreamer?.widgets || userInfo.widgets || [],
+      profile: userInfo.profile,
     };
-  }, [userInfo, activeStreamer]);
+  }, [userInfo]);
 
   const patchOrg = useCallback((patch: Partial<Organization>) => {
     const active = selectActiveOrg(orgStore.getState());
     if (active) {
       orgStore.getState().updateOrganization(active.id, patch);
+    }
+  }, []);
+
+  const refreshUserInfo = useCallback(async () => {
+    const authCookie = await getCookie("USRSS");
+    if (!authCookie) return;
+    try {
+      const r = await fetch(getApiUrl("/api/v1/me"), {
+        method: "GET",
+        headers: {
+          authorization: "Bearer " + atob(authCookie),
+        },
+      });
+      if (r.ok) {
+        const d = (await r.json()) as User;
+        setUserInfo(d);
+        orgStore.getState().syncFromMemberships(d.memberships);
+      }
+    } catch {}
+  }, []);
+
+  const removeStreamer = useCallback((streamerId: string) => {
+    orgStore.getState().removeStreamer(streamerId);
+    setUserInfo((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        memberships: prev.memberships?.map((m) => ({
+          ...m,
+          organization: {
+            ...m.organization,
+            streamers: (m.organization.streamers || []).filter(
+              (s: Streamer) => s.id !== streamerId && s.name !== streamerId,
+            ),
+          },
+        })),
+      };
+    });
+  }, []);
+
+  const removeOrganization = useCallback((orgId: string) => {
+    orgStore.getState().removeOrganization(orgId);
+    setUserInfo((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        memberships: prev.memberships?.filter(
+          (m) => m.organization.id !== orgId && m.organization.slug !== orgId,
+        ),
+      };
+    });
+  }, []);
+
+  const addStreamer = useCallback((streamer: Streamer) => {
+    const active = selectActiveOrg(orgStore.getState());
+    if (active) {
+      orgStore.getState().addStreamer(active.id, streamer);
+      setUserInfo((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          memberships: prev.memberships?.map((m) => {
+            if (m.organization.id !== active.id && m.organization.slug !== active.id) return m;
+            const existing = m.organization.streamers || [];
+            if (existing.some((s) => s.id === streamer.id || s.name === streamer.name)) return m;
+            return {
+              ...m,
+              organization: {
+                ...m.organization,
+                streamers: [...existing, streamer],
+              },
+            };
+          }),
+        };
+      });
     }
   }, []);
 
@@ -267,7 +316,12 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         patchUserInfo,
+        patchStreamer,
         patchOrg,
+        removeStreamer,
+        removeOrganization,
+        addStreamer,
+        refreshUserInfo,
         organizations,
         activeOrg,
         activeStreamer,

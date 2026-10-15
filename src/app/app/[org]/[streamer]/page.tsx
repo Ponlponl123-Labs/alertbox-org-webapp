@@ -22,6 +22,18 @@ export default function StreamerDashboardPage() {
   const orgKey = activeOrg?.slug || activeOrg?.id || "org";
   const streamerKey = activeStreamer?.name || activeStreamer?.id || "streamer";
 
+  if (!activeStreamer) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center max-w-md mx-auto my-12 border border-border rounded-2xl bg-card">
+        <BroadcastIcon size={36} className="text-muted-foreground/60 mb-3" />
+        <h2 className="text-base font-bold text-foreground">No Channel Assigned</h2>
+        <p className="text-xs text-muted-foreground mt-1 mb-4">
+          You do not have access to this streaming channel in {activeOrg?.name || "this organization"}. Contact an administrator to assign channel permissions to your account.
+        </p>
+      </div>
+    );
+  }
+
   const widgetToken = activeStreamer?.widgets?.[0]?.token;
   const overlayUrl = typeof window !== "undefined" && widgetToken
     ? `${window.location.origin}/overlay/alertbox?token=${widgetToken}`

@@ -24,6 +24,7 @@ function Connection({
   skey,
   soon,
   href,
+  readOnly,
   setConnections,
 }: {
   api_endpoint: string;
@@ -37,6 +38,7 @@ function Connection({
   skey: string;
   soon?: boolean;
   href?: string;
+  readOnly?: boolean;
   connections: Connections | null;
   setConnections: Dispatch<SetStateAction<Connections | null>>;
 }) {
@@ -178,25 +180,36 @@ function Connection({
               {lang.data.app.connections.soon}
             </Button>
           ) : isUserSecretFlow ? (
-            <Link
-              href={targetHref}
-              className="w-full min-w-0 flex-1"
-            >
+            readOnly && !isConnected ? (
               <Button
-                variant={isConnected ? "secondary" : "default"}
-                className="rounded-xl p-4 w-full"
+                variant="outline"
+                className="rounded-xl p-4 w-full cursor-not-allowed opacity-70"
+                disabled
               >
-                {isConnected
-                  ? (lang.key === "th-TH" ? "ตั้งค่าการใช้งาน" : "Configure")
-                  : lang.data.app.connections.status.connect}
+                Not Connected (Read-only)
               </Button>
-            </Link>
+            ) : (
+              <Link
+                href={targetHref}
+                className="w-full min-w-0 flex-1"
+              >
+                <Button
+                  variant={isConnected ? "secondary" : "default"}
+                  className="rounded-xl p-4 w-full"
+                >
+                  {isConnected
+                    ? (lang.key === "th-TH" ? "ตั้งค่าการใช้งาน" : "Configure")
+                    : lang.data.app.connections.status.connect}
+                </Button>
+              </Link>
+            )
           ) : typeof secret === "boolean" ? (
             <>
               {!secret ? (
                 <Button
                   className="rounded-xl p-4 min-w-0 flex-1 w-full border-2 border-dashed"
                   onClick={async () => {
+                    if (readOnly) return;
                     setIsLoading(true);
                     const r = await authFetch(getApiUrl(api_endpoint + "/oauth2"), {
                       method: "GET",
@@ -206,12 +219,12 @@ function Connection({
                       window.location.href = oauth2_link;
                     }
                   }}
-                  disabled={isLoading}
+                  disabled={isLoading || readOnly}
                 >
                   {isLoading ? (
                     <Spinner className="size-4" />
                   ) : (
-                    lang.data.app.connections.status.connect
+                    readOnly ? "Disabled (Read-only)" : lang.data.app.connections.status.connect
                   )}
                 </Button>
               ) : (
@@ -238,7 +251,7 @@ function Connection({
                         type="text"
                         placeholder="Username"
                         value={username}
-                        readOnly={isLoading}
+                        readOnly={isLoading || readOnly}
                         maxLength={64}
                         onChange={(e) => setUsername(e.target.value)}
                         className="text-foreground/60 font-mono text-sm flex-1 min-w-0"
@@ -254,7 +267,7 @@ function Connection({
                         type="text"
                         placeholder={isUserSecretFlow ? "Webhook Secret" : lang.data.app.connections.placeholder}
                         value={currentSecret}
-                        readOnly={isLoading}
+                        readOnly={isLoading || readOnly}
                         maxLength={255}
                         onChange={(e) => setCurrentSecret(e.target.value)}
                         className="text-foreground/60 font-mono text-sm flex-1 min-w-0"
@@ -264,7 +277,15 @@ function Connection({
                           fontSize: "12px",
                         }}
                       />
-                      {canSave && hasChanges ? (
+                      {readOnly ? (
+                        <Button
+                          variant="secondary"
+                          className="rounded-xl p-4 cursor-not-allowed opacity-70"
+                          disabled
+                        >
+                          Read-only
+                        </Button>
+                      ) : canSave && hasChanges ? (
                         <Button
                           variant="default"
                           className="rounded-xl p-4 -mr-1"
@@ -304,8 +325,9 @@ function Connection({
                       variant="default"
                       className="rounded-xl p-4 min-w-0 flex-1 w-full"
                       onClick={() => setIsShowSecret(true)}
+                      disabled={readOnly}
                     >
-                      {lang.data.app.connections.status.connect}
+                      {readOnly ? "Disabled (Read-only)" : lang.data.app.connections.status.connect}
                     </Button>
                     <Link
                       href={targetHref}

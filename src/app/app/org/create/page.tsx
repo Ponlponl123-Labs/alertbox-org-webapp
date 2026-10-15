@@ -15,7 +15,6 @@ export default function CreateOrgPage() {
   const { authFetch, patchUserInfo } = useUserContext();
 
   const [orgName, setOrgName] = useState("");
-  const [streamerName, setStreamerName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +31,6 @@ export default function CreateOrgPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: orgName.trim(),
-          streamerName: streamerName.trim() || undefined,
         }),
       });
 
@@ -52,11 +50,11 @@ export default function CreateOrgPage() {
         patchUserInfo(freshUser);
         orgStore.getState().syncFromMemberships(freshUser.memberships);
         orgStore.getState().setActiveOrgId(String(created.id));
+        orgStore.getState().setActiveStreamerId("org");
       }
 
       const orgSlug = created.slug || created.id;
-      const channelSlug = streamerName.trim() || "streamer";
-      router.push(`/app/${orgSlug}/${channelSlug}`);
+      router.push(`/app/${orgSlug}`);
     } catch {
       setError("Network error while creating organization");
     } finally {
@@ -117,23 +115,6 @@ export default function CreateOrgPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-foreground/85 flex items-center justify-between">
-              <span>Primary Channel / Streamer Handle</span>
-              <span className="text-[10px] text-muted-foreground font-normal">Optional</span>
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. main-stage, stream1"
-              value={streamerName}
-              onChange={(e) => setStreamerName(e.target.value)}
-              maxLength={48}
-              className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-input bg-background text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-            />
-            <span className="text-[11px] text-muted-foreground">
-              You can add more channels and streamers later anytime.
-            </span>
-          </div>
 
           {error && (
             <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">

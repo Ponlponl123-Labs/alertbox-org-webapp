@@ -39,7 +39,7 @@ import OrgSwitcher from "./org-switcher";
 import StreamerSelector from "./streamer-selector";
 import NavUser from "./nav-user";
 import { useUserContext } from "@/contexts/user";
-import { hasPermission, OrgPerm } from "@/lib/rbac";
+import { hasPermission, OrgPerm, canAccessStreamer, StreamerPerm } from "@/lib/rbac";
 
 interface SidebarLink {
   text: string;
@@ -134,80 +134,17 @@ function AppSidebar() {
   const { activeOrg, activeStreamer, isOrgMode } = useUserContext();
 
   const sections: SidebarSection[] = useMemo(() => {
-    const isOwnerOrAdmin =
-      activeOrg?.role === "OWNER" ||
-      activeOrg?.role === "ADMIN" ||
-      hasPermission(activeOrg?.permissions, OrgPerm.VIEW_ORG);
-
-    const orgKey = activeOrg?.slug || activeOrg?.id || "org";
-    const streamerKey = activeStreamer?.name || activeStreamer?.id || "streamer";
-
-    const orgPages = ["/members", "/streamers", "/permissions", "/roles", "/audit", "/settings", "/billing", "/transactions"];
-    const isOrgRoute =
-      pathname === `/app/${orgKey}` ||
-      orgPages.some((p) => pathname.startsWith(`/app/${orgKey}${p}`));
-    const showOrgManagement = (isOrgMode || isOrgRoute) && isOwnerOrAdmin;
-
-    // 1. Organization Management View (Owner/Admin in Org Mode or Org Route)
-    if (showOrgManagement) {
+    if (!activeOrg) {
       return [
         {
-          id: "organization",
-          title: "Organization",
+          id: "workspace",
+          title: "Workspace",
           items: [
             {
-              id: "org-overview",
-              text: "Overview",
+              id: "workspace-overview",
+              text: "Workspace Zone",
               icon: <ChartLineIcon weight="bold" size={16} />,
-              href: `/app/${orgKey}`,
-            },
-            {
-              id: "org-members",
-              text: "Members & Staff",
-              icon: <UsersIcon weight="bold" size={16} />,
-              href: `/app/${orgKey}/members`,
-            },
-            {
-              id: "org-streamers",
-              text: "Channels",
-              icon: <BroadcastIcon weight="bold" size={16} />,
-              href: `/app/${orgKey}/streamers`,
-            },
-            {
-              id: "org-permissions",
-              text: "Permissions",
-              icon: <ShieldCheckIcon weight="bold" size={16} />,
-              href: `/app/${orgKey}/permissions`,
-            },
-            {
-              id: "org-audit",
-              text: "Audit Logs",
-              icon: <ClockCounterClockwiseIcon weight="bold" size={16} />,
-              href: `/app/${orgKey}/audit`,
-            },
-            {
-              id: "org-settings",
-              text: "Settings",
-              icon: <GearSixIcon weight="bold" size={16} />,
-              href: `/app/${orgKey}/settings`,
-            },
-          ],
-        },
-        {
-          id: "finance",
-          title: "Finance",
-          items: [
-            {
-              id: "org-billing",
-              text: "Billing & Plans",
-              icon: <HandCoinsIcon weight="bold" size={16} />,
-              href: `/app/${orgKey}/billing`,
-            },
-            {
-              id: "org-transactions",
-              text: "Transactions",
-              icon: <StorefrontIcon weight="bold" size={16} />,
-              href: `/app/${orgKey}/transactions`,
+              href: "/app",
             },
           ],
         },
@@ -242,22 +179,159 @@ function AppSidebar() {
       ];
     }
 
+    const isOwner = activeOrg?.role === "OWNER";
+    const isOwnerOrAdmin = isOwner || activeOrg?.role === "ADMIN";
+
+    const canViewOrg = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_VIEW);
+    const canManageMembers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBERS_MANAGE);
+    const canManageRoles = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_ROLES_MANAGE);
+    const canViewStreamers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.STREAMER_VIEW);
+    const canManageSettings = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MANAGE);
+    const canViewAudit = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MANAGE);
+    const canViewBilling = isOwnerOrAdmin;
+    const canViewTransactions = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.TRANSACTION_VIEW);
+
+    const orgKey = activeOrg?.slug || activeOrg?.id || "org";
+    const streamerKey = activeStreamer?.name || activeStreamer?.id || "streamer";
+
+    const orgPages = ["/members", "/streamers", "/audit", "/settings", "/billing", "/transactions"];
+    const isOrgRoute =
+      pathname === `/app/${orgKey}` ||
+      orgPages.some((p) => pathname.startsWith(`/app/${orgKey}${p}`));
+    const hasAnyOrgAccess =
+      isOwnerOrAdmin ||
+      canViewOrg ||
+      canManageMembers ||
+      canManageRoles ||
+      canViewStreamers ||
+      canManageSettings ||
+      canViewTransactions;
+    const showOrgManagement = (isOrgMode || isOrgRoute) && hasAnyOrgAccess;
+
+    // 1. Organization Management View (Owner/Admin or authorized role in Org Mode or Org Route)
+    if (showOrgManagement) {
+      const orgItems: SidebarItem[] = [];
+      if (canViewOrg) {
+        orgItems.push({
+          id: "org-overview",
+          text: "Overview",
+          icon: <ChartLineIcon weight="bold" size={16} />,
+          href: `/app/${orgKey}`,
+        });
+      }
+      if (canManageMembers || canManageRoles) {
+        orgItems.push({
+          id: "org-members",
+          text: "Members & Staff",
+          icon: <UsersIcon weight="bold" size={16} />,
+          href: `/app/${orgKey}/members`,
+        });
+      }
+      if (canViewStreamers) {
+        orgItems.push({
+          id: "org-streamers",
+          text: "Channels",
+          icon: <BroadcastIcon weight="bold" size={16} />,
+          href: `/app/${orgKey}/streamers`,
+        });
+      }
+      if (canViewAudit) {
+        orgItems.push({
+          id: "org-audit",
+          text: "Audit Logs",
+          icon: <ClockCounterClockwiseIcon weight="bold" size={16} />,
+          href: `/app/${orgKey}/audit`,
+        });
+      }
+      if (canManageSettings) {
+        orgItems.push({
+          id: "org-settings",
+          text: "Settings",
+          icon: <GearSixIcon weight="bold" size={16} />,
+          href: `/app/${orgKey}/settings`,
+        });
+      }
+
+      const financeItems: SidebarItem[] = [];
+      if (canViewBilling) {
+        financeItems.push({
+          id: "org-billing",
+          text: "Billing & Plans",
+          icon: <HandCoinsIcon weight="bold" size={16} />,
+          href: `/app/${orgKey}/billing`,
+        });
+      }
+      if (canViewTransactions) {
+        financeItems.push({
+          id: "org-transactions",
+          text: "Transactions",
+          icon: <StorefrontIcon weight="bold" size={16} />,
+          href: `/app/${orgKey}/transactions`,
+        });
+      }
+
+      const sections: SidebarSection[] = [];
+      if (orgItems.length > 0) {
+        sections.push({
+          id: "organization",
+          title: "Organization",
+          items: orgItems,
+        });
+      }
+      if (financeItems.length > 0) {
+        sections.push({
+          id: "finance",
+          title: "Finance",
+          items: financeItems,
+        });
+      }
+      sections.push({
+        id: "account",
+        title: "Account",
+        items: [
+          {
+            id: "settings",
+            text: lang.data.app.sidebar.links.settings.title,
+            icon: <GearSixIcon weight="bold" size={16} />,
+            links: [
+              {
+                text: lang.data.app.sidebar.links.settings.account,
+                icon: <UserGearIcon weight="bold" size={16} />,
+                href: "/app/account",
+              },
+              {
+                text: lang.data.app.sidebar.links.settings.security,
+                icon: <ShieldCheckIcon weight="bold" size={16} />,
+                href: "/app/account/security",
+              },
+              {
+                text: lang.data.app.sidebar.links.settings.danger,
+                icon: <WarningOctagonIcon weight="bold" size={16} />,
+                href: "/app/account/danger",
+              },
+            ],
+          },
+        ],
+      });
+      return sections;
+    }
+
     // 2. Streamer Management View (Tailored to active streamer and user bitmask perms)
+    const canViewStreamerBasic =
+      canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_VIEW, OrgPerm.STREAMER_VIEW);
     const canEditProfile =
-      isOwnerOrAdmin ||
-      hasPermission(activeOrg?.permissions, OrgPerm.EDIT_STREAMER_PROFILE);
+      canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_MANAGE, OrgPerm.STREAMER_MANAGE);
+    const canViewProfile = canViewStreamerBasic || canEditProfile;
+
     const canViewAlertbox =
-      isOwnerOrAdmin ||
-      hasPermission(activeOrg?.permissions, OrgPerm.VIEW_WIDGETS) ||
-      hasPermission(activeOrg?.permissions, OrgPerm.MANAGE_ALERTBOX);
+      canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_WIDGET_MANAGE, OrgPerm.WIDGET_MANAGE) ||
+      hasPermission(activeOrg?.permissions, OrgPerm.WIDGET_VIEW);
     const canViewIntegrations =
-      isOwnerOrAdmin ||
-      hasPermission(activeOrg?.permissions, OrgPerm.VIEW_INTEGRATIONS) ||
-      hasPermission(activeOrg?.permissions, OrgPerm.MANAGE_INTEGRATIONS);
+      canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_INTEGRATION_MANAGE, OrgPerm.INTEGRATION_MANAGE) ||
+      hasPermission(activeOrg?.permissions, OrgPerm.INTEGRATION_VIEW);
     const canViewAnalytics =
-      isOwnerOrAdmin ||
-      hasPermission(activeOrg?.permissions, OrgPerm.VIEW_ANALYTICS) ||
-      hasPermission(activeOrg?.permissions, OrgPerm.VIEW_TRANSACTIONS);
+      canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_ANALYTICS_VIEW, OrgPerm.ANALYTICS_VIEW) ||
+      canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_TRANSACTION_VIEW, OrgPerm.TRANSACTION_VIEW);
 
     const streamerTitle = activeStreamer?.displayName || activeStreamer?.name
       ? `Channel: ${activeStreamer.displayName || activeStreamer.name}`
@@ -265,7 +339,7 @@ function AppSidebar() {
 
     const streamerItems: SidebarItem[] = [];
 
-    if (canViewAnalytics) {
+    if (canViewStreamerBasic || canViewAnalytics) {
       streamerItems.push({
         id: "dashboard",
         text: lang.data.header.user_chip.links.dashboard,
@@ -274,7 +348,7 @@ function AppSidebar() {
       });
     }
 
-    if (canEditProfile) {
+    if (canViewProfile) {
       streamerItems.push({
         id: "profile",
         text: lang.data.app.sidebar.links.profile,
@@ -339,12 +413,6 @@ function AppSidebar() {
       href: `/app/${orgKey}/${streamerKey}/audit`,
     });
 
-    streamerItems.push({
-      id: "streamer-settings",
-      text: "Settings",
-      icon: <GearSixIcon weight="bold" size={16} />,
-      href: `/app/${orgKey}/${streamerKey}/settings`,
-    });
 
     return [
       {

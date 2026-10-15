@@ -16,6 +16,9 @@ export type OrgStoreActions = {
   setActiveOrgId: (id: string) => void;
   setActiveStreamerId: (id: string | null) => void;
   setOrgMode: (enabled: boolean) => void;
+  removeStreamer: (streamerId: string) => void;
+  removeOrganization: (orgId: string) => void;
+  addStreamer: (orgId: string, streamer: Streamer) => void;
   updateStreamer: (streamerId: string, partial: Partial<Streamer>) => void;
   updateOrganization: (orgId: string, partial: Partial<Organization>) => void;
 };
@@ -42,13 +45,21 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
     }
 
     const currentOrg = orgs.find((o) => o.id === nextOrgId);
+    const isOwnerOrAdmin = currentOrg?.role === "OWNER" || currentOrg?.role === "ADMIN";
     let nextStreamerId = state.activeStreamerId;
-    if (currentOrg?.streamers?.length) {
+    let nextIsOrgMode = state.isOrgMode;
+
+    if (isOwnerOrAdmin && (state.isOrgMode || !nextStreamerId)) {
+      nextStreamerId = null;
+      nextIsOrgMode = true;
+    } else if (currentOrg?.streamers?.length) {
       if (!currentOrg.streamers.some((s) => s.id === nextStreamerId)) {
-        nextStreamerId = currentOrg.streamers[0].id;
+        nextStreamerId = isOwnerOrAdmin ? null : currentOrg.streamers[0].id;
+        if (isOwnerOrAdmin) nextIsOrgMode = true;
       }
     } else {
       nextStreamerId = null;
+      if (isOwnerOrAdmin) nextIsOrgMode = true;
     }
 
     if (typeof window !== "undefined") {
@@ -56,9 +67,13 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
         localStorage.setItem("ab_active_org_id", nextOrgId);
         setCookie("ab_org_id", nextOrgId, { path: "/" });
       }
-      if (nextStreamerId && !state.isOrgMode) {
+      localStorage.setItem("ab_view_mode", nextIsOrgMode ? "org" : "streamer");
+      if (nextStreamerId && !nextIsOrgMode) {
         localStorage.setItem("ab_active_streamer_id", nextStreamerId);
         setCookie("ab_streamer_id", nextStreamerId, { path: "/" });
+      } else {
+        localStorage.removeItem("ab_active_streamer_id");
+        deleteCookie("ab_streamer_id");
       }
     }
 
@@ -66,18 +81,22 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
       organizations: orgs,
       activeOrgId: nextOrgId,
       activeStreamerId: nextStreamerId,
+      isOrgMode: nextIsOrgMode,
     });
   },
 
   setActiveOrgId: (id: string) => {
     const orgs = get().organizations;
     const org = orgs.find((o) => o.id === id);
-    const nextStreamerId = org?.streamers?.[0]?.id ?? null;
+    const isOwnerOrAdmin = org?.role === "OWNER" || org?.role === "ADMIN";
+    const shouldBeOrgMode = isOwnerOrAdmin || get().isOrgMode;
+    const nextStreamerId = shouldBeOrgMode ? null : (org?.streamers?.[0]?.id ?? null);
 
     if (typeof window !== "undefined") {
       localStorage.setItem("ab_active_org_id", id);
       setCookie("ab_org_id", id, { path: "/" });
-      if (nextStreamerId && !get().isOrgMode) {
+      localStorage.setItem("ab_view_mode", shouldBeOrgMode ? "org" : "streamer");
+      if (nextStreamerId && !shouldBeOrgMode) {
         localStorage.setItem("ab_active_streamer_id", nextStreamerId);
         setCookie("ab_streamer_id", nextStreamerId, { path: "/" });
       } else {
@@ -89,6 +108,7 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
     set({
       activeOrgId: id,
       activeStreamerId: nextStreamerId,
+      isOrgMode: shouldBeOrgMode,
     });
   },
 
@@ -120,6 +140,120 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
     set({ isOrgMode: enabled });
   },
 
+  removeStreamer: (streamerId: string) => {
+    const state = get();
+    const updatedOrgs = state.organizations.map((org) => ({
+      ...org,
+      streamers: org.streamers.filter((s) => s.id !== streamerId && s.name !== streamerId),
+    }));
+
+    let nextStreamerId = state.activeStreamerId;
+    let nextIsOrgMode = state.isOrgMode;
+
+    const currentOrg = updatedOrgs.find((o) => o.id === state.activeOrgId) || updatedOrgs[0] || null;
+    const isOwnerOrAdmin = currentOrg?.role === "OWNER" || currentOrg?.role === "ADMIN";
+
+    if (state.activeStreamerId === streamerId || (state.activeStreamerId && !currentOrg?.streamers.some((s) => s.id === state.activeStreamerId))) {
+      if (isOwnerOrAdmin || !currentOrg?.streamers.length) {
+        nextStreamerId = null;
+        nextIsOrgMode = true;
+        if (typeof window !== "undefined") {
+          localStorage.setItem("ab_view_mode", "org");
+          localStorage.removeItem("ab_active_streamer_id");
+          deleteCookie("ab_streamer_id");
+        }
+      } else {
+        nextStreamerId = currentOrg.streamers[0]?.id || null;
+        nextIsOrgMode = false;
+        if (typeof window !== "undefined") {
+          if (nextStreamerId) {
+            localStorage.setItem("ab_view_mode", "streamer");
+            localStorage.setItem("ab_active_streamer_id", nextStreamerId);
+            setCookie("ab_streamer_id", nextStreamerId, { path: "/" });
+          } else {
+            localStorage.setItem("ab_view_mode", "org");
+            localStorage.removeItem("ab_active_streamer_id");
+            deleteCookie("ab_streamer_id");
+          }
+        }
+      }
+    }
+
+    set({
+      organizations: updatedOrgs,
+      activeStreamerId: nextStreamerId,
+      isOrgMode: nextIsOrgMode,
+    });
+  },
+
+  removeOrganization: (orgId: string) => {
+    const state = get();
+    const updatedOrgs = state.organizations.filter(
+      (o) => o.id !== orgId && o.slug !== orgId,
+    );
+
+    let nextOrgId = state.activeOrgId;
+    let nextStreamerId = state.activeStreamerId;
+    let nextIsOrgMode = state.isOrgMode;
+
+    if (state.activeOrgId === orgId || !updatedOrgs.some((o) => o.id === state.activeOrgId)) {
+      const nextOrg = updatedOrgs[0] || null;
+      if (nextOrg) {
+        nextOrgId = nextOrg.id;
+        const isOwnerOrAdmin = nextOrg.role === "OWNER" || nextOrg.role === "ADMIN";
+        if (isOwnerOrAdmin) {
+          nextStreamerId = null;
+          nextIsOrgMode = true;
+        } else {
+          nextStreamerId = nextOrg.streamers?.[0]?.id || null;
+          nextIsOrgMode = !nextStreamerId;
+        }
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("ab_active_org_id", nextOrg.id);
+          setCookie("ab_org_id", nextOrg.id, { path: "/" });
+          if (nextStreamerId) {
+            localStorage.setItem("ab_view_mode", "streamer");
+            localStorage.setItem("ab_active_streamer_id", nextStreamerId);
+            setCookie("ab_streamer_id", nextStreamerId, { path: "/" });
+          } else {
+            localStorage.setItem("ab_view_mode", "org");
+            localStorage.removeItem("ab_active_streamer_id");
+            deleteCookie("ab_streamer_id");
+          }
+        }
+      } else {
+        nextOrgId = null;
+        nextStreamerId = null;
+        nextIsOrgMode = false;
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("ab_active_org_id");
+          localStorage.removeItem("ab_active_streamer_id");
+          localStorage.removeItem("ab_view_mode");
+          deleteCookie("ab_org_id");
+          deleteCookie("ab_streamer_id");
+        }
+      }
+    }
+
+    set({
+      organizations: updatedOrgs,
+      activeOrgId: nextOrgId,
+      activeStreamerId: nextStreamerId,
+      isOrgMode: nextIsOrgMode,
+    });
+  },
+
+  addStreamer: (orgId: string, streamer: Streamer) => {
+    set((state) => ({
+      organizations: state.organizations.map((org) => {
+        if (org.id !== orgId && org.slug !== orgId) return org;
+        if (org.streamers.some((s) => s.id === streamer.id || s.name === streamer.name)) return org;
+        return { ...org, streamers: [...org.streamers, streamer] };
+      }),
+    }));
+  },
+
   updateStreamer: (streamerId: string, partial: Partial<Streamer>) => {
     set((state) => ({
       organizations: state.organizations.map((org) => ({
@@ -147,6 +281,6 @@ export const selectActiveStreamer = (state: OrgStore): Streamer | null => {
   const activeOrg = selectActiveOrg(state);
   if (!activeOrg?.streamers?.length) return null;
   const isOwnerOrAdmin = activeOrg.role === "OWNER" || activeOrg.role === "ADMIN";
-  if (state.isOrgMode && isOwnerOrAdmin) return null;
-  return activeOrg.streamers.find((s) => s.id === state.activeStreamerId) || activeOrg.streamers[0] || null;
+  if (isOwnerOrAdmin && (state.isOrgMode || !state.activeStreamerId)) return null;
+  return activeOrg.streamers.find((s) => s.id === state.activeStreamerId) || (isOwnerOrAdmin ? null : activeOrg.streamers[0]) || null;
 };

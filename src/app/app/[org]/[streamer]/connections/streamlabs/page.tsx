@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Streamlabs } from "@thesvg/react";
 import Image from "next/image";
+import { canAccessStreamer, StreamerPerm, OrgPerm } from "@/lib/rbac";
 
 interface RelayLog {
   id: string;
@@ -61,6 +62,13 @@ function StreamlabsPage() {
   const params = useSearchParams();
   const code = params.get("code");
   const state = params.get("state");
+
+  const canManageIntegrations = canAccessStreamer(
+    activeOrg,
+    activeStreamer,
+    StreamerPerm.STREAMER_INTEGRATION_MANAGE,
+    OrgPerm.INTEGRATION_MANAGE
+  );
 
   const orgKey = activeOrg?.slug || activeOrg?.id;
   const streamerKey = activeStreamer?.name || activeStreamer?.id;
@@ -448,28 +456,39 @@ function StreamlabsPage() {
                       type="checkbox"
                       className="sr-only peer"
                       checked={item.checked}
+                      disabled={!canManageIntegrations}
                       onChange={(e) => item.onChange(e.target.checked)}
                     />
-                    <div className="relative w-11 h-6 bg-foreground/15 rounded-full peer peer-focus:ring-0 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 transition-colors" />
+                    <div className="relative w-11 h-6 bg-foreground/15 rounded-full peer peer-focus:ring-0 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 transition-colors peer-disabled:opacity-50" />
                   </div>
                 </label>
               ))}
 
               <div className="pt-4 flex flex-col gap-3">
-                <Button
-                  variant="secondary"
-                  onClick={handleSaveSettings}
-                  disabled={isSaving}
-                  className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                >
-                  {isSaving ? (
-                    <Spinner className="size-4 text-current" />
-                  ) : (
-                    setupLang.btn_save
-                  )}
-                </Button>
+                {canManageIntegrations ? (
+                  <Button
+                    variant="secondary"
+                    onClick={handleSaveSettings}
+                    disabled={isSaving}
+                    className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                  >
+                    {isSaving ? (
+                      <Spinner className="size-4 text-current" />
+                    ) : (
+                      setupLang.btn_save
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    disabled
+                    className="w-full h-12 rounded-xl text-xs font-bold tracking-wider opacity-60 cursor-not-allowed"
+                  >
+                    Read-only (No Permission)
+                  </Button>
+                )}
 
-                {isConnected && (
+                {isConnected && canManageIntegrations && (
                   <Button
                     type="button"
                     variant="destructive"

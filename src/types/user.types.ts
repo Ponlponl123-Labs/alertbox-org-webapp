@@ -23,6 +23,8 @@ export interface OrganizationMember {
 export interface Streamer extends Profile {
   orgId?: string;
   widgets?: Widget[];
+  permissions?: number;
+  isAssigned?: boolean;
 }
 
 export interface User {
