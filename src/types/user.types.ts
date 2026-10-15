@@ -1,5 +1,6 @@
 export interface Organization {
   id: string;
+  type?: "COMMUNITY" | "ENTERPRISE";
   name: string;
   slug: string;
   avatar: string | null;
@@ -29,6 +30,7 @@ export interface Streamer extends Profile {
 
 export interface User {
   id: string;
+  type?: "REGULAR" | "SUPPORTER" | "OPERATOR";
   email: string;
   name?: string | null;
   avatar?: string | null;

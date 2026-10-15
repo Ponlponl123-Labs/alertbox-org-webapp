@@ -20,11 +20,14 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
       : userInfo?.name
         ? `${userInfo.name}'s Org`
         : "Workspace");
-  const displayPlan = activeOrg?.role
-    ? `${activeOrg.role.charAt(0) + activeOrg.role.slice(1).toLowerCase()} Plan`
-    : organizations.length === 0
-      ? "No Organization"
-      : "Enterprise";
+  const displayType =
+    activeOrg?.type === "ENTERPRISE"
+      ? "Enterprise"
+      : activeOrg
+        ? "Community"
+        : organizations.length === 0
+          ? "No Organization"
+          : "Community";
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -80,7 +83,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                 {displayName}
               </span>
               <span className="truncate text-xs text-muted-foreground">
-                {displayPlan}
+                {displayType}
               </span>
             </div>
           )}

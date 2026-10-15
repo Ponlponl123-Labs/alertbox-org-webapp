@@ -13,16 +13,19 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getFallbackInitial } from "@/lib/utils";
 import { hasPermission, OrgPerm } from "@/lib/rbac";
+import { OrgActivity3D } from "@/components/org-activity-3d";
 
 export default function OrgOverviewPage() {
-  const { activeOrg } = useUserContext();
+  const { activeOrg, isSelfHosted } = useUserContext();
 
   const role = (activeOrg?.role || "").toLowerCase();
   const isOwnerOrAdmin = role === "owner" || role === "admin";
-  const canCreateStreamer = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.STREAMER_CREATE);
-
+  const orgType = activeOrg?.type || "COMMUNITY";
+  const isEnterprise = orgType === "ENTERPRISE";
   const streamers = activeOrg?.streamers || [];
   const orgSlug = activeOrg?.slug || activeOrg?.id || "org";
+  const isChannelLimitReached = !isSelfHosted && !isEnterprise && streamers.length >= 1;
+  const canCreateStreamer = (isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.STREAMER_CREATE)) && !isChannelLimitReached;
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl w-full py-4">
@@ -36,17 +39,22 @@ export default function OrgOverviewPage() {
             {activeOrg?.name || "Organization Overview"}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Centralized hub for all streamer channels, staff members, and subscription billing.
+            Centralized hub for all streamer channels, staff members, and workspace settings.
           </p>
         </div>
-        {canCreateStreamer && (
+        {canCreateStreamer ? (
           <Link href={`/app/${orgSlug}/streamers`}>
             <Button size="sm" className="gap-2">
               <BroadcastIcon size={15} weight="bold" />
               <span>Add Channel</span>
             </Button>
           </Link>
-        )}
+        ) : isChannelLimitReached && (isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.STREAMER_CREATE)) ? (
+          <Button size="sm" variant="outline" disabled className="gap-2 opacity-60 cursor-not-allowed">
+            <BroadcastIcon size={15} weight="bold" />
+            <span>Channel Limit (1/1)</span>
+          </Button>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -56,7 +64,9 @@ export default function OrgOverviewPage() {
             <BroadcastIcon size={18} weight="bold" className="text-primary" />
           </div>
           <span className="text-2xl font-bold text-foreground mt-1">{streamers.length}</span>
-          <span className="text-[11px] text-muted-foreground">Active streamer profiles</span>
+          <span className="text-[11px] text-muted-foreground">
+            {isEnterprise || isSelfHosted ? "Unlimited channels" : `${streamers.length}/1 active channel`}
+          </span>
         </div>
 
         <div className="p-4 rounded-2xl border border-border bg-card flex flex-col gap-1">
@@ -83,12 +93,28 @@ export default function OrgOverviewPage() {
 
         <div className="p-4 rounded-2xl border border-border bg-card flex flex-col gap-1">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-xs font-medium">Subscription</span>
-            <HandCoinsIcon size={18} weight="bold" className="text-emerald-500" />
+            <span className="text-xs font-medium">Organization Type</span>
+            <HandCoinsIcon size={18} weight="bold" className={isEnterprise ? "text-purple-500" : "text-emerald-500"} />
           </div>
-          <span className="text-2xl font-bold text-foreground mt-1">Active</span>
-          <span className="text-[11px] text-muted-foreground">Enterprise multi-channel plan</span>
+          <span className="text-2xl font-bold text-foreground mt-1 capitalize">
+            {isEnterprise ? "Enterprise" : "Community"}
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            {isEnterprise || isSelfHosted ? (isSelfHosted ? "Community tier (unlocked self-hosted)" : "Enterprise tier (unlimited channels)") : "Community tier (1 channel limit)"}
+          </span>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2.5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-foreground">Transaction Activity</h2>
+          <span className="text-xs text-muted-foreground">Combined streamer tip volume (365 days)</span>
+        </div>
+        <OrgActivity3D
+          orgId={activeOrg?.id || activeOrg?.slug}
+          orgName={activeOrg?.name}
+          streamerCount={streamers.length}
+        />
       </div>
 
       <div className="flex flex-col gap-3">

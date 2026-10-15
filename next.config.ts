@@ -52,6 +52,7 @@ const nextConfig: NextConfig = {
 
       ...(allowedLocalhostWhen.includes(process.env.NODE_ENV || "")
         ? [
+            new URL("http://127.0.0.1:3001/**"),
             new URL("http://localhost:3001/**"),
             ...allowedDevOrigins.map((host) => new URL(`http://${host}:3001/**`)),
           ]

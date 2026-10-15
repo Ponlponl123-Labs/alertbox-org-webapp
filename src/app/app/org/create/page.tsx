@@ -12,15 +12,21 @@ import Link from "next/link";
 
 export default function CreateOrgPage() {
   const router = useRouter();
-  const { authFetch, patchUserInfo } = useUserContext();
+  const { authFetch, patchUserInfo, userInfo, organizations, isSelfHosted } = useUserContext();
+
+  const userType = userInfo?.type || "REGULAR";
+  const isOperator = userType === "OPERATOR";
+  const ownedOrgs = organizations.filter((o) => o.role === "OWNER");
+  const isOrgLimitReached = !isSelfHosted && !isOperator && ownedOrgs.length >= 1;
 
   const [orgName, setOrgName] = useState("");
+  const [orgType, setOrgType] = useState<"COMMUNITY" | "ENTERPRISE">("COMMUNITY");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orgName.trim() || isSubmitting) return;
+    if (!orgName.trim() || isSubmitting || isOrgLimitReached) return;
 
     setIsSubmitting(true);
     setError(null);
@@ -31,6 +37,7 @@ export default function CreateOrgPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: orgName.trim(),
+          type: isOperator ? orgType : "COMMUNITY",
         }),
       });
 
@@ -116,6 +123,46 @@ export default function CreateOrgPage() {
           </div>
 
 
+          {isOperator && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-foreground/85">
+                Organization Tier
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOrgType("COMMUNITY")}
+                  className={`p-3 rounded-xl border text-left flex flex-col gap-0.5 transition-all ${
+                    orgType === "COMMUNITY"
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  <span className="text-xs font-bold text-foreground">Community</span>
+                  <span className="text-[11px] opacity-80">1 channel limit</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrgType("ENTERPRISE")}
+                  className={`p-3 rounded-xl border text-left flex flex-col gap-0.5 transition-all ${
+                    orgType === "ENTERPRISE"
+                      ? "border-primary bg-primary/10 text-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  <span className="text-xs font-bold text-foreground">Enterprise</span>
+                  <span className="text-[11px] opacity-80">Unlimited channels</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isOrgLimitReached && (
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-medium">
+              You have reached the limit of 1 organization for regular and supporter accounts.
+            </div>
+          )}
+
           {error && (
             <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
               {error}
@@ -125,7 +172,7 @@ export default function CreateOrgPage() {
           <div className="pt-2 flex items-center justify-end gap-2.5">
             <Button
               type="submit"
-              disabled={isSubmitting || !orgName.trim()}
+              disabled={isSubmitting || !orgName.trim() || isOrgLimitReached}
               className="rounded-xl px-5 text-xs font-semibold gap-2"
             >
               {isSubmitting ? (
@@ -133,6 +180,8 @@ export default function CreateOrgPage() {
                   <Spinner />
                   <span>Creating Organization...</span>
                 </>
+              ) : isOrgLimitReached ? (
+                <span>Org Limit Reached (1/1)</span>
               ) : (
                 <>
                   <Plus className="size-4" />

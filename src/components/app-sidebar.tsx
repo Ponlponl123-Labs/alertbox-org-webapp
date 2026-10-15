@@ -261,14 +261,6 @@ function AppSidebar() {
           href: `/app/${orgKey}/billing`,
         });
       }
-      if (canViewTransactions) {
-        financeItems.push({
-          id: "org-transactions",
-          text: "Transactions",
-          icon: <StorefrontIcon weight="bold" size={16} />,
-          href: `/app/${orgKey}/transactions`,
-        });
-      }
 
       const sections: SidebarSection[] = [];
       if (orgItems.length > 0) {
@@ -403,6 +395,15 @@ function AppSidebar() {
             href: "/app/member/history",
           },
         ],
+      });
+    }
+
+    if (canViewAnalytics) {
+      streamerItems.push({
+        id: "streamer-transactions",
+        text: "Transactions",
+        icon: <StorefrontIcon weight="bold" size={16} />,
+        href: `/app/${orgKey}/${streamerKey}/transactions`,
       });
     }
 

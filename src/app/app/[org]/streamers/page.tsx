@@ -11,26 +11,32 @@ import Link from "next/link";
 import { hasPermission, OrgPerm } from "@/lib/rbac";
 
 export default function OrgStreamersPage() {
-  const { activeOrg, authFetch, setActiveStreamerId, refreshUserInfo } = useUserContext();
+  const { activeOrg, authFetch, setActiveStreamerId, refreshUserInfo, isSelfHosted } = useUserContext();
   const [newStreamerName, setNewStreamerName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   const role = (activeOrg?.role || "").toLowerCase();
   const isOwner = role === "owner";
   const isOwnerOrAdmin = isOwner || role === "admin";
-  const canCreateStreamer = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.STREAMER_CREATE);
-
   const streamers = activeOrg?.streamers || [];
+  const isEnterprise = activeOrg?.type === "ENTERPRISE";
+  const isChannelLimitReached = !isSelfHosted && !isEnterprise && streamers.length >= 1;
+  const canCreateStreamer = (isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.STREAMER_CREATE)) && !isChannelLimitReached;
 
   const handleCreateChannel = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newStreamerName.trim() || !activeOrg) return;
+    const trimmed = newStreamerName.trim();
+    if (!trimmed || !activeOrg || isChannelLimitReached) return;
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
+      toast.error("Channel name can only contain letters, numbers, hyphens, and underscores");
+      return;
+    }
     setIsCreating(true);
     try {
       const res = await authFetch(getApiUrl(`/api/v1/org/${activeOrg.id}/streamers`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newStreamerName.trim() }),
+        body: JSON.stringify({ name: trimmed }),
       });
       if (res.ok) {
         toast.success(`Channel "${newStreamerName}" created!`);
@@ -62,6 +68,12 @@ export default function OrgStreamersPage() {
         </p>
       </div>
 
+      {!isSelfHosted && !isEnterprise && streamers.length >= 1 && (
+        <div className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-500 text-xs font-medium">
+          This is a Community organization which is limited to 1 streamer channel. Enterprise organizations have unlimited channels.
+        </div>
+      )}
+
       {canCreateStreamer && (
         <div className="p-4 rounded-xl border border-border bg-card text-card-foreground">
           <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -71,9 +83,11 @@ export default function OrgStreamersPage() {
           <form onSubmit={handleCreateChannel} className="flex gap-2">
             <Input
               type="text"
-              placeholder="Channel / Streamer Name"
+              placeholder="Channel Name (e.g. main-stream, live_01)"
               value={newStreamerName}
               onChange={(e) => setNewStreamerName(e.target.value)}
+              pattern="^[a-zA-Z0-9_\-]+$"
+              title="Allowed characters: letters, numbers, hyphens, underscores"
               className="flex-1 text-xs"
               required
             />

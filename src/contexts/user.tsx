@@ -13,6 +13,7 @@ import {
 import { setCookie, getCookie, deleteCookie } from "cookies-next";
 import { getApiUrl } from "@/lib/api";
 import { allowedLocalhostWhen } from "@/consts/statement";
+import { checkIsAlertboxProduction, isSelfHosted } from "@/lib/instance";
 
 import { useStore } from "zustand";
 import { orgStore, selectActiveOrg, selectActiveStreamer } from "@/hooks/store/org";
@@ -36,6 +37,7 @@ export interface UserContext {
   addStreamer: (streamer: Streamer) => void;
   refreshUserInfo: () => Promise<void>;
   authFetch: (url: string, init?: RequestInit) => Promise<Response>;
+  isSelfHosted: boolean;
 }
 
 const userContext = createContext<UserContext>({
@@ -57,11 +59,19 @@ const userContext = createContext<UserContext>({
   setActiveOrgId: () => {},
   setActiveStreamerId: () => {},
   authFetch: async () => new Response(),
+  isSelfHosted: true,
 });
 
 export const UserContextProvider = ({ children }: { children: ReactNode }) => {
   const [userInfo, setUserInfo] = useState<UserContext["userInfo"]>(null);
+  const [selfHosted, setSelfHosted] = useState<boolean>(isSelfHosted());
   const fetched = useRef(false);
+
+  useEffect(() => {
+    void checkIsAlertboxProduction().then((isProd) => {
+      setSelfHosted(!isProd);
+    });
+  }, []);
 
   const organizations = useStore(orgStore, (s) => s.organizations);
   const activeOrg = useStore(orgStore, selectActiveOrg);
@@ -330,6 +340,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
         setActiveOrgId,
         setActiveStreamerId,
         authFetch,
+        isSelfHosted: selfHosted,
       }}
     >
       {children}

@@ -11,7 +11,7 @@ export const getApiUrl = (path: string): string => {
   let endpoint =
     process.env.NEXT_PUBLIC_API_ENDPOINT ||
     (allowedLocalhostWhen.includes(process.env.NODE_ENV || "")
-      ? "http://localhost:3001/"
+      ? "http://127.0.0.1:3001/"
       : "https://api.alertbox.org/");
 
   if (process.env.NODE_ENV === "production") {
