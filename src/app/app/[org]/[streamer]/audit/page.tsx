@@ -69,7 +69,10 @@ export default function StreamerAuditPage() {
           setLogs(data.logs);
         }
       })
-      .catch(() => toast.error("Failed to load channel audit logs"))
+      .catch((err) => {
+        if (err?.name === "AbortError") return;
+        toast.error("Failed to load channel audit logs");
+      })
       .finally(() => setLoading(false));
   }, [orgTarget, streamerTarget, authFetch]);
 
@@ -85,7 +88,8 @@ export default function StreamerAuditPage() {
           setLogs(data.logs);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err?.name === "AbortError") return;
         if (active) toast.error("Failed to load channel audit logs");
       })
       .finally(() => {

@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
 import { cn, getFallbackInitial } from "@/lib/utils";
@@ -70,8 +71,14 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
         >
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-blue-600 text-white shrink-0 shadow-sm font-semibold text-xs">
             {activeOrg?.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={activeOrg.avatar} alt={displayName} className="size-full rounded-lg object-cover" />
+              <Image
+                src={activeOrg.avatar}
+                alt={displayName}
+                width={32}
+                height={32}
+                className="size-full rounded-md object-cover"
+                unoptimized
+              />
             ) : (
               <GalleryVerticalEnd className="size-4" />
             )}
@@ -135,8 +142,14 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                     >
                       <div className="flex size-6 items-center justify-center rounded-md bg-blue-600/90 text-white font-semibold text-[10px] shrink-0">
                         {org.avatar ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={org.avatar} alt={org.name} className="size-full rounded-md object-cover" />
+                          <Image
+                            src={org.avatar}
+                            alt={org.name}
+                            width={24}
+                            height={24}
+                            className="size-full rounded-md object-cover"
+                            unoptimized
+                          />
                         ) : (
                           getFallbackInitial(org.name)
                         )}

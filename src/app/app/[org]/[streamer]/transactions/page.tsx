@@ -153,7 +153,8 @@ export default function StreamerTransactionsPage() {
           setTotalCount(data.total || 0);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err?.name === "AbortError") return;
         if (active) toast.error("Failed to load transactions");
       })
       .finally(() => {
@@ -278,7 +279,7 @@ export default function StreamerTransactionsPage() {
                 setTimeout(() => setLiveTxId((id) => (id === incoming.id ? null : id)), 3000);
 
                 toast.info(
-                  `⚡ Live: ${incoming.senderName} tipped ${incoming.amount.toLocaleString()} ${incoming.currency}`,
+                  `⚡ Live: ${incoming.senderName} tipped ${(incoming.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${incoming.currency}`,
                   {
                     description: incoming.message || undefined,
                   },
@@ -443,7 +444,9 @@ export default function StreamerTransactionsPage() {
 
       if (!res.ok) throw new Error("Replay failed");
 
-      toast.success(`Replayed alert for ${tx.senderName} (${tx.amount} ${tx.currency})`);
+      toast.success(
+        `Replayed alert for ${tx.senderName} (${(tx.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${tx.currency})`,
+      );
     } catch {
       toast.error("Failed to resend alert");
     }
@@ -725,7 +728,10 @@ export default function StreamerTransactionsPage() {
                               : tx.currency === "EUR"
                               ? "€"
                               : ""}
-                            {tx.amount.toLocaleString()}
+                            {(tx.amount / 100).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                           </span>
                           <span className="text-[10px] text-muted-foreground font-normal">
                             {tx.currency}

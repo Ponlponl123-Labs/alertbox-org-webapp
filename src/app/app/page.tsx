@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
 import { useStore } from "zustand";
@@ -114,7 +115,6 @@ export default function WorkspaceZonePage() {
 
   return (
     <div className="flex-1 flex flex-col py-10 px-4 md:px-8 max-w-5xl mx-auto w-full gap-8">
-      {/* Header */}
       <div className="flex flex-col gap-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold w-fit">
           <Sparkles className="size-3.5" />
@@ -128,7 +128,6 @@ export default function WorkspaceZonePage() {
         </p>
       </div>
 
-      {/* Existing Organizations (if any) */}
       {organizations.length > 0 && (
         <div className="flex flex-col gap-3">
           <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
@@ -150,8 +149,14 @@ export default function WorkspaceZonePage() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="size-10 rounded-xl bg-blue-600/10 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
                       {org.avatar ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={org.avatar} alt={org.name} className="size-full rounded-xl object-cover" />
+                        <Image
+                          src={org.avatar}
+                          alt={org.name}
+                          width={40}
+                          height={40}
+                          className="size-full rounded-xl object-cover"
+                          unoptimized
+                        />
                       ) : (
                         <Building2 className="size-5" />
                       )}
@@ -173,9 +178,7 @@ export default function WorkspaceZonePage() {
         </div>
       )}
 
-      {/* Action Zone: Create & Join */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Card 1: Create Organization */}
         <div className="p-6 md:p-7 rounded-3xl border border-border bg-card shadow-sm flex flex-col justify-between gap-6">
           <div className="flex flex-col gap-3">
             <div className="size-12 rounded-2xl bg-blue-600/10 text-blue-600 flex items-center justify-center">
@@ -236,7 +239,6 @@ export default function WorkspaceZonePage() {
           </div>
         </div>
 
-        {/* Card 2: Join Organization */}
         <div className="p-6 md:p-7 rounded-3xl border border-border bg-card shadow-sm flex flex-col justify-between gap-6">
           <div className="flex flex-col gap-3">
             <div className="size-12 rounded-2xl bg-amber-600/10 text-amber-600 flex items-center justify-center">

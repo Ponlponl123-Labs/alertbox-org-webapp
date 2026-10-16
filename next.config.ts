@@ -42,6 +42,8 @@ const nextConfig: NextConfig = {
   },
   allowedDevOrigins,
   images: {
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 86400,
     dangerouslyAllowLocalIP: allowedLocalhostWhen.includes(process.env.NODE_ENV || ""),
     remotePatterns: [
       new URL("https://cdn.discordapp.com/**"),

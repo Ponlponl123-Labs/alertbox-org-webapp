@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -66,11 +67,13 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
           ) : (
             <div className="flex size-5 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
               {activeStreamer?.avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={activeStreamer.avatar}
                   alt={activeStreamer.name}
+                  width={20}
+                  height={20}
                   className="size-full rounded-md object-cover"
+                  unoptimized
                 />
               ) : (
                 <BroadcastIcon size={13} weight="fill" />
@@ -159,11 +162,13 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
                   >
                     <div className="flex size-6 items-center justify-center rounded-md bg-blue-600/90 text-white font-semibold text-[10px] shrink-0">
                       {s.avatar ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={s.avatar}
                           alt={s.name}
+                          width={24}
+                          height={24}
                           className="size-full rounded-md object-cover"
+                          unoptimized
                         />
                       ) : (
                         getFallbackInitial(s.displayName || s.name)

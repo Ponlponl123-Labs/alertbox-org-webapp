@@ -111,7 +111,7 @@ export function canAccessStreamer(
     if (typeof p === "number") {
       if ((p & requiredStreamerPerm) === requiredStreamerPerm) return true;
     } else if (Array.isArray(p)) {
-      const mask = p.reduce((acc: number, item: any) => {
+      const mask = p.reduce((acc: number, item: unknown) => {
         if (typeof item === "number") return acc | item;
         if (typeof item === "string") {
           if (!isNaN(Number(item))) return acc | Number(item);

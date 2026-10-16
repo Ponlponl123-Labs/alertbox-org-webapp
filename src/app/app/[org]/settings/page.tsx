@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
 import { getApiUrl } from "@/lib/api";
@@ -324,11 +325,13 @@ export default function OrgSettingsPage() {
           {/* Banner Container */}
           <div className="relative w-full h-44 sm:h-52 bg-linear-to-r from-secondary/80 via-secondary/40 to-muted/60 border-b border-border flex items-center justify-center overflow-hidden group">
             {banner ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={banner}
                 alt="Organization Banner"
+                width={800}
+                height={208}
                 className="w-full h-full object-cover"
+                unoptimized
               />
             ) : (
               <div className="flex flex-col items-center gap-2 text-muted-foreground/60 select-none">

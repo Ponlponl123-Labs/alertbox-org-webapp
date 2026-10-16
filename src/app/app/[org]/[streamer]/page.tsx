@@ -11,6 +11,7 @@ import {
   CheckIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { getFallbackInitial } from "@/lib/utils";
 import { toast } from "sonner";
@@ -53,11 +54,13 @@ export default function StreamerDashboardPage() {
         <div className="flex items-center gap-3">
           <div className="size-12 rounded-xl bg-blue-600/90 text-white font-bold text-lg flex items-center justify-center shrink-0 shadow-sm">
             {activeStreamer?.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={activeStreamer.avatar}
                 alt={activeStreamer.name}
+                width={48}
+                height={48}
                 className="size-full rounded-xl object-cover"
+                unoptimized
               />
             ) : (
               getFallbackInitial(activeStreamer?.displayName || activeStreamer?.name || "Channel")

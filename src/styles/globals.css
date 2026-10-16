@@ -26,6 +26,10 @@
     transition: all 0.64s cubic-bezier(0, 0, .065, 1.55);
   }
 
+  .recharts-tooltip-wrapper {
+    transition: none !important;
+  }
+
   [data-base-ui-portal] {
     z-index: 30000;
   }
@@ -122,5 +126,45 @@
   .old-browser .dark .glass-card {
     background: #18181b !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  @keyframes shiny-shimmer {
+    0% {
+      transform: translateX(-150%) skewX(-15deg);
+    }
+    100% {
+      transform: translateX(150%) skewX(-15deg);
+    }
+  }
+
+  .shimmer-shiny {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer-shiny::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: translateX(-150%) skewX(-15deg);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.45) 50%,
+      transparent 100%
+    );
+    animation: shiny-shimmer 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    pointer-events: none;
+  }
+
+  .dark .shimmer-shiny::after {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      transparent 100%
+    );
   }
 }

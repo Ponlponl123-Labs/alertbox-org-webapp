@@ -208,7 +208,6 @@ function AppSidebar() {
       canViewTransactions;
     const showOrgManagement = (isOrgMode || isOrgRoute) && hasAnyOrgAccess;
 
-    // 1. Organization Management View (Owner/Admin or authorized role in Org Mode or Org Route)
     if (showOrgManagement) {
       const orgItems: SidebarItem[] = [];
       if (canViewOrg) {
@@ -308,7 +307,6 @@ function AppSidebar() {
       return sections;
     }
 
-    // 2. Streamer Management View (Tailored to active streamer and user bitmask perms)
     const canViewStreamerBasic =
       canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_VIEW, OrgPerm.STREAMER_VIEW);
     const canEditProfile =

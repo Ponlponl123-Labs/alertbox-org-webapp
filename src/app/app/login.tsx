@@ -12,18 +12,44 @@ import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { UndrawBiometricLogin } from "@/consts/svg";
 import { BellRing } from "@/components/animate-ui/icons/bell-ring";
+import GradientASCII from "@/components/GradientASCII";
 
 function Login() {
   const lang = useStore(coreStore, (state) => state.lang);
 
   return (
     <div className="min-h-[calc(100dvh-4rem-var(--status-banner-height,0))] relative flex p-2.5 items-center bg-foreground/5">
-      <div className="m-auto flex justify-center items-center gap-12 flex-1 min-w-0 h-[calc(100dvh-4rem-var(--status-banner-height,0))] mt-10">
+      <div className="absolute inset-0">
+        <GradientASCII
+          colors={["#1e3fd8", "#f6f8ff", "#a5d8ff", "#38bdf8"]}
+          shape="horizon"
+          characters=" .·•●"
+          cellSize={8}
+          density={0}
+          glyphOpacity={0}
+          glow={0}
+          depthOfField={0}
+          flicker={0.2}
+          softness={0.5}
+          scale={1}
+          flow={1}
+          speed={1}
+          gradientOpacity={0.91}
+          grain={0.08}
+          variation={10}
+          mouseInteraction={false}
+          scrambleRadius={0.1}
+          clickEffect="none"
+          intro
+          lightMode={false}
+        />
+      </div>
+      <div className="m-auto flex justify-center items-center gap-12 flex-1 min-w-0 h-[calc(100dvh-4rem-var(--status-banner-height,0))] mt-10 z-10">
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.26 }}
-          className="flex flex-col gap-1.5 md:max-w-82 md:py-16"
+          className="flex flex-col gap-1.5 md:max-w-82 md:py-16 max-md:mt-auto max-md:mb-12"
         >
           <motion.div className="flex flex-col z-10 w-full">
             <h1 className="font-medium text-5xl mb-3">
@@ -76,7 +102,7 @@ function Login() {
             </span>
           </motion.div>
         </motion.div>
-        <motion.div className="m-6">
+        <motion.div className="m-6 max-md:hidden">
           <UndrawBiometricLogin className="size-72" />
         </motion.div>
       </div>

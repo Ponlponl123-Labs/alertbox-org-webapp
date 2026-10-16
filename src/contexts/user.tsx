@@ -126,8 +126,44 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     [],
   );
 
+const combineSignals = (a?: AbortSignal | null, b?: AbortSignal | null): AbortSignal | undefined => {
+  if (!a) return b || undefined;
+  if (!b) return a || undefined;
+  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.any === "function") {
+    return AbortSignal.any([a, b]);
+  }
+  const c = new AbortController();
+  const onAbort = () => c.abort();
+  if (a.aborted || b.aborted) {
+    c.abort();
+    return c.signal;
+  }
+  a.addEventListener("abort", onAbort, { once: true });
+  b.addEventListener("abort", onAbort, { once: true });
+  return c.signal;
+};
+
+  const inFlightGetRequests = useRef(new Map<string, Promise<Response>>());
+  const orgAbortControllerRef = useRef(new AbortController());
+  const lastOrgSwitchRef = useRef(0);
+  const activeOrgIdRef = useRef<string | null>(orgStore.getState().activeOrgId);
+
+  useEffect(() => {
+    const unsub = orgStore.subscribe((state) => {
+      if (state.activeOrgId !== activeOrgIdRef.current) {
+        activeOrgIdRef.current = state.activeOrgId;
+        lastOrgSwitchRef.current = Date.now();
+        orgAbortControllerRef.current.abort();
+        orgAbortControllerRef.current = new AbortController();
+        inFlightGetRequests.current.clear();
+      }
+    });
+    return unsub;
+  }, []);
+
   const authFetch = useCallback(
-    async (url: string, init?: RequestInit) => {
+    async (url: string, init?: RequestInit): Promise<Response> => {
+      const method = (init?.method || "GET").toUpperCase();
       const authCookie = await getCookie("USRSS");
       const headers = new Headers(init?.headers);
       if (authCookie) {
@@ -141,6 +177,49 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       if (activeStreamerNow) {
         headers.set("x-streamer-id", activeStreamerNow.id);
       }
+
+      if (method === "GET") {
+        const isOrgScoped = url.includes("/api/v1/org/") || headers.has("x-org-id");
+        const currentController = orgAbortControllerRef.current;
+
+        if (isOrgScoped) {
+          const elapsed = Date.now() - lastOrgSwitchRef.current;
+          const waitMs = Math.max(0, 250 - elapsed);
+          if (waitMs > 0) {
+            await new Promise<void>((resolve, reject) => {
+              const timer = setTimeout(resolve, waitMs);
+              const cancel = () => {
+                clearTimeout(timer);
+                reject(new DOMException("Aborted", "AbortError"));
+              };
+              if (currentController.signal.aborted || init?.signal?.aborted) {
+                cancel();
+                return;
+              }
+              currentController.signal.addEventListener("abort", cancel, { once: true });
+              init?.signal?.addEventListener("abort", cancel, { once: true });
+            });
+          }
+        }
+
+        const signal = isOrgScoped
+          ? combineSignals(init?.signal, currentController.signal)
+          : init?.signal;
+
+        const key = `${url}::${activeOrgNow?.id || ""}::${activeStreamerNow?.id || ""}`;
+        const existing = inFlightGetRequests.current.get(key);
+        if (existing) {
+          const res = await existing;
+          return res.clone();
+        }
+        const promise = fetch(url, { ...init, headers, signal }).finally(() => {
+          inFlightGetRequests.current.delete(key);
+        });
+        inFlightGetRequests.current.set(key, promise);
+        const res = await promise;
+        return res.clone();
+      }
+
       return fetch(url, { ...init, headers });
     },
     [],

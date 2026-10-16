@@ -183,7 +183,10 @@ export default function OrgMembersPage() {
       .then((data) => {
         setMembers(data);
       })
-      .catch(() => toast.error("Failed to load organization members"))
+      .catch((err) => {
+        if (err?.name === "AbortError") return;
+        toast.error("Failed to load organization members");
+      })
       .finally(() => {
         setLoading(false);
       });
