@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 
-const emptySubscribe = () => () => {};
+const emptySubscribe = () => () => { };
 
 export function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
   const { userInfo, logout } = useUserContext();
@@ -28,7 +28,7 @@ export function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
       <Popover>
         <PopoverTrigger
           className={cn(
-            "flex items-center gap-2.5 w-full p-2 rounded-lg hover:bg-foreground/5 data-[state=open]:bg-foreground/5 transition-colors cursor-pointer text-left select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
+            "flex items-center gap-2.5 w-full p-2 rounded-lg hover:bg-foreground/5 data-[state=open]:bg-foreground/5 cursor-pointer text-left select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
             isCollapsed && "justify-center p-1",
           )}
         >
@@ -76,14 +76,14 @@ export function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
           <div className="flex flex-col gap-0.5">
             <Link
               href="/app/account"
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
             >
               <Settings className="size-3.5 text-muted-foreground" />
               <span>Account settings</span>
             </Link>
             <Link
               href="/app/account/security"
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
             >
               <ShieldCheck className="size-3.5 text-muted-foreground" />
               <span>Security</span>
@@ -91,7 +91,7 @@ export function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
             <button
               type="button"
               onClick={() => toggleTheme()}
-              className="flex items-center justify-between px-2 py-1.5 rounded-md text-xs hover:bg-accent hover:text-accent-foreground transition-colors w-full text-left cursor-pointer"
+              className="flex items-center justify-between px-2 py-1.5 rounded-md text-xs hover:bg-accent hover:text-accent-foreground w-full text-left cursor-pointer"
             >
               <div className="flex items-center gap-2">
                 {mounted && isDark ? (
@@ -109,7 +109,7 @@ export function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
             <button
               type="button"
               onClick={() => logout()}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-destructive hover:bg-destructive/10 transition-colors w-full text-left cursor-pointer"
+              className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-destructive hover:bg-destructive/10 w-full text-left cursor-pointer"
             >
               <LogOut className="size-3.5" />
               <span>Log out</span>

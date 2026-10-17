@@ -62,7 +62,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
           className={cn(
-            "flex items-center gap-3 w-full p-2 rounded-lg hover:bg-foreground/5 data-[state=open]:bg-foreground/5 transition-colors cursor-pointer text-left select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
+            "flex items-center gap-3 w-full p-2 rounded-lg hover:bg-foreground/5 data-[state=open]:bg-foreground/5 text-left select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
             isCollapsed && "justify-center p-1.5",
           )}
           title={displayName}
@@ -132,7 +132,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                         setOpen(false);
                       }}
                       className={cn(
-                        "flex items-center gap-2.5 w-full p-2 rounded-md text-left text-xs transition-colors cursor-pointer",
+                        "flex items-center gap-2.5 w-full p-2 rounded-md text-left text-xs",
                         isSelected
                           ? "bg-accent text-accent-foreground font-medium"
                           : "hover:bg-accent/60 text-foreground/80",
@@ -183,7 +183,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
             <div className="h-px bg-border my-1 -mx-1" />
             <button
               type="button"
-              className="flex items-center gap-2.5 w-full p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-xs font-medium text-foreground/80 text-left"
+              className="flex items-center gap-2.5 w-full p-2 rounded-md hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground/80 text-left"
               onClick={() => {
                 setOpen(false);
                 router.push("/app/org/create");
@@ -196,7 +196,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
             </button>
             <button
               type="button"
-              className="flex items-center gap-2.5 w-full p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-xs font-medium text-foreground/80 text-left"
+              className="flex items-center gap-2.5 w-full p-2 rounded-md hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground/80 text-left"
               onClick={() => {
                 setOpen(false);
                 router.push("/app/org/join");

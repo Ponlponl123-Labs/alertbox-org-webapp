@@ -51,7 +51,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
           className={cn(
-            "flex items-center gap-2 w-full px-2 py-1.5 rounded-lg border border-border/50 bg-foreground/2 hover:bg-foreground/6 text-xs transition-colors cursor-pointer select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
+            "flex items-center gap-2 w-full px-2 py-1.5 rounded-lg border border-border/50 bg-foreground/2 hover:bg-foreground/6 text-xs select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
             isCollapsed && "justify-center p-1.5 border-0 bg-transparent hover:bg-foreground/5",
           )}
           title={
@@ -116,7 +116,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex items-center gap-2.5 w-full p-2 rounded-md text-left text-xs transition-colors cursor-pointer",
+                  "flex items-center gap-2.5 w-full p-2 rounded-md text-left text-xs",
                   effectiveOrgMode
                     ? "bg-accent text-accent-foreground font-medium"
                     : "hover:bg-accent/60 text-foreground/80",
@@ -154,7 +154,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
                       setOpen(false);
                     }}
                     className={cn(
-                      "flex items-center gap-2.5 w-full p-2 rounded-md text-left text-xs transition-colors cursor-pointer",
+                      "flex items-center gap-2.5 w-full p-2 rounded-md text-left text-xs",
                       isSelected
                         ? "bg-accent text-accent-foreground font-medium"
                         : "hover:bg-accent/60 text-foreground/80",
@@ -196,7 +196,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
                 <Link
                   href={`/app/${activeOrg.slug || activeOrg.id}/streamers`}
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 w-full p-2 rounded-md hover:bg-accent text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-2 w-full p-2 rounded-md hover:bg-accent text-xs font-medium text-muted-foreground hover:text-foreground"
                 >
                   <div className="flex size-5 items-center justify-center rounded-md border border-dashed border-border bg-background shrink-0">
                     <PlusIcon size={12} weight="bold" />

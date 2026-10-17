@@ -8,11 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "react-smooth-input";
 import {
   GearSixIcon,
-  ShieldCheckIcon,
   TrashIcon,
   CheckIcon,
   WarningOctagonIcon,
-  IdentificationCardIcon,
   CameraIcon,
   LockSimpleIcon,
   ImageIcon,
@@ -40,6 +38,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { hasPermission, OrgPerm } from "@/lib/rbac";
 import type { CropType, TransferStep, OrgMemberOption } from "@/types";
 import { TRANSFER_CONFIRM_PHRASE } from "@/consts/org";
+import { motion } from "motion/react";
+import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function OrgSettingsPage() {
   const routeParams = useParams();
@@ -298,7 +300,11 @@ export default function OrgSettingsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl w-full py-4">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-1 z-10"
+    >
       <input
         type="file"
         ref={avatarInputRef}
@@ -314,44 +320,38 @@ export default function OrgSettingsPage() {
         className="hidden"
       />
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5">
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
             <GearSixIcon size={16} weight="bold" />
             <span>Organization Administration</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground mt-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
             Organization Settings
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Manage organization branding, banner, logo, and administrative parameters.
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg border bg-secondary/80 text-foreground">
-            Role: {activeOrg?.role || "MEMBER"}
-          </span>
-        </div>
       </div>
 
       {!canManageSettings && (
-        <div className="flex items-center gap-2.5 p-3.5 rounded-xl border border-border/80 bg-muted/40 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2.5 p-3.5 mb-5 rounded-2xl bg-muted text-xs text-muted-foreground">
           <LockSimpleIcon size={16} weight="bold" className="text-muted-foreground shrink-0" />
           <span>You are viewing organization settings in read-only mode. Organization management permissions are required to edit branding or settings.</span>
         </div>
       )}
 
       <div className="flex flex-col gap-6">
-        <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden flex flex-col">
-          <div className="relative w-full h-44 sm:h-52 bg-linear-to-r from-secondary/80 via-secondary/40 to-muted/60 border-b border-border flex items-center justify-center overflow-hidden group">
+        <div className="rounded-3xl flex flex-col">
+          <div className="relative w-full rounded-3xl bg-linear-to-r from-secondary/80 via-secondary/40 to-muted/60 border-b border-border flex items-center justify-center group min-h-64">
             {banner ? (
               <Image
                 src={banner}
                 alt="Organization Banner"
                 width={800}
                 height={208}
-                className="w-full h-full object-cover"
+                className="w-full rounded-3xl object-cover"
                 unoptimized
               />
             ) : (
@@ -368,7 +368,7 @@ export default function OrgSettingsPage() {
                   size="sm"
                   variant="secondary"
                   onClick={() => bannerInputRef.current?.click()}
-                  className="h-8 px-3 rounded-xl text-xs font-semibold gap-1.5 shadow-md backdrop-blur-md bg-background/80 hover:bg-background border border-border cursor-pointer"
+                  className="p-3 h-max rounded-xl text-xs font-semibold gap-1.5"
                 >
                   <CameraIcon size={14} weight="bold" />
                   <span>{banner ? "Change Banner" : "Upload Banner"}</span>
@@ -377,9 +377,9 @@ export default function OrgSettingsPage() {
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
+                    variant="destructive"
                     onClick={() => handleRemoveMedia("banner")}
-                    className="h-8 px-2.5 rounded-xl text-xs font-semibold text-destructive hover:text-destructive shadow-md backdrop-blur-md bg-background/80 hover:bg-destructive/10 border border-destructive/20 cursor-pointer"
+                    className="p-3 h-max rounded-xl text-xs font-semibold"
                     title="Remove banner"
                   >
                     <TrashIcon size={14} weight="bold" />
@@ -390,9 +390,9 @@ export default function OrgSettingsPage() {
 
             <div className="absolute -bottom-8 left-6 flex items-end gap-3 z-10">
               <div className="relative group/avatar">
-                <Avatar className="size-20 sm:size-22 rounded-2xl border-4 border-card shadow-md bg-card shrink-0">
+                <Avatar className="size-20 sm:size-22 rounded-2xl ring-4 ring-background shadow-md bg-card shrink-0 after:border-none">
                   {avatar ? (
-                    <AvatarImage src={avatar} alt={name} className="object-cover" />
+                    <AvatarImage src={avatar} alt={name} className="object-cover border-0 rounded-2xl" />
                   ) : (
                     <AvatarFallback className="font-bold text-xl bg-primary/10 text-primary rounded-2xl">
                       {getFallbackInitial(name || activeOrg?.name || "Org")}
@@ -400,23 +400,24 @@ export default function OrgSettingsPage() {
                   )}
                 </Avatar>
                 {canManageSettings && (
-                  <button
+                  <Button
                     type="button"
+                    variant={"ghost"}
                     onClick={() => avatarInputRef.current?.click()}
-                    className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center text-white transition-opacity cursor-pointer border-4 border-transparent"
+                    className="absolute inset-0 size-20 sm:size-22 rounded-2xl bg-black/50 group-hover/avatar:backdrop-blur-[2px] opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center text-white"
                     title="Change Logo"
                   >
                     <CameraIcon size={18} weight="bold" />
                     <span className="text-[10px] font-semibold mt-0.5">Edit</span>
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
           </div>
 
-          <div className="pt-10 pb-6 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50">
+          <div className="pt-10 pb-6 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground">
+              <h2 className="text-2xl font-semibold text-foreground">
                 {activeOrg?.name || "Organization"}
               </h2>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
@@ -430,10 +431,10 @@ export default function OrgSettingsPage() {
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => avatarInputRef.current?.click()}
-                  className="h-8 text-xs font-semibold rounded-xl gap-1.5 cursor-pointer"
+                  className="p-2.5 h-max text-xs font-semibold rounded-xl gap-1.5"
                 >
                   <CameraIcon size={14} weight="bold" />
                   <span>Upload Logo</span>
@@ -441,10 +442,10 @@ export default function OrgSettingsPage() {
                 {avatar && (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="destructive"
                     size="sm"
                     onClick={() => handleRemoveMedia("avatar")}
-                    className="h-8 px-2.5 text-xs rounded-xl text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/10 cursor-pointer"
+                    className="p-2.5 h-max text-xs rounded-xl"
                     title="Remove logo"
                   >
                     <TrashIcon size={14} weight="bold" />
@@ -454,12 +455,12 @@ export default function OrgSettingsPage() {
             )}
           </div>
 
-          <form onSubmit={handleSaveGeneral} className="p-6 flex flex-col gap-5">
+          <form onSubmit={handleSaveGeneral} className="p-6 flex flex-col gap-5 bg-muted/30 rounded-3xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">
+              <Field>
+                <FieldLabel className="text-xs font-semibold text-foreground">
                   Organization Name <span className="text-destructive">*</span>
-                </label>
+                </FieldLabel>
                 <Input
                   type="text"
                   value={name}
@@ -468,33 +469,41 @@ export default function OrgSettingsPage() {
                   required
                   disabled={!canManageSettings}
                   readOnly={!canManageSettings}
-                  className="w-full text-xs"
-                  classNames={{ base: "h-10 rounded-xl" }}
+                  fontStyle={{
+                    fontFamily: "var(--font-sans)",
+                    fontWeight: "600",
+                    fontSize: "14px",
+                  }}
+                  className="w-full rounded-xl"
+                  classNames={{ base: "h-10" }}
                 />
-              </div>
+              </Field>
 
-              <div className="space-y-1.5">
+              <Field>
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <FieldLabel className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                     <span>Organization Handle</span>
                     <LockSimpleIcon size={12} weight="bold" className="text-muted-foreground" />
-                  </label>
+                  </FieldLabel>
                   <span className="text-[10px] text-muted-foreground font-mono">Immutable</span>
                 </div>
-                <div className="relative flex items-center">
-                  <Input
-                    type="text"
-                    value={activeOrg?.slug || ""}
-                    disabled
-                    readOnly
-                    className="w-full text-xs font-mono opacity-80 cursor-not-allowed bg-muted/40"
-                    classNames={{ base: "h-10 rounded-xl" }}
-                  />
-                </div>
-                <span className="text-[11px] text-muted-foreground font-mono">
+                <Input
+                  type="text"
+                  value={activeOrg?.slug || ""}
+                  disabled
+                  readOnly
+                  fontStyle={{
+                    fontFamily: "var(--font-sans)",
+                    fontWeight: "600",
+                    fontSize: "14px",
+                  }}
+                  className="w-full opacity-80 cursor-not-allowed bg-muted/40 rounded-xl"
+                  classNames={{ base: "h-10" }}
+                />
+                <FieldDescription className="text-[11px] font-mono">
                   Slug handle is permanently locked: /app/{activeOrg?.slug || "org"}
-                </span>
-              </div>
+                </FieldDescription>
+              </Field>
             </div>
 
             {canManageSettings && (
@@ -502,7 +511,7 @@ export default function OrgSettingsPage() {
                 <Button
                   type="submit"
                   disabled={isSaving || !name.trim() || name.trim() === activeOrg?.name}
-                  className="gap-2 text-xs font-semibold rounded-xl cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="p-3 h-max gap-2 text-xs font-semibold rounded-xl cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   {isSaving ? <Spinner className="size-3.5" /> : <CheckIcon size={14} weight="bold" />}
                   <span>Save Changes</span>
@@ -512,46 +521,8 @@ export default function OrgSettingsPage() {
           </form>
         </div>
 
-        <div className="p-6 rounded-2xl border border-border bg-card shadow-xs flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-secondary text-foreground flex items-center justify-center">
-              <IdentificationCardIcon size={20} weight="bold" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-foreground">Organization Credentials</h2>
-              <p className="text-xs text-muted-foreground">Internal identifiers and tenancy parameters.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div className="p-3.5 rounded-xl border border-border/60 bg-secondary/30 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                  Workspace Handle
-                </span>
-                <p className="font-mono font-semibold text-foreground mt-0.5">
-                  /app/{activeOrg?.slug || "org"}
-                </p>
-              </div>
-              <ShieldCheckIcon size={20} weight="bold" className="text-primary" />
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-border/60 bg-secondary/30 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                  Access Level
-                </span>
-                <p className="font-semibold text-foreground mt-0.5">
-                  {activeOrg?.role || "MEMBER"} · Full Tenant
-                </p>
-              </div>
-              <ShieldCheckIcon size={20} weight="bold" className="text-primary" />
-            </div>
-          </div>
-        </div>
-
         {isOwner && (
-          <div className="p-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 shadow-xs flex flex-col gap-4">
+          <div className="p-6 rounded-2xl bg-amber-500/5 shadow-xs flex flex-col gap-4">
             <div className="flex items-center gap-3">
               <div className="size-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
                 <ArrowsLeftRightIcon size={20} weight="bold" />
@@ -564,16 +535,16 @@ export default function OrgSettingsPage() {
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
               <div className="max-w-md">
-                <p className="text-xs font-semibold text-foreground">Designate a new organization owner</p>
+                <p className="text-sm font-semibold text-foreground">Designate a new organization owner</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
                   Each organization can have only a single owner. You will become an Admin with full administrative privileges once transferred.
                 </p>
               </div>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={openTransferDialog}
-                className="gap-2 text-xs font-semibold rounded-xl cursor-pointer border-amber-500/30 text-amber-500 hover:bg-amber-500/10 shrink-0"
+                className="gap-2 text-xs font-semibold rounded-xl p-3 h-max bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 shrink-0"
               >
                 <ArrowsLeftRightIcon size={15} weight="bold" />
                 <span>Transfer Ownership</span>
@@ -582,9 +553,9 @@ export default function OrgSettingsPage() {
           </div>
         )}
 
-        <div className="p-6 rounded-2xl border border-destructive/30 bg-destructive/5 shadow-xs flex flex-col gap-4">
+        <div className="p-6 rounded-2xl bg-destructive/5 shadow-xs flex flex-col gap-4">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center">
+            <div className="size-12 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center">
               <WarningOctagonIcon size={20} weight="bold" />
             </div>
             <div>
@@ -596,7 +567,7 @@ export default function OrgSettingsPage() {
           {!isOwner ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
               <div className="max-w-md">
-                <p className="text-xs font-semibold text-foreground">Leave this organization</p>
+                <p className="text-sm font-semibold text-foreground">Leave this organization</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
                   Revoke your membership and leave this organization. You will immediately lose access to all channels, widgets, and settings. You can only rejoin if an administrator re-invites you.
                 </p>
@@ -605,7 +576,7 @@ export default function OrgSettingsPage() {
                 variant="destructive"
                 size="sm"
                 onClick={() => setIsLeaveOpen(true)}
-                className="gap-2 text-xs font-semibold rounded-xl cursor-pointer shrink-0"
+                className="gap-2 text-xs font-semibold rounded-xl p-3 h-max shrink-0"
               >
                 <SignOutIcon size={15} weight="bold" />
                 <span>Leave Organization</span>
@@ -614,7 +585,7 @@ export default function OrgSettingsPage() {
           ) : (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
               <div className="max-w-md">
-                <p className="text-xs font-semibold text-foreground">Delete this organization</p>
+                <p className="text-sm font-semibold text-foreground">Delete this organization</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
                   Permanently delete this organization, all attached streamer channels, widgets, and team memberships. As the owner, you cannot leave without deleting or transferring ownership first.
                 </p>
@@ -626,7 +597,7 @@ export default function OrgSettingsPage() {
                   setConfirmSlug("");
                   setIsDeleteOpen(true);
                 }}
-                className="gap-2 text-xs font-semibold rounded-xl cursor-pointer shrink-0"
+                className="gap-2 text-xs font-semibold rounded-xl p-3 h-max shrink-0"
               >
                 <TrashIcon size={15} weight="bold" />
                 <span>Delete Organization</span>
@@ -647,12 +618,12 @@ export default function OrgSettingsPage() {
       />
 
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
+        <DialogContent className="max-w-md! p-6 rounded-3xl" showCloseButton={false}>
           <DialogHeader>
             <div className="size-11 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mb-2">
               <WarningOctagonIcon size={22} weight="bold" />
             </div>
-            <DialogTitle className="text-lg font-bold text-destructive">
+            <DialogTitle className="text-xl font-semibold text-destructive">
               Delete Organization Permanently?
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -660,27 +631,32 @@ export default function OrgSettingsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-2 mt-2">
-            <label className="text-xs font-semibold text-foreground">
+          <Field className="mt-2">
+            <FieldLabel className="text-xs font-semibold text-foreground">
               Type your organization slug <code className="text-primary font-mono">{activeOrg?.slug}</code> to confirm:
-            </label>
+            </FieldLabel>
             <Input
               type="text"
               value={confirmSlug}
               onChange={(e) => setConfirmSlug(e.target.value)}
               placeholder={activeOrg?.slug || "org-slug"}
-              className="w-full text-xs font-mono"
+              fontStyle={{
+                fontFamily: "var(--font-sans)",
+                fontWeight: "600",
+                fontSize: "14px",
+              }}
+              className="w-full"
               classNames={{ base: "h-10 rounded-xl" }}
             />
-          </div>
+          </Field>
 
           <DialogFooter className="mt-5 gap-2">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => setIsDeleteOpen(false)}
               disabled={isDeleting}
-              className="text-xs rounded-xl cursor-pointer"
+              className="text-xs rounded-xl p-3 h-max"
             >
               Cancel
             </Button>
@@ -689,7 +665,7 @@ export default function OrgSettingsPage() {
               size="sm"
               onClick={handleDeleteOrg}
               disabled={isDeleting || confirmSlug !== activeOrg?.slug}
-              className="gap-1.5 text-xs font-semibold rounded-xl cursor-pointer"
+              className="gap-1.5 text-xs font-semibold rounded-xl p-3 h-max"
             >
               {isDeleting && <Spinner className="size-3.5" />}
               <span>Delete Permanently</span>
@@ -700,10 +676,10 @@ export default function OrgSettingsPage() {
       <Dialog open={isLeaveOpen} onOpenChange={setIsLeaveOpen}>
         <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
           <DialogHeader>
-            <div className="size-11 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mb-2">
+            <div className="size-12 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mb-2">
               <SignOutIcon size={22} weight="bold" />
             </div>
-            <DialogTitle className="text-lg font-bold text-destructive">
+            <DialogTitle className="text-xl font-semibold text-destructive">
               Leave Organization?
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -713,11 +689,11 @@ export default function OrgSettingsPage() {
 
           <DialogFooter className="mt-5 gap-2">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => setIsLeaveOpen(false)}
               disabled={isLeaving}
-              className="text-xs rounded-xl cursor-pointer"
+              className="text-xs rounded-xl p-3 h-max"
             >
               Cancel
             </Button>
@@ -726,7 +702,7 @@ export default function OrgSettingsPage() {
               size="sm"
               onClick={handleLeaveOrg}
               disabled={isLeaving}
-              className="gap-1.5 text-xs font-semibold rounded-xl cursor-pointer"
+              className="gap-1.5 text-xs font-semibold rounded-xl p-3 h-max"
             >
               {isLeaving && <Spinner className="size-3.5" />}
               <span>Confirm & Leave</span>
@@ -738,10 +714,10 @@ export default function OrgSettingsPage() {
       <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
         <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
           <DialogHeader>
-            <div className="size-11 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-2">
+            <div className="size-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-2">
               <ArrowsLeftRightIcon size={22} weight="bold" />
             </div>
-            <DialogTitle className="text-lg font-bold text-foreground">
+            <DialogTitle className="text-xl font-semibold text-foreground">
               Transfer Organization Ownership
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -755,11 +731,11 @@ export default function OrgSettingsPage() {
               <span>Loading organization members...</span>
             </div>
           ) : members.length === 0 ? (
-            <div className="p-4 rounded-2xl bg-muted/50 border border-border text-xs text-muted-foreground flex flex-col gap-2 mt-2">
+            <div className="p-4 rounded-2xl bg-muted/50 text-xs text-muted-foreground flex flex-col gap-2 mt-2">
               <p className="font-semibold text-foreground">No eligible members found</p>
               <p>There are no other members in this organization to transfer ownership to. Invite members in Members & Staff first.</p>
               <DialogFooter className="mt-4">
-                <Button variant="secondary" size="sm" onClick={() => setIsTransferOpen(false)} className="rounded-xl w-full">
+                <Button variant="secondary" size="sm" onClick={() => setIsTransferOpen(false)} className="rounded-xl p-3 h-max w-full">
                   Close
                 </Button>
               </DialogFooter>
@@ -768,18 +744,17 @@ export default function OrgSettingsPage() {
             <div className="flex flex-col gap-4 mt-2">
               {transferStep === 1 ? (
                 <>
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                  <Field>
+                    <FieldLabel className="text-xs font-semibold text-foreground flex items-center justify-between w-full">
                       <span>Select New Owner</span>
                       <span className="text-[10px] text-muted-foreground font-normal">Active Members</span>
-                    </label>
+                    </FieldLabel>
 
                     <Popover open={memberComboboxOpen} onOpenChange={setMemberComboboxOpen}>
                       <PopoverTrigger
                         type="button"
                         className={cn(
-                          "w-full flex items-center justify-between gap-3 p-2.5 rounded-2xl border border-input bg-background/50 hover:bg-accent/40 text-left transition-all cursor-pointer outline-none focus:ring-1 focus:ring-primary shadow-xs",
-                          memberComboboxOpen && "ring-1 ring-primary border-primary",
+                          "w-full flex items-center justify-between gap-3 p-2.5 rounded-xl bg-background/50 hover:bg-accent/40 text-left outline-none shadow-xs",
                         )}
                       >
                         {(() => {
@@ -800,7 +775,7 @@ export default function OrgSettingsPage() {
                                   <span className="text-xs font-semibold text-foreground truncate">
                                     {selectedMember.name || "Member"}
                                   </span>
-                                  <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-md border bg-secondary/80 text-foreground/80 leading-none capitalize">
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-secondary/80 text-foreground/80 leading-none capitalize">
                                     {selectedMember.role.toLowerCase()}
                                   </span>
                                 </div>
@@ -819,14 +794,20 @@ export default function OrgSettingsPage() {
                         sideOffset={6}
                         className="w-[calc(100vw-2.5rem)] sm:w-100 p-2 rounded-2xl bg-popover border border-border shadow-xl z-50 flex flex-col gap-2"
                       >
-                        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-input bg-background/80">
+                        <div className="flex items-center gap-2 px-2 py-1 rounded-xl bg-muted border-2 not-hover:border-transparent duration-150 transition-all">
                           <MagnifyingGlassIcon size={14} weight="bold" className="text-muted-foreground shrink-0" />
-                          <input
+                          <Input
                             type="text"
                             placeholder="Search by name, email, or role..."
                             value={memberSearchQuery}
                             onChange={(e) => setMemberSearchQuery(e.target.value)}
-                            className="w-full text-xs bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+                            fontStyle={{
+                              fontFamily: "var(--font-sans)",
+                              fontWeight: "600",
+                              fontSize: "14px",
+                            }}
+                            className="w-full leading-normal bg-transparent outline-none text-foreground placeholder:text-muted-foreground border-0 shadow-none focus-visible:ring-0"
+                            classNames={{ base: "h-auto bg-transparent! dark:data-[focused=true]:bg-transparent! data-[focused=true]:bg-transparent! border-0 p-0 shadow-none" }}
                             autoFocus
                           />
                         </div>
@@ -854,22 +835,23 @@ export default function OrgSettingsPage() {
                             return filtered.map((m) => {
                               const isSelected = m.id === selectedMemberId;
                               return (
-                                <button
+                                <Button
                                   key={m.id}
+                                  variant={"ghost"}
                                   type="button"
                                   onClick={() => {
                                     setSelectedMemberId(m.id);
                                     setMemberComboboxOpen(false);
                                   }}
                                   className={cn(
-                                    "flex items-center justify-between gap-3 p-2 rounded-xl text-left transition-colors cursor-pointer",
+                                    "flex items-center justify-between gap-3 p-2 rounded-3xl text-left h-max",
                                     isSelected
-                                      ? "bg-primary/10 text-primary border border-primary/20 font-medium"
+                                      ? "bg-primary/10 text-primary font-medium"
                                       : "hover:bg-accent/60 text-foreground",
                                   )}
                                 >
                                   <div className="flex items-center gap-2.5 min-w-0">
-                                    <Avatar className="size-7 rounded-full border border-border shrink-0">
+                                    <Avatar className="size-10 rounded-full border border-border shrink-0">
                                       {m.avatar && <AvatarImage src={m.avatar} />}
                                       <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
                                         {getFallbackInitial(m.name || m.email)}
@@ -886,40 +868,39 @@ export default function OrgSettingsPage() {
                                   </div>
 
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-md border bg-secondary/80 text-foreground/70 capitalize">
+                                    <span className="text-[10px] font-semibold px-2 py-1 rounded-md bg-secondary/80 text-foreground/70 capitalize">
                                       {m.role.toLowerCase()}
                                     </span>
                                     {isSelected && (
                                       <CheckIcon size={14} weight="bold" className="text-primary" />
                                     )}
                                   </div>
-                                </button>
+                                </Button>
                               );
                             });
                           })()}
                         </div>
                       </PopoverContent>
                     </Popover>
-                  </div>
+                  </Field>
 
-                  <label className="flex items-start gap-2.5 p-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
+                  <Label className="flex items-start gap-2.5 p-3 rounded-2xl bg-amber-500/5 cursor-pointer select-none">
+                    <Checkbox
                       checked={transferAck}
-                      onChange={(e) => setTransferAck(e.target.checked)}
-                      className="mt-0.5 rounded border-input size-4 text-primary focus:ring-primary shrink-0"
+                      onCheckedChange={(checked) => setTransferAck(!!checked)}
+                      className="mt-0.5"
                     />
-                    <span className="text-[11px] text-foreground/90 leading-snug">
+                    <span className="text-[11px] text-amber-500/90 leading-snug font-normal">
                       I understand that transferring ownership will demote my account to <strong>Admin</strong> and grant full control of the organization to the selected member.
                     </span>
-                  </label>
+                  </Label>
 
                   <DialogFooter className="mt-3 gap-2">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => setIsTransferOpen(false)}
-                      className="text-xs rounded-xl cursor-pointer"
+                      className="text-xs rounded-xl p-3 h-max"
                     >
                       Cancel
                     </Button>
@@ -928,7 +909,7 @@ export default function OrgSettingsPage() {
                       size="sm"
                       disabled={!selectedMemberId || !transferAck}
                       onClick={() => setTransferStep(2)}
-                      className="gap-1.5 text-xs font-semibold rounded-xl cursor-pointer"
+                      className="gap-1.5 text-xs font-semibold rounded-xl p-3 h-max"
                     >
                       <span>Continue</span>
                       <ArrowRightIcon size={14} weight="bold" />
@@ -937,8 +918,8 @@ export default function OrgSettingsPage() {
                 </>
               ) : (
                 <>
-                  <div className="p-3.5 rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive text-xs flex flex-col gap-1.5 leading-relaxed">
-                    <span className="font-bold flex items-center gap-1.5">
+                  <div className="p-3.5 rounded-2xl bg-destructive/10 text-destructive text-xs flex flex-col gap-1.5 leading-relaxed">
+                    <span className="font-semibold text-sm flex items-center gap-1.5">
                       <WarningOctagonIcon size={16} weight="bold" />
                       Final Confirmation Required
                     </span>
@@ -947,28 +928,33 @@ export default function OrgSettingsPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-foreground">
-                      Type <code className="text-destructive font-mono font-bold">{TRANSFER_CONFIRM_PHRASE}</code> to execute:
-                    </label>
+                  <Field>
+                    <FieldLabel className="text-xs font-semibold text-foreground">
+                      Type <code className="text-destructive font-mono font-bold bg-background p-1 rounded-md">{TRANSFER_CONFIRM_PHRASE}</code> to execute:
+                    </FieldLabel>
                     <Input
                       type="text"
                       value={confirmPhrase}
                       onChange={(e) => setConfirmPhrase(e.target.value)}
                       placeholder={TRANSFER_CONFIRM_PHRASE}
-                      className="w-full text-xs font-mono"
+                      fontStyle={{
+                        fontFamily: "var(--font-sans)",
+                        fontWeight: "600",
+                        fontSize: "14px",
+                      }}
+                      className="w-full font-mono"
                       classNames={{ base: "h-10 rounded-xl" }}
                       autoFocus
                     />
-                  </div>
+                  </Field>
 
                   <DialogFooter className="mt-3 gap-2">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => setTransferStep(1)}
                       disabled={isTransferring}
-                      className="text-xs rounded-xl cursor-pointer gap-1"
+                      className="text-xs rounded-xl p-3 h-max gap-2"
                     >
                       <ArrowLeftIcon size={14} weight="bold" />
                       <span>Back</span>
@@ -978,7 +964,7 @@ export default function OrgSettingsPage() {
                       size="sm"
                       onClick={handleTransferOwnership}
                       disabled={isTransferring || confirmPhrase !== TRANSFER_CONFIRM_PHRASE}
-                      className="gap-1.5 text-xs font-semibold rounded-xl cursor-pointer"
+                      className="gap-2 text-xs font-semibold rounded-xl p-3 h-max"
                     >
                       {isTransferring && <Spinner className="size-3.5" />}
                       <span>Confirm & Transfer</span>
@@ -990,6 +976,6 @@ export default function OrgSettingsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

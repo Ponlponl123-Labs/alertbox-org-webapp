@@ -660,7 +660,7 @@ function AppSidebar() {
         <Button
           className={cn(
             "rounded-lg overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start mt-auto shrink-0 max-md:hidden",
-            "hover:bg-primary/5 hover:text-primary transition-colors",
+            "hover:bg-primary/5 hover:text-primary",
           )}
           variant="ghost"
           onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
