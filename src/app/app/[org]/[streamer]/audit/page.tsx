@@ -20,11 +20,20 @@ import { cn, getFallbackInitial } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import {
   humanizeAuditAction,
   formatTableDate,
   formatRelativeTime,
   formatPayloadSummary,
 } from "@/lib/audit-format";
+import { DEFAULT_AUDIT_PAGE_SIZE } from "@/consts/audit";
 
 interface AuditLogItem {
   id: string;
@@ -43,7 +52,7 @@ interface AuditLogItem {
   };
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = DEFAULT_AUDIT_PAGE_SIZE;
 
 export default function StreamerAuditPage() {
   const routeParams = useParams();
@@ -190,41 +199,40 @@ export default function StreamerAuditPage() {
       </div>
 
       <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-2xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-border/60 text-muted-foreground text-[11px] font-semibold">
-                <th className="py-3.5 pl-4 pr-1 w-9 text-center"></th>
-                <th className="py-3.5 px-4 font-medium text-muted-foreground/80">Actor</th>
-                <th className="py-3.5 px-4 font-medium text-muted-foreground/80">Event</th>
-                <th className="py-3.5 px-4 font-medium text-muted-foreground/80 hidden md:table-cell">Summary</th>
-                <th className="py-3.5 px-4 font-medium text-muted-foreground/80">
-                  <span className="flex items-center gap-1">
-                    <span>Date</span>
-                    <CaretDownIcon size={11} className="text-muted-foreground/60" />
-                  </span>
-                </th>
-                <th className="py-3.5 pr-6 pl-4 text-right font-medium text-muted-foreground/80">Origin IP</th>
-              </tr>
-            </thead>
+        <Table className="w-full text-left text-xs border-collapse">
+          <TableHeader>
+            <TableRow className="border-b border-border/60 text-muted-foreground text-[11px] font-semibold hover:bg-transparent">
+              <TableHead className="py-3.5 pl-4 pr-1 w-9 text-center h-auto"></TableHead>
+              <TableHead className="py-3.5 px-4 font-medium text-muted-foreground/80 h-auto">Actor</TableHead>
+              <TableHead className="py-3.5 px-4 font-medium text-muted-foreground/80 h-auto">Event</TableHead>
+              <TableHead className="py-3.5 px-4 font-medium text-muted-foreground/80 hidden md:table-cell h-auto">Summary</TableHead>
+              <TableHead className="py-3.5 px-4 font-medium text-muted-foreground/80 h-auto">
+                <span className="flex items-center gap-1">
+                  <span>Date</span>
+                  <CaretDownIcon size={11} className="text-muted-foreground/60" />
+                </span>
+              </TableHead>
+              <TableHead className="py-3.5 pr-6 pl-4 text-right font-medium text-muted-foreground/80 h-auto">Origin IP</TableHead>
+            </TableRow>
+          </TableHeader>
 
-            <tbody className="divide-y divide-border/40">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-20 text-center">
-                    <div className="flex flex-col items-center justify-center gap-2.5">
-                      <Spinner className="size-6 text-primary" />
-                      <p className="text-xs text-muted-foreground">Loading channel records...</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : paginatedLogs.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-16 text-center text-muted-foreground text-xs">
-                    No channel events found.
-                  </td>
-                </tr>
-              ) : (
+          <TableBody className="divide-y divide-border/40">
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-20 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2.5">
+                    <Spinner className="size-6 text-primary" />
+                    <p className="text-xs text-muted-foreground">Loading channel records...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : paginatedLogs.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-16 text-center text-muted-foreground text-xs">
+                  No channel events found.
+                </TableCell>
+              </TableRow>
+            ) : (
                 paginatedLogs.map((log) => {
                   const info = humanizeAuditAction(log.action, log.payload);
                   const isExpanded = expandedId === log.id;
@@ -233,14 +241,14 @@ export default function StreamerAuditPage() {
 
                   return (
                     <React.Fragment key={log.id}>
-                      <tr
+                      <TableRow
                         onClick={() => toggleRow(log.id)}
                         className={cn(
                           "group hover:bg-secondary/35 transition-colors cursor-pointer select-none",
                           isExpanded && "bg-secondary/25",
                         )}
                       >
-                        <td className="py-3 pl-4 pr-1 text-center">
+                        <TableCell className="py-3 pl-4 pr-1 text-center">
                           <button
                             type="button"
                             aria-label="Expand row"
@@ -252,9 +260,9 @@ export default function StreamerAuditPage() {
                               <CaretRightIcon size={12} weight="bold" />
                             )}
                           </button>
-                        </td>
+                        </TableCell>
 
-                        <td className="py-3 px-4 whitespace-nowrap">
+                        <TableCell className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <Avatar className="size-8 rounded-full border border-border/80 shrink-0">
                               {log.user.avatar ? (
@@ -273,33 +281,33 @@ export default function StreamerAuditPage() {
                               </span>
                             </div>
                           </div>
-                        </td>
+                        </TableCell>
 
-                        <td className="py-3 px-4 whitespace-nowrap">
+                        <TableCell className="py-3 px-4 whitespace-nowrap">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-secondary/80 border border-border/60 text-foreground">
                             <span className={cn("size-1.5 rounded-full shrink-0", info.dotClass)} />
                             <span>{info.title}</span>
                           </span>
-                        </td>
+                        </TableCell>
 
-                        <td className="py-3 px-4 text-muted-foreground text-xs hidden md:table-cell max-w-xs truncate">
+                        <TableCell className="py-3 px-4 text-muted-foreground text-xs hidden md:table-cell max-w-xs truncate">
                           {info.description}
-                        </td>
+                        </TableCell>
 
-                        <td className="py-3 px-4 whitespace-nowrap text-foreground/90 font-medium text-xs">
+                        <TableCell className="py-3 px-4 whitespace-nowrap text-foreground/90 font-medium text-xs">
                           <span title={new Date(log.createdAt).toLocaleString()}>
                             {formatTableDate(log.createdAt)}
                           </span>
-                        </td>
+                        </TableCell>
 
-                        <td className="py-3 pr-6 pl-4 text-right whitespace-nowrap font-mono text-xs text-muted-foreground">
+                        <TableCell className="py-3 pr-6 pl-4 text-right whitespace-nowrap font-mono text-xs text-muted-foreground">
                           {log.ipAddress}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
 
                       {isExpanded && (
-                        <tr className="bg-secondary/15 border-b border-border/60">
-                          <td colSpan={6} className="py-4 px-6">
+                        <TableRow className="bg-secondary/15 border-b border-border/60">
+                          <TableCell colSpan={6} className="py-4 px-6">
                             <div className="flex flex-col gap-3 rounded-xl p-4 bg-card border border-border/70 shadow-xs">
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/50 pb-3">
                                 <div className="flex items-center gap-2">
@@ -369,16 +377,15 @@ export default function StreamerAuditPage() {
                                 )}
                               </div>
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       )}
                     </React.Fragment>
                   );
                 })
               )}
-            </tbody>
-          </table>
-        </div>
+          </TableBody>
+        </Table>
 
         <div className="flex items-center justify-between px-6 py-3.5 border-t border-border/60 bg-secondary/20 text-xs text-muted-foreground">
           <span>

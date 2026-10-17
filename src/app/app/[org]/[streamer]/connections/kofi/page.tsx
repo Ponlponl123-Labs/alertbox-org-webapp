@@ -30,7 +30,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { KoFi } from "@thesvg/react";
 import { Connections } from "@/types/user.types";
-import { canAccessStreamer, StreamerPerm, OrgPerm } from "@/lib/rbac";
+import { canAccessStreamer } from "@/lib/rbac";
+import { StreamerPerm, OrgPerm } from "@/consts/permission";
 
 function KofiPage() {
   const lang = useStore(coreStore, (state) => state.lang);

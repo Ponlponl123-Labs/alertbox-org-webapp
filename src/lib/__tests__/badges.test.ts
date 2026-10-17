@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { ProfileBadges, getActiveBadges } from "../badges";
+import { getActiveBadges } from "../badges";
+import { ProfileBadges } from "@/consts/profile";
 
 describe("Profile Badges Bitmask Logic", () => {
   it("should have correct bit flags", () => {

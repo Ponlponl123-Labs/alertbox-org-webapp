@@ -6,7 +6,7 @@ import {
   PlugsConnectedIcon,
   ChartLineUpIcon,
 } from "@phosphor-icons/react";
-import { OrgPerm, StreamerPerm } from "@/lib/rbac";
+import { OrgPerm, StreamerPerm } from "./permission";
 import type { InviteRoleOption, OrgPermDefinition, StreamerPermDefinition } from "@/types";
 
 export const TRANSFER_CONFIRM_PHRASE = "TRANSFER";
@@ -52,7 +52,9 @@ export const ORG_PERM_DEFINITIONS: OrgPermDefinition[] = [
     perms: [
       { bit: OrgPerm.ORG_VIEW, key: "ORG_VIEW", name: "View Organization", desc: "View organization dashboard, overview & public profile" },
       { bit: OrgPerm.ORG_MANAGE, key: "ORG_MANAGE", name: "Manage Settings", desc: "Update organization branding, banner, and parameters" },
-      { bit: OrgPerm.ORG_MEMBERS_MANAGE, key: "ORG_MEMBERS_MANAGE", name: "Manage Members", desc: "Send invites, add and remove staff members" },
+      { bit: OrgPerm.ORG_MEMBER_ADD, key: "ORG_MEMBER_ADD", name: "Invite Members", desc: "Send invites and generate OTP join codes" },
+      { bit: OrgPerm.ORG_MEMBER_MODIFY, key: "ORG_MEMBER_MODIFY", name: "Modify Members", desc: "Update member roles, permissions, and delegations" },
+      { bit: OrgPerm.ORG_MEMBER_REMOVE, key: "ORG_MEMBER_REMOVE", name: "Remove Members", desc: "Kick members and revoke pending invitations" },
       { bit: OrgPerm.ORG_ROLES_MANAGE, key: "ORG_ROLES_MANAGE", name: "Manage Roles & Perms", desc: "Delegate permissions, roles, and channel assignments" },
     ],
   },
@@ -106,3 +108,12 @@ export const STREAMER_PERM_DEFINITIONS: StreamerPermDefinition[] = [
   { key: "STREAMER_ANALYTICS_VIEW", bit: StreamerPerm.STREAMER_ANALYTICS_VIEW, name: "View Analytics", desc: "View stream performance charts and viewer statistics" },
   { key: "STREAMER_TRANSACTION_VIEW", bit: StreamerPerm.STREAMER_TRANSACTION_VIEW, name: "View Transactions", desc: "Inspect donation histories, tips, and supporter records" },
 ];
+
+export const ROLE_SUMMARIES: Record<string, string> = {
+  OWNER: "Root Admin · All Channels",
+  ADMIN: "Members, Channels & Finance",
+  MANAGER: "Channels, Widgets & Stats",
+  EDITOR: "Profiles & AlertBox",
+  VIEWER: "Read-only View",
+  MEMBER: "Standard Access",
+};

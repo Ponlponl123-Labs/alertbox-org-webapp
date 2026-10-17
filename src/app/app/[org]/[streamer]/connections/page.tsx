@@ -32,7 +32,8 @@ import {
 } from "@phosphor-icons/react";
 import { useParams, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { OrgPerm, canAccessStreamer, StreamerPerm } from "@/lib/rbac";
+import { canAccessStreamer } from "@/lib/rbac";
+import { OrgPerm, StreamerPerm } from "@/consts/permission";
 
 function Page() {
   const [connections, setConnections] = useState<Connections | null>(null);

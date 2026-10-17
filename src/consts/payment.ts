@@ -35,3 +35,5 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
     href: "https://feelfreepay.com/",
   },
 ];
+
+export const DEFAULT_TRANSACTION_PAGE_SIZE = 15;

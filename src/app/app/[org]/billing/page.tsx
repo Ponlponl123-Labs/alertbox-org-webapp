@@ -3,7 +3,8 @@ import React from "react";
 import { useUserContext } from "@/contexts/user";
 import { HandCoinsIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { hasPermission, OrgPerm } from "@/lib/rbac";
+import { hasPermission } from "@/lib/rbac";
+import { OrgPerm } from "@/consts/permission";
 
 export default function OrgBillingPage() {
   const { activeOrg } = useUserContext();

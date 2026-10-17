@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import { getFallbackInitial } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
-import { hasPermission, OrgPerm } from "@/lib/rbac";
+import { hasPermission } from "@/lib/rbac";
+import { OrgPerm } from "@/consts/permission";
 
 export default function OrgStreamersPage() {
   const { activeOrg, authFetch, setActiveStreamerId, refreshUserInfo, isSelfHosted } = useUserContext();

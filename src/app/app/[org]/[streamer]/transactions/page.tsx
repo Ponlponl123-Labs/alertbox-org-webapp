@@ -41,6 +41,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import { DEFAULT_TRANSACTION_PAGE_SIZE } from "@/consts/payment";
 
 interface TransactionItem {
   id: string;
@@ -65,7 +74,7 @@ interface StreamerConnections {
   streamlabs: boolean;
 }
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = DEFAULT_TRANSACTION_PAGE_SIZE;
 
 export default function StreamerTransactionsPage() {
   const routeParams = useParams();
@@ -614,32 +623,31 @@ export default function StreamerTransactionsPage() {
           </div>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-border bg-muted/30 text-muted-foreground font-medium uppercase tracking-wider text-[10px]">
-                <th className="py-3 px-4">Status & Type</th>
-                <th className="py-3 px-4">Supporter</th>
-                <th className="py-3 px-4">Amount</th>
-                <th className="py-3 px-4">Gateway</th>
-                <th className="py-3 px-4">Date</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {transactions.length === 0 && !loading ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center gap-2">
-                      <MoneyIcon size={32} weight="duotone" className="text-muted-foreground/60" />
-                      <span className="font-medium text-foreground">No transactions recorded yet</span>
-                      <span className="text-[11px] max-w-sm">
-                        Incoming tips and donations from connected gateways will appear here in real-time.
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
+        <Table className="w-full text-left border-collapse text-xs">
+          <TableHeader>
+            <TableRow className="border-b border-border bg-muted/30 text-muted-foreground font-medium uppercase tracking-wider text-[10px] hover:bg-muted/30">
+              <TableHead className="py-3 px-4 h-auto text-muted-foreground">Status & Type</TableHead>
+              <TableHead className="py-3 px-4 h-auto text-muted-foreground">Supporter</TableHead>
+              <TableHead className="py-3 px-4 h-auto text-muted-foreground">Amount</TableHead>
+              <TableHead className="py-3 px-4 h-auto text-muted-foreground">Gateway</TableHead>
+              <TableHead className="py-3 px-4 h-auto text-muted-foreground">Date</TableHead>
+              <TableHead className="py-3 px-4 text-right h-auto text-muted-foreground">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-border/60">
+            {transactions.length === 0 && !loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2">
+                    <MoneyIcon size={32} weight="duotone" className="text-muted-foreground/60" />
+                    <span className="font-medium text-foreground">No transactions recorded yet</span>
+                    <span className="text-[11px] max-w-sm">
+                      Incoming tips and donations from connected gateways will appear here in real-time.
+                    </span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
                 transactions.map((tx) => {
                   const isCompleted = tx.status === "COMPLETED";
                   const isFailed = tx.status === "FAILED";
@@ -647,7 +655,7 @@ export default function StreamerTransactionsPage() {
                   const isRefunded = tx.status === "REFUNDED";
 
                   return (
-                    <tr
+                    <TableRow
                       key={tx.id}
                       className={cn(
                         "group transition-all duration-300 hover:bg-muted/30",
@@ -655,7 +663,7 @@ export default function StreamerTransactionsPage() {
                         tx.isDeleted && "opacity-40 border-dashed bg-muted/10 line-through text-muted-foreground",
                       )}
                     >
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <TableCell className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <span
                             className={cn(
@@ -682,9 +690,9 @@ export default function StreamerTransactionsPage() {
                             )}
                           </div>
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td className="py-3.5 px-4 min-w-50">
+                      <TableCell className="py-3.5 px-4 min-w-50">
                         <div className="flex items-start gap-2.5">
                           <div className="size-7 rounded-full bg-primary/10 text-primary font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
                             {getFallbackInitial(tx.senderName)}
@@ -703,9 +711,9 @@ export default function StreamerTransactionsPage() {
                             )}
                           </div>
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <TableCell className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-baseline gap-1 font-mono font-bold text-sm text-foreground">
                           <span>
                             {tx.currency === "THB"
@@ -724,15 +732,15 @@ export default function StreamerTransactionsPage() {
                             {tx.currency}
                           </span>
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <TableCell className="py-3.5 px-4 whitespace-nowrap">
                         <span className="px-2 py-1 rounded-md text-[11px] font-medium bg-muted text-foreground border border-border">
                           {tx.provider}
                         </span>
-                      </td>
+                      </TableCell>
 
-                      <td className="py-3.5 px-4 whitespace-nowrap text-[11px] text-muted-foreground font-mono">
+                      <TableCell className="py-3.5 px-4 whitespace-nowrap text-[11px] text-muted-foreground font-mono">
                         {new Date(tx.createdAt).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -744,9 +752,9 @@ export default function StreamerTransactionsPage() {
                             minute: "2-digit",
                           })}
                         </span>
-                      </td>
+                      </TableCell>
 
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <TableCell className="py-3.5 px-4 text-right whitespace-nowrap">
                         <Popover>
                           <PopoverTrigger
                             render={
@@ -812,14 +820,13 @@ export default function StreamerTransactionsPage() {
                             </button>
                           </PopoverContent>
                         </Popover>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })
               )}
-            </tbody>
-          </table>
-        </div>
+          </TableBody>
+        </Table>
 
         <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
           <span>

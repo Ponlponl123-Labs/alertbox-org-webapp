@@ -35,7 +35,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { hasPermission, OrgPerm } from "@/lib/rbac";
+import { hasPermission } from "@/lib/rbac";
+import { OrgPerm } from "@/consts/permission";
 import type { CropType, TransferStep, OrgMemberOption } from "@/types";
 import { TRANSFER_CONFIRM_PHRASE } from "@/consts/org";
 import { motion } from "motion/react";

@@ -31,7 +31,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Streamlabs } from "@thesvg/react";
 import Image from "next/image";
-import { canAccessStreamer, StreamerPerm, OrgPerm } from "@/lib/rbac";
+import { canAccessStreamer } from "@/lib/rbac";
+import { StreamerPerm, OrgPerm } from "@/consts/permission";
 
 interface RelayLog {
   id: string;

@@ -22,6 +22,8 @@ import {
   CaretUpDownIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
+  ShieldCheckeredIcon,
+  PersonSimpleTaiChiIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { getFallbackInitial, cn } from "@/lib/utils";
@@ -29,7 +31,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { hasPermission, OrgPerm, RolePresets } from "@/lib/rbac";
+import { hasPermission } from "@/lib/rbac";
+import { OrgPerm, RolePresets } from "@/consts/permission";
 import {
   Dialog,
   DialogContent,
@@ -38,6 +41,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
 import type {
   OrgMemberData,
   StreamerPermissionAssignment,
@@ -48,19 +59,26 @@ import {
   ORG_PERM_DEFINITIONS,
   STREAMER_PERM_DEFINITIONS,
   INVITE_ROLES,
+  ROLE_SUMMARIES,
 } from "@/consts/org";
+import { motion } from "motion/react";
+import { Badge } from "@/components/ui/badge";
 
 export default function OrgMembersPage() {
   const routeParams = useParams();
-  const { activeOrg, authFetch } = useUserContext();
+  const { activeOrg, authFetch, userInfo } = useUserContext();
   const [members, setMembers] = useState<OrgMemberData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
   const isOwner = activeOrg?.role === "OWNER";
   const isOwnerOrAdmin = isOwner || activeOrg?.role === "ADMIN";
-  const canManageMembers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBERS_MANAGE);
+  const canAddMembers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBER_ADD);
+  const canModifyMembers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBER_MODIFY);
+  const canRemoveMembers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBER_REMOVE);
   const canManageRoles = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_ROLES_MANAGE);
+  const canEditStaff = canManageRoles || canModifyMembers;
+  const callerPerms = isOwner ? OrgPerm.ALL : BigInt(activeOrg?.permissions || "0");
 
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteStep, setInviteStep] = useState<1 | 2>(1);
@@ -87,15 +105,6 @@ export default function OrgMembersPage() {
   const [deletingMember, setDeletingMember] = useState<OrgMemberData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const ROLE_SUMMARIES: Record<string, string> = {
-    OWNER: "Root Admin · All Channels",
-    ADMIN: "Members, Channels & Finance",
-    MANAGER: "Channels, Widgets & Stats",
-    EDITOR: "Profiles & AlertBox",
-    VIEWER: "Read-only View",
-    MEMBER: "Standard Access",
-  };
-
   const orgTarget = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
   const streamers = activeOrg?.streamers || [];
 
@@ -120,9 +129,28 @@ export default function OrgMembersPage() {
   }, [fetchMembers]);
 
   const openManageDialog = (m: OrgMemberData) => {
+    const isSelf = Boolean(
+      (userInfo?.id && m.userId === userInfo.id) ||
+      (userInfo?.email && m.email.toLowerCase() === userInfo.email.toLowerCase())
+    );
+    if (isSelf) {
+      toast.error("You cannot manage your own role or permissions.");
+      return;
+    }
     if (m.role === "OWNER") {
       toast.error("Organization Owner cannot be modified here. Ownership must be transferred from Organization Settings.");
       return;
+    }
+    if (!isOwner) {
+      if (m.role === "ADMIN" && activeOrg?.role !== "ADMIN") {
+        toast.error("You cannot modify an Administrator member.");
+        return;
+      }
+      const targetPerms = BigInt(m.permissions || "0");
+      if ((targetPerms & ~callerPerms) !== BigInt(0)) {
+        toast.error("You cannot manage this member because their permissions exceed your own.");
+        return;
+      }
     }
     setManagingMember(m);
     setDialogTab("org");
@@ -142,6 +170,11 @@ export default function OrgMembersPage() {
 
   const handleSelectRolePreset = (role: string) => {
     if (role === "OWNER") return;
+    const presetPerms = RolePresets[role] ?? BigInt(0);
+    if (!isOwner && (presetPerms & ~callerPerms) !== BigInt(0)) {
+      toast.error(`Cannot select ${role} preset because it contains permissions above your own.`);
+      return;
+    }
     setDialogRole(role);
     if (RolePresets[role] !== undefined) {
       setDialogPerms(RolePresets[role]);
@@ -157,6 +190,10 @@ export default function OrgMembersPage() {
   };
 
   const toggleOrgPermBit = (bit: bigint) => {
+    if (!isOwner && (callerPerms & bit) !== bit) {
+      toast.error("You cannot toggle a permission higher than your own.");
+      return;
+    }
     setDialogPerms((prev) => prev ^ bit);
   };
 
@@ -215,6 +252,18 @@ export default function OrgMembersPage() {
 
   const handleSavePermissions = async () => {
     if (!managingMember || !orgTarget) return;
+    const isSelf = Boolean(
+      (userInfo?.id && managingMember.userId === userInfo.id) ||
+      (userInfo?.email && managingMember.email.toLowerCase() === userInfo.email.toLowerCase())
+    );
+    if (isSelf) {
+      toast.error("You cannot modify your own role or permissions.");
+      return;
+    }
+    if (!isOwner && (dialogPerms & ~callerPerms) !== BigInt(0)) {
+      toast.error("Cannot save permissions that exceed your own.");
+      return;
+    }
     setIsSavingPermissions(true);
 
     try {
@@ -347,6 +396,14 @@ export default function OrgMembersPage() {
 
   const handleRemoveMember = async () => {
     if (!deletingMember || !orgTarget) return;
+    const isSelf = Boolean(
+      (userInfo?.id && deletingMember.userId === userInfo.id) ||
+      (userInfo?.email && deletingMember.email.toLowerCase() === userInfo.email.toLowerCase())
+    );
+    if (isSelf) {
+      toast.error("You cannot remove yourself here. Use organization settings to leave.");
+      return;
+    }
     setIsDeleting(true);
     try {
       const res = await authFetch(
@@ -407,14 +464,18 @@ export default function OrgMembersPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-5xl w-full py-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-5">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-1 z-10"
+    >
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-5">
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
             <UsersIcon size={16} weight="bold" />
             <span>Team & Delegated Access</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground mt-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
             Members & Staff
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -422,7 +483,7 @@ export default function OrgMembersPage() {
           </p>
         </div>
 
-        {canManageMembers && (
+        {canAddMembers && (
           <div className="flex items-center gap-2">
             <Button
               size="sm"
@@ -434,7 +495,7 @@ export default function OrgMembersPage() {
                 setCreatedInviteCode(null);
                 setIsInviteOpen(true);
               }}
-              className="gap-2 font-semibold text-xs rounded-xl cursor-pointer"
+              className="gap-2 font-semibold text-xs rounded-xl p-3 h-max"
             >
               <UserPlusIcon size={16} weight="bold" />
               <span>Invite Member</span>
@@ -443,243 +504,272 @@ export default function OrgMembersPage() {
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-3">
         <div className="relative flex-1 max-w-sm">
-          <MagnifyingGlassIcon
-            size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-          />
           <Input
             type="text"
             placeholder="Search by name, email, or role..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 text-xs"
+            startContent={<MagnifyingGlassIcon size={16} className="text-muted-foreground" />}
+            fontStyle={{
+              fontFamily: "var(--font-sans)",
+              fontWeight: "600",
+              fontSize: "14px",
+            }}
+            className="w-full"
             classNames={{ base: "h-9 rounded-xl" }}
           />
         </div>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>Total Staff: <strong className="text-foreground">{members.length}</strong></span>
-          <span>•</span>
-          <span>Channels: <strong className="text-foreground">{streamers.length}</strong></span>
+          <Badge variant={"secondary"} className="p-2 h-max rounded-xl select-none"><ShieldCheckeredIcon weight="fill" size={16} /> Total Staff: <strong className="text-foreground">{members.length}</strong></Badge>
+          <Badge variant={"secondary"} className="p-2 h-max rounded-xl select-none"><PersonSimpleTaiChiIcon weight="fill" size={16} /> Channels: <strong className="text-foreground">{streamers.length}</strong></Badge>
         </div>
       </div>
 
       <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-border text-xs text-muted-foreground bg-secondary/30">
-                <th className="py-3.5 px-6 font-semibold">User</th>
-                <th className="py-3.5 px-6 font-semibold">Role & Permissions</th>
-                <th className="py-3.5 px-6 font-semibold">Status</th>
-                <th className="py-3.5 px-6 font-semibold">Joined Date</th>
-                <th className="py-3.5 px-6 font-semibold">Assigned Channels</th>
-                <th className="py-3.5 px-6 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/30 text-sm">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
-                    <div className="flex items-center justify-center gap-2">
-                      <Spinner />
-                      <span>Loading team members...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredMembers.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
-                    {searchQuery ? "No members match your search query." : "No members found."}
-                  </td>
-                </tr>
-              ) : (
-                filteredMembers.map((m) => {
-                  const isOwnerOrAdmin = m.role === "OWNER" || m.role === "ADMIN";
-                  const memberStatus = m.status || "Active";
-                  const formattedDate = m.joinedAt
-                    ? new Date(m.joinedAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })
-                    : "—";
+        <Table className="w-full text-left border-collapse">
+          <TableHeader>
+            <TableRow className="border-b border-border text-xs text-muted-foreground bg-secondary/30 hover:bg-secondary/30">
+              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">User</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">Role & Permissions</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">Status</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">Joined Date</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">Assigned Channels</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold text-right h-auto text-muted-foreground">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-border/30 text-sm">
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2">
+                    <Spinner />
+                    <span>Loading team members...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredMembers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
+                  {searchQuery ? "No members match your search query." : "No members found."}
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredMembers.map((m) => {
+                const isOwnerOrAdmin = m.role === "OWNER" || m.role === "ADMIN";
+                const memberStatus = m.status || "Active";
+                const formattedDate = m.joinedAt
+                  ? new Date(m.joinedAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                  : "—";
 
-                  const assignedList = isOwnerOrAdmin ? streamers : (m.streamers || []);
+                const assignedList = isOwnerOrAdmin ? streamers : (m.streamers || []);
+                const isSelf = Boolean(
+                  (userInfo?.id && m.userId === userInfo.id) ||
+                  (userInfo?.email && m.email.toLowerCase() === userInfo.email.toLowerCase())
+                );
+                const isTargetAboveCaller = !isOwner && (
+                  (m.role === "ADMIN" && activeOrg?.role !== "ADMIN") ||
+                  ((BigInt(m.permissions || "0") & ~callerPerms) !== BigInt(0))
+                );
 
-                  return (
-                    <tr key={m.id} className="hover:bg-foreground/2 transition-colors">
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3.5">
-                          <Avatar className="size-10 rounded-full border border-border/40 shrink-0">
-                            {m.avatar ? <AvatarImage src={m.avatar} alt={m.name || "Member"} /> : null}
-                            <AvatarFallback className="bg-blue-600/90 text-white font-semibold text-xs">
-                              {getFallbackInitial(m.name || m.email || "U")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col leading-tight min-w-0">
+                return (
+                  <TableRow key={m.id} className="hover:bg-foreground/2 transition-colors">
+                    <TableCell className="py-4 px-6">
+                      <div className="flex items-center gap-3.5">
+                        <Avatar className="size-12 rounded-full border border-border/40 shrink-0">
+                          {m.avatar ? <AvatarImage src={m.avatar} alt={m.name || "Member"} /> : null}
+                          <AvatarFallback className="bg-blue-600/90 text-white font-semibold text-xs">
+                            {getFallbackInitial(m.name || m.email || "U")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col leading-tight min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             <span className="font-semibold text-sm text-foreground truncate">
                               {m.name || "Member"}
                             </span>
-                            <span className="text-xs text-muted-foreground truncate mt-0.5">
-                              {m.email}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="py-4 px-6 whitespace-nowrap">
-                        <div className="flex flex-col gap-0.5">
-                          <span
-                            className={cn(
-                              "inline-block w-fit px-2.5 py-0.5 rounded-md text-xs font-semibold border leading-normal",
-                              getRoleBadgeStyle(m.role),
+                            {isSelf && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] py-0 px-1.5 h-4 font-semibold border-primary/30 text-primary bg-primary/10 select-none shrink-0"
+                              >
+                                You
+                              </Badge>
                             )}
-                          >
-                            {m.role}
-                          </span>
-                          <span className="text-[11px] text-muted-foreground/80 font-normal">
-                            {ROLE_SUMMARIES[m.role] || "Standard Access"}
+                          </div>
+                          <span className="text-xs text-muted-foreground truncate mt-0.5">
+                            {m.email}
                           </span>
                         </div>
-                      </td>
+                      </div>
+                    </TableCell>
 
-                      <td className="py-4 px-6 whitespace-nowrap">
+                    <TableCell className="py-4 px-6 whitespace-nowrap">
+                      <div className="flex flex-col gap-0.5">
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium border leading-normal",
-                            getStatusBadgeStyle(memberStatus),
+                            "inline-block w-fit px-2 py-1 rounded-lg text-xs font-semibold leading-normal select-none",
+                            getRoleBadgeStyle(m.role),
                           )}
                         >
-                          <span
-                            className={cn(
-                              "size-1.5 rounded-full shrink-0",
-                              memberStatus === "Active" ? "bg-emerald-400" : "bg-zinc-400",
-                            )}
-                          />
-                          {memberStatus}
+                          {m.role}
                         </span>
-                      </td>
+                        <span className="text-[11px] text-muted-foreground/80 font-normal">
+                          {ROLE_SUMMARIES[m.role] || "Standard Access"}
+                        </span>
+                      </div>
+                    </TableCell>
 
-                      <td className="py-4 px-6 whitespace-nowrap text-xs text-muted-foreground font-mono">
-                        {formattedDate}
-                      </td>
-
-                      <td className="py-4 px-6 whitespace-nowrap">
-                        {isOwnerOrAdmin ? (
-                          <span className="text-xs text-muted-foreground/80 font-medium">
-                            All channels (Full Access)
-                          </span>
-                        ) : assignedList.length > 0 ? (
-                          <div className="flex items-center -space-x-2 overflow-hidden">
-                            {assignedList.slice(0, 3).map((st) => (
-                              <Avatar
-                                key={st.id}
-                                className="size-7 ring-2 ring-card border border-border/50 shrink-0"
-                                title={st.displayName || st.name}
-                              >
-                                {st.avatar ? (
-                                  <AvatarImage src={st.avatar} alt={st.displayName || st.name} />
-                                ) : (
-                                  <AvatarFallback className="text-[9px] bg-blue-600 text-white font-bold">
-                                    {getFallbackInitial(st.displayName || st.name)}
-                                  </AvatarFallback>
-                                )}
-                              </Avatar>
-                            ))}
-                            {assignedList.length > 3 && (
-                              <span
-                                className="size-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground ring-2 ring-card"
-                                title={assignedList.slice(3).map((s) => s.displayName || s.name).join(", ")}
-                              >
-                                +{assignedList.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground/50 italic">
-                            No channels assigned
-                          </span>
+                    <TableCell className="py-4 px-6 whitespace-nowrap">
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium leading-normal select-none",
+                          getStatusBadgeStyle(memberStatus),
                         )}
-                      </td>
+                      >
+                        <span
+                          className={cn(
+                            "size-1.5 rounded-full shrink-0",
+                            memberStatus === "Active" ? "bg-emerald-400" : "bg-zinc-400",
+                          )}
+                        />
+                        {memberStatus}
+                      </span>
+                    </TableCell>
 
-                      <td className="py-4 px-6 whitespace-nowrap text-right">
-                        <Popover
-                          open={actionMenuMemberId === m.id}
-                          onOpenChange={(open) => setActionMenuMemberId(open ? m.id : null)}
+                    <TableCell className="py-4 px-6 whitespace-nowrap text-xs text-muted-foreground font-mono">
+                      {formattedDate}
+                    </TableCell>
+
+                    <TableCell className="py-4 px-6 whitespace-nowrap">
+                      {isOwnerOrAdmin ? (
+                        <span className="text-xs text-muted-foreground/80 font-medium">
+                          All channels (Full Access)
+                        </span>
+                      ) : assignedList.length > 0 ? (
+                        <div className="flex items-center -space-x-2 overflow-hidden">
+                          {assignedList.slice(0, 3).map((st) => (
+                            <Avatar
+                              key={st.id}
+                              className="size-7 ring-2 ring-card border border-border/50 shrink-0"
+                              title={st.displayName || st.name}
+                            >
+                              {st.avatar ? (
+                                <AvatarImage src={st.avatar} alt={st.displayName || st.name} />
+                              ) : (
+                                <AvatarFallback className="text-[9px] bg-blue-600 text-white font-bold">
+                                  {getFallbackInitial(st.displayName || st.name)}
+                                </AvatarFallback>
+                              )}
+                            </Avatar>
+                          ))}
+                          {assignedList.length > 3 && (
+                            <span
+                              className="size-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground ring-2 ring-card"
+                              title={assignedList.slice(3).map((s) => s.displayName || s.name).join(", ")}
+                            >
+                              +{assignedList.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/50 italic">
+                          No channels assigned
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell className="py-4 px-6 whitespace-nowrap text-right">
+                      <Popover
+                        open={actionMenuMemberId === m.id}
+                        onOpenChange={(open) => setActionMenuMemberId(open ? m.id : null)}
+                      >
+                        <PopoverTrigger
+                          className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none"
+                          title="Member actions"
                         >
-                          <PopoverTrigger
-                            className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none"
-                            title="Member actions"
-                          >
-                            <DotsThreeVerticalIcon size={16} weight="bold" />
-                          </PopoverTrigger>
-                          <PopoverContent
-                            align="end"
-                            sideOffset={4}
-                            className="w-56 p-1.5 rounded-2xl border border-border shadow-xl bg-popover"
-                          >
-                            <div className="flex flex-col gap-0.5 text-xs">
-                              {canManageRoles && m.role !== "OWNER" && (
+                          <DotsThreeVerticalIcon size={16} weight="bold" />
+                        </PopoverTrigger>
+                        <PopoverContent
+                          align="end"
+                          sideOffset={4}
+                          className="w-56 p-1.5 rounded-2xl border border-border shadow-xl bg-popover"
+                        >
+                          <div className="flex flex-col gap-0.5 text-xs">
+                            {canEditStaff && m.role !== "OWNER" && !isSelf && !isTargetAboveCaller && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActionMenuMemberId(null);
+                                  openManageDialog(m);
+                                }}
+                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-accent hover:text-accent-foreground text-foreground transition-colors text-left font-medium cursor-pointer"
+                              >
+                                <ShieldCheckIcon size={14} weight="bold" className="text-primary" />
+                                <span>Permissions & Channels</span>
+                              </button>
+                            )}
+                            {isTargetAboveCaller && !isSelf && m.role !== "OWNER" && (
+                              <div className="px-2.5 py-1.5 text-[11px] text-muted-foreground/80 font-medium italic flex items-center gap-1.5">
+                                <ShieldCheckIcon size={14} weight="bold" className="text-muted-foreground/60" />
+                                <span>Higher Privileges</span>
+                              </div>
+                            )}
+                            {isSelf && (
+                              <div className="px-2.5 py-1.5 text-[11px] text-muted-foreground/80 font-medium italic flex items-center gap-1.5">
+                                <ShieldCheckIcon size={14} weight="bold" className="text-primary/70" />
+                                <span>Your Account</span>
+                              </div>
+                            )}
+                            {m.role === "OWNER" && !isSelf && (
+                              <div className="px-2.5 py-1.5 text-[11px] text-muted-foreground/80 font-semibold italic flex items-center gap-1.5">
+                                <ShieldCheckIcon size={14} weight="bold" className="text-amber-500" />
+                                <span>Organization Owner</span>
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(m.email);
+                                toast.success("Email copied to clipboard");
+                                setActionMenuMemberId(null);
+                              }}
+                              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-accent hover:text-accent-foreground text-foreground transition-colors text-left font-medium cursor-pointer"
+                            >
+                              <CopySimpleIcon size={14} weight="bold" className="text-muted-foreground" />
+                              <span>Copy Email</span>
+                            </button>
+                            {canRemoveMembers && m.role !== "OWNER" && !isSelf && (
+                              <>
+                                <div className="h-px bg-border my-1 -mx-0.5" />
                                 <button
                                   type="button"
                                   onClick={() => {
                                     setActionMenuMemberId(null);
-                                    openManageDialog(m);
+                                    setDeletingMember(m);
                                   }}
-                                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-accent hover:text-accent-foreground text-foreground transition-colors text-left font-medium cursor-pointer"
+                                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-destructive/10 text-destructive transition-colors text-left font-medium cursor-pointer"
                                 >
-                                  <ShieldCheckIcon size={14} weight="bold" className="text-primary" />
-                                  <span>Permissions & Channels</span>
+                                  <TrashIcon size={14} weight="bold" />
+                                  <span>Remove Member</span>
                                 </button>
-                              )}
-                              {m.role === "OWNER" && (
-                                <div className="px-2.5 py-1.5 text-[11px] text-muted-foreground/80 font-semibold italic flex items-center gap-1.5">
-                                  <ShieldCheckIcon size={14} weight="bold" className="text-amber-500" />
-                                  <span>Organization Owner</span>
-                                </div>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(m.email);
-                                  toast.success("Email copied to clipboard");
-                                  setActionMenuMemberId(null);
-                                }}
-                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-accent hover:text-accent-foreground text-foreground transition-colors text-left font-medium cursor-pointer"
-                              >
-                                <CopySimpleIcon size={14} weight="bold" className="text-muted-foreground" />
-                                <span>Copy Email</span>
-                              </button>
-                              {canManageMembers && m.role !== "OWNER" && (
-                                <>
-                                  <div className="h-px bg-border my-1 -mx-0.5" />
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setActionMenuMemberId(null);
-                                      setDeletingMember(m);
-                                    }}
-                                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-destructive/10 text-destructive transition-colors text-left font-medium cursor-pointer"
-                                  >
-                                    <TrashIcon size={14} weight="bold" />
-                                    <span>Remove Member</span>
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                              </>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       <Dialog
@@ -765,20 +855,27 @@ export default function OrgMembersPage() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 pt-1">
                     {["ADMIN", "MANAGER", "EDITOR", "VIEWER", "MEMBER"].map((role) => {
                       const isSelected = dialogRole === role;
+                      const presetPerms = RolePresets[role] ?? BigInt(0);
+                      const isLocked = !isOwner && ((presetPerms & ~callerPerms) !== BigInt(0));
                       return (
                         <button
                           key={role}
                           type="button"
-                          onClick={() => handleSelectRolePreset(role)}
+                          disabled={isLocked}
+                          onClick={() => !isLocked && handleSelectRolePreset(role)}
                           className={cn(
-                            "flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all cursor-pointer",
-                            isSelected
-                              ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
-                              : "border-border/60 bg-secondary/20 hover:bg-secondary/60 text-muted-foreground hover:text-foreground",
+                            "flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all",
+                            isLocked
+                              ? "border-border/30 bg-muted/20 text-muted-foreground/40 cursor-not-allowed opacity-50"
+                              : isSelected
+                              ? "bg-primary/10 border-primary text-primary font-bold shadow-xs cursor-pointer"
+                              : "border-border/60 bg-secondary/20 hover:bg-secondary/60 text-muted-foreground hover:text-foreground cursor-pointer",
                           )}
                         >
                           <span className="text-xs font-semibold">{role}</span>
-                          <span className="text-[10px] opacity-70 mt-0.5">{ROLE_SUMMARIES[role]?.split("·")[0] || "Role"}</span>
+                          <span className="text-[10px] opacity-70 mt-0.5">
+                            {isLocked ? "Locked" : ROLE_SUMMARIES[role]?.split("·")[0] || "Role"}
+                          </span>
                         </button>
                       );
                     })}
@@ -799,26 +896,38 @@ export default function OrgMembersPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                         {cat.perms.map((p) => {
                           const isGranted = (dialogPerms & p.bit) === p.bit;
+                          const isLocked = !isOwner && ((callerPerms & p.bit) !== p.bit);
                           return (
                             <div
                               key={p.key}
                               onClick={() => {
-                                if (dialogRole !== "OWNER") toggleOrgPermBit(p.bit);
+                                if (dialogRole !== "OWNER" && !isLocked) toggleOrgPermBit(p.bit);
                               }}
                               className={cn(
-                                "flex items-start justify-between gap-3 p-3 rounded-xl border transition-colors cursor-pointer select-none",
-                                isGranted ? "border-primary/30 bg-primary/5" : "border-border/50 bg-secondary/10 hover:bg-secondary/20",
+                                "flex items-start justify-between gap-3 p-3 rounded-xl border transition-colors select-none",
+                                isLocked
+                                  ? "border-border/30 bg-muted/20 opacity-50 cursor-not-allowed"
+                                  : isGranted
+                                  ? "border-primary/30 bg-primary/5 cursor-pointer"
+                                  : "border-border/50 bg-secondary/10 hover:bg-secondary/20 cursor-pointer",
                                 dialogRole === "OWNER" && "cursor-not-allowed opacity-80",
                               )}
                             >
                               <div className="grid leading-tight min-w-0 pr-2">
-                                <span className="text-xs font-semibold text-foreground">{p.name}</span>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-semibold text-foreground">{p.name}</span>
+                                  {isLocked && (
+                                    <span className="text-[10px] text-amber-500 font-medium border border-amber-500/20 bg-amber-500/10 px-1 py-0.2 rounded">
+                                      Locked
+                                    </span>
+                                  )}
+                                </div>
                                 <span className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{p.desc}</span>
                               </div>
                               <Switch
                                 checked={isGranted}
-                                onCheckedChange={() => toggleOrgPermBit(p.bit)}
-                                disabled={dialogRole === "OWNER"}
+                                onCheckedChange={() => !isLocked && toggleOrgPermBit(p.bit)}
+                                disabled={dialogRole === "OWNER" || isLocked}
                               />
                             </div>
                           );
@@ -1084,6 +1193,11 @@ export default function OrgMembersPage() {
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       required
+                      fontStyle={{
+                        fontFamily: "var(--font-sans)",
+                        fontWeight: "600",
+                        fontSize: "14px",
+                      }}
                       className="w-full"
                       classNames={{ base: "h-10 rounded-xl" }}
                     />
@@ -1343,7 +1457,7 @@ export default function OrgMembersPage() {
               type="button"
               variant="secondary"
               onClick={() => setDeletingMember(null)}
-              className="rounded-xl p-2 h-max text-xs font-semibold gap-2"
+              className="rounded-xl p-3 h-max text-xs font-semibold gap-2"
             >
               Cancel
             </Button>
@@ -1352,7 +1466,7 @@ export default function OrgMembersPage() {
               variant="destructive"
               onClick={handleRemoveMember}
               disabled={isDeleting}
-              className="rounded-xl p-2 h-max text-xs font-semibold gap-2"
+              className="rounded-xl p-3 h-max text-xs font-semibold gap-2"
             >
               {isDeleting ? <Spinner /> : <TrashIcon size={16} weight="bold" />}
               <span>Remove Member</span>
@@ -1360,6 +1474,6 @@ export default function OrgMembersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

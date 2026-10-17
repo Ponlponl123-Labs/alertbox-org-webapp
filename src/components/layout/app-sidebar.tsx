@@ -39,7 +39,8 @@ import OrgSwitcher from '@/components/features/org/org-switcher';
 import StreamerSelector from '@/components/features/streamer/streamer-selector';
 import NavUser from './nav-user';
 import { useUserContext } from "@/contexts/user";
-import { hasPermission, OrgPerm, canAccessStreamer, StreamerPerm } from "@/lib/rbac";
+import { hasPermission, hasAnyPermission, canAccessStreamer } from "@/lib/rbac";
+import { OrgPerm, StreamerPerm } from "@/consts/permission";
 
 interface SidebarLink {
   text: string;
@@ -183,7 +184,7 @@ function AppSidebar() {
     const isOwnerOrAdmin = isOwner || activeOrg?.role === "ADMIN";
 
     const canViewOrg = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_VIEW);
-    const canManageMembers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBERS_MANAGE);
+    const canManageMembers = isOwnerOrAdmin || hasAnyPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBERS_MANAGE);
     const canManageRoles = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_ROLES_MANAGE);
     const canViewStreamers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.STREAMER_VIEW);
     const canManageSettings = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MANAGE);

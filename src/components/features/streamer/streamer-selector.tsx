@@ -13,7 +13,8 @@ import {
   PlusIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
-import { hasPermission, OrgPerm } from "@/lib/rbac";
+import { hasPermission } from "@/lib/rbac";
+import { OrgPerm } from "@/consts/permission";
 
 export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
   const router = useRouter();

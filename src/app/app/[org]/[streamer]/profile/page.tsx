@@ -55,7 +55,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { hasPermission, OrgPerm, canAccessStreamer, StreamerPerm } from "@/lib/rbac";
+import { hasPermission, canAccessStreamer } from "@/lib/rbac";
+import { OrgPerm, StreamerPerm } from "@/consts/permission";
 
 function useUriCooldown(cooldownDateStr?: string | null): boolean {
   return React.useSyncExternalStore(

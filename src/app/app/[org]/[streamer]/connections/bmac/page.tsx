@@ -31,7 +31,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { BuyMeACoffee } from "@thesvg/react";
 import { Connections } from "@/types/user.types";
-import { OrgPerm, canAccessStreamer, StreamerPerm } from "@/lib/rbac";
+import { canAccessStreamer } from "@/lib/rbac";
+import { OrgPerm, StreamerPerm } from "@/consts/permission";
 
 function BmacPage() {
   const lang = useStore(coreStore, (state) => state.lang);

@@ -4,16 +4,7 @@ import {
   SparkleIcon,
   HandshakeIcon,
 } from "@phosphor-icons/react";
-
-/**
- * Bit flags representing profile badges.
- */
-export const ProfileBadges = {
-  VERIFIED: 1 << 0, // 1
-  STAFF: 1 << 1, // 2
-  EARLY_USER: 1 << 2, // 4
-  PARTNER: 1 << 3, // 8
-} as const;
+import { ProfileBadges } from "@/consts/profile";
 
 import { type BadgeInfo } from "@/types/badges.types";
 
