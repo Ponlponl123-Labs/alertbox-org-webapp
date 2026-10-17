@@ -15,11 +15,12 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
-import { TrashIcon, WarningOctagonIcon } from "@phosphor-icons/react";
+import { TrashIcon, UserIcon, WarningOctagonIcon } from "@phosphor-icons/react";
 import { getCookie } from "cookies-next/client";
 import { useState } from "react";
 import { useStore } from "zustand";
 import { getApiUrl } from "@/lib/api";
+import { motion } from "motion/react";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -44,13 +45,23 @@ function Page() {
   };
 
   return (
-    <>
-      <h1 className="font-semibold text-3xl mt-1.5">
-        {lang.data.app.danger.title}
-      </h1>
-      <p className="mt-1.5 text-sm text-foreground/40">
-        {lang.data.app.danger.description}
-      </p>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-1 flex-col gap-6 z-10"
+    >
+      <div>
+        <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
+          <UserIcon size={16} weight="bold" />
+          <span>My Account</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
+          {lang.data.app.danger.title}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          {lang.data.app.danger.description}
+        </p>
+      </div>
       <div className="w-full flex flex-col min-h-0 mt-6 flex-1">
         <div className="w-full flex flex-col items-center justify-center min-h-0 bg-foreground/5 rounded-4xl flex-1 border-2 border-dashed border-foreground/10 gap-6 p-6">
           <WarningOctagonIcon size={32} weight="fill" />
@@ -105,7 +116,7 @@ function Page() {
           </AlertDialog>
         </div>
       </div>
-    </>
+    </motion.div>
   );
 }
 

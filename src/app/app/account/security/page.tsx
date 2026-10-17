@@ -24,6 +24,7 @@ import {
   PaperPlaneTiltIcon,
   PenIcon,
   ShieldCheckIcon,
+  UserIcon,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -77,13 +78,23 @@ function Page() {
   }, [isFetched, logout, userInfo, authFetch]);
 
   return (
-    <>
-      <h1 className="font-semibold text-3xl mt-1.5">
-        {lang.data.app.security.title}
-      </h1>
-      <p className="mt-1.5 text-sm text-foreground/40">
-        {lang.data.app.security.description}
-      </p>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-1 flex-col gap-6 z-10"
+    >
+      <div>
+        <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
+          <UserIcon size={16} weight="bold" />
+          <span>My Account</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
+          {lang.data.app.security.title}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          {lang.data.app.security.description}
+        </p>
+      </div>
       <div className="w-full flex flex-col min-h-0 mt-6 flex-1 gap-4">
         {[
           {
@@ -97,13 +108,13 @@ function Page() {
             title: lang.data.app.security.registered,
             value: userInfo?.createdAt
               ? new Date(userInfo.createdAt).toLocaleDateString(lang.key, {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })
               : lang.data.app.security.device.unknown,
           },
           {
@@ -190,7 +201,7 @@ function Page() {
                       className={cn(
                         "w-full rounded-md p-3 h-max flex flex-wrap justify-between gap-2 bg-background/30 overflow-hidden",
                         selectedDevice?.id === d.id &&
-                          "border-2 border-foreground/10 bg-foreground/5",
+                        "border-2 border-foreground/10 bg-foreground/5",
                       )}
                       key={i}
                     >
@@ -253,44 +264,44 @@ function Page() {
                         },
                         ...(selectedDevice?.id === d.id
                           ? [
-                              {
-                                title: lang.data.app.security.device.info.lat,
-                                value:
-                                  d.latitude ||
-                                  lang.data.app.security.device
-                                    .unknown_location,
-                              },
-                              {
-                                title: lang.data.app.security.device.info.lon,
-                                value:
-                                  d.longitude ||
-                                  lang.data.app.security.device
-                                    .unknown_location,
-                              },
-                              {
-                                title:
-                                  lang.data.app.security.device.info.country,
-                                value:
-                                  d.country ||
-                                  lang.data.app.security.device
-                                    .unknown_location,
-                              },
-                              {
-                                title: lang.data.app.security.device.info.city,
-                                value:
-                                  d.city ||
-                                  lang.data.app.security.device
-                                    .unknown_location,
-                              },
-                              {
-                                title:
-                                  lang.data.app.security.device.info.region,
-                                value:
-                                  d.region ||
-                                  lang.data.app.security.device
-                                    .unknown_location,
-                              },
-                            ]
+                            {
+                              title: lang.data.app.security.device.info.lat,
+                              value:
+                                d.latitude ||
+                                lang.data.app.security.device
+                                  .unknown_location,
+                            },
+                            {
+                              title: lang.data.app.security.device.info.lon,
+                              value:
+                                d.longitude ||
+                                lang.data.app.security.device
+                                  .unknown_location,
+                            },
+                            {
+                              title:
+                                lang.data.app.security.device.info.country,
+                              value:
+                                d.country ||
+                                lang.data.app.security.device
+                                  .unknown_location,
+                            },
+                            {
+                              title: lang.data.app.security.device.info.city,
+                              value:
+                                d.city ||
+                                lang.data.app.security.device
+                                  .unknown_location,
+                            },
+                            {
+                              title:
+                                lang.data.app.security.device.info.region,
+                              value:
+                                d.region ||
+                                lang.data.app.security.device
+                                  .unknown_location,
+                            },
+                          ]
                           : []),
                         {
                           title: lang.data.app.security.device.info.time,
@@ -307,7 +318,7 @@ function Page() {
                         },
                         {
                           title: lang.data.app.security.device.info.last_used,
-                          value: d.lastUsed ? 
+                          value: d.lastUsed ?
                             new Date(d.lastUsed).toLocaleDateString(lang.key, {
                               year: "numeric",
                               month: "long",
@@ -418,7 +429,7 @@ function Page() {
           </AnimatePresence>
         </div>
       </div>
-    </>
+    </motion.div>
   );
 }
 

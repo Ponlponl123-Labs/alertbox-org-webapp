@@ -1,10 +1,10 @@
 "use client";
-import React from "react";
 import { useUserContext } from "@/contexts/user";
 import { HandCoinsIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { hasPermission } from "@/lib/rbac";
 import { OrgPerm } from "@/consts/permission";
+import { motion } from "motion/react";
 
 export default function OrgBillingPage() {
   const { activeOrg } = useUserContext();
@@ -14,7 +14,11 @@ export default function OrgBillingPage() {
   const canManageBilling = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MANAGE);
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl w-full py-4">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-6 z-10"
+    >
       <div>
         <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
           <HandCoinsIcon size={16} weight="bold" />
@@ -48,6 +52,6 @@ export default function OrgBillingPage() {
           </Button>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

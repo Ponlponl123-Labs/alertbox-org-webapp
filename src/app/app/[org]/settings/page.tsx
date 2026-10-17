@@ -472,7 +472,7 @@ export default function OrgSettingsPage() {
                   readOnly={!canManageSettings}
                   fontStyle={{
                     fontFamily: "var(--font-sans)",
-                    fontWeight: "600",
+                    fontWeight: "500",
                     fontSize: "14px",
                   }}
                   className="w-full rounded-xl"
@@ -495,7 +495,7 @@ export default function OrgSettingsPage() {
                   readOnly
                   fontStyle={{
                     fontFamily: "var(--font-sans)",
-                    fontWeight: "600",
+                    fontWeight: "500",
                     fontSize: "14px",
                   }}
                   className="w-full opacity-80 cursor-not-allowed bg-muted/40 rounded-xl"
@@ -566,10 +566,10 @@ export default function OrgSettingsPage() {
           </div>
 
           {!isOwner ? (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-              <div className="max-w-md">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 pt-2">
+              <div>
                 <p className="text-sm font-semibold text-foreground">Leave this organization</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                   Revoke your membership and leave this organization. You will immediately lose access to all channels, widgets, and settings. You can only rejoin if an administrator re-invites you.
                 </p>
               </div>
@@ -584,10 +584,10 @@ export default function OrgSettingsPage() {
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-              <div className="max-w-md">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 pt-2">
+              <div>
                 <p className="text-sm font-semibold text-foreground">Delete this organization</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                   Permanently delete this organization, all attached streamer channels, widgets, and team memberships. As the owner, you cannot leave without deleting or transferring ownership first.
                 </p>
               </div>
@@ -643,7 +643,7 @@ export default function OrgSettingsPage() {
               placeholder={activeOrg?.slug || "org-slug"}
               fontStyle={{
                 fontFamily: "var(--font-sans)",
-                fontWeight: "600",
+                fontWeight: "500",
                 fontSize: "14px",
               }}
               className="w-full"
@@ -804,7 +804,7 @@ export default function OrgSettingsPage() {
                             onChange={(e) => setMemberSearchQuery(e.target.value)}
                             fontStyle={{
                               fontFamily: "var(--font-sans)",
-                              fontWeight: "600",
+                              fontWeight: "500",
                               fontSize: "14px",
                             }}
                             className="w-full leading-normal bg-transparent outline-none text-foreground placeholder:text-muted-foreground border-0 shadow-none focus-visible:ring-0"
@@ -940,7 +940,7 @@ export default function OrgSettingsPage() {
                       placeholder={TRANSFER_CONFIRM_PHRASE}
                       fontStyle={{
                         fontFamily: "var(--font-sans)",
-                        fontWeight: "600",
+                        fontWeight: "500",
                         fontSize: "14px",
                       }}
                       className="w-full font-mono"

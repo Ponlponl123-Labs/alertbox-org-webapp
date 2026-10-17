@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { motion } from "motion/react";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -117,21 +118,28 @@ function Page() {
   };
 
   return (
-    <>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-1 flex-col gap-6 z-10"
+    >
       <div className="w-full flex flex-col gap-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-foreground/5 text-foreground/70">
-            <UserIcon size={24} weight="fill" />
+        <div>
+          <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
+            <UserIcon size={16} weight="bold" />
+            <span>My Account</span>
           </div>
-          <div>
-            <h1 className="text-xl font-bold">{lang.data.app.account.title}</h1>
-            <p className="text-xs text-foreground/40">Manage your user account profile and settings</p>
-          </div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
+            {lang.data.app.account.title}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Manage your user account profile and settings
+          </p>
         </div>
 
-        <div className="w-full bg-card p-6 rounded-3xl border border-foreground/5 shadow-xs flex flex-col sm:flex-row items-center sm:items-start gap-6">
+        <div className="w-full bg-card p-3 rounded-4xl border border-border/5 shadow-xs flex flex-col sm:flex-row items-center gap-6">
           <div
-            className="group relative size-28 rounded-full overflow-hidden border-4 border-background shadow-md active:scale-98 cursor-pointer select-none shrink-0"
+            className="group relative size-32 rounded-full overflow-hidden border-4 border-background shadow-md active:scale-98 cursor-pointer select-none shrink-0"
             onClick={() => avatarInputRef.current?.click()}
           >
             <Avatar className="size-full rounded-none group-hover:blur-xs transition-all">
@@ -255,7 +263,7 @@ function Page() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </motion.div>
   );
 }
 

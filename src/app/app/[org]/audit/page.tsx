@@ -10,9 +10,6 @@ import {
   CaretRightIcon,
   CaretDownIcon,
   CaretLeftIcon,
-  CodeIcon,
-  CopyIcon,
-  CheckIcon,
   ShieldCheckIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
@@ -30,10 +27,14 @@ import {
 import {
   humanizeAuditAction,
   formatTableDate,
-  formatRelativeTime,
-  formatPayloadSummary,
+  AuditExpandedRowContent,
+  isAuditActionInCategory,
 } from "@/lib/audit-format";
 import { AUDIT_CATEGORY_TABS, DEFAULT_AUDIT_PAGE_SIZE, type AuditCategory } from "@/consts/audit";
+import { motion } from "motion/react";
+import JellyRadio from "@/components/JellyRadio";
+import { Input } from "react-smooth-input";
+import { useTinyUser, useTinyStreamer } from "@/lib/tiny-user-cache";
 
 interface AuditLogItem {
   id: string;
@@ -55,6 +56,142 @@ interface AuditLogItem {
 const CATEGORY_TABS = AUDIT_CATEGORY_TABS;
 const PAGE_SIZE = DEFAULT_AUDIT_PAGE_SIZE;
 
+function AuditRow({
+  log,
+  isExpanded,
+  onToggle,
+  orgTarget,
+}: {
+  log: AuditLogItem;
+  isExpanded: boolean;
+  onToggle: () => void;
+  orgTarget: string;
+}) {
+  const { authFetch } = useUserContext();
+  const info = humanizeAuditAction(log.action, log.payload);
+  const userName = log.user.name || log.user.email.split("@")[0];
+  const p = (log.payload && typeof log.payload === "object" ? log.payload : {}) as Record<string, unknown>;
+
+  const isUserTarget = log.targetType === "MEMBER" || log.targetType === "USER";
+  const rawTargetUserId =
+    p.targetUserId ??
+    p.newOwnerUserId ??
+    p.newOwnerId ??
+    p.removedUserId ??
+    (isUserTarget ? log.targetId : null);
+  const targetUserId = rawTargetUserId ? String(rawTargetUserId) : null;
+
+  const isStreamerTarget = log.targetType === "STREAMER";
+  const targetStreamerId = isStreamerTarget
+    ? (log.targetId ? String(log.targetId) : p.streamerId ? String(p.streamerId) : null)
+    : null;
+
+  const { user: targetUser, loading: targetUserLoading } = useTinyUser(
+    authFetch,
+    getApiUrl(""),
+    orgTarget,
+    targetUserId,
+    isExpanded,
+  );
+
+  const { streamer: targetStreamer, loading: targetStreamerLoading } = useTinyStreamer(
+    authFetch,
+    getApiUrl(""),
+    orgTarget,
+    targetStreamerId,
+    isExpanded,
+  );
+
+  return (
+    <React.Fragment>
+      <TableRow
+        onClick={onToggle}
+        className={cn(
+          "group hover:bg-secondary/35 transition-colors cursor-pointer select-none",
+          isExpanded && "bg-secondary/25",
+        )}
+      >
+        <TableCell className="py-3 pl-4 pr-1 text-center">
+          <button
+            type="button"
+            aria-label="Expand row"
+            className="size-5 rounded flex items-center justify-center text-muted-foreground group-hover:text-foreground transition-colors cursor-pointer"
+          >
+            {isExpanded ? (
+              <CaretDownIcon size={12} weight="bold" />
+            ) : (
+              <CaretRightIcon size={12} weight="bold" />
+            )}
+          </button>
+        </TableCell>
+
+        <TableCell className="py-3 px-4 whitespace-nowrap">
+          <div className="flex items-center gap-3">
+            <Avatar className="size-8 rounded-full border border-border/80 shrink-0">
+              {log.user.avatar ? (
+                <AvatarImage src={log.user.avatar} alt={userName} />
+              ) : null}
+              <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">
+                {getFallbackInitial(userName)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col leading-tight">
+              <span className="font-semibold text-foreground text-xs">
+                {userName}
+              </span>
+              <span className="text-[11px] text-muted-foreground/80 font-mono">
+                {log.user.email}
+              </span>
+            </div>
+          </div>
+        </TableCell>
+
+        <TableCell className="py-3 px-4 whitespace-nowrap">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-secondary/80 border border-border/60 text-foreground">
+            <span className={cn("size-1.5 rounded-full shrink-0", info.dotClass)} />
+            <span>{info.title}</span>
+          </span>
+        </TableCell>
+
+        <TableCell className="py-3 px-4 text-muted-foreground text-xs hidden md:table-cell max-w-xs truncate">
+          {info.description}
+        </TableCell>
+
+        <TableCell className="py-3 px-4 whitespace-nowrap text-foreground/90 font-medium text-xs">
+          <span title={new Date(log.createdAt).toLocaleString()}>
+            {formatTableDate(log.createdAt)}
+          </span>
+        </TableCell>
+
+        <TableCell className="py-3 pr-6 pl-4 text-right whitespace-nowrap font-mono text-xs text-muted-foreground">
+          {log.ipAddress}
+        </TableCell>
+      </TableRow>
+
+      {isExpanded && (
+        <TableRow className="bg-secondary/15 hover:bg-secondary/15">
+          <TableCell colSpan={6} className="py-3 px-6">
+            <AuditExpandedRowContent
+              actor={log.user}
+              action={log.action}
+              targetType={log.targetType}
+              targetId={log.targetId}
+              payload={log.payload}
+              createdAt={log.createdAt}
+              ipAddress={log.ipAddress}
+              targetUser={targetUser}
+              targetUserLoading={targetUserLoading}
+              targetStreamer={targetStreamer}
+              targetStreamerLoading={targetStreamerLoading}
+              orgTarget={orgTarget}
+            />
+          </TableCell>
+        </TableRow>
+      )}
+    </React.Fragment>
+  );
+}
+
 export default function OrgAuditPage() {
   const routeParams = useParams();
   const { activeOrg, authFetch } = useUserContext();
@@ -65,8 +202,6 @@ export default function OrgAuditPage() {
   const [categoryFilter, setCategoryFilter] = useState<AuditCategory>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [showJsonId, setShowJsonId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchLogs = useCallback(() => {
@@ -110,7 +245,7 @@ export default function OrgAuditPage() {
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
       const info = humanizeAuditAction(log.action, log.payload);
-      if (categoryFilter !== "ALL" && info.filterCategory !== categoryFilter) {
+      if (categoryFilter !== "ALL" && !isAuditActionInCategory(log.action, categoryFilter)) {
         return false;
       }
       if (!searchQuery.trim()) return true;
@@ -142,12 +277,6 @@ export default function OrgAuditPage() {
     return filteredLogs.slice(start, start + PAGE_SIZE);
   }, [filteredLogs, currentPage]);
 
-  const handleCopyJson = (logId: string, payload: unknown) => {
-    navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-    setCopiedId(logId);
-    toast.success("JSON copied to clipboard");
-    setTimeout(() => setCopiedId(null), 2000);
-  };
 
   const toggleRow = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -157,14 +286,18 @@ export default function OrgAuditPage() {
   const endIndex = Math.min(currentPage * PAGE_SIZE, filteredLogs.length);
 
   return (
-    <div className="flex flex-col gap-6 max-w-6xl w-full py-4">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-6 z-10"
+    >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
             <ShieldCheckIcon size={16} weight="bold" />
             <span>Audit & Compliance</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground mt-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
             Audit Activity Log
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -174,11 +307,11 @@ export default function OrgAuditPage() {
 
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={fetchLogs}
             disabled={loading}
-            className="gap-1.5 text-xs rounded-xl cursor-pointer bg-card hover:bg-secondary/60"
+            className="gap-1.5 text-xs rounded-xl p-3 h-max"
           >
             <ArrowsClockwiseIcon size={14} className={loading ? "animate-spin" : ""} />
             <span>Refresh</span>
@@ -188,31 +321,29 @@ export default function OrgAuditPage() {
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          {CATEGORY_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => handleCategoryChange(tab.id)}
-              className={cn(
-                "px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer whitespace-nowrap",
-                categoryFilter === tab.id
-                  ? "bg-secondary text-foreground font-semibold shadow-xs border border-border"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/40",
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
+          <JellyRadio
+            items={CATEGORY_TABS.map((tab) => ({ value: tab.id, label: tab.label }))}
+            defaultValue={categoryFilter}
+            disabled={false}
+            onChange={(value) => handleCategoryChange(value as AuditCategory)}
+            size="sm"
+          />
         </div>
 
-        <div className="relative w-full sm:w-64">
-          <MagnifyingGlassIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
+        <div className="relative w-full sm:w-96">
+          <Input
             type="text"
+            placeholder="Search by name, email, or role..."
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Search customer, action, IP..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-input bg-card text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50 transition-colors"
+            startContent={<MagnifyingGlassIcon size={16} className="text-muted-foreground" />}
+            fontStyle={{
+              fontFamily: "var(--font-sans)",
+              fontWeight: "500",
+              fontSize: "14px",
+            }}
+            className="w-full"
+            classNames={{ base: "h-9 rounded-xl" }}
           />
         </div>
       </div>
@@ -236,173 +367,32 @@ export default function OrgAuditPage() {
           </TableHeader>
 
           <TableBody className="divide-y divide-border/40">
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-20 text-center">
-                    <div className="flex flex-col items-center justify-center gap-2.5">
-                      <Spinner className="size-6 text-primary" />
-                      <p className="text-xs text-muted-foreground">Loading audit records...</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : paginatedLogs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-16 text-center text-muted-foreground text-xs">
-                    No activity records found matching your filters.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedLogs.map((log) => {
-                  const info = humanizeAuditAction(log.action, log.payload);
-                  const isExpanded = expandedId === log.id;
-                  const userName = log.user.name || log.user.email.split("@")[0];
-                  const summaryParams = formatPayloadSummary(log.action, log.payload);
-
-                  return (
-                    <React.Fragment key={log.id}>
-                      <TableRow
-                        onClick={() => toggleRow(log.id)}
-                        className={cn(
-                          "group hover:bg-secondary/35 transition-colors cursor-pointer select-none",
-                          isExpanded && "bg-secondary/25",
-                        )}
-                      >
-                        <TableCell className="py-3 pl-4 pr-1 text-center">
-                          <button
-                            type="button"
-                            aria-label="Expand row"
-                            className="size-5 rounded flex items-center justify-center text-muted-foreground group-hover:text-foreground transition-colors cursor-pointer"
-                          >
-                            {isExpanded ? (
-                              <CaretDownIcon size={12} weight="bold" />
-                            ) : (
-                              <CaretRightIcon size={12} weight="bold" />
-                            )}
-                          </button>
-                        </TableCell>
-
-                        <TableCell className="py-3 px-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="size-8 rounded-full border border-border/80 shrink-0">
-                              {log.user.avatar ? (
-                                <AvatarImage src={log.user.avatar} alt={userName} />
-                              ) : null}
-                              <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">
-                                {getFallbackInitial(userName)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col leading-tight">
-                              <span className="font-semibold text-foreground text-xs">
-                                {userName}
-                              </span>
-                              <span className="text-[11px] text-muted-foreground/80 font-mono">
-                                {log.user.email}
-                              </span>
-                            </div>
-                          </div>
-                        </TableCell>
-
-                        <TableCell className="py-3 px-4 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-secondary/80 border border-border/60 text-foreground">
-                            <span className={cn("size-1.5 rounded-full shrink-0", info.dotClass)} />
-                            <span>{info.title}</span>
-                          </span>
-                        </TableCell>
-
-                        <TableCell className="py-3 px-4 text-muted-foreground text-xs hidden md:table-cell max-w-xs truncate">
-                          {info.description}
-                        </TableCell>
-
-                        <TableCell className="py-3 px-4 whitespace-nowrap text-foreground/90 font-medium text-xs">
-                          <span title={new Date(log.createdAt).toLocaleString()}>
-                            {formatTableDate(log.createdAt)}
-                          </span>
-                        </TableCell>
-
-                        <TableCell className="py-3 pr-6 pl-4 text-right whitespace-nowrap font-mono text-xs text-muted-foreground">
-                          {log.ipAddress}
-                        </TableCell>
-                      </TableRow>
-
-                      {isExpanded && (
-                        <TableRow className="bg-secondary/15 border-b border-border/60">
-                          <TableCell colSpan={6} className="py-4 px-6">
-                            <div className="flex flex-col gap-3 rounded-xl p-4 bg-card border border-border/70 shadow-xs">
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/50 pb-3">
-                                <div className="flex items-center gap-2">
-                                  <div className={cn("size-6 rounded-lg border flex items-center justify-center shrink-0", info.badgeClass)}>
-                                    {info.icon}
-                                  </div>
-                                  <span className="font-semibold text-xs text-foreground">
-                                    {info.description}
-                                  </span>
-                                </div>
-                                <span className="text-[11px] text-muted-foreground font-mono">
-                                  {new Date(log.createdAt).toLocaleString()} ({formatRelativeTime(log.createdAt)})
-                                </span>
-                              </div>
-
-                              {summaryParams.length > 0 && (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 pt-1">
-                                  {summaryParams.map((p, idx) => (
-                                    <div key={idx} className="flex flex-col p-2.5 rounded-lg bg-secondary/30 border border-border/40">
-                                      <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-                                        {p.label}
-                                      </span>
-                                      <span className="text-xs font-semibold text-foreground font-mono mt-0.5">
-                                        {p.value}
-                                      </span>
-                                    </div>
-                                  ))}
-                                  <div className="flex flex-col p-2.5 rounded-lg bg-secondary/30 border border-border/40">
-                                    <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-                                      Target Entity
-                                    </span>
-                                    <span className="text-xs font-semibold text-foreground font-mono mt-0.5">
-                                      {log.targetType} {log.targetId ? `#${log.targetId}` : ""}
-                                    </span>
-                                  </div>
-                                </div>
-                              )}
-
-                              <div className="pt-2 flex flex-col gap-2">
-                                <div className="flex items-center justify-between">
-                                  <button
-                                    type="button"
-                                    onClick={() => setShowJsonId(showJsonId === log.id ? null : log.id)}
-                                    className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground cursor-pointer"
-                                  >
-                                    <CodeIcon size={13} />
-                                    <span>{showJsonId === log.id ? "Hide Developer Payload" : "View Developer Payload"}</span>
-                                  </button>
-
-                                  {Boolean(log.payload) && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleCopyJson(log.id, log.payload)}
-                                      className="h-6 px-2 text-[11px] gap-1 cursor-pointer"
-                                    >
-                                      {copiedId === log.id ? <CheckIcon size={12} className="text-emerald-500" /> : <CopyIcon size={12} />}
-                                      <span>{copiedId === log.id ? "Copied" : "Copy Payload"}</span>
-                                    </Button>
-                                  )}
-                                </div>
-
-                                {showJsonId === log.id && (
-                                  <pre className="p-3 rounded-lg bg-secondary/60 border border-border text-[11px] font-mono text-foreground leading-relaxed overflow-x-auto max-h-48">
-                                    {JSON.stringify(log.payload || {}, null, 2)}
-                                  </pre>
-                                )}
-                              </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </React.Fragment>
-                  );
-                })
-              )}
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-20 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2.5">
+                    <Spinner className="size-6 text-primary" />
+                    <p className="text-xs text-muted-foreground">Loading audit records...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : paginatedLogs.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-16 text-center text-muted-foreground text-xs">
+                  No activity records found matching your filters.
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginatedLogs.map((log) => (
+                <AuditRow
+                  key={log.id}
+                  log={log}
+                  isExpanded={expandedId === log.id}
+                  onToggle={() => toggleRow(log.id)}
+                  orgTarget={orgTarget}
+                />
+              ))
+            )}
           </TableBody>
         </Table>
 
@@ -436,6 +426,6 @@ export default function OrgAuditPage() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

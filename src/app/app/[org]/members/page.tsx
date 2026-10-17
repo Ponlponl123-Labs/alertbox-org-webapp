@@ -63,6 +63,7 @@ import {
 } from "@/consts/org";
 import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function OrgMembersPage() {
   const routeParams = useParams();
@@ -514,7 +515,7 @@ export default function OrgMembersPage() {
             startContent={<MagnifyingGlassIcon size={16} className="text-muted-foreground" />}
             fontStyle={{
               fontFamily: "var(--font-sans)",
-              fontWeight: "600",
+              fontWeight: "500",
               fontSize: "14px",
             }}
             className="w-full"
@@ -595,8 +596,8 @@ export default function OrgMembersPage() {
                             </span>
                             {isSelf && (
                               <Badge
-                                variant="outline"
-                                className="text-[10px] py-0 px-1.5 h-4 font-semibold border-primary/30 text-primary bg-primary/10 select-none shrink-0"
+                                variant="default"
+                                className="text-[10px] p-2 h-4 font-medium rounded-xl select-none shrink-0"
                               >
                                 You
                               </Badge>
@@ -780,10 +781,10 @@ export default function OrgMembersPage() {
           className="sm:max-w-4xl w-[95vw] h-[88vh] max-h-[88vh] p-0 flex flex-col gap-0 rounded-2xl overflow-hidden border border-border bg-card shadow-2xl"
           showCloseButton={false}
         >
-          <DialogHeader className="px-6 py-4 border-b border-border bg-secondary/30 shrink-0">
+          <DialogHeader className="px-6 py-3 bg-secondary/30 shrink-0 absolute z-10 top-0 left-0 backdrop-blur-xl w-full rounded-2xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
-                <Avatar className="size-10 rounded-full border border-border shrink-0">
+                <Avatar className="size-12 rounded-full border border-border shrink-0">
                   {managingMember?.avatar ? (
                     <AvatarImage src={managingMember.avatar} alt={managingMember.name || "Member"} />
                   ) : null}
@@ -792,361 +793,363 @@ export default function OrgMembersPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col min-w-0 leading-tight">
-                  <div className="flex items-center gap-2">
-                    <DialogTitle className="text-base font-bold text-foreground truncate">
+                  <div className="flex items-center gap-2 -mt-0.5">
+                    <DialogTitle className="text-lg font-semibold text-foreground font-sans truncate">
                       {managingMember?.name || "Staff Member"}
                     </DialogTitle>
-                    <span className={cn("px-2 py-0.5 rounded-md text-[10px] font-semibold border", getRoleBadgeStyle(dialogRole))}>
+                    <span className={cn("px-2 py-1 rounded-md text-[10px] font-semibold", getRoleBadgeStyle(dialogRole))}>
                       {dialogRole}
                     </span>
                   </div>
-                  <DialogDescription className="text-xs text-muted-foreground truncate">
+                  <DialogDescription className="text-xs text-muted-foreground font-sans truncate">
                     {managingMember?.email}
                   </DialogDescription>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-xl border border-border/50">
-                <button
-                  type="button"
+              <div className="flex items-center gap-0.5 p-0.5 bg-muted/60 rounded-lg">
+                <Button
+                  variant={"ghost"}
                   onClick={() => setDialogTab("org")}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
                     dialogTab === "org"
-                      ? "bg-background text-foreground shadow-xs"
+                      ? "bg-foreground text-background hover:bg-foreground/90! hover:text-background shadow-xs"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <ShieldCheckIcon size={14} weight="bold" />
                   <span>Org Role & Permissions</span>
-                </button>
+                </Button>
 
-                <button
-                  type="button"
+                <Button
+                  variant={"ghost"}
                   onClick={() => setDialogTab("streamers")}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer",
                     dialogTab === "streamers"
-                      ? "bg-background text-foreground shadow-xs"
+                      ? "bg-foreground text-background hover:bg-foreground/90! hover:text-background shadow-xs"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <BroadcastIcon size={14} weight="bold" />
                   <span>Channel Assignments</span>
-                  <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] bg-primary/20 text-primary font-bold">
+                  <span className={cn(
+                    "ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold",
+                    dialogTab === "streamers"
+                      ? "bg-background text-foreground"
+                      : "bg-primary/20 text-primary",
+                  )}>
                     {dialogRole === "OWNER" || dialogRole === "ADMIN" ? streamers.length : dialogAssignments.length}
                   </span>
-                </button>
+                </Button>
               </div>
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-            {dialogTab === "org" ? (
-              <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">
-                <div className="p-5 rounded-2xl border border-border bg-card shadow-xs flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-bold text-foreground">Organization Role Preset</h3>
-                      <p className="text-xs text-muted-foreground">Select a standard preset to automatically populate the 64-bit permission bitmask.</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 pt-1">
-                    {["ADMIN", "MANAGER", "EDITOR", "VIEWER", "MEMBER"].map((role) => {
-                      const isSelected = dialogRole === role;
-                      const presetPerms = RolePresets[role] ?? BigInt(0);
-                      const isLocked = !isOwner && ((presetPerms & ~callerPerms) !== BigInt(0));
-                      return (
-                        <button
-                          key={role}
-                          type="button"
-                          disabled={isLocked}
-                          onClick={() => !isLocked && handleSelectRolePreset(role)}
-                          className={cn(
-                            "flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all",
-                            isLocked
-                              ? "border-border/30 bg-muted/20 text-muted-foreground/40 cursor-not-allowed opacity-50"
-                              : isSelected
-                              ? "bg-primary/10 border-primary text-primary font-bold shadow-xs cursor-pointer"
-                              : "border-border/60 bg-secondary/20 hover:bg-secondary/60 text-muted-foreground hover:text-foreground cursor-pointer",
-                          )}
-                        >
-                          <span className="text-xs font-semibold">{role}</span>
-                          <span className="text-[10px] opacity-70 mt-0.5">
-                            {isLocked ? "Locked" : ROLE_SUMMARIES[role]?.split("·")[0] || "Role"}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  {ORG_PERM_DEFINITIONS.map((cat) => (
-                    <div
-                      key={cat.category}
-                      className="p-5 rounded-2xl border border-border bg-card shadow-xs flex flex-col gap-3"
-                    >
-                      <div className="flex items-center gap-2.5 pb-2 border-b border-border/50">
-                        <div className={cn("p-1.5 rounded-lg border", cat.color)}>{cat.icon}</div>
-                        <h4 className="text-sm font-bold text-foreground">{cat.category}</h4>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                        {cat.perms.map((p) => {
-                          const isGranted = (dialogPerms & p.bit) === p.bit;
-                          const isLocked = !isOwner && ((callerPerms & p.bit) !== p.bit);
-                          return (
-                            <div
-                              key={p.key}
-                              onClick={() => {
-                                if (dialogRole !== "OWNER" && !isLocked) toggleOrgPermBit(p.bit);
-                              }}
-                              className={cn(
-                                "flex items-start justify-between gap-3 p-3 rounded-xl border transition-colors select-none",
-                                isLocked
-                                  ? "border-border/30 bg-muted/20 opacity-50 cursor-not-allowed"
-                                  : isGranted
-                                  ? "border-primary/30 bg-primary/5 cursor-pointer"
-                                  : "border-border/50 bg-secondary/10 hover:bg-secondary/20 cursor-pointer",
-                                dialogRole === "OWNER" && "cursor-not-allowed opacity-80",
-                              )}
-                            >
-                              <div className="grid leading-tight min-w-0 pr-2">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-xs font-semibold text-foreground">{p.name}</span>
-                                  {isLocked && (
-                                    <span className="text-[10px] text-amber-500 font-medium border border-amber-500/20 bg-amber-500/10 px-1 py-0.2 rounded">
-                                      Locked
-                                    </span>
-                                  )}
-                                </div>
-                                <span className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{p.desc}</span>
-                              </div>
-                              <Switch
-                                checked={isGranted}
-                                onCheckedChange={() => !isLocked && toggleOrgPermBit(p.bit)}
-                                disabled={dialogRole === "OWNER" || isLocked}
-                              />
-                            </div>
-                          );
-                        })}
+          <ScrollArea className="overflow-y-auto">
+            <div className="flex flex-col gap-6 p-2 pt-20">
+              {dialogTab === "org" ? (
+                <div className="flex flex-col gap-2 max-w-5xl mx-auto w-full">
+                  <div className="py-5 px-3 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-base font-semibold text-foreground">Organization Role Preset</h3>
+                        <p className="text-xs text-muted-foreground">Select a standard preset to automatically populate the 64-bit permission bitmask.</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">
-                {dialogRole === "OWNER" || dialogRole === "ADMIN" ? (
-                  <div className="p-5 rounded-2xl border border-blue-500/20 bg-blue-500/10 flex items-center gap-3.5">
-                    <ShieldCheckIcon size={24} weight="bold" className="text-blue-400 shrink-0" />
-                    <div>
-                      <h3 className="text-sm font-bold text-foreground">
-                        Unrestricted Channel Privileges
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                        Organization {dialogRole}s automatically have full access and management permissions across all channels.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-5 rounded-2xl border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-0.5">
-                      <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                        <BroadcastIcon size={16} weight="bold" className="text-primary" />
-                        <span>Streamer Channel Assignments & Unique Access</span>
-                      </h3>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Staff members have <strong>no channels assigned by default</strong>. Assign streaming channels below and select which unique operations this member may execute per channel.
-                      </p>
-                    </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="xs"
-                        onClick={handleAssignAllStreamers}
-                        className="rounded-xl text-xs cursor-pointer font-medium"
-                      >
-                        Assign All
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="xs"
-                        onClick={handleUnassignAllStreamers}
-                        className="rounded-xl text-xs cursor-pointer font-medium text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/10"
-                      >
-                        Unassign All
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {streamers.length === 0 ? (
-                  <div className="p-12 text-center text-xs text-muted-foreground border border-dashed rounded-2xl">
-                    No streaming channels found in this organization. Create a channel first under Organization Channels.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4">
-                    {streamers.map((st) => {
-                      const isOwnerOrAdmin = dialogRole === "OWNER" || dialogRole === "ADMIN";
-                      const assigned = isStreamerAssigned(st.id);
-                      const currentAssign = dialogAssignments.find((a) => a.streamerId === st.id);
-                      const assignedPerms = isOwnerOrAdmin
-                        ? STREAMER_PERM_DEFINITIONS.map((p) => p.key)
-                        : (currentAssign?.permissions || []);
-
-                      return (
-                        <div
-                          key={st.id}
-                          className={cn(
-                            "rounded-2xl border transition-all overflow-hidden bg-card shadow-xs",
-                            assigned ? "border-primary/50 shadow-md ring-1 ring-primary/20" : "border-border/60 opacity-80",
-                          )}
-                        >
-                          <div
-                            onClick={() => !isOwnerOrAdmin && toggleStreamerAssignment(st.id)}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 p-1 bg-primary/5 rounded-2xl">
+                      {["ADMIN", "MANAGER", "EDITOR", "VIEWER", "MEMBER"].map((role) => {
+                        const isSelected = dialogRole === role;
+                        const presetPerms = RolePresets[role] ?? BigInt(0);
+                        const isLocked = !isOwner && ((presetPerms & ~callerPerms) !== BigInt(0));
+                        return (
+                          <Button
+                            key={role}
+                            variant={isSelected ? "default" : "ghost"}
+                            disabled={isLocked}
+                            onClick={() => !isLocked && handleSelectRolePreset(role)}
                             className={cn(
-                              "p-4 bg-secondary/30 border-b border-border/50 flex items-center justify-between gap-4 select-none",
-                              !isOwnerOrAdmin && "cursor-pointer hover:bg-secondary/50",
+                              "flex flex-col items-center justify-center p-3 rounded-xl h-max text-center transition-all"
                             )}
                           >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <Avatar className="size-10 rounded-xl border border-border shrink-0">
-                                {st.avatar ? (
-                                  <AvatarImage src={st.avatar} alt={st.displayName || st.name} />
-                                ) : null}
-                                <AvatarFallback className="bg-blue-600 text-white font-bold text-xs rounded-xl">
-                                  {getFallbackInitial(st.displayName || st.name)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="grid min-w-0 leading-tight">
-                                <span className="font-bold text-sm text-foreground truncate">
-                                  {st.displayName || st.name}
-                                </span>
-                                <span className="text-xs text-muted-foreground font-mono truncate">
-                                  @{st.name}
-                                </span>
+                            <span className="text-xs font-semibold">{role}</span>
+                            <span className="text-[10px] opacity-70 mt-0.5">
+                              {isLocked ? "Locked" : ROLE_SUMMARIES[role]?.split("·")[0] || "Role"}
+                            </span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    {ORG_PERM_DEFINITIONS.map((cat) => (
+                      <div
+                        key={cat.category}
+                        className="p-3 rounded-2xl flex flex-col gap-3"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className={cn("p-2 rounded-lg", cat.color)}>{cat.icon}</div>
+                          <h4 className="text-base font-semibold text-foreground">{cat.category}</h4>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-1 pt-1">
+                          {cat.perms.map((p) => {
+                            const isGranted = (dialogPerms & p.bit) === p.bit;
+                            const isLocked = !isOwner && ((callerPerms & p.bit) !== p.bit);
+                            return (
+                              <div
+                                key={p.key}
+                                onClick={() => {
+                                  if (dialogRole !== "OWNER" && !isLocked) toggleOrgPermBit(p.bit);
+                                }}
+                                className={cn(
+                                  "flex items-start justify-between gap-3 p-3 rounded-lg select-none",
+                                  isLocked
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : isGranted
+                                      ? "bg-primary/5 cursor-pointer"
+                                      : "bg-secondary/10 hover:bg-secondary/20 cursor-pointer",
+                                  dialogRole === "OWNER" && "cursor-not-allowed opacity-80",
+                                )}
+                              >
+                                <div className="grid leading-tight min-w-0 pr-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-semibold text-foreground">{p.name}</span>
+                                    {isLocked && (
+                                      <span className="text-[10px] text-amber-500 font-medium border border-amber-500/20 bg-amber-500/10 px-1 py-0.2 rounded">
+                                        Locked
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{p.desc}</span>
+                                </div>
+                                <Switch
+                                  checked={isGranted}
+                                  onCheckedChange={() => !isLocked && toggleOrgPermBit(p.bit)}
+                                  disabled={dialogRole === "OWNER" || isLocked}
+                                />
                               </div>
-                            </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 max-w-5xl mx-auto w-full">
+                  {dialogRole === "OWNER" || dialogRole === "ADMIN" ? (
+                    <div className="p-5 rounded-2xl bg-blue-500/10 flex items-center gap-5">
+                      <ShieldCheckIcon size={24} weight="bold" className="text-blue-400 shrink-0" />
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground">
+                          Unrestricted Channel Privileges
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                          Organization {dialogRole}s automatically have full access and management permissions across all channels.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-5 rounded-2xl bg-primary/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-0.5 max-w-lg">
+                        <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                          <BroadcastIcon size={16} weight="bold" className="text-primary" />
+                          <span>Streamer Channel Assignments & Unique Access</span>
+                        </h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Staff members have <strong>no channels assigned by default</strong>. Assign streaming channels below and select which unique operations this member may execute per channel.
+                        </p>
+                      </div>
 
-                            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                              <span className="text-xs font-semibold text-foreground/80">
-                                {assigned ? "Assigned" : "Unassigned"}
-                              </span>
-                              <Switch
-                                checked={assigned}
-                                onCheckedChange={() => toggleStreamerAssignment(st.id)}
-                                disabled={isOwnerOrAdmin}
-                              />
-                            </div>
-                          </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="xs"
+                          onClick={handleAssignAllStreamers}
+                          className="rounded-xl text-xs p-3 h-max font-medium"
+                        >
+                          Assign All
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="xs"
+                          onClick={handleUnassignAllStreamers}
+                          className="rounded-xl text-xs p-3 h-max font-medium"
+                        >
+                          Unassign All
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
-                          {assigned ? (
-                            <div className="p-5 flex flex-col gap-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                  Delegated Channel Permissions
-                                </span>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setDialogAssignments((prev) =>
-                                        prev.map((a) =>
-                                          a.streamerId === st.id
-                                            ? { ...a, permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key) }
-                                            : a,
-                                        ),
-                                      );
-                                    }}
-                                    className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
-                                  >
-                                    Select All
-                                  </button>
-                                  <span className="text-muted-foreground">•</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setDialogAssignments((prev) =>
-                                        prev.map((a) =>
-                                          a.streamerId === st.id ? { ...a, permissions: [] } : a,
-                                        ),
-                                      );
-                                    }}
-                                    className="text-[11px] text-muted-foreground hover:text-foreground font-medium cursor-pointer"
-                                  >
-                                    Clear
-                                  </button>
+                  {streamers.length === 0 ? (
+                    <div className="p-12 text-center text-xs text-muted-foreground border border-dashed rounded-2xl">
+                      No streaming channels found in this organization. Create a channel first under Organization Channels.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                      {streamers.map((st) => {
+                        const isOwnerOrAdmin = dialogRole === "OWNER" || dialogRole === "ADMIN";
+                        const assigned = isStreamerAssigned(st.id);
+                        const currentAssign = dialogAssignments.find((a) => a.streamerId === st.id);
+                        const assignedPerms = isOwnerOrAdmin
+                          ? STREAMER_PERM_DEFINITIONS.map((p) => p.key)
+                          : (currentAssign?.permissions || []);
+
+                        return (
+                          <div
+                            key={st.id}
+                            className={cn(
+                              "rounded-2xl transition-all overflow-hidden bg-primary/5 shadow-xs",
+                              assigned ? "shadow-md" : "opacity-80",
+                            )}
+                          >
+                            <div
+                              onClick={() => !isOwnerOrAdmin && toggleStreamerAssignment(st.id)}
+                              className={cn(
+                                "p-4 bg-secondary/30 rounded-xl m-1.5 mb-0 flex items-center justify-between gap-4 select-none transition-interactive",
+                                !isOwnerOrAdmin && "cursor-pointer hover:bg-secondary/50",
+                              )}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <Avatar className="size-12 rounded-xl border border-border shrink-0">
+                                  {st.avatar ? (
+                                    <AvatarImage src={st.avatar} alt={st.displayName || st.name} className={"rounded-xl"} />
+                                  ) : null}
+                                  <AvatarFallback className="bg-blue-600 text-white font-bold text-xs rounded-xl">
+                                    {getFallbackInitial(st.displayName || st.name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="grid min-w-0 leading-tight">
+                                  <span className="font-semibold text-base text-foreground truncate">
+                                    {st.displayName || st.name}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground/80 font-sans truncate">
+                                    @{st.name}
+                                  </span>
                                 </div>
                               </div>
 
-                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                                {STREAMER_PERM_DEFINITIONS.map((sp) => {
-                                  const isChecked = assignedPerms.includes(sp.key);
-                                  return (
-                                    <button
-                                      key={sp.key}
-                                      type="button"
-                                      onClick={() => toggleStreamerPermission(st.id, sp.key)}
-                                      className={cn(
-                                        "flex flex-col text-left p-3 rounded-xl border transition-all cursor-pointer",
-                                        isChecked
-                                          ? "bg-primary/10 border-primary text-foreground"
-                                          : "bg-secondary/20 border-border/60 text-muted-foreground hover:text-foreground",
-                                      )}
-                                    >
-                                      <div className="flex items-center justify-between w-full">
-                                        <span className="text-xs font-semibold">{sp.name}</span>
-                                        <div
-                                          className={cn(
-                                            "size-4 rounded-md border flex items-center justify-center transition-colors",
-                                            isChecked
-                                              ? "bg-primary border-primary text-primary-foreground"
-                                              : "border-border bg-background",
-                                          )}
-                                        >
-                                          {isChecked && <CheckIcon size={11} weight="bold" />}
-                                        </div>
-                                      </div>
-                                      <span className="text-[10px] text-muted-foreground mt-1 leading-snug">
-                                        {sp.desc}
-                                      </span>
-                                    </button>
-                                  );
-                                })}
+                              <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                                <span className="text-xs font-semibold text-foreground/80">
+                                  {assigned ? "Assigned" : "Unassigned"}
+                                </span>
+                                <Switch
+                                  checked={assigned}
+                                  onCheckedChange={() => toggleStreamerAssignment(st.id)}
+                                  disabled={isOwnerOrAdmin}
+                                />
                               </div>
                             </div>
-                          ) : (
-                            <div className="p-4 text-xs text-muted-foreground/60 italic bg-secondary/10">
-                              This channel is currently not assigned. Toggle the switch above to grant access.
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
 
-          <DialogFooter className="px-6 py-3.5 border-t border-border bg-secondary/20 flex flex-row items-center justify-between shrink-0 sm:justify-between">
+                            {assigned ? (
+                              <div className="p-4 flex flex-col gap-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    Delegated Channel Permissions
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setDialogAssignments((prev) =>
+                                          prev.map((a) =>
+                                            a.streamerId === st.id
+                                              ? { ...a, permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key) }
+                                              : a,
+                                          ),
+                                        );
+                                      }}
+                                      className="text-[11px] text-primary font-medium"
+                                    >
+                                      Select All
+                                    </button>
+                                    <span className="text-muted-foreground">•</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setDialogAssignments((prev) =>
+                                          prev.map((a) =>
+                                            a.streamerId === st.id ? { ...a, permissions: [] } : a,
+                                          ),
+                                        );
+                                      }}
+                                      className="text-[11px] text-muted-foreground hover:text-foreground font-medium"
+                                    >
+                                      Clear
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 pb-1">
+                                  {STREAMER_PERM_DEFINITIONS.map((sp) => {
+                                    const isChecked = assignedPerms.includes(sp.key);
+                                    return (
+                                      <button
+                                        key={sp.key}
+                                        type="button"
+                                        onClick={() => toggleStreamerPermission(st.id, sp.key)}
+                                        className={cn(
+                                          "flex flex-col text-left p-3 rounded-lg transition-all cursor-pointer",
+                                          isChecked
+                                            ? "bg-primary/10 border-primary text-foreground"
+                                            : "bg-secondary/20 border-border/60 text-muted-foreground hover:text-foreground",
+                                        )}
+                                      >
+                                        <div className="flex items-center justify-between w-full">
+                                          <span className="text-xs font-semibold">{sp.name}</span>
+                                          <div
+                                            className={cn(
+                                              "size-4 rounded-md border flex items-center justify-center transition-colors",
+                                              isChecked
+                                                ? "bg-primary border-primary text-primary-foreground"
+                                                : "border-border bg-background",
+                                            )}
+                                          >
+                                            {isChecked && <CheckIcon size={11} weight="bold" />}
+                                          </div>
+                                        </div>
+                                        <span className="text-[10px] text-muted-foreground mt-1 leading-snug">
+                                          {sp.desc}
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="p-4 text-xs text-muted-foreground/60 italic bg-secondary/10">
+                                This channel is currently not assigned. Toggle the switch above to grant access.
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+
+          <DialogFooter className="px-6 py-3.5 mt-auto border-t border-border bg-secondary/20 flex flex-row items-center justify-between shrink-0 sm:justify-between">
             <span className="text-xs text-muted-foreground">
               Configuring privileges for <strong className="text-foreground">{managingMember?.name || managingMember?.email}</strong>
             </span>
             <div className="flex items-center gap-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setManagingMember(null)}
                 disabled={isSavingPermissions}
-                className="rounded-xl text-xs cursor-pointer"
+                className="rounded-xl text-xs p-3 h-max"
               >
                 Cancel
               </Button>
@@ -1156,7 +1159,7 @@ export default function OrgMembersPage() {
                   size="sm"
                   onClick={handleSavePermissions}
                   disabled={isSavingPermissions}
-                  className="gap-2 rounded-xl text-xs font-semibold cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="gap-2 rounded-xl text-xs font-semibold p-3 h-max"
                 >
                   {isSavingPermissions ? <Spinner className="size-3.5" /> : <CheckIcon size={14} weight="bold" />}
                   <span>Save Changes</span>
@@ -1195,7 +1198,7 @@ export default function OrgMembersPage() {
                       required
                       fontStyle={{
                         fontFamily: "var(--font-sans)",
-                        fontWeight: "600",
+                        fontWeight: "500",
                         fontSize: "14px",
                       }}
                       className="w-full"
