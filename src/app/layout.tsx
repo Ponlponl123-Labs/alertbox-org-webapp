@@ -10,17 +10,17 @@ import {
   Sarabun,
   Bai_Jamjuree,
 } from "next/font/google";
-import { CountryFlagsPolyfill } from "@/components/CountryFlagsPolyfill";
+import { CountryFlagsPolyfill } from "@/components/shared/country-flags-polyfill";
 import { preload } from "@/consts/theme";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
+import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
 import { cn } from "@/lib/utils";
 import "@/styles/globals.css";
 import { UserContextProvider } from "@/contexts/user";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
-import BackendLivenessChecker from "@/components/backend-liveness-checker";
-import BackendLivenessBanner from "@/components/backend-liveness-banner";
+import BackendLivenessChecker from "@/components/shared/backend-liveness-checker";
+import BackendLivenessBanner from "@/components/shared/backend-liveness-banner";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],

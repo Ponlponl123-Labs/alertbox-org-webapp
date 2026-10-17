@@ -9,7 +9,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { getFallbackInitial } from "@/lib/utils";
 import ContributionSkyline from "@/components/ui/contribution-skyline";
-import OrgAnalytics from "@/components/org-analytics";
+import OrgAnalytics from "@/components/features/org/org-analytics";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 

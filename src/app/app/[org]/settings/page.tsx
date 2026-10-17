@@ -21,12 +21,13 @@ import {
   ArrowLeftIcon,
   CaretUpDownIcon,
   MagnifyingGlassIcon,
+  SignOutIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ImageCropperModal } from "@/components/image-cropper-modal";
+import { ImageCropperModal } from "@/components/features/modals/image-cropper-modal";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,8 @@ import {
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { hasPermission, OrgPerm } from "@/lib/rbac";
+import type { CropType, TransferStep, OrgMemberOption } from "@/types";
+import { TRANSFER_CONFIRM_PHRASE } from "@/consts/org";
 
 export default function OrgSettingsPage() {
   const routeParams = useParams();
@@ -49,31 +52,28 @@ export default function OrgSettingsPage() {
   const [banner, setBanner] = useState(activeOrg?.banner || "");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Transfer Ownership state
   const [isTransferOpen, setIsTransferOpen] = useState(false);
-  const [members, setMembers] = useState<
-    Array<{ id: string; name: string | null; email: string; avatar: string | null; role: string }>
-  >([]);
+  const [members, setMembers] = useState<OrgMemberOption[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [memberComboboxOpen, setMemberComboboxOpen] = useState(false);
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
-  const [transferStep, setTransferStep] = useState<1 | 2>(1);
+  const [transferStep, setTransferStep] = useState<TransferStep>(1);
   const [transferAck, setTransferAck] = useState(false);
   const [confirmPhrase, setConfirmPhrase] = useState("");
   const [isTransferring, setIsTransferring] = useState(false);
 
-  // Cropper state
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-  const [cropType, setCropType] = useState<"avatar" | "banner">("avatar");
+  const [cropType, setCropType] = useState<CropType>("avatar");
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
-  // Danger zone
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [confirmSlug, setConfirmSlug] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLeaveOpen, setIsLeaveOpen] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   // Keep state synchronized when active organization switches
   const prevOrgIdRef = useRef(activeOrg?.id);
@@ -217,6 +217,31 @@ export default function OrgSettingsPage() {
     }
   };
 
+  const handleLeaveOrg = async () => {
+    if (!orgTarget || isLeaving) return;
+    setIsLeaving(true);
+    try {
+      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}/leave`), {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        if (activeOrg) removeOrganization(activeOrg.id);
+        toast.success(`You have left ${activeOrg?.name || "the organization"}`);
+        setIsLeaveOpen(false);
+        await refreshUserInfo();
+        router.push("/app");
+      } else {
+        const msg = await res.text();
+        toast.error(msg || "Failed to leave organization");
+      }
+    } catch {
+      toast.error("Network error while leaving organization");
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
   const openTransferDialog = async () => {
     setIsTransferOpen(true);
     setTransferStep(1);
@@ -246,7 +271,7 @@ export default function OrgSettingsPage() {
   };
 
   const handleTransferOwnership = async () => {
-    if (!selectedMemberId || isTransferring || confirmPhrase !== "TRANSFER" || !transferAck) return;
+    if (!selectedMemberId || isTransferring || confirmPhrase !== TRANSFER_CONFIRM_PHRASE || !transferAck) return;
     setIsTransferring(true);
     try {
       const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}/transfer`), {
@@ -274,7 +299,6 @@ export default function OrgSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl w-full py-4">
-      {/* Hidden File Inputs for Direct Upload */}
       <input
         type="file"
         ref={avatarInputRef}
@@ -290,7 +314,6 @@ export default function OrgSettingsPage() {
         className="hidden"
       />
 
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
@@ -320,9 +343,7 @@ export default function OrgSettingsPage() {
       )}
 
       <div className="flex flex-col gap-6">
-        {/* Branding & Visual Identity Card */}
         <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden flex flex-col">
-          {/* Banner Container */}
           <div className="relative w-full h-44 sm:h-52 bg-linear-to-r from-secondary/80 via-secondary/40 to-muted/60 border-b border-border flex items-center justify-center overflow-hidden group">
             {banner ? (
               <Image
@@ -340,7 +361,6 @@ export default function OrgSettingsPage() {
               </div>
             )}
 
-            {/* Banner Overlay Actions */}
             {canManageSettings && (
               <div className="absolute top-3 right-3 flex items-center gap-2">
                 <Button
@@ -368,7 +388,6 @@ export default function OrgSettingsPage() {
               </div>
             )}
 
-            {/* Bottom-left Overlapping Avatar */}
             <div className="absolute -bottom-8 left-6 flex items-end gap-3 z-10">
               <div className="relative group/avatar">
                 <Avatar className="size-20 sm:size-22 rounded-2xl border-4 border-card shadow-md bg-card shrink-0">
@@ -395,7 +414,6 @@ export default function OrgSettingsPage() {
             </div>
           </div>
 
-          {/* Under-banner Info Header */}
           <div className="pt-10 pb-6 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50">
             <div>
               <h2 className="text-lg font-bold text-foreground">
@@ -436,7 +454,6 @@ export default function OrgSettingsPage() {
             )}
           </div>
 
-          {/* General Form */}
           <form onSubmit={handleSaveGeneral} className="p-6 flex flex-col gap-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -495,7 +512,6 @@ export default function OrgSettingsPage() {
           </form>
         </div>
 
-        {/* Organization Metadata Card */}
         <div className="p-6 rounded-2xl border border-border bg-card shadow-xs flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-secondary text-foreground flex items-center justify-center">
@@ -534,7 +550,6 @@ export default function OrgSettingsPage() {
           </div>
         </div>
 
-        {/* Transfer Ownership Card */}
         {isOwner && (
           <div className="p-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 shadow-xs flex flex-col gap-4">
             <div className="flex items-center gap-3">
@@ -567,24 +582,41 @@ export default function OrgSettingsPage() {
           </div>
         )}
 
-        {/* Danger Zone */}
-        {isOwner && (
-          <div className="p-6 rounded-2xl border border-destructive/30 bg-destructive/5 shadow-xs flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center">
-                <WarningOctagonIcon size={20} weight="bold" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-destructive">Danger Zone</h2>
-                <p className="text-xs text-muted-foreground">Irreversible administrative actions.</p>
-              </div>
+        <div className="p-6 rounded-2xl border border-destructive/30 bg-destructive/5 shadow-xs flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center">
+              <WarningOctagonIcon size={20} weight="bold" />
             </div>
+            <div>
+              <h2 className="text-base font-bold text-destructive">Danger Zone</h2>
+              <p className="text-xs text-muted-foreground">Irreversible actions and membership departure.</p>
+            </div>
+          </div>
 
+          {!isOwner ? (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+              <div className="max-w-md">
+                <p className="text-xs font-semibold text-foreground">Leave this organization</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                  Revoke your membership and leave this organization. You will immediately lose access to all channels, widgets, and settings. You can only rejoin if an administrator re-invites you.
+                </p>
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setIsLeaveOpen(true)}
+                className="gap-2 text-xs font-semibold rounded-xl cursor-pointer shrink-0"
+              >
+                <SignOutIcon size={15} weight="bold" />
+                <span>Leave Organization</span>
+              </Button>
+            </div>
+          ) : (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
               <div className="max-w-md">
                 <p className="text-xs font-semibold text-foreground">Delete this organization</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                  Permanently delete this organization, all attached streamer channels, widgets, and team memberships. This action cannot be undone.
+                  Permanently delete this organization, all attached streamer channels, widgets, and team memberships. As the owner, you cannot leave without deleting or transferring ownership first.
                 </p>
               </div>
               <Button
@@ -600,11 +632,10 @@ export default function OrgSettingsPage() {
                 <span>Delete Organization</span>
               </Button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Image Cropper Modal */}
       <ImageCropperModal
         open={cropperOpen}
         onClose={() => setCropperOpen(false)}
@@ -615,7 +646,6 @@ export default function OrgSettingsPage() {
         onCropComplete={onCropComplete}
       />
 
-      {/* Confirmation Dialog: Delete Organization */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
           <DialogHeader>
@@ -667,8 +697,44 @@ export default function OrgSettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={isLeaveOpen} onOpenChange={setIsLeaveOpen}>
+        <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
+          <DialogHeader>
+            <div className="size-11 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mb-2">
+              <SignOutIcon size={22} weight="bold" />
+            </div>
+            <DialogTitle className="text-lg font-bold text-destructive">
+              Leave Organization?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              Are you sure you want to leave <strong>{activeOrg?.name}</strong>? You will immediately lose access to this organization, its channels, widgets, and administrative tools. An administrator will need to invite you again to rejoin.
+            </DialogDescription>
+          </DialogHeader>
 
-      {/* Transfer Ownership Dialog (with members dropdown and double confirmation) */}
+          <DialogFooter className="mt-5 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsLeaveOpen(false)}
+              disabled={isLeaving}
+              className="text-xs rounded-xl cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleLeaveOrg}
+              disabled={isLeaving}
+              className="gap-1.5 text-xs font-semibold rounded-xl cursor-pointer"
+            >
+              {isLeaving && <Spinner className="size-3.5" />}
+              <span>Confirm & Leave</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
         <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
           <DialogHeader>
@@ -753,7 +819,6 @@ export default function OrgSettingsPage() {
                         sideOffset={6}
                         className="w-[calc(100vw-2.5rem)] sm:w-100 p-2 rounded-2xl bg-popover border border-border shadow-xl z-50 flex flex-col gap-2"
                       >
-                        {/* Search Input */}
                         <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl border border-input bg-background/80">
                           <MagnifyingGlassIcon size={14} weight="bold" className="text-muted-foreground shrink-0" />
                           <input
@@ -766,7 +831,6 @@ export default function OrgSettingsPage() {
                           />
                         </div>
 
-                        {/* Members List */}
                         <div className="flex flex-col gap-1 max-h-56 overflow-y-auto pr-0.5">
                           {(() => {
                             const query = memberSearchQuery.toLowerCase().trim();
@@ -838,7 +902,6 @@ export default function OrgSettingsPage() {
                     </Popover>
                   </div>
 
-                  {/* Confirmation 1: Acknowledgment Checkbox */}
                   <label className="flex items-start gap-2.5 p-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 cursor-pointer select-none">
                     <input
                       type="checkbox"
@@ -874,7 +937,6 @@ export default function OrgSettingsPage() {
                 </>
               ) : (
                 <>
-                  {/* Step 2: Final Double Confirmation */}
                   <div className="p-3.5 rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive text-xs flex flex-col gap-1.5 leading-relaxed">
                     <span className="font-bold flex items-center gap-1.5">
                       <WarningOctagonIcon size={16} weight="bold" />
@@ -887,13 +949,13 @@ export default function OrgSettingsPage() {
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-foreground">
-                      Type <code className="text-destructive font-mono font-bold">TRANSFER</code> to execute:
+                      Type <code className="text-destructive font-mono font-bold">{TRANSFER_CONFIRM_PHRASE}</code> to execute:
                     </label>
                     <Input
                       type="text"
                       value={confirmPhrase}
                       onChange={(e) => setConfirmPhrase(e.target.value)}
-                      placeholder="TRANSFER"
+                      placeholder={TRANSFER_CONFIRM_PHRASE}
                       className="w-full text-xs font-mono"
                       classNames={{ base: "h-10 rounded-xl" }}
                       autoFocus
@@ -915,7 +977,7 @@ export default function OrgSettingsPage() {
                       variant="destructive"
                       size="sm"
                       onClick={handleTransferOwnership}
-                      disabled={isTransferring || confirmPhrase !== "TRANSFER"}
+                      disabled={isTransferring || confirmPhrase !== TRANSFER_CONFIRM_PHRASE}
                       className="gap-1.5 text-xs font-semibold rounded-xl cursor-pointer"
                     >
                       {isTransferring && <Spinner className="size-3.5" />}

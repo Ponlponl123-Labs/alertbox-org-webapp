@@ -11,7 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import { BuyMeACoffee } from "@thesvg/react";
 import type { DonatePageData } from "@/types/landing.types";
-import PixelSnow from "@/components/PixelSnow";
+import PixelSnow from "@/components/effects/pixel-snow";
 import { Button } from "@/components/ui/button";
 
 const MotionButton = motion.create(Button);

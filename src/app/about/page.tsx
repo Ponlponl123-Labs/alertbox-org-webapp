@@ -9,12 +9,12 @@ import {
   PlusIcon,
   MinusIcon,
 } from "@phosphor-icons/react";
-import ShinyText from "@/components/ShinyText";
+import ShinyText from "@/components/effects/shiny-text";
 import type { AboutPageData } from "@/types/landing.types";
 import CTABanner from "../index/cta-banner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-const ShapeWaves = dynamic(() => import("@/components/ShapeWaves"), {
+const ShapeWaves = dynamic(() => import("@/components/effects/shape-waves"), {
   ssr: false,
 });
 

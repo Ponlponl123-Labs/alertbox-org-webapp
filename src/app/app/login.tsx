@@ -10,9 +10,9 @@ import Link from "next/link";
 import { Google, Streamlabs } from "@thesvg/react";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
-import { UndrawBiometricLogin } from "@/consts/svg";
+import { UndrawBiometricLogin } from "@/components/svg";
 import { BellRing } from "@/components/animate-ui/icons/bell-ring";
-import GradientASCII from "@/components/GradientASCII";
+import GradientASCII from "@/components/effects/gradient-ascii";
 
 function Login() {
   const lang = useStore(coreStore, (state) => state.lang);

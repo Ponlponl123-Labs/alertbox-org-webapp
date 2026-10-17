@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { CircleIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 

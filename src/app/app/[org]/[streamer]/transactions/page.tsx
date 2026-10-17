@@ -456,7 +456,6 @@ export default function StreamerTransactionsPage() {
 
   return (
     <div className="flex flex-col gap-5 max-w-6xl w-full py-4 select-none">
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
@@ -472,7 +471,6 @@ export default function StreamerTransactionsPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Enterprise Live WebSocket Status Indicator */}
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-border bg-card/60 shadow-xs backdrop-blur-xs">
             <span
               className={cn(
@@ -524,9 +522,7 @@ export default function StreamerTransactionsPage() {
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 rounded-xl border border-border bg-card">
-        {/* Search */}
         <div className="relative flex-1">
           <MagnifyingGlassIcon
             size={16}
@@ -545,9 +541,7 @@ export default function StreamerTransactionsPage() {
           />
         </div>
 
-        {/* Filter Controls */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Provider Select */}
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <FunnelIcon size={13} weight="bold" />
             <select
@@ -567,7 +561,6 @@ export default function StreamerTransactionsPage() {
             </select>
           </div>
 
-          {/* Status Select */}
           <select
             value={selectedStatus}
             onChange={(e) => {
@@ -583,7 +576,6 @@ export default function StreamerTransactionsPage() {
             <option value="REFUNDED">Refunded</option>
           </select>
 
-          {/* Sort By Select */}
           <select
             value={sortBy}
             onChange={(e) => {
@@ -596,7 +588,6 @@ export default function StreamerTransactionsPage() {
             <option value="amount">Sort: Amount</option>
           </select>
 
-          {/* Sort Order Toggle */}
           <Button
             size="xs"
             variant="ghost"
@@ -616,7 +607,6 @@ export default function StreamerTransactionsPage() {
         </div>
       </div>
 
-      {/* Modern Minimal Table */}
       <div className="relative rounded-xl border border-border bg-card overflow-hidden shadow-xs">
         {loading && (
           <div className="absolute inset-0 bg-background/50 backdrop-blur-xs flex items-center justify-center z-10">
@@ -665,7 +655,6 @@ export default function StreamerTransactionsPage() {
                         tx.isDeleted && "opacity-40 border-dashed bg-muted/10 line-through text-muted-foreground",
                       )}
                     >
-                      {/* Status & Type */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <span
@@ -695,7 +684,6 @@ export default function StreamerTransactionsPage() {
                         </div>
                       </td>
 
-                      {/* Supporter & Message */}
                       <td className="py-3.5 px-4 min-w-50">
                         <div className="flex items-start gap-2.5">
                           <div className="size-7 rounded-full bg-primary/10 text-primary font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
@@ -717,7 +705,6 @@ export default function StreamerTransactionsPage() {
                         </div>
                       </td>
 
-                      {/* Amount & Currency */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex items-baseline gap-1 font-mono font-bold text-sm text-foreground">
                           <span>
@@ -739,14 +726,12 @@ export default function StreamerTransactionsPage() {
                         </div>
                       </td>
 
-                      {/* Payment Gateway */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <span className="px-2 py-1 rounded-md text-[11px] font-medium bg-muted text-foreground border border-border">
                           {tx.provider}
                         </span>
                       </td>
 
-                      {/* Date */}
                       <td className="py-3.5 px-4 whitespace-nowrap text-[11px] text-muted-foreground font-mono">
                         {new Date(tx.createdAt).toLocaleDateString("en-US", {
                           month: "short",
@@ -761,7 +746,6 @@ export default function StreamerTransactionsPage() {
                         </span>
                       </td>
 
-                      {/* Action Popover Column */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <Popover>
                           <PopoverTrigger
@@ -778,7 +762,6 @@ export default function StreamerTransactionsPage() {
                             align="end"
                             className="w-48 p-1.5 flex flex-col gap-1 rounded-xl bg-card border border-border shadow-xl text-xs"
                           >
-                            {/* Resend / Replay Alert */}
                             <button
                               onClick={() => handleResendAlert(tx)}
                               className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left font-medium"
@@ -787,7 +770,6 @@ export default function StreamerTransactionsPage() {
                               <span>Resend Alert</span>
                             </button>
 
-                            {/* Copy Transaction ID */}
                             <button
                               onClick={() => {
                                 navigator.clipboard.writeText(tx.id);
@@ -807,7 +789,6 @@ export default function StreamerTransactionsPage() {
 
                             <div className="h-px bg-border my-0.5" />
 
-                            {/* Soft Delete / Restore */}
                             <button
                               onClick={() => handleToggleSoftDelete(tx.id)}
                               className={cn(
@@ -840,7 +821,6 @@ export default function StreamerTransactionsPage() {
           </table>
         </div>
 
-        {/* Pagination Footer */}
         <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
           <span>
             Showing{" "}
@@ -882,7 +862,6 @@ export default function StreamerTransactionsPage() {
         </div>
       </div>
 
-      {/* Send Test Transaction Modal Dialog */}
       <Dialog open={isTestDialogOpen} onOpenChange={setIsTestDialogOpen}>
         <DialogContent className="max-w-md rounded-2xl bg-card border border-border p-6 shadow-2xl">
           <DialogHeader>
@@ -896,7 +875,6 @@ export default function StreamerTransactionsPage() {
           </DialogHeader>
 
           <div className="flex flex-col gap-4 py-2">
-            {/* Choose Available Gateway */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-foreground">
                 Payment Gateway Provider
@@ -927,7 +905,6 @@ export default function StreamerTransactionsPage() {
               </span>
             </div>
 
-            {/* Amount & Currency */}
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-2 flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-foreground">Amount</label>
@@ -957,7 +934,6 @@ export default function StreamerTransactionsPage() {
               </div>
             </div>
 
-            {/* Donor Name */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-foreground">Donor Name</label>
               <input
@@ -969,7 +945,6 @@ export default function StreamerTransactionsPage() {
               />
             </div>
 
-            {/* Message */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-foreground">Donation Message</label>
               <textarea

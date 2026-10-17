@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import LogoLoop from "@/components/LogoLoop";
+import LogoLoop from "@/components/effects/logo-loop";
 import {
   BuyMeACoffee,
   FacebookLive,

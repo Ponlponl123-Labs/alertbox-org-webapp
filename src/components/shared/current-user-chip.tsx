@@ -6,11 +6,11 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "./ui/popover";
+} from "@/components/ui/popover";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { useStore } from "zustand";
-import { Button } from "./ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { coreStore } from "@/hooks/store/core";
 import {
   ChartLineIcon,

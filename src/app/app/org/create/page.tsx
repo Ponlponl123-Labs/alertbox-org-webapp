@@ -6,9 +6,10 @@ import { getApiUrl } from "@/lib/api";
 import { orgStore } from "@/hooks/store/org";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { Building2, Plus, ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft, ArrowRight, Info } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { UndrawAgreement } from "@/components/svg";
 
 export default function CreateOrgPage() {
   const router = useRouter();
@@ -70,127 +71,144 @@ export default function CreateOrgPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center py-10 px-4 max-w-xl mx-auto w-full">
-      <div className="w-full flex items-center justify-between mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="rounded-xl text-xs gap-1.5 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-3.5" />
-          <span>Back</span>
-        </Button>
-        <Link href="/app/org/join">
+    <div className="flex-1 flex flex-col items-center justify-center py-10 px-4 max-w-7xl mx-auto w-full">
+      <div>
+        <div className="w-full flex items-center justify-between mb-6">
           <Button
             variant="ghost"
             size="sm"
-            className="rounded-xl text-xs text-primary font-medium hover:underline"
+            onClick={() => router.back()}
+            className="rounded-xl p-2 text-xs h-max gap-1.5 text-muted-foreground hover:text-foreground"
           >
-            Have an invite code? Join here
+            <ArrowLeft className="size-3.5" />
+            <span>Back</span>
           </Button>
-        </Link>
-      </div>
-
-      <div className="w-full p-6 sm:p-8 rounded-3xl border border-border bg-card shadow-xl flex flex-col gap-6">
-        <div className="flex flex-col gap-1.5">
-          <div className="size-12 rounded-2xl bg-blue-600/10 text-blue-600 flex items-center justify-center mb-1">
-            <Building2 className="size-6 text-blue-600" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Create Organization
-          </h1>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Create a dedicated organization workspace for your streaming team, studio, or agency.
-          </p>
+          <Link href="/app/org/join">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-xl p-2 text-xs h-max text-primary font-medium"
+            >
+              Have an invite code? Join here
+            </Button>
+          </Link>
         </div>
 
-        <form onSubmit={handleCreate} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-foreground/85">
-              Organization Name <span className="text-destructive">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Acme Studio, Team Vitality"
-              value={orgName}
-              onChange={(e) => setOrgName(e.target.value)}
-              maxLength={64}
-              required
-              className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-input bg-background text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-              autoFocus
-            />
+        <div className="flex items-center gap-12">
+          <div className="max-lg:hidden">
+            <UndrawAgreement className="size-60 xl:size-96 md:ml-12" />
           </div>
+          <div className="w-full flex flex-col gap-3 max-w-md">
+            <div className="flex flex-col gap-1.5 my-6">
+              <h1 className="text-5xl font-medium mb-3 text-foreground">
+                Make your first startup
+              </h1>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Create a dedicated organization workspace for your streaming team, studio, or agency.
+              </p>
+            </div>
 
-
-          {isOperator && (
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-foreground/85">
-                Organization Tier
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOrgType("COMMUNITY")}
-                  className={`p-3 rounded-xl border text-left flex flex-col gap-0.5 transition-all ${
-                    orgType === "COMMUNITY"
-                      ? "border-primary bg-primary/10 text-foreground"
-                      : "border-border bg-background text-muted-foreground hover:border-primary/50"
-                  }`}
-                >
-                  <span className="text-xs font-bold text-foreground">Community</span>
-                  <span className="text-[11px] opacity-80">1 channel limit</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOrgType("ENTERPRISE")}
-                  className={`p-3 rounded-xl border text-left flex flex-col gap-0.5 transition-all ${
-                    orgType === "ENTERPRISE"
-                      ? "border-primary bg-primary/10 text-foreground"
-                      : "border-border bg-background text-muted-foreground hover:border-primary/50"
-                  }`}
-                >
-                  <span className="text-xs font-bold text-foreground">Enterprise</span>
-                  <span className="text-[11px] opacity-80">Unlimited channels</span>
-                </button>
+            <form onSubmit={handleCreate} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-foreground/85">
+                  Organization Name <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Acme Studio, Team Vitality"
+                  value={orgName}
+                  onChange={(e) => setOrgName(e.target.value)}
+                  maxLength={64}
+                  required
+                  className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-input bg-background text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                  autoFocus
+                />
               </div>
-            </div>
-          )}
 
-          {isOrgLimitReached && (
-            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-medium">
-              You have reached the limit of 1 organization for regular and supporter accounts.
-            </div>
-          )}
 
-          {error && (
-            <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
-              {error}
-            </div>
-          )}
-
-          <div className="pt-2 flex items-center justify-end gap-2.5">
-            <Button
-              type="submit"
-              disabled={isSubmitting || !orgName.trim() || isOrgLimitReached}
-              className="rounded-xl px-5 text-xs font-semibold gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <Spinner />
-                  <span>Creating Organization...</span>
-                </>
-              ) : isOrgLimitReached ? (
-                <span>Org Limit Reached (1/1)</span>
-              ) : (
-                <>
-                  <Plus className="size-4" />
-                  <span>Create Organization</span>
-                </>
+              {isOperator && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-foreground/85">
+                    Organization Tier
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setOrgType("COMMUNITY")}
+                      className={`p-3 rounded-xl border text-left flex flex-col gap-0.5 transition-all ${orgType === "COMMUNITY"
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/50"
+                        }`}
+                    >
+                      <span className="text-xs font-bold text-foreground">Community</span>
+                      <span className="text-[11px] opacity-80">1 channel limit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOrgType("ENTERPRISE")}
+                      className={`p-3 rounded-xl border text-left flex flex-col gap-0.5 transition-all ${orgType === "ENTERPRISE"
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/50"
+                        }`}
+                    >
+                      <span className="text-xs font-bold text-foreground">Enterprise</span>
+                      <span className="text-[11px] opacity-80">Unlimited channels</span>
+                    </button>
+                  </div>
+                </div>
               )}
-            </Button>
+
+              {isOrgLimitReached && (
+                <div className="p-3.5 rounded-2xl bg-muted/60 select-none text-xs flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5 text-foreground font-semibold">
+                    <Info className="size-4 shrink-0 text-muted-foreground" />
+                    <span>There are no signers</span>
+                  </div>
+                  <p className="text-muted-foreground leading-relaxed">
+                    We can handle only 1 signer right now, but if u want unlimited signers, you can freely self-host your Alertbox!
+                  </p>
+                  <Link
+                    href="https://github.com/Ponlponl123-Labs/alertbox-org#readme"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-foreground hover:underline font-medium transition-colors w-max group"
+                  >
+                    <span>Learn about self-hosting</span>
+                    <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              )}
+
+              {error && (
+                <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-medium">
+                  {error}
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || !orgName.trim() || isOrgLimitReached}
+                  className="rounded-xl p-3 h-max text-xs font-semibold gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Spinner className="size-4" />
+                      <span>Creating Organization...</span>
+                    </>
+                  ) : isOrgLimitReached ? (
+                    <span>Feature unavailable</span>
+                  ) : (
+                    <>
+                      <Plus className="size-4" />
+                      <span>Create Organization</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

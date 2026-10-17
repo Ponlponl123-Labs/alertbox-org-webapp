@@ -5,7 +5,7 @@ import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
-import BorderGlow from "@/components/BorderGlow";
+import BorderGlow from "@/components/effects/border-glow";
 import { CheckIcon, SparkleIcon } from "@phosphor-icons/react";
 
 const fadeInUp = {

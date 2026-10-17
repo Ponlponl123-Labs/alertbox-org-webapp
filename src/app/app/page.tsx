@@ -7,7 +7,6 @@ import { useStore } from "zustand";
 import { orgStore, selectActiveOrg, selectActiveStreamer } from "@/hooks/store/org";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
-import { JoinOrgDialog } from "@/components/join-org-dialog";
 import { getApiUrl } from "@/lib/api";
 import { toast } from "sonner";
 import {
@@ -34,7 +33,6 @@ export default function WorkspaceZonePage() {
   const [orgName, setOrgName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const [isJoinOpen, setIsJoinOpen] = useState(false);
 
   // Auto-redirect existing users with active organizations unless forceZone
   useEffect(() => {
@@ -265,7 +263,7 @@ export default function WorkspaceZonePage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsJoinOpen(true)}
+                onClick={() => router.push("/app/org/join")}
                 className="rounded-xl px-4 py-2.5 text-xs font-semibold gap-2 mt-2 w-full justify-center border-border hover:bg-accent"
               >
                 <KeyRound className="size-4" />
@@ -280,8 +278,6 @@ export default function WorkspaceZonePage() {
           </div>
         </div>
       </div>
-
-      <JoinOrgDialog open={isJoinOpen} onOpenChange={setIsJoinOpen} />
     </div>
   );
 }

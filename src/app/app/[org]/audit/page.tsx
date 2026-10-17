@@ -157,7 +157,6 @@ export default function OrgAuditPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-6xl w-full py-4">
-      {/* Top Title & Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
@@ -186,7 +185,6 @@ export default function OrgAuditPage() {
         </div>
       </div>
 
-      {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           {CATEGORY_TABS.map((tab) => (
@@ -218,11 +216,9 @@ export default function OrgAuditPage() {
         </div>
       </div>
 
-      {/* Modern Minimal Table Container */}
       <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-2xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            {/* Table Header */}
             <thead>
               <tr className="border-b border-border/60 text-muted-foreground text-[11px] font-semibold">
                 <th className="py-3.5 pl-4 pr-1 w-9 text-center"></th>
@@ -239,7 +235,6 @@ export default function OrgAuditPage() {
               </tr>
             </thead>
 
-            {/* Table Body */}
             <tbody className="divide-y divide-border/40">
               {loading ? (
                 <tr>
@@ -272,7 +267,6 @@ export default function OrgAuditPage() {
                           isExpanded && "bg-secondary/25",
                         )}
                       >
-                        {/* Caret expand toggle */}
                         <td className="py-3 pl-4 pr-1 text-center">
                           <button
                             type="button"
@@ -287,7 +281,6 @@ export default function OrgAuditPage() {
                           </button>
                         </td>
 
-                        {/* Customer / Actor */}
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <Avatar className="size-8 rounded-full border border-border/80 shrink-0">
@@ -309,7 +302,6 @@ export default function OrgAuditPage() {
                           </div>
                         </td>
 
-                        {/* Status / Event Dot Pill */}
                         <td className="py-3 px-4 whitespace-nowrap">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-secondary/80 border border-border/60 text-foreground">
                             <span className={cn("size-1.5 rounded-full shrink-0", info.dotClass)} />
@@ -317,30 +309,25 @@ export default function OrgAuditPage() {
                           </span>
                         </td>
 
-                        {/* Plain English Summary */}
                         <td className="py-3 px-4 text-muted-foreground text-xs hidden md:table-cell max-w-xs truncate">
                           {info.description}
                         </td>
 
-                        {/* Minimal Date */}
                         <td className="py-3 px-4 whitespace-nowrap text-foreground/90 font-medium text-xs">
                           <span title={new Date(log.createdAt).toLocaleString()}>
                             {formatTableDate(log.createdAt)}
                           </span>
                         </td>
 
-                        {/* Amount / Origin IP */}
                         <td className="py-3 pr-6 pl-4 text-right whitespace-nowrap font-mono text-xs text-muted-foreground">
                           {log.ipAddress}
                         </td>
                       </tr>
 
-                      {/* Expandable Row Panel */}
                       {isExpanded && (
                         <tr className="bg-secondary/15 border-b border-border/60">
                           <td colSpan={6} className="py-4 px-6">
                             <div className="flex flex-col gap-3 rounded-xl p-4 bg-card border border-border/70 shadow-xs">
-                              {/* Header & Story Description */}
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/50 pb-3">
                                 <div className="flex items-center gap-2">
                                   <div className={cn("size-6 rounded-lg border flex items-center justify-center shrink-0", info.badgeClass)}>
@@ -355,7 +342,6 @@ export default function OrgAuditPage() {
                                 </span>
                               </div>
 
-                              {/* Formatted Parameters Grid */}
                               {summaryParams.length > 0 && (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 pt-1">
                                   {summaryParams.map((p, idx) => (
@@ -379,7 +365,6 @@ export default function OrgAuditPage() {
                                 </div>
                               )}
 
-                              {/* Collapsible Raw JSON for Power Users */}
                               <div className="pt-2 flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
                                   <button
@@ -422,7 +407,6 @@ export default function OrgAuditPage() {
           </table>
         </div>
 
-        {/* Minimal Footer & Pagination */}
         <div className="flex items-center justify-between px-6 py-3.5 border-t border-border/60 bg-secondary/20 text-xs text-muted-foreground">
           <span>
             {filteredLogs.length > 0 ? `${startIndex}–${endIndex} of ${filteredLogs.length}` : "0 records"}

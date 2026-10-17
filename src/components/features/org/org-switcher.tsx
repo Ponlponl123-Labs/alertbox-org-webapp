@@ -1,18 +1,16 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { GalleryVerticalEnd, ChevronsUpDown, Plus, Check, KeyRound } from "lucide-react";
-import { JoinOrgDialog } from "@/components/join-org-dialog";
 
 export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
   const router = useRouter();
   const { userInfo, organizations, activeOrg, setActiveOrgId, setActiveStreamerId } = useUserContext();
   const [open, setOpen] = useState(false);
-  const [isJoinOpen, setIsJoinOpen] = useState(false);
 
   const displayName =
     activeOrg?.name ||
@@ -157,7 +155,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                       <div className="grid flex-1 min-w-0 leading-tight">
                         <span className="truncate font-medium">{org.name}</span>
                         <span className="truncate text-[10px] text-muted-foreground capitalize">
-                          {org.role?.toLowerCase() || "member"}
+                          {org.type?.toLowerCase() || "community"}
                         </span>
                       </div>
                       <span className="text-[10px] text-muted-foreground ml-auto shrink-0 font-mono opacity-60">
@@ -201,7 +199,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
               className="flex items-center gap-2.5 w-full p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer text-xs font-medium text-foreground/80 text-left"
               onClick={() => {
                 setOpen(false);
-                setIsJoinOpen(true);
+                router.push("/app/org/join");
               }}
             >
               <div className="flex size-6 items-center justify-center rounded-md border border-dashed border-border bg-background shrink-0">
@@ -212,8 +210,6 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
           </div>
         </PopoverContent>
       </Popover>
-
-      <JoinOrgDialog open={isJoinOpen} onOpenChange={setIsJoinOpen} />
     </div>
   );
 }

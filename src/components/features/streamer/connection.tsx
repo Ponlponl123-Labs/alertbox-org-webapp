@@ -1,13 +1,13 @@
 "use client";
 import { Dispatch, ReactNode, SetStateAction, useState } from "react";
 import { useStore } from "zustand";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { coreStore } from "@/hooks/store/core";
 import { BankIcon, LockKeyIcon } from "@phosphor-icons/react";
 import { AnimatePresence } from "motion/react";
 import { Input } from "react-smooth-input";
 import { Connections } from "@/types/user.types";
-import { Spinner } from "./ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
 import { getApiUrl } from "@/lib/api";
 import { useUserContext } from "@/contexts/user";

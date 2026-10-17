@@ -8,8 +8,8 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "./ui/popover";
-import { Button } from "./ui/button";
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { langs } from "@/lib/i18n";
 import { GlobeSimpleIcon } from "@phosphor-icons/react";

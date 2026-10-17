@@ -41,7 +41,7 @@ import {
 } from "@phosphor-icons/react";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { hexColorToNumber, numberToHexColor } from "@/lib/color";
-import { ImageCropperModal } from "@/components/image-cropper-modal";
+import { ImageCropperModal } from "@/components/features/modals/image-cropper-modal";
 import Link from "next/link";
 import { Input } from "react-smooth-input";
 import { useStore } from "zustand";
@@ -446,7 +446,6 @@ function Page() {
 
       <div className="flex max-md:flex-col gap-1.5 min-h-0 flex-1 mt-3">
         <div className="md:w-64 flex flex-col h-max z-10 relative gap-1.5">
-          {/* 1. Basic Info Accordion */}
           <Accordion className="w-full bg-card rounded-2xl">
             <AccordionItem defaultOpen={true}>
               <AccordionButton
@@ -519,7 +518,6 @@ function Page() {
             </AccordionItem>
           </Accordion>
 
-          {/* 2. Social Links Accordion */}
           <Accordion className="w-full bg-card rounded-2xl">
             <AccordionItem>
               <AccordionButton
@@ -585,7 +583,6 @@ function Page() {
             </AccordionItem>
           </Accordion>
 
-          {/* 3. Accent Color Accordion */}
           <Accordion className="w-full bg-card rounded-2xl">
             <AccordionItem>
               <AccordionButton
@@ -643,7 +640,6 @@ function Page() {
             </AccordionItem>
           </Accordion>
 
-          {/* 4. Avatar & Banner Accordion */}
           {canEditProfile && (
             <Accordion className="w-full bg-card rounded-2xl">
               <AccordionItem>
@@ -690,7 +686,6 @@ function Page() {
             </Accordion>
           )}
 
-          {/* 5. OBS Browser Source & Token Security Accordion */}
           <Accordion className="w-full bg-card rounded-2xl">
             <AccordionItem>
               <AccordionButton
@@ -762,7 +757,6 @@ function Page() {
             </AccordionItem>
           </Accordion>
 
-          {/* 6. Danger Zone Accordion (Owner / Admin with DELETE_STREAMER perm) */}
           {canDeleteStreamer && (
             <Accordion className="w-full bg-card rounded-2xl border border-destructive/20">
               <AccordionItem>
@@ -807,7 +801,6 @@ function Page() {
           )}
         </div>
 
-        {/* Live Profile Preview */}
         <div className="w-full max-md:-order-1 flex flex-col overflow-hidden min-h-0 bg-foreground/5 rounded-4xl flex-1 border-2 border-dashed border-foreground/10 z-10 relative">
           <ProfilePreview
             onAvatarClick={canEditProfile ? () => avatarInputRef.current?.click() : undefined}
@@ -862,7 +855,6 @@ function Page() {
         className={cropType === "banner" ? "sm:max-w-4xl" : "sm:max-w-xl"}
       />
 
-      {/* Confirmation Dialog: Rotate Tokens */}
       <Dialog open={isRotateConfirmOpen} onOpenChange={setIsRotateConfirmOpen}>
         <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
           <DialogHeader>
@@ -900,7 +892,6 @@ function Page() {
         </DialogContent>
       </Dialog>
 
-      {/* Confirmation Dialog: Delete Channel */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
           <DialogHeader>

@@ -3,12 +3,12 @@
 import { memo } from "react";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
-import LanguageSwitcher from "./language-switcher";
+import LanguageSwitcher from '@/components/shared/language-switcher';
 import Link from "next/link";
 import { HandHeartIcon } from "@phosphor-icons/react";
 import { usePathname } from "next/navigation";
-import BorderGlow from "./BorderGlow";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import BorderGlow from '@/components/effects/border-glow';
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const Footer = memo(function Footer({
   force,

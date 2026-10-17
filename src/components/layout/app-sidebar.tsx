@@ -4,7 +4,7 @@ import { coreStore } from "@/hooks/store/core";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import { useStore } from "zustand";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import {
   BellRingingIcon,
   BroadcastIcon,
@@ -33,11 +33,11 @@ import {
   AccordionButton,
   AccordionItem,
   AccordionPanel,
-} from "./animate-ui/components/headless/accordion";
-import { useDisclosure } from "./animate-ui/primitives/headless/disclosure";
-import OrgSwitcher from "./org-switcher";
-import StreamerSelector from "./streamer-selector";
-import NavUser from "./nav-user";
+} from "@/components/animate-ui/components/headless/accordion";
+import { useDisclosure } from "@/components/animate-ui/primitives/headless/disclosure";
+import OrgSwitcher from '@/components/features/org/org-switcher';
+import StreamerSelector from '@/components/features/streamer/streamer-selector';
+import NavUser from './nav-user';
 import { useUserContext } from "@/contexts/user";
 import { hasPermission, OrgPerm, canAccessStreamer, StreamerPerm } from "@/lib/rbac";
 
@@ -242,14 +242,12 @@ function AppSidebar() {
           href: `/app/${orgKey}/audit`,
         });
       }
-      if (canManageSettings) {
-        orgItems.push({
-          id: "org-settings",
-          text: "Settings",
-          icon: <GearSixIcon weight="bold" size={16} />,
-          href: `/app/${orgKey}/settings`,
-        });
-      }
+      orgItems.push({
+        id: "org-settings",
+        text: "Settings",
+        icon: <GearSixIcon weight="bold" size={16} />,
+        href: `/app/${orgKey}/settings`,
+      });
 
       const financeItems: SidebarItem[] = [];
       if (canViewBilling) {

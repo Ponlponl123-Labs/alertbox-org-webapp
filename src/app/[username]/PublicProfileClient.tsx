@@ -34,8 +34,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Input } from "react-smooth-input";
-import LanguageSwitcher from "@/components/language-switcher";
-import ThemeSwitcher from "@/components/theme-switcher";
+import LanguageSwitcher from "@/components/shared/language-switcher";
+import ThemeSwitcher from "@/components/shared/theme-switcher";
 import { motion, Variants } from "motion/react";
 import Link from "next/link";
 

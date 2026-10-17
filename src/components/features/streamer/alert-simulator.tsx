@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BellRingingIcon, PlayIcon, PaletteIcon } from "@phosphor-icons/react";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 
 import { type Language } from "@/types/i18n.types";
 

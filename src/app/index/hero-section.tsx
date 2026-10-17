@@ -7,7 +7,7 @@ import { motion } from "motion/react";
 import { ArrowRightIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { Input } from "react-smooth-input";
-import Prism from "@/components/Prism";
+import Prism from "@/components/effects/prism";
 import clsx from "clsx";
 
 export default function HeroSection() {

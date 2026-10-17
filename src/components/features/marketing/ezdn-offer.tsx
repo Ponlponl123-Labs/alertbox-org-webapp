@@ -2,14 +2,14 @@ import { coreStore } from "@/hooks/store/core";
 import Link from "next/link";
 import React from "react";
 import { useStore } from "zustand";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { ArrowUpRightIcon } from "@phosphor-icons/react";
 import {
   Accordion,
   AccordionButton,
   AccordionItem,
   AccordionPanel,
-} from "./animate-ui/components/headless/accordion";
+} from "@/components/animate-ui/components/headless/accordion";
 
 export default function EzdnOffer() {
   const lang = useStore(coreStore, (state) => state.lang);

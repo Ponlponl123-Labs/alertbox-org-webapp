@@ -144,7 +144,6 @@ export default function StreamerAuditPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-6xl w-full py-4">
-      {/* Top Title & Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
@@ -173,7 +172,6 @@ export default function StreamerAuditPage() {
         </div>
       </div>
 
-      {/* Search Toolbar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <span className="text-xs font-semibold text-muted-foreground">
           Showing {filteredLogs.length} activity event(s)
@@ -191,7 +189,6 @@ export default function StreamerAuditPage() {
         </div>
       </div>
 
-      {/* Modern Minimal Table Container */}
       <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-2xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">

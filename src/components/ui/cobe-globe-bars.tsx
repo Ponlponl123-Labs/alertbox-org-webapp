@@ -15,6 +15,9 @@ interface GlobeBarsProps {
   className?: string;
   speed?: number;
   dark?: boolean;
+  focusLocation?: [number, number] | null;
+  focusedMarkerId?: string | null;
+  zoomScale?: number;
 }
 
 const defaultMarkers: BarMarker[] = [
@@ -29,6 +32,9 @@ export function GlobeBars({
   className = "",
   speed = 0.003,
   dark,
+  focusLocation = null,
+  focusedMarkerId = null,
+  zoomScale = 1.18,
 }: GlobeBarsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointerInteracting = useRef<{ x: number; y: number } | null>(null);
@@ -37,6 +43,14 @@ export function GlobeBars({
   const thetaOffsetRef = useRef(0);
   const isHoveredRef = useRef(false);
   const isDarkMode = dark ?? false;
+
+  const focusLocationRef = useRef<[number, number] | null>(focusLocation);
+  const zoomScaleRef = useRef(zoomScale);
+
+  useEffect(() => {
+    focusLocationRef.current = focusLocation;
+    zoomScaleRef.current = zoomScale;
+  }, [focusLocation, zoomScale]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     pointerInteracting.current = { x: e.clientX, y: e.clientY };
@@ -87,6 +101,7 @@ export function GlobeBars({
         height: width,
         phi: 0,
         theta: 0.2,
+        scale: 1,
         dark: isDarkMode ? 1 : 0,
         diffuse: 1.5,
         mapSamples: 16000,
@@ -104,14 +119,41 @@ export function GlobeBars({
       });
 
       let currentVelocity = speed;
+      let currentScale = 1;
+      let theta = 0.2;
+
       function animate() {
-        const targetVelocity = isHoveredRef.current || pointerInteracting.current !== null ? 0 : speed;
-        currentVelocity += (targetVelocity - currentVelocity) * 0.05;
-        phi += currentVelocity;
+        const isInteracting = pointerInteracting.current !== null;
+        const focus = focusLocationRef.current;
+
+        if (isInteracting) {
+          currentVelocity = 0;
+        } else if (focus) {
+          const [lat, lon] = focus;
+          const targetPhi = -(lon * Math.PI / 180) - Math.PI / 2;
+          const targetTheta = Math.max(-0.4, Math.min(0.5, (lat * Math.PI) / 180));
+
+          let diffPhi = (targetPhi - (phi + phiOffsetRef.current)) % (2 * Math.PI);
+          if (diffPhi > Math.PI) diffPhi -= 2 * Math.PI;
+          if (diffPhi < -Math.PI) diffPhi += 2 * Math.PI;
+
+          phi += diffPhi * 0.06;
+          theta += (targetTheta - theta) * 0.06;
+          currentVelocity = 0;
+        } else {
+          const targetVelocity = isHoveredRef.current ? 0 : speed;
+          currentVelocity += (targetVelocity - currentVelocity) * 0.05;
+          phi += currentVelocity;
+          theta += (0.2 - theta) * 0.05;
+        }
+
+        const targetScale = focus ? zoomScaleRef.current : 1;
+        currentScale += (targetScale - currentScale) * 0.06;
 
         globe!.update({
           phi: phi + phiOffsetRef.current + dragOffset.current.phi,
-          theta: 0.2 + thetaOffsetRef.current + dragOffset.current.theta,
+          theta: theta + thetaOffsetRef.current + dragOffset.current.theta,
+          scale: currentScale,
         });
         animationId = requestAnimationFrame(animate);
       }
@@ -165,32 +207,36 @@ export function GlobeBars({
           touchAction: "none",
         }}
       />
-      {markers.map((m) => (
-        <div
-          key={m.id}
-          style={{
-            position: "absolute",
-            positionAnchor: `--cobe-${m.id}`,
-            bottom: "anchor(top)",
-            left: "anchor(center)",
-            translate: "-50% 0",
-            marginBottom: 8,
-            display: "flex",
-            flexDirection: "column" as const,
-            alignItems: "center",
-            gap: "0.2rem",
-            padding: "0.35rem 0.5rem",
-            background: "var(--card, #fff)",
-            border: "1.5px solid var(--border, #1a1a2e)",
-            borderRadius: 6,
-            minWidth: 64,
-            pointerEvents: "none" as const,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            opacity: `var(--cobe-visible-${m.id}, 0)`,
-            filter: `blur(calc((1 - var(--cobe-visible-${m.id}, 0)) * 8px))`,
-            transition: "opacity 0.4s, filter 0.4s",
-          }}
-        >
+      {markers.map((m) => {
+        const isFocused = focusedMarkerId === m.id;
+        return (
+          <div
+            key={m.id}
+            style={{
+              position: "absolute",
+              positionAnchor: `--cobe-${m.id}`,
+              bottom: "anchor(top)",
+              left: "anchor(center)",
+              translate: "-50% 0",
+              marginBottom: 8,
+              display: "flex",
+              flexDirection: "column" as const,
+              alignItems: "center",
+              gap: "0.2rem",
+              padding: "0.35rem 0.5rem",
+              background: "var(--card, #fff)",
+              border: isFocused ? "2px solid #0284c7" : "1.5px solid var(--border, #1a1a2e)",
+              borderRadius: 6,
+              minWidth: 64,
+              pointerEvents: "none" as const,
+              boxShadow: isFocused ? "0 0 16px rgba(2, 132, 199, 0.45)" : "0 4px 12px rgba(0,0,0,0.15)",
+              opacity: `var(--cobe-visible-${m.id}, 0)`,
+              filter: `blur(calc((1 - var(--cobe-visible-${m.id}, 0)) * 8px))`,
+              transform: isFocused ? "scale(1.15)" : "scale(1)",
+              zIndex: isFocused ? 30 : 10,
+              transition: "opacity 0.4s, filter 0.4s, transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
+            }}
+          >
           <span
             style={{
               fontFamily: "monospace",
@@ -234,7 +280,8 @@ export function GlobeBars({
             {m.value}%
           </span>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

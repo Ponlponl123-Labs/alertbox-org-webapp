@@ -3,6 +3,7 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GlobeBars, BarMarker } from "@/components/ui/cobe-globe-bars";
 import {
@@ -308,6 +309,18 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
     });
   }, [currencies]);
 
+  const [hoveredCurrency, setHoveredCurrency] = React.useState<string | null>(null);
+
+  const activeLocation = React.useMemo(() => {
+    if (!hoveredCurrency) return null;
+    return CURRENCY_DEFAULT_COORDS[hoveredCurrency.toUpperCase()] || [13.75, 100.5];
+  }, [hoveredCurrency]);
+
+  const activeMarkerId = React.useMemo(() => {
+    if (!hoveredCurrency) return null;
+    return `curr-${hoveredCurrency.toLowerCase()}`;
+  }, [hoveredCurrency]);
+
   const gatewaysWithColor = React.useMemo(() => {
     return gateways.map((g) => ({
       ...g,
@@ -406,7 +419,7 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 h-36">
               <div className="relative rounded-2xl border border-border/80 bg-card/50 backdrop-blur-md p-5 flex flex-col justify-between overflow-hidden shadow-xs hover:border-border transition-colors">
                 <div className="absolute inset-x-0 bottom-0 h-20 pointer-events-none opacity-20 dark:opacity-25">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" className={"mask-l-from-0%"}>
                     <AreaChart data={timeline} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                       <Area
                         type="monotone"
@@ -438,7 +451,7 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
 
               <div className="relative rounded-2xl border border-border/80 bg-card/50 backdrop-blur-md p-5 flex flex-col justify-between overflow-hidden shadow-xs hover:border-border transition-colors">
                 <div className="absolute inset-x-0 bottom-0 h-20 pointer-events-none opacity-20 dark:opacity-25">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" className={"mask-l-from-0%"}>
                     <AreaChart data={timeline} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                       <Area
                         type="monotone"
@@ -468,7 +481,7 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
 
               <div className="relative rounded-2xl border border-border/80 bg-card/50 backdrop-blur-md p-5 flex flex-col justify-between overflow-hidden shadow-xs hover:border-border transition-colors">
                 <div className="absolute inset-x-0 bottom-0 h-20 pointer-events-none opacity-20 dark:opacity-25">
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" className={"mask-l-from-0%"}>
                     <AreaChart data={timeline} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                       <Area
                         type="monotone"
@@ -639,31 +652,59 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
                     </div>
                   </div>
 
-                  <div className="w-full aspect-square -mb-48">
-                    <GlobeBars markers={currencyMarkers} dark={isDark} />
+                  <div className="w-full -mb-12">
+                    <GlobeBars
+                      markers={currencyMarkers}
+                      dark={isDark}
+                      focusLocation={activeLocation}
+                      focusedMarkerId={activeMarkerId}
+                    />
                   </div>
 
-                  <div className="flex flex-wrap z-20 justify-center gap-2 w-full mt-auto">
-                    {currencies.map((c) => (
-                      <div
-                        key={c.currency}
-                        className="flex gap-6 items-center justify-between p-2 rounded-full w-max border border-border/40 bg-card/20 text-xs z-20 backdrop-blur-lg"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="size-2 rounded-full bg-sky-500 shrink-0" />
-                          <span className="font-semibold text-foreground">{c.currency}</span>
-                          <span className="text-muted-foreground text-[11px]">
-                            {c.currency === "THB" ? "Thailand" : c.currency === "USD" ? "United States" : c.currency === "EUR" ? "Europe" : "International"}
-                          </span>
+                  <div className="flex flex-wrap z-20 justify-center gap-2 w-full mt-2 absolute left-0 bottom-3">
+                    {currencies.map((c) => {
+                      const isHovered = hoveredCurrency === c.currency;
+                      return (
+                        <div
+                          key={c.currency}
+                          onMouseEnter={() => setHoveredCurrency(c.currency)}
+                          onMouseLeave={() => setHoveredCurrency(null)}
+                          className={cn(
+                            "flex gap-6 items-center justify-between p-2 rounded-full w-max border text-xs z-20 backdrop-blur-lg select-none cursor-pointer transition-all duration-200",
+                            isHovered
+                              ? "border-sky-500/80 bg-sky-500/15 shadow-sm scale-105"
+                              : "border-border/40 bg-card/20 hover:border-border/80 hover:bg-card/40"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                "size-2 rounded-full shrink-0 transition-all duration-200",
+                                isHovered
+                                  ? "bg-sky-400 scale-125 shadow-[0_0_8px_rgba(56,189,248,0.8)]"
+                                  : "bg-sky-500"
+                              )}
+                            />
+                            <span className="font-semibold text-foreground">{c.currency}</span>
+                            <span className="text-muted-foreground text-[11px]">
+                              {c.currency === "THB"
+                                ? "Thailand"
+                                : c.currency === "USD"
+                                ? "United States"
+                                : c.currency === "EUR"
+                                ? "Europe"
+                                : "International"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 tabular-nums text-xs">
+                            <span className="text-muted-foreground">{c.percentage}%</span>
+                            <span className="font-bold text-foreground">
+                              {formatCurrency(c.amount, c.currency)}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3 tabular-nums text-xs">
-                          <span className="text-muted-foreground">{c.percentage}%</span>
-                          <span className="font-bold text-foreground">
-                            {formatCurrency(c.amount, c.currency)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

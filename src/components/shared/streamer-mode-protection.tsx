@@ -3,7 +3,7 @@ import React from "react";
 import { coreStore } from "@/hooks/store/core";
 import { useStore } from "zustand/react";
 import { ShieldCheckIcon } from "@phosphor-icons/react";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "motion/react";
 
 function StreamerModeProtection() {

@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 import { Input } from "react-smooth-input";
 import { motion, AnimatePresence } from "motion/react";
 
-const ShapeWaves = dynamic(() => import("@/components/ShapeWaves"), {
+const ShapeWaves = dynamic(() => import("@/components/effects/shape-waves"), {
   ssr: false,
 });
 

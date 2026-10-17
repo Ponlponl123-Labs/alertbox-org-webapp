@@ -17,10 +17,11 @@ import {
   DotsThreeVerticalIcon,
   ShieldCheckIcon,
   BroadcastIcon,
-  GearSixIcon,
-  BrowsersIcon,
-  PlugsConnectedIcon,
-  ChartLineUpIcon,
+  HandWavingIcon,
+  HandshakeIcon,
+  CaretUpDownIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { getFallbackInitial, cn } from "@/lib/utils";
@@ -28,7 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { hasPermission, OrgPerm, RolePresets, StreamerPerm } from "@/lib/rbac";
+import { hasPermission, OrgPerm, RolePresets } from "@/lib/rbac";
 import {
   Dialog,
   DialogContent,
@@ -37,95 +38,17 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-
-interface StreamerMini {
-  id: string;
-  name: string;
-  displayName: string;
-  avatar: string | null;
-}
-
-interface StreamerPermissionAssignment {
-  streamerId: string;
-  permissions: string[];
-}
-
-interface OrgMemberData {
-  id: string;
-  userId: string;
-  role: string;
-  permissions: string;
-  status?: string;
-  joinedAt: string;
-  email: string;
-  name: string | null;
-  avatar: string | null;
-  streamerAssignments?: StreamerPermissionAssignment[];
-  streamers?: StreamerMini[];
-}
-
-const ORG_PERM_DEFINITIONS = [
-  {
-    category: "Organization Administration",
-    icon: <GearSixIcon size={16} weight="bold" />,
-    color: "text-purple-400 bg-purple-500/10 border-purple-500/20",
-    perms: [
-      { bit: OrgPerm.ORG_VIEW, key: "ORG_VIEW", name: "View Organization", desc: "View organization dashboard, overview & public profile" },
-      { bit: OrgPerm.ORG_MANAGE, key: "ORG_MANAGE", name: "Manage Settings", desc: "Update organization branding, banner, and parameters" },
-      { bit: OrgPerm.ORG_MEMBERS_MANAGE, key: "ORG_MEMBERS_MANAGE", name: "Manage Members", desc: "Send invites, add and remove staff members" },
-      { bit: OrgPerm.ORG_ROLES_MANAGE, key: "ORG_ROLES_MANAGE", name: "Manage Roles & Perms", desc: "Delegate permissions, roles, and channel assignments" },
-    ],
-  },
-  {
-    category: "Streamer Channels",
-    icon: <BroadcastIcon size={16} weight="bold" />,
-    color: "text-blue-400 bg-blue-500/10 border-blue-500/20",
-    perms: [
-      { bit: OrgPerm.STREAMER_VIEW, key: "STREAMER_VIEW", name: "View Streamers", desc: "Access the channels list and channel dashboards" },
-      { bit: OrgPerm.STREAMER_CREATE, key: "STREAMER_CREATE", name: "Create Streamers", desc: "Provision new streaming channels under the organization" },
-      { bit: OrgPerm.STREAMER_MANAGE, key: "STREAMER_MANAGE", name: "Edit Channel Profiles", desc: "Modify handles, display names, bios, and visuals" },
-      { bit: OrgPerm.STREAMER_DELETE, key: "STREAMER_DELETE", name: "Delete Channels", desc: "Permanently delete streaming channels" },
-    ],
-  },
-  {
-    category: "Widgets & Overlays",
-    icon: <BrowsersIcon size={16} weight="bold" />,
-    color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-    perms: [
-      { bit: OrgPerm.WIDGET_VIEW, key: "WIDGET_VIEW", name: "View Overlays", desc: "Access alert overlay previews and OBS browser sources" },
-      { bit: OrgPerm.WIDGET_MANAGE, key: "WIDGET_MANAGE", name: "Manage AlertBox", desc: "Customize alert events, animations, sounds, and TTS" },
-      { bit: OrgPerm.WIDGET_TOKEN_ROTATE, key: "WIDGET_TOKEN_ROTATE", name: "Rotate Widget Tokens", desc: "Invalidate and regenerate OBS browser source tokens" },
-    ],
-  },
-  {
-    category: "Integrations & Gateways",
-    icon: <PlugsConnectedIcon size={16} weight="bold" />,
-    color: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-    perms: [
-      { bit: OrgPerm.INTEGRATION_VIEW, key: "INTEGRATION_VIEW", name: "View Integrations", desc: "Inspect connected payment gateways and relay status" },
-      { bit: OrgPerm.INTEGRATION_MANAGE, key: "INTEGRATION_MANAGE", name: "Manage Gateways", desc: "Connect/disconnect Stripe, Ko-fi, BMAC, and Streamlabs" },
-    ],
-  },
-  {
-    category: "Analytics & Finance",
-    icon: <ChartLineUpIcon size={16} weight="bold" />,
-    color: "text-rose-400 bg-rose-500/10 border-rose-500/20",
-    perms: [
-      { bit: OrgPerm.ANALYTICS_VIEW, key: "ANALYTICS_VIEW", name: "View Analytics", desc: "Access viewer engagement charts and stream metrics" },
-      { bit: OrgPerm.TRANSACTION_VIEW, key: "TRANSACTION_VIEW", name: "View Transactions", desc: "Access financial donation history and supporter receipts" },
-      { bit: OrgPerm.REPORT_EXPORT, key: "REPORT_EXPORT", name: "Export Reports", desc: "Download CSV audit logs and accounting reports" },
-    ],
-  },
-];
-
-const STREAMER_PERM_DEFINITIONS = [
-  { key: "STREAMER_VIEW", bit: StreamerPerm.STREAMER_VIEW, name: "View Channel & OBS", desc: "View channel dashboard and browser source overlay URLs" },
-  { key: "STREAMER_MANAGE", bit: StreamerPerm.STREAMER_MANAGE, name: "Edit Channel Profile", desc: "Edit display name, bio, appearance, banner, and socials" },
-  { key: "STREAMER_WIDGET_MANAGE", bit: StreamerPerm.STREAMER_WIDGET_MANAGE, name: "Manage AlertBox", desc: "Edit alert layouts, events, audio volumes, and TTS" },
-  { key: "STREAMER_INTEGRATION_MANAGE", bit: StreamerPerm.STREAMER_INTEGRATION_MANAGE, name: "Manage Gateways", desc: "Configure Ko-fi, BMAC, Stripe, and Streamlabs relays" },
-  { key: "STREAMER_ANALYTICS_VIEW", bit: StreamerPerm.STREAMER_ANALYTICS_VIEW, name: "View Analytics", desc: "View stream performance charts and viewer statistics" },
-  { key: "STREAMER_TRANSACTION_VIEW", bit: StreamerPerm.STREAMER_TRANSACTION_VIEW, name: "View Transactions", desc: "Inspect donation histories, tips, and supporter records" },
-];
+import type {
+  OrgMemberData,
+  StreamerPermissionAssignment,
+  VerifiedTargetUser,
+  CreatedInviteCode,
+} from "@/types";
+import {
+  ORG_PERM_DEFINITIONS,
+  STREAMER_PERM_DEFINITIONS,
+  INVITE_ROLES,
+} from "@/consts/org";
 
 export default function OrgMembersPage() {
   const routeParams = useParams();
@@ -139,18 +62,18 @@ export default function OrgMembersPage() {
   const canManageMembers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBERS_MANAGE);
   const canManageRoles = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_ROLES_MANAGE);
 
-  // Invite modal states
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [inviteStep, setInviteStep] = useState<1 | 2>(1);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("MEMBER");
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [verifiedTargetUser, setVerifiedTargetUser] = useState<VerifiedTargetUser | null>(null);
+  const [isRolePopoverOpen, setIsRolePopoverOpen] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
-  const [createdInviteCode, setCreatedInviteCode] = useState<{
-    code: string;
-    email: string;
-    role: string;
-    expiresAt: string;
-  } | null>(null);
+  const [createdInviteCode, setCreatedInviteCode] = useState<CreatedInviteCode | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+
+  const selectedInviteRoleObj = INVITE_ROLES.find((r) => r.value === inviteRole) || INVITE_ROLES[0];
 
   // Full-screen Permissions & Streamer Assignment Dialog states
   const [managingMember, setManagingMember] = useState<OrgMemberData | null>(null);
@@ -298,9 +221,9 @@ export default function OrgMembersPage() {
       const isOwnerOrAdmin = dialogRole === "OWNER" || dialogRole === "ADMIN";
       const finalAssignments = isOwnerOrAdmin
         ? streamers.map((s) => ({
-            streamerId: s.id,
-            permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key),
-          }))
+          streamerId: s.id,
+          permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key),
+        }))
         : dialogAssignments;
 
       const sanitizedPerms = (dialogPerms & ~OrgPerm.ORG_DELETE).toString();
@@ -324,16 +247,16 @@ export default function OrgMembersPage() {
           prev.map((m) =>
             m.id === managingMember.id
               ? {
-                  ...m,
-                  role: dialogRole,
-                  permissions: sanitizedPerms,
-                  streamerAssignments: finalAssignments,
-                  streamers: isOwnerOrAdmin
-                    ? streamers
-                    : streamers.filter((s) =>
-                        finalAssignments.some((a) => a.streamerId === s.id),
-                      ),
-                }
+                ...m,
+                role: dialogRole,
+                permissions: sanitizedPerms,
+                streamerAssignments: finalAssignments,
+                streamers: isOwnerOrAdmin
+                  ? streamers
+                  : streamers.filter((s) =>
+                    finalAssignments.some((a) => a.streamerId === s.id),
+                  ),
+              }
               : m,
           ),
         );
@@ -350,8 +273,36 @@ export default function OrgMembersPage() {
     }
   };
 
-  const handleInvite = async (e: React.FormEvent) => {
+  const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanEmail = inviteEmail.trim().toLowerCase();
+    if (!cleanEmail || !orgTarget) return;
+
+    setIsCheckingEmail(true);
+    try {
+      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}/invites/lookup`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setVerifiedTargetUser(data);
+        setInviteStep(2);
+      } else {
+        const msg = await res.text();
+        toast.error(msg || "No active registered user found with this email");
+      }
+    } catch {
+      toast.error("Network error verifying email");
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
+
+  const handleInvite = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!inviteEmail.trim() || !orgTarget) return;
     setIsInviting(true);
 
@@ -383,9 +334,15 @@ export default function OrgMembersPage() {
 
   const handleCloseInvite = () => {
     setIsInviteOpen(false);
-    setCreatedInviteCode(null);
+    setInviteStep(1);
     setInviteEmail("");
+    setInviteRole("MEMBER");
+    setVerifiedTargetUser(null);
+    setCreatedInviteCode(null);
     setIsCopied(false);
+    setIsRolePopoverOpen(false);
+    setIsCheckingEmail(false);
+    setIsInviting(false);
   };
 
   const handleRemoveMember = async () => {
@@ -451,7 +408,6 @@ export default function OrgMembersPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl w-full py-4">
-      {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
@@ -470,7 +426,14 @@ export default function OrgMembersPage() {
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              onClick={() => setIsInviteOpen(true)}
+              onClick={() => {
+                setInviteStep(1);
+                setInviteEmail("");
+                setInviteRole("MEMBER");
+                setVerifiedTargetUser(null);
+                setCreatedInviteCode(null);
+                setIsInviteOpen(true);
+              }}
               className="gap-2 font-semibold text-xs rounded-xl cursor-pointer"
             >
               <UserPlusIcon size={16} weight="bold" />
@@ -480,7 +443,6 @@ export default function OrgMembersPage() {
         )}
       </div>
 
-      {/* Search & Statistics Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-sm">
           <MagnifyingGlassIcon
@@ -504,7 +466,6 @@ export default function OrgMembersPage() {
         </div>
       </div>
 
-      {/* Members Table */}
       <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -540,10 +501,10 @@ export default function OrgMembersPage() {
                   const memberStatus = m.status || "Active";
                   const formattedDate = m.joinedAt
                     ? new Date(m.joinedAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
                     : "—";
 
                   const assignedList = isOwnerOrAdmin ? streamers : (m.streamers || []);
@@ -721,7 +682,6 @@ export default function OrgMembersPage() {
         </div>
       </div>
 
-      {/* FULL-SCREEN / LARGE MODAL: Permissions, Streamer Assignment & Streamer Assigned Permissions */}
       <Dialog
         open={Boolean(managingMember)}
         onOpenChange={(open) => !open && setManagingMember(null)}
@@ -730,7 +690,6 @@ export default function OrgMembersPage() {
           className="sm:max-w-4xl w-[95vw] h-[88vh] max-h-[88vh] p-0 flex flex-col gap-0 rounded-2xl overflow-hidden border border-border bg-card shadow-2xl"
           showCloseButton={false}
         >
-          {/* Top Modal Navigation Header */}
           <DialogHeader className="px-6 py-4 border-b border-border bg-secondary/30 shrink-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
@@ -757,7 +716,6 @@ export default function OrgMembersPage() {
                 </div>
               </div>
 
-              {/* Navigation Tabs */}
               <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-xl border border-border/50">
                 <button
                   type="button"
@@ -793,11 +751,9 @@ export default function OrgMembersPage() {
             </div>
           </DialogHeader>
 
-          {/* Modal Content Scroll Body */}
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
             {dialogTab === "org" ? (
               <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">
-                {/* Role Preset Selector Card */}
                 <div className="p-5 rounded-2xl border border-border bg-card shadow-xs flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -829,7 +785,6 @@ export default function OrgMembersPage() {
                   </div>
                 </div>
 
-                {/* Granular Permission Categories */}
                 <div className="flex flex-col gap-4">
                   {ORG_PERM_DEFINITIONS.map((cat) => (
                     <div
@@ -875,7 +830,6 @@ export default function OrgMembersPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">
-                {/* Banner & Quick Actions */}
                 {dialogRole === "OWNER" || dialogRole === "ADMIN" ? (
                   <div className="p-5 rounded-2xl border border-blue-500/20 bg-blue-500/10 flex items-center gap-3.5">
                     <ShieldCheckIcon size={24} weight="bold" className="text-blue-400 shrink-0" />
@@ -923,7 +877,6 @@ export default function OrgMembersPage() {
                   </div>
                 )}
 
-                {/* Channel Assignment Cards */}
                 {streamers.length === 0 ? (
                   <div className="p-12 text-center text-xs text-muted-foreground border border-dashed rounded-2xl">
                     No streaming channels found in this organization. Create a channel first under Organization Channels.
@@ -946,7 +899,6 @@ export default function OrgMembersPage() {
                             assigned ? "border-primary/50 shadow-md ring-1 ring-primary/20" : "border-border/60 opacity-80",
                           )}
                         >
-                          {/* Channel Card Header */}
                           <div
                             onClick={() => !isOwnerOrAdmin && toggleStreamerAssignment(st.id)}
                             className={cn(
@@ -985,7 +937,6 @@ export default function OrgMembersPage() {
                             </div>
                           </div>
 
-                          {/* Channel Granular Permissions (Only shown when assigned) */}
                           {assigned ? (
                             <div className="p-5 flex flex-col gap-3">
                               <div className="flex items-center justify-between">
@@ -1075,7 +1026,6 @@ export default function OrgMembersPage() {
             )}
           </div>
 
-          {/* Modal Bottom Footer */}
           <DialogFooter className="px-6 py-3.5 border-t border-border bg-secondary/20 flex flex-row items-center justify-between shrink-0 sm:justify-between">
             <span className="text-xs text-muted-foreground">
               Configuring privileges for <strong className="text-foreground">{managingMember?.name || managingMember?.email}</strong>
@@ -1108,90 +1058,208 @@ export default function OrgMembersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Invite Member Dialog */}
       <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-        <DialogContent className="max-w-md rounded-3xl p-6" showCloseButton={false}>
+        <DialogContent className="max-w-md! rounded-3xl p-6" showCloseButton={false}>
           {!createdInviteCode ? (
-            <>
-              <DialogHeader>
-                <div className="bg-primary/10 p-2.5 size-12 rounded-2xl text-primary flex items-center justify-center mb-2">
-                  <UserPlusIcon weight="bold" size={22} />
-                </div>
-                <DialogTitle className="text-xl font-bold">Invite Staff Member</DialogTitle>
-                <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
-                  Enter email and assigned role. The server will generate an 8-digit single-use invitation code valid for 5 minutes.
-                </DialogDescription>
-              </DialogHeader>
+            inviteStep === 1 ? (
+              <>
+                <DialogHeader>
+                  <div className="bg-primary/10 p-2.5 size-12 rounded-2xl text-primary flex items-center justify-center mb-2">
+                    <HandshakeIcon weight="bold" size={22} />
+                  </div>
+                  <DialogTitle className="text-2xl font-semibold">Work together always better!</DialogTitle>
+                  <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
+                    Enter the email address of a registered Alertbox user to invite them to this organization.
+                  </DialogDescription>
+                </DialogHeader>
 
-              <form onSubmit={handleInvite} className="flex flex-col gap-4 mt-2">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground/80">
-                    Email Address <span className="text-destructive">*</span>
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="colleague@example.com"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    required
-                    className="w-full"
-                    classNames={{ base: "h-10 rounded-xl" }}
-                  />
-                  <span className="text-[11px] text-muted-foreground">
-                    Must be registered in Alertbox. The code can only be used by this email.
-                  </span>
-                </div>
+                <form onSubmit={handleCheckEmail} className="flex flex-col gap-4 mt-2">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-foreground/80">
+                      Email Address <span className="text-destructive">*</span>
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="colleague@example.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      required
+                      className="w-full"
+                      classNames={{ base: "h-10 rounded-xl" }}
+                    />
+                    <span className="text-[11px] text-muted-foreground">
+                      Must be registered in Alertbox. We will verify their identity before proceeding.
+                    </span>
+                  </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground/80">Role & Access Level</label>
-                  <select
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-input bg-background text-foreground outline-none focus:border-primary/50"
-                  >
-                    <option value="MEMBER">Member (Standard staff)</option>
-                    <option value="VIEWER">Viewer (Read-only)</option>
-                    <option value="EDITOR">Editor (Manage streamers & widgets)</option>
-                    <option value="MANAGER">Manager (Manage staff & streams)</option>
-                    <option value="ADMIN">Admin (Full access except owner)</option>
-                  </select>
-                </div>
+                  <DialogFooter className="mt-4 gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleCloseInvite}
+                      className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isCheckingEmail || !inviteEmail.trim()}
+                      className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
+                    >
+                      {isCheckingEmail ? <Spinner className="size-4" /> : <ArrowRightIcon size={16} weight="bold" />}
+                      <span>Continue</span>
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </>
+            ) : (
+              <>
+                <DialogHeader>
+                  <div className="flex items-center gap-2 mb-1">
+                    <button
+                      type="button"
+                      onClick={() => setInviteStep(1)}
+                      className="p-1 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                      title="Back to email"
+                    >
+                      <ArrowLeftIcon size={18} weight="bold" />
+                    </button>
+                    <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Step 2 of 2</span>
+                  </div>
+                  <DialogTitle className="text-2xl font-semibold">Verify Member Identity</DialogTitle>
+                  <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
+                    Confirm member identity and configure their assigned role and permissions.
+                  </DialogDescription>
+                </DialogHeader>
 
-                <DialogFooter className="mt-4 gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={handleCloseInvite}
-                    className="rounded-xl cursor-pointer"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isInviting || !inviteEmail.trim()}
-                    className="rounded-xl gap-2 font-semibold cursor-pointer"
-                  >
-                    {isInviting ? <Spinner /> : <UserPlusIcon size={16} weight="bold" />}
-                    <span>Generate Invite Code</span>
-                  </Button>
-                </DialogFooter>
-              </form>
-            </>
+                <div className="flex flex-col gap-4 mt-2">
+                  <div className="p-3.5 rounded-2xl border border-border bg-accent/30 flex items-center gap-3.5">
+                    <Avatar className="size-12 rounded-xl border border-border shrink-0">
+                      <AvatarImage src={verifiedTargetUser?.avatar || undefined} className="rounded-xl" />
+                      <AvatarFallback className="rounded-xl bg-blue-600 text-white font-bold text-sm">
+                        {getFallbackInitial(verifiedTargetUser?.name || verifiedTargetUser?.email || "U")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-sm text-foreground truncate">
+                          {verifiedTargetUser?.name || "Alertbox User"}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 shrink-0">
+                          <CheckCircleIcon size={12} weight="bold" />
+                          Verified
+                        </span>
+                      </div>
+                      <span className="text-xs text-muted-foreground truncate font-mono">
+                        {verifiedTargetUser?.email}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-foreground/80">Role & Access Level</label>
+                    <Popover open={isRolePopoverOpen} onOpenChange={setIsRolePopoverOpen}>
+                      <PopoverTrigger
+                        type="button"
+                        className={cn(
+                          "w-full flex items-center justify-between gap-3 p-3 rounded-2xl border border-input bg-background/50 hover:bg-accent/40 text-left transition-all cursor-pointer outline-none focus:ring-1 focus:ring-primary shadow-xs",
+                          isRolePopoverOpen && "ring-1 ring-primary border-primary",
+                        )}
+                      >
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-foreground">
+                              {selectedInviteRoleObj.label}
+                            </span>
+                            <span className={cn("px-1.5 py-0.2 rounded text-[10px] font-medium border capitalize", selectedInviteRoleObj.badgeStyle)}>
+                              {selectedInviteRoleObj.label}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-muted-foreground truncate mt-0.5">
+                            {selectedInviteRoleObj.desc}
+                          </span>
+                        </div>
+                        <CaretUpDownIcon size={16} weight="bold" className="text-muted-foreground shrink-0 ml-1" />
+                      </PopoverTrigger>
+
+                      <PopoverContent align="start" className="w-(--radix-popover-trigger-width) max-w-sm p-1.5 rounded-2xl bg-card border border-border shadow-xl">
+                        <div className="flex flex-col gap-1">
+                          {INVITE_ROLES.map((r) => {
+                            const isSelected = r.value === inviteRole;
+                            return (
+                              <button
+                                key={r.value}
+                                type="button"
+                                onClick={() => {
+                                  setInviteRole(r.value);
+                                  setIsRolePopoverOpen(false);
+                                }}
+                                className={cn(
+                                  "flex items-start justify-between gap-3 p-2.5 rounded-xl text-left transition-all cursor-pointer",
+                                  isSelected ? "bg-primary/10 text-primary" : "hover:bg-muted/60 text-foreground",
+                                )}
+                              >
+                                <div className="flex flex-col min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-foreground">
+                                      {r.label}
+                                    </span>
+                                    <span className={cn("px-1.5 py-0.2 rounded text-[10px] font-medium border capitalize", r.badgeStyle)}>
+                                      {r.label}
+                                    </span>
+                                  </div>
+                                  <span className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                                    {r.desc}
+                                  </span>
+                                </div>
+                                {isSelected && (
+                                  <CheckIcon size={16} weight="bold" className="text-primary shrink-0 mt-0.5" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <DialogFooter className="mt-4 gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setInviteStep(1)}
+                      className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => handleInvite()}
+                      disabled={isInviting}
+                      className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
+                    >
+                      {isInviting ? <Spinner className="size-4" /> : <UserPlusIcon size={16} weight="bold" />}
+                      <span>Generate Invite Code</span>
+                    </Button>
+                  </DialogFooter>
+                </div>
+              </>
+            )
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 select-none">
               <DialogHeader>
                 <div className="bg-emerald-500/10 p-2.5 size-12 rounded-2xl text-emerald-500 flex items-center justify-center mb-1">
                   <CheckCircleIcon weight="bold" size={24} />
                 </div>
-                <DialogTitle className="text-xl font-bold text-foreground">
+                <DialogTitle className="text-2xl font-semibold text-foreground">
                   Invitation Code Created
                 </DialogTitle>
-                <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
-                  Share this 8-digit OTP code with <strong>{createdInviteCode.email}</strong>.
+                <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
+                  Share this 8-digit OTP code with <strong className="p-1 bg-muted rounded-md">{createdInviteCode.email}</strong>.
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="p-4 rounded-2xl border border-primary/20 bg-primary/5 flex flex-col items-center gap-3">
+              <div className="p-4 rounded-2xl bg-primary/5 flex flex-col items-center gap-6">
                 <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   8-Digit Join Code
                 </span>
@@ -1210,7 +1278,7 @@ export default function OrgMembersPage() {
                     toast.success("Code copied to clipboard!");
                     setTimeout(() => setIsCopied(false), 2000);
                   }}
-                  className="rounded-xl text-xs gap-1.5 cursor-pointer"
+                  className="rounded-xl p-2 h-max text-xs font-semibold gap-2"
                 >
                   {isCopied ? (
                     <>
@@ -1226,7 +1294,7 @@ export default function OrgMembersPage() {
                 </Button>
               </div>
 
-              <div className="p-3.5 rounded-xl border border-border bg-accent/30 flex flex-col gap-1.5 text-xs">
+              <div className="flex flex-col gap-1.5 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Target Email:</span>
                   <span className="font-semibold text-foreground">{createdInviteCode.email}</span>
@@ -1244,11 +1312,11 @@ export default function OrgMembersPage() {
                 </div>
               </div>
 
-              <DialogFooter className="mt-2">
+              <DialogFooter className="mt-3">
                 <Button
                   type="button"
                   onClick={handleCloseInvite}
-                  className="rounded-xl w-full font-semibold text-xs cursor-pointer"
+                  className="rounded-xl p-2 w-full h-max text-xs font-semibold gap-2"
                 >
                   Done
                 </Button>
@@ -1258,14 +1326,13 @@ export default function OrgMembersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Remove Member Confirmation Dialog */}
       <Dialog open={Boolean(deletingMember)} onOpenChange={(open) => !open && setDeletingMember(null)}>
         <DialogContent className="max-w-md rounded-3xl p-6" showCloseButton={false}>
           <DialogHeader>
             <div className="bg-destructive/10 p-2.5 size-12 rounded-2xl text-destructive flex items-center justify-center mb-2">
-              <TrashIcon weight="bold" size={22} />
+              <HandWavingIcon weight="bold" size={22} />
             </div>
-            <DialogTitle className="text-xl font-bold">Remove Member</DialogTitle>
+            <DialogTitle className="text-2xl font-semibold">Remove Member</DialogTitle>
             <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
               Are you sure you want to remove <strong>{deletingMember?.name || deletingMember?.email}</strong> from {activeOrg?.name}? They will lose access to all channels immediately.
             </DialogDescription>
@@ -1276,7 +1343,7 @@ export default function OrgMembersPage() {
               type="button"
               variant="secondary"
               onClick={() => setDeletingMember(null)}
-              className="rounded-xl cursor-pointer"
+              className="rounded-xl p-2 h-max text-xs font-semibold gap-2"
             >
               Cancel
             </Button>
@@ -1285,7 +1352,7 @@ export default function OrgMembersPage() {
               variant="destructive"
               onClick={handleRemoveMember}
               disabled={isDeleting}
-              className="rounded-xl gap-2 font-semibold cursor-pointer"
+              className="rounded-xl p-2 h-max text-xs font-semibold gap-2"
             >
               {isDeleting ? <Spinner /> : <TrashIcon size={16} weight="bold" />}
               <span>Remove Member</span>

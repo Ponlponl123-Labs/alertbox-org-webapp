@@ -15,7 +15,7 @@ import { Input } from "react-smooth-input";
 import { toast } from "sonner";
 import { useStore } from "zustand";
 import { getApiUrl } from "@/lib/api";
-import { ImageCropperModal } from "@/components/image-cropper-modal";
+import { ImageCropperModal } from "@/components/features/modals/image-cropper-modal";
 import {
   Dialog,
   DialogContent,

@@ -9,17 +9,17 @@ import { Spinner } from "@/components/ui/spinner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getFallbackInitial, cn } from "@/lib/utils";
 import {
-  KeyRound,
   CheckCircle2,
   AlertCircle,
   Clock,
-  ArrowRight,
   ArrowLeft,
   ShieldCheck,
   Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { PersonSimpleHikeIcon } from "@phosphor-icons/react";
+import { UndrawTeamwork } from "@/components/svg";
 
 interface VerifiedOrgInfo {
   code: string;
@@ -209,196 +209,197 @@ export default function JoinOrgPage() {
   const fullCode = otp.join("");
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center py-10 px-4 max-w-xl mx-auto w-full">
-      <div className="w-full flex items-center justify-between mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="rounded-xl text-xs gap-1.5 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-3.5" />
-          <span>Back</span>
-        </Button>
-        <Link href="/app/org/create">
+    <div className="flex-1 flex flex-col items-center justify-center py-10 px-4 max-w-7xl mx-auto w-full">
+      <div>
+        <div className="w-full flex items-center justify-between mb-6">
           <Button
             variant="ghost"
             size="sm"
-            className="rounded-xl text-xs text-primary font-medium hover:underline"
+            onClick={() => router.back()}
+            className="rounded-xl p-2 text-xs h-max gap-1.5 text-muted-foreground hover:text-foreground"
           >
-            Want to create an organization instead?
+            <ArrowLeft className="size-3.5" />
+            <span>Back</span>
           </Button>
-        </Link>
-      </div>
+          <Link href="/app/org/create">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-xl p-2 text-xs h-max text-primary font-medium"
+            >
+              Want to create an organization instead?
+            </Button>
+          </Link>
+        </div>
 
-      <div className="w-full p-6 sm:p-8 rounded-3xl border border-border bg-card shadow-xl flex flex-col gap-6">
-        {!verifiedInfo ? (
-          <>
-            <div className="flex flex-col gap-1.5">
-              <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-1">
-                <KeyRound className="size-6 text-primary" />
-              </div>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                Join Organization
-              </h1>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Enter your 8-digit invitation code. The code is single-use, valid for 5 minutes, and strictly bound to your account email.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center gap-4 py-3">
-              <div className="flex items-center gap-1.5 sm:gap-2.5 justify-center w-full">
-                {otp.map((digit, idx) => (
-                  <React.Fragment key={idx}>
-                    {idx === 4 && (
-                      <span className="text-muted-foreground/60 font-semibold px-0.5 sm:px-1">-</span>
-                    )}
-                    <input
-                      ref={(el) => {
-                        inputRefs.current[idx] = el;
-                      }}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleInputChange(idx, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(idx, e)}
-                      onPaste={handlePaste}
-                      className={cn(
-                        "size-10 sm:size-12 rounded-xl text-center text-lg sm:text-xl font-bold font-mono transition-all duration-150 outline-none select-none",
-                        "border bg-background/80 text-foreground",
-                        digit
-                          ? "border-primary/70 bg-primary/5 text-primary shadow-xs"
-                          : "border-border hover:border-foreground/30",
-                        "focus:border-primary focus:ring-2 focus:ring-primary/20",
-                        verifyError && "border-destructive text-destructive",
-                      )}
-                    />
-                  </React.Fragment>
-                ))}
-              </div>
-
-              {verifyError && (
-                <div className="flex items-center gap-1.5 text-xs text-destructive font-medium">
-                  <AlertCircle className="size-4 shrink-0" />
-                  <span>{verifyError}</span>
+        <div className="flex items-center gap-12">
+          <div className="w-full flex flex-col gap-3 max-w-md">
+            {!verifiedInfo ? (
+              <>
+                <div className="flex flex-col gap-1.5 my-6">
+                  <h1 className="text-5xl font-medium mb-3 text-foreground">
+                    Work better together
+                  </h1>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Enter the 8-digit invite code sent to your email to join your team and start collaborating.
+                  </p>
                 </div>
-              )}
-            </div>
 
-            <div className="pt-2 flex items-center justify-end">
-              <Button
-                type="button"
-                disabled={fullCode.length !== 8 || isVerifying}
-                onClick={() => verifyCode(fullCode)}
-                className="rounded-xl px-6 text-xs font-semibold gap-2"
-              >
-                {isVerifying ? (
-                  <>
-                    <Spinner />
-                    <span>Verifying...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Verify Code</span>
-                    <ArrowRight className="size-3.5" />
-                  </>
-                )}
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex flex-col gap-1.5">
-              <div className="size-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-1">
-                <CheckCircle2 className="size-6 text-emerald-500" />
-              </div>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                Confirm Invitation
-              </h1>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Confirm joining this organization with the assigned permissions below.
-              </p>
-            </div>
+                <div className="flex flex-col items-center gap-4 py-3 w-max">
+                  <div className="flex items-center gap-1.25 justify-center">
+                    {otp.map((digit, idx) => (
+                      <React.Fragment key={idx}>
+                        {idx === 4 && (
+                          <span className="text-muted-foreground/60 font-semibold px-0.5 sm:px-1">-</span>
+                        )}
+                        <input
+                          ref={(el) => {
+                            inputRefs.current[idx] = el;
+                          }}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={1}
+                          value={digit}
+                          onChange={(e) => handleInputChange(idx, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(idx, e)}
+                          onPaste={handlePaste}
+                          className={cn(
+                            "size-10 sm:size-12 rounded-xl text-center text-lg sm:text-xl font-bold font-mono transition-all duration-150 outline-none select-none",
+                            "bg-muted text-foreground",
+                            digit
+                              ? "bg-primary/5 text-primary shadow-xs"
+                              : "",
+                            verifyError && "bg-destructive/10 text-destructive",
+                          )}
+                        />
+                      </React.Fragment>
+                    ))}
+                  </div>
 
-            <div className="p-5 rounded-2xl border border-border bg-accent/30 flex flex-col gap-4">
-              <div className="flex items-center gap-3.5">
-                <Avatar className="size-14 rounded-2xl border border-border shrink-0">
-                  <AvatarImage src={verifiedInfo.organization.avatar || undefined} />
-                  <AvatarFallback className="rounded-2xl bg-blue-600 text-white font-bold text-base">
-                    {getFallbackInitial(verifiedInfo.organization.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col min-w-0 flex-1">
-                  <span className="font-bold text-base text-foreground truncate">
-                    {verifiedInfo.organization.name}
-                  </span>
-                  {verifiedInfo.organization.slug && (
-                    <span className="text-xs text-muted-foreground font-mono">
-                      @{verifiedInfo.organization.slug}
-                    </span>
+                  {verifyError && (
+                    <div className="flex items-center gap-1.5 text-xs text-destructive font-medium">
+                      <AlertCircle className="size-4 shrink-0" />
+                      <span>{verifyError}</span>
+                    </div>
                   )}
                 </div>
-                <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary shrink-0 capitalize">
-                  <ShieldCheck className="size-3.5" />
-                  <span>{verifiedInfo.role.toLowerCase()}</span>
-                </div>
-              </div>
 
-              <div className="h-px bg-border/60 -mx-1" />
-
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-                    Invited By
-                  </span>
-                  <span className="font-medium text-foreground truncate">
-                    {verifiedInfo.inviter.name || "Organization Admin"}
-                  </span>
+                <div className="pt-2 flex items-center">
+                  <Button
+                    type="button"
+                    disabled={fullCode.length !== 8 || isVerifying}
+                    onClick={() => verifyCode(fullCode)}
+                    className="rounded-xl p-3 h-max text-xs font-semibold gap-2"
+                  >
+                    {isVerifying ? (
+                      <>
+                        <Spinner className="size-4" />
+                        <span>Finding mailbox...</span>
+                      </>
+                    ) : (
+                      <>
+                        <PersonSimpleHikeIcon className="size-4" />
+                        <span>Check invitation letter</span>
+                      </>
+                    )}
+                  </Button>
                 </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-                    Time Remaining
-                  </span>
-                  <div className="flex items-center gap-1 font-mono font-medium text-amber-500">
-                    <Clock className="size-3.5" />
-                    <span>{timeLeft}</span>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <div className="size-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-1">
+                    <CheckCircle2 className="size-6 text-emerald-500" />
+                  </div>
+                  <h1 className="text-4xl font-medium tracking-tight text-foreground">
+                    Confirm Invitation
+                  </h1>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Confirm joining this organization with the assigned permissions below.
+                  </p>
+                </div>
+
+                <div className="p-1 rounded-2xl border border-border bg-accent/30 flex flex-col gap-4">
+                  <div className="flex p-3 items-center gap-3.5">
+                    <Avatar className="size-14 rounded-xl border border-border shrink-0">
+                      <AvatarImage src={verifiedInfo.organization.avatar || undefined} className={"rounded-xl"} />
+                      <AvatarFallback className="rounded-xl bg-blue-600 text-white font-bold text-base">
+                        {getFallbackInitial(verifiedInfo.organization.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="font-semibold text-xl font-heading text-foreground truncate">
+                        {verifiedInfo.organization.name}
+                      </span>
+                      {verifiedInfo.organization.slug && (
+                        <span className="text-xs text-muted-foreground font-mono">
+                          @{verifiedInfo.organization.slug}
+                        </span>
+                      )}
+                    </div>
+                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary shrink-0 capitalize">
+                      <ShieldCheck className="size-3.5" />
+                      <span>{verifiedInfo.role.toLowerCase()}</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 text-xs bg-foreground/10 p-4 rounded-xl">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] uppercase font-medium text-muted-foreground tracking-wider">
+                        Invited By
+                      </span>
+                      <span className="font-medium text-lg text-foreground truncate">
+                        {verifiedInfo.inviter.name || "Organization Admin"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] uppercase font-medium text-muted-foreground tracking-wider">
+                        Time Remaining
+                      </span>
+                      <div className="flex items-center text-lg gap-1 font-mono font-medium text-amber-500">
+                        <Clock className="size-3.5" />
+                        <span>{timeLeft}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="pt-2 flex items-center justify-between">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setVerifiedInfo(null)}
-                className="rounded-xl text-xs"
-                disabled={isJoining}
-              >
-                Back to Code
-              </Button>
-              <Button
-                type="button"
-                onClick={handleConfirmJoin}
-                disabled={isJoining || timeLeft === "Expired"}
-                className="rounded-xl px-6 text-xs font-semibold gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-              >
-                {isJoining ? (
-                  <>
-                    <Spinner />
-                    <span>Joining...</span>
-                  </>
-                ) : (
-                  <>
-                    <Building2 className="size-4" />
-                    <span>Confirm & Join</span>
-                  </>
-                )}
-              </Button>
-            </div>
-          </>
-        )}
+                <div className="pt-2 flex items-center justify-between">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setVerifiedInfo(null)}
+                    className="rounded-xl p-3 h-max text-xs font-semibold gap-2"
+                    disabled={isJoining}
+                  >
+                    Back to Code
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleConfirmJoin}
+                    disabled={isJoining || timeLeft === "Expired"}
+                    className="rounded-xl p-3 h-max text-xs font-semibold gap-2"
+                  >
+                    {isJoining ? (
+                      <>
+                        <Spinner className="size-4" />
+                        <span>Joining...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Building2 className="size-4" />
+                        <span>Confirm & Join</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="max-lg:hidden">
+            <UndrawTeamwork className="size-60 xl:size-96 md:ml-12" />
+          </div>
+        </div>
       </div>
     </div>
   );

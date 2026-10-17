@@ -13,8 +13,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { AutoHeight } from "./animate-ui/primitives/effects/auto-height";
-import { ScrollArea } from "./ui/scroll-area";
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
 
 const CONFIG: Record<

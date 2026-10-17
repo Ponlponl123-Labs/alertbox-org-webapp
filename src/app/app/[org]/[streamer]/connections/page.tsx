@@ -1,5 +1,5 @@
 "use client";
-import Connection from "@/components/connection";
+import Connection from "@/components/features/streamer/connection";
 import { Spinner } from "@/components/ui/spinner";
 import { useUserContext } from "@/contexts/user";
 import { getApiUrl } from "@/lib/api";

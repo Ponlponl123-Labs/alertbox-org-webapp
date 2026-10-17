@@ -3,11 +3,11 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useStore } from "zustand";
-import { Button } from "./ui/button";
-import ThemeSwitcher from "./theme-switcher";
+import { Button } from "@/components/ui/button";
+import ThemeSwitcher from '@/components/shared/theme-switcher';
 import { usePathname } from "next/navigation";
 import { coreStore } from "@/hooks/store/core";
-import LanguageSwitcher from "./language-switcher";
+import LanguageSwitcher from '@/components/shared/language-switcher';
 import {
   CaretLeftIcon,
   GithubLogoIcon,
@@ -15,7 +15,7 @@ import {
   ListIcon,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
-import CurrentUserChip from "./current-user-chip";
+import CurrentUserChip from '@/components/shared/current-user-chip';
 import { useUserContext } from "@/contexts/user";
 import Image from "next/image";
 
