@@ -261,6 +261,9 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
   const [data, setData] = React.useState<OrgAnalyticsData | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  const isDev = process.env.NODE_ENV === "development";
+  const [showSample, setShowSample] = React.useState(isDev);
+
   React.useEffect(() => {
     if (!orgId) return;
     let active = true;
@@ -269,15 +272,11 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
       .then((res) => (res.ok ? res.json() : null))
       .then((res: OrgAnalyticsData | null) => {
         if (!active) return;
-        if (res && res.totals.transactions > 0) {
-          setData(res);
-        } else {
-          setData(res || generateMockAnalytics(timeframe));
-        }
+        setData(res);
       })
       .catch((err) => {
         if (err?.name === "AbortError") return;
-        if (active) setData(generateMockAnalytics(timeframe));
+        if (active) setData(null);
       })
       .finally(() => {
         if (active) setIsLoading(false);
@@ -290,10 +289,27 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
 
   const displayData = React.useMemo(() => {
     if (!data || data.totals.transactions === 0) {
-      return generateMockAnalytics(timeframe);
+      if (isDev && showSample) return generateMockAnalytics(timeframe);
+      return (
+        data || {
+          timeframe,
+          totals: {
+            revenue: 0,
+            currency: "THB",
+            transactions: 0,
+            realTransactions: 0,
+            testTransactions: 0,
+            activeGateways: 0,
+            activeStreamers: 0,
+          },
+          currencies: [],
+          gateways: [],
+          timeline: [],
+        }
+      );
     }
     return data;
-  }, [data, timeframe]);
+  }, [data, timeframe, isDev, showSample]);
 
   const { totals, currencies, gateways, timeline } = displayData;
 
@@ -332,13 +348,19 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
     <section className="relative w-full mx-auto max-w-384 mt-6 pb-2 flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          {(!data || data.totals.transactions === 0) && (
+          {isDev && (!data || data.totals.transactions === 0) && (
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-background/80 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer backdrop-blur-xs"
+              onClick={() => setShowSample((prev) => !prev)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg p-2 h-max text-xs font-medium backdrop-blur-xs",
+                showSample
+                  ? "bg-amber-500/15 text-amber-500 hover:text-amber-400"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              )}
             >
-              <SparkleIcon weight={"regular"} className="size-3 text-amber-400" />
-              <span>Preview Sample</span>
+              <SparkleIcon weight={showSample ? "fill" : "regular"} className="size-3 text-amber-400" />
+              <span>{showSample ? "Sample Active" : "Preview Sample"}</span>
             </button>
           )}
 
@@ -419,7 +441,7 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 h-36">
               <div className="relative rounded-2xl border border-border/80 bg-card/50 backdrop-blur-md p-5 flex flex-col justify-between overflow-hidden shadow-xs hover:border-border transition-colors">
                 <div className="absolute inset-x-0 bottom-0 h-20 pointer-events-none opacity-20 dark:opacity-25">
-                  <ResponsiveContainer width="100%" height="100%" className={"mask-l-from-0%"}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} className={"mask-l-from-0%"}>
                     <AreaChart data={timeline} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                       <Area
                         type="monotone"
@@ -451,7 +473,7 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
 
               <div className="relative rounded-2xl border border-border/80 bg-card/50 backdrop-blur-md p-5 flex flex-col justify-between overflow-hidden shadow-xs hover:border-border transition-colors">
                 <div className="absolute inset-x-0 bottom-0 h-20 pointer-events-none opacity-20 dark:opacity-25">
-                  <ResponsiveContainer width="100%" height="100%" className={"mask-l-from-0%"}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} className={"mask-l-from-0%"}>
                     <AreaChart data={timeline} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                       <Area
                         type="monotone"
@@ -481,7 +503,7 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
 
               <div className="relative rounded-2xl border border-border/80 bg-card/50 backdrop-blur-md p-5 flex flex-col justify-between overflow-hidden shadow-xs hover:border-border transition-colors">
                 <div className="absolute inset-x-0 bottom-0 h-20 pointer-events-none opacity-20 dark:opacity-25">
-                  <ResponsiveContainer width="100%" height="100%" className={"mask-l-from-0%"}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} className={"mask-l-from-0%"}>
                     <AreaChart data={timeline} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                       <Area
                         type="monotone"
@@ -589,126 +611,128 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="rounded-2xl border group border-border/80 bg-card/40 backdrop-blur-md overflow-hidden relative p-6 flex flex-col justify-between min-h-115">
-                <div>
-                  <div className="flex items-center justify-between absolute z-10">
-                    <div>
-                      <h3 className="text-2xl font-medium mb-2 text-foreground">Payment Gateways</h3>
-                      <p className="text-xs text-muted-foreground">Volume & share distribution across providers</p>
+            {totals.transactions > 0 && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="rounded-2xl border group border-border/80 bg-card/40 backdrop-blur-md overflow-hidden relative p-6 flex flex-col justify-between min-h-115">
+                  <div>
+                    <div className="flex items-center justify-between absolute z-10">
+                      <div>
+                        <h3 className="text-2xl font-medium mb-2 text-foreground">Payment Gateways</h3>
+                        <p className="text-xs text-muted-foreground">Volume & share distribution across providers</p>
+                      </div>
                     </div>
-                  </div>
 
-                  {gateways.length > 0 ? (
-                    <ChartContainer config={gatewayChartConfig} className="size-96 group-hover:grayscale-0 grayscale transition-all duration-250 ease-in-out absolute bottom-0 right-6 aspect-square scale-125 mask-linear-from-0% mask-top-left">
-                      <PieChart>
-                        <ChartTooltip
-                          cursor={false}
-                          animationDuration={250}
-                          animationEasing="ease-out"
-                          content={
-                            <ChartTooltipContent
-                              nameKey="provider"
-                              hideLabel
-                              formatter={(val, name) => [
-                                PROVIDER_NAMES[String(name)] || String(name),
-                                ` (${Number(val).toLocaleString()} transactions)`,
-                              ]}
-                            />
-                          }
-                        />
-                        <Pie
-                          data={gatewaysWithColor}
-                          dataKey="count"
-                          nameKey="provider"
-                          innerRadius={140}
-                          outerRadius={190}
-                          paddingAngle={3}
-                          strokeWidth={0}
-                        >
-                          {gatewaysWithColor.map((entry) => (
-                            <Cell
-                              key={entry.provider}
-                              fill={entry.fill}
-                            />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ChartContainer>
-                  ) : (
-                    <div className="py-12 text-center text-xs text-muted-foreground">
-                      No gateway transactions recorded yet
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-2xl min-h-115 not-hover:grayscale transition-all duration-250 ease-in-out border border-border/80 bg-card/40 backdrop-blur-md p-6 flex flex-col justify-between shadow-xs overflow-hidden">
-                <div>
-                  <div className="flex items-center justify-between absolute z-10">
-                    <div>
-                      <h3 className="text-2xl font-medium mb-2 text-foreground">Global Currency Breakdown</h3>
-                      <p className="text-xs text-muted-foreground">Interactive 3D representation of donation sources</p>
-                    </div>
-                  </div>
-
-                  <div className="w-full -mb-12">
-                    <GlobeBars
-                      markers={currencyMarkers}
-                      dark={isDark}
-                      focusLocation={activeLocation}
-                      focusedMarkerId={activeMarkerId}
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap z-20 justify-center gap-2 w-full mt-2 absolute left-0 bottom-3">
-                    {currencies.map((c) => {
-                      const isHovered = hoveredCurrency === c.currency;
-                      return (
-                        <div
-                          key={c.currency}
-                          onMouseEnter={() => setHoveredCurrency(c.currency)}
-                          onMouseLeave={() => setHoveredCurrency(null)}
-                          className={cn(
-                            "flex gap-6 items-center justify-between p-2 rounded-full w-max border text-xs z-20 backdrop-blur-lg select-none cursor-pointer transition-all duration-200",
-                            isHovered
-                              ? "border-sky-500/80 bg-sky-500/15 shadow-sm scale-105"
-                              : "border-border/40 bg-card/20 hover:border-border/80 hover:bg-card/40"
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={cn(
-                                "size-2 rounded-full shrink-0 transition-all duration-200",
-                                isHovered
-                                  ? "bg-sky-400 scale-125 shadow-[0_0_8px_rgba(56,189,248,0.8)]"
-                                  : "bg-sky-500"
-                              )}
-                            />
-                            <span className="font-semibold text-foreground">{c.currency}</span>
-                            <span className="text-muted-foreground text-[11px]">
-                              {c.currency === "THB"
-                                ? "Thailand"
-                                : c.currency === "USD"
-                                ? "United States"
-                                : c.currency === "EUR"
-                                ? "Europe"
-                                : "International"}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 tabular-nums text-xs">
-                            <span className="text-muted-foreground">{c.percentage}%</span>
-                            <span className="font-bold text-foreground">
-                              {formatCurrency(c.amount, c.currency)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {gateways.length > 0 ? (
+                      <ChartContainer config={gatewayChartConfig} className="size-96 group-hover:grayscale-0 grayscale transition-all duration-250 ease-in-out absolute bottom-0 right-6 aspect-square scale-125 mask-linear-from-0% mask-top-left">
+                        <PieChart>
+                          <ChartTooltip
+                            cursor={false}
+                            animationDuration={250}
+                            animationEasing="ease-out"
+                            content={
+                              <ChartTooltipContent
+                                nameKey="provider"
+                                hideLabel
+                                formatter={(val, name) => [
+                                  PROVIDER_NAMES[String(name)] || String(name),
+                                  ` (${Number(val).toLocaleString()} transactions)`,
+                                ]}
+                              />
+                            }
+                          />
+                          <Pie
+                            data={gatewaysWithColor}
+                            dataKey="count"
+                            nameKey="provider"
+                            innerRadius={140}
+                            outerRadius={190}
+                            paddingAngle={3}
+                            strokeWidth={0}
+                          >
+                            {gatewaysWithColor.map((entry) => (
+                              <Cell
+                                key={entry.provider}
+                                fill={entry.fill}
+                              />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ChartContainer>
+                    ) : (
+                      <div className="py-12 text-center text-xs text-muted-foreground">
+                        No gateway transactions recorded yet
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                <div className="rounded-2xl min-h-115 not-hover:grayscale transition-all duration-250 ease-in-out border border-border/80 bg-card/40 backdrop-blur-md p-6 flex flex-col justify-between shadow-xs overflow-hidden">
+                  <div>
+                    <div className="flex items-center justify-between absolute z-10">
+                      <div>
+                        <h3 className="text-2xl font-medium mb-2 text-foreground">Global Currency Breakdown</h3>
+                        <p className="text-xs text-muted-foreground">Interactive 3D representation of donation sources</p>
+                      </div>
+                    </div>
+
+                    <div className="w-full -mb-12">
+                      <GlobeBars
+                        markers={currencyMarkers}
+                        dark={isDark}
+                        focusLocation={activeLocation}
+                        focusedMarkerId={activeMarkerId}
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap z-20 justify-center gap-2 w-full mt-2 absolute left-0 bottom-3">
+                      {currencies.map((c) => {
+                        const isHovered = hoveredCurrency === c.currency;
+                        return (
+                          <div
+                            key={c.currency}
+                            onMouseEnter={() => setHoveredCurrency(c.currency)}
+                            onMouseLeave={() => setHoveredCurrency(null)}
+                            className={cn(
+                              "flex gap-6 items-center justify-between p-2 rounded-full w-max border text-xs z-20 backdrop-blur-lg select-none cursor-pointer transition-all duration-200",
+                              isHovered
+                                ? "border-sky-500/80 bg-sky-500/15 shadow-sm scale-105"
+                                : "border-border/40 bg-card/20 hover:border-border/80 hover:bg-card/40"
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  "size-2 rounded-full shrink-0 transition-all duration-200",
+                                  isHovered
+                                    ? "bg-sky-400 scale-125 shadow-[0_0_8px_rgba(56,189,248,0.8)]"
+                                    : "bg-sky-500"
+                                )}
+                              />
+                              <span className="font-semibold text-foreground">{c.currency}</span>
+                              <span className="text-muted-foreground text-[11px]">
+                                {c.currency === "THB"
+                                  ? "Thailand"
+                                  : c.currency === "USD"
+                                    ? "United States"
+                                    : c.currency === "EUR"
+                                      ? "Europe"
+                                      : "International"}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 tabular-nums text-xs">
+                              <span className="text-muted-foreground">{c.percentage}%</span>
+                              <span className="font-bold text-foreground">
+                                {formatCurrency(c.amount, c.currency)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

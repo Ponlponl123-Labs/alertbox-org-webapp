@@ -905,9 +905,12 @@ export default function ContributionSkyline({
         let bl = col[L + 2]
 
         const hasTest = tc[i] > 0
-        const isPureTest = hasTest && rc[i] <= 0
+        const hasReal = rc[i] > 0
+        const isPureTest = hasTest && !hasReal
+        const isSplit = hasTest && hasReal
+        const totalCount = tc[i] + rc[i]
+        const zTest = isSplit && totalCount > 0 ? z * (tc[i] / totalCount) : isPureTest ? z : 0
 
-        // If completely test transactions, tint the walls with dark sky blue
         if (isPureTest) {
           r = 14
           g = 165
@@ -934,26 +937,104 @@ export default function ContributionSkyline({
           bl = lerp(bl, isDark ? 248 : 233, shine * 0.85)
         }
 
-        // Draw side walls
-        if (f & 1) {
-          ctx.beginPath()
-          quadPath(ctx, polys, o + 8, 0)
-          ctx.fillStyle = rgbString(r * 0.84, g * 0.84, bl * 0.84)
-          ctx.fill()
+        let rT = 14
+        let gT = 165
+        let blT = 233
+        if (d > 0.002) {
+          rT += (ex - rT) * 0.72 * d
+          gT += (ey - gT) * 0.72 * d
+          blT += (ez - blT) * 0.72 * d
         }
-        if (f & 2) {
-          ctx.beginPath()
-          quadPath(ctx, polys, o + 16, 0)
-          ctx.fillStyle = rgbString(r * 0.68, g * 0.68, bl * 0.68)
-          ctx.fill()
+        if (hv > 0.002) {
+          const m = 0.16 * hv
+          rT += (fg[0] - rT) * m
+          gT += (fg[1] - gT) * m
+          blT += (fg[2] - blT) * m
+        }
+        if (shine > 0) {
+          rT = lerp(rT, isDark ? 56 : 14, shine * 0.85)
+          gT = lerp(gT, isDark ? 189 : 165, shine * 0.85)
+          blT = lerp(blT, isDark ? 248 : 233, shine * 0.85)
         }
 
-        // Draw top face
+        if (isSplit) {
+          const yMidX0 = px(x0, y1), yMidY0 = py(x0, y1, zTest)
+          const yMidX1 = px(x1, y1), yMidY1 = py(x1, y1, zTest)
+          const xMidX0 = px(x1, y0), xMidY0 = py(x1, y0, zTest)
+          const xMidX1 = yMidX1, xMidY1 = yMidY1
+
+          if (f & 1) {
+            ctx.beginPath()
+            ctx.moveTo(px(x0, y1), py(x0, y1, 0))
+            ctx.lineTo(px(x1, y1), py(x1, y1, 0))
+            ctx.lineTo(yMidX1, yMidY1)
+            ctx.lineTo(yMidX0, yMidY0)
+            ctx.closePath()
+            ctx.fillStyle = rgbString(rT * 0.84, gT * 0.84, blT * 0.84)
+            ctx.fill()
+
+            ctx.beginPath()
+            ctx.moveTo(yMidX0, yMidY0)
+            ctx.lineTo(yMidX1, yMidY1)
+            ctx.lineTo(polys[o + 4], polys[o + 5])
+            ctx.lineTo(polys[o + 6], polys[o + 7])
+            ctx.closePath()
+            ctx.fillStyle = rgbString(r * 0.84, g * 0.84, bl * 0.84)
+            ctx.fill()
+          }
+          if (f & 2) {
+            ctx.beginPath()
+            ctx.moveTo(px(x1, y0), py(x1, y0, 0))
+            ctx.lineTo(px(x1, y1), py(x1, y1, 0))
+            ctx.lineTo(xMidX1, xMidY1)
+            ctx.lineTo(xMidX0, xMidY0)
+            ctx.closePath()
+            ctx.fillStyle = rgbString(rT * 0.68, gT * 0.68, blT * 0.68)
+            ctx.fill()
+
+            ctx.beginPath()
+            ctx.moveTo(xMidX0, xMidY0)
+            ctx.lineTo(xMidX1, xMidY1)
+            ctx.lineTo(polys[o + 4], polys[o + 5])
+            ctx.lineTo(polys[o + 2], polys[o + 3])
+            ctx.closePath()
+            ctx.fillStyle = rgbString(r * 0.68, g * 0.68, bl * 0.68)
+            ctx.fill()
+          }
+          if (f & 3) {
+            ctx.beginPath()
+            if (f & 1) {
+              ctx.moveTo(yMidX0, yMidY0)
+              ctx.lineTo(yMidX1, yMidY1)
+            }
+            if (f & 2) {
+              if (!(f & 1)) ctx.moveTo(xMidX1, xMidY1)
+              ctx.lineTo(xMidX0, xMidY0)
+            }
+            ctx.strokeStyle = "rgba(0, 0, 0, " + (isDark ? "0.3" : "0.15") + ")"
+            ctx.lineWidth = 1
+            ctx.stroke()
+          }
+        } else {
+          if (f & 1) {
+            ctx.beginPath()
+            quadPath(ctx, polys, o + 8, 0)
+            ctx.fillStyle = rgbString(r * 0.84, g * 0.84, bl * 0.84)
+            ctx.fill()
+          }
+          if (f & 2) {
+            ctx.beginPath()
+            quadPath(ctx, polys, o + 16, 0)
+            ctx.fillStyle = rgbString(r * 0.68, g * 0.68, bl * 0.68)
+            ctx.fill()
+          }
+        }
+
         let topR = r
         let topG = g
         let topB = bl
 
-        if (hasTest) {
+        if (isPureTest) {
           topR = 56
           topG = 189
           topB = 248
@@ -977,10 +1058,28 @@ export default function ContributionSkyline({
           topB = lerp(topB, 255, shine * 0.95)
         }
 
-        ctx.beginPath()
-        quadPath(ctx, polys, o, radius)
-        ctx.fillStyle = rgbString(topR, topG, topB)
-        ctx.fill()
+        if (isSplit && e < 0.05) {
+          ctx.beginPath()
+          ctx.moveTo(polys[o], polys[o + 1])
+          ctx.lineTo(polys[o + 4], polys[o + 5])
+          ctx.lineTo(polys[o + 6], polys[o + 7])
+          ctx.closePath()
+          ctx.fillStyle = rgbString(56, 189, 248)
+          ctx.fill()
+
+          ctx.beginPath()
+          ctx.moveTo(polys[o], polys[o + 1])
+          ctx.lineTo(polys[o + 2], polys[o + 3])
+          ctx.lineTo(polys[o + 4], polys[o + 5])
+          ctx.closePath()
+          ctx.fillStyle = rgbString(topR, topG, topB)
+          ctx.fill()
+        } else {
+          ctx.beginPath()
+          quadPath(ctx, polys, o, radius)
+          ctx.fillStyle = rgbString(topR, topG, topB)
+          ctx.fill()
+        }
 
         if (shine > 0.35) {
           ctx.strokeStyle = "rgba(56, 189, 248, " + ((shine - 0.35) * 1.5).toFixed(3) + ")"
