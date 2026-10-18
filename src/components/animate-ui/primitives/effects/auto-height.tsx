@@ -18,13 +18,15 @@ type AutoHeightProps = WithAsChild<
     deps?: React.DependencyList;
     animate?: TargetAndTransition | LegacyAnimationControls;
     transition?: Transition;
+    springOptions?: Transition;
   } & Omit<HTMLMotionProps<'div'>, 'animate'>
 >;
 
 function AutoHeight({
   children,
   deps = [],
-  transition = {
+  springOptions,
+  transition = springOptions || {
     type: 'spring',
     stiffness: 300,
     damping: 30,

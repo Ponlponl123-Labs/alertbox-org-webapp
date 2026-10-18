@@ -368,7 +368,7 @@ export function ChannelMentionChip({
           <BroadcastIcon size={10} weight="bold" />
         )}
       </span>
-      <span className="truncate max-w-40 font-mono">
+      <span className="truncate max-w-40 font-sans">
         @{channelName || "channel"}
       </span>
     </span>

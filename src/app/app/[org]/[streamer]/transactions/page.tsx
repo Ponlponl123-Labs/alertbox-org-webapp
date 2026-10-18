@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowsClockwiseIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
   SortAscendingIcon,
   SortDescendingIcon,
   DotsThreeVerticalIcon,
@@ -18,15 +17,20 @@ import {
   ArrowCounterClockwiseIcon,
   CopyIcon,
   CheckIcon,
-  StorefrontIcon,
   SparkleIcon,
   CaretLeftIcon,
   CaretRightIcon,
   MoneyIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { cn, getFallbackInitial } from "@/lib/utils";
+import { motion, AnimatePresence } from "motion/react";
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
+import JellyRadio from "@/components/JellyRadio";
+import { Input } from "react-smooth-input";
 import {
   Dialog,
   DialogContent,
@@ -44,12 +48,31 @@ import {
 import {
   Table,
   TableHeader,
-  TableBody,
   TableRow,
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatTableDate } from "@/lib/audit-format";
 import { DEFAULT_TRANSACTION_PAGE_SIZE } from "@/consts/payment";
+
+const GATEWAY_NAMES: Record<string, string> = {
+  STRIPE: "Stripe",
+  BUYMEACOFFEE: "Buy Me a Coffee",
+  BMAC: "Buy Me a Coffee",
+  KOFI: "Ko-fi",
+  FEELFREEPAY: "FeelFreePay",
+  FFP: "PromptPay",
+  XENDIT: "Xendit",
+};
+
+const TRANSACTION_STATUS_TABS = [
+  { value: "ALL", label: "All Status" },
+  { value: "COMPLETED", label: "Completed" },
+  { value: "PENDING", label: "Pending" },
+  { value: "FAILED", label: "Failed" },
+  { value: "REFUNDED", label: "Refunded" },
+];
 
 interface TransactionItem {
   id: string;
@@ -86,6 +109,7 @@ export default function StreamerTransactionsPage() {
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [wsStatus, setWsStatus] = useState<"connected" | "connecting" | "disconnected">("connecting");
   const [liveTxId, setLiveTxId] = useState<string | null>(null);
@@ -127,16 +151,12 @@ export default function StreamerTransactionsPage() {
   // Action states
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const refetchTransactions = useCallback(() => {
-    setRefreshKey((k) => k + 1);
-  }, []);
-
-  // Fetch Transactions on filter/page/sort change
-  useEffect(() => {
-    let active = true;
+  const fetchTransactions = useCallback(() => {
     if (!orgTarget || !streamerTarget) return;
+
+    setLoading(true);
+    const startTime = Date.now();
+    const MIN_SKELETON_MS = 280;
 
     const queryParams = new URLSearchParams({
       limit: String(PAGE_SIZE),
@@ -155,24 +175,23 @@ export default function StreamerTransactionsPage() {
       ),
     )
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!active) return;
+      .then(async (data) => {
         if (data && Array.isArray(data.transactions)) {
+          const elapsed = Date.now() - startTime;
+          if (elapsed < MIN_SKELETON_MS) {
+            await new Promise((resolve) => setTimeout(resolve, MIN_SKELETON_MS - elapsed));
+          }
           setTransactions(data.transactions);
           setTotalCount(data.total || 0);
         }
       })
       .catch((err) => {
         if (err?.name === "AbortError") return;
-        if (active) toast.error("Failed to load transactions");
+        toast.error("Failed to load transactions");
       })
       .finally(() => {
-        if (active) setLoading(false);
+        setLoading(false);
       });
-
-    return () => {
-      active = false;
-    };
   }, [
     orgTarget,
     streamerTarget,
@@ -182,9 +201,22 @@ export default function StreamerTransactionsPage() {
     selectedProvider,
     selectedStatus,
     searchQuery,
-    refreshKey,
     authFetch,
   ]);
+
+  const refetchTransactions = useCallback(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  useEffect(() => {
+    let ignore = false;
+    queueMicrotask(() => {
+      if (!ignore) fetchTransactions();
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [fetchTransactions]);
 
   // Enterprise Secure WebSocket: Real-time Live Updates with Client-Side Filtering
   useEffect(() => {
@@ -302,9 +334,9 @@ export default function StreamerTransactionsPage() {
                 prev.map((t) =>
                   t.id === data.transactionId
                     ? {
-                        ...t,
-                        ...(typeof data.isDeleted === "boolean" ? { isDeleted: data.isDeleted } : {}),
-                      }
+                      ...t,
+                      ...(typeof data.isDeleted === "boolean" ? { isDeleted: data.isDeleted } : {}),
+                    }
                     : t,
                 ),
               );
@@ -464,57 +496,60 @@ export default function StreamerTransactionsPage() {
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   return (
-    <div className="flex flex-col gap-5 max-w-6xl w-full py-4 select-none">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-6 z-10"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
-            <StorefrontIcon size={16} weight="bold" />
+            <MoneyIcon size={16} weight="bold" />
             <span>Channel Financials</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mt-0.5">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
             Transactions & Tips
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             Consolidated supporter donations, tips, and gateway event history for @{streamerTarget}.
           </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-border bg-card/60 shadow-xs backdrop-blur-xs">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-border/80 bg-card/60 shadow-xs backdrop-blur-xs">
             <span
               className={cn(
                 "relative flex h-2 w-2 rounded-full",
                 wsStatus === "connected"
                   ? "bg-emerald-500"
                   : wsStatus === "connecting"
-                  ? "bg-amber-500"
-                  : "bg-zinc-400",
+                    ? "bg-amber-500"
+                    : "bg-zinc-400",
               )}
             >
               {wsStatus === "connected" && (
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               )}
             </span>
-            <span className="text-[11px] text-muted-foreground font-medium">
+            <span className="text-[11px] text-muted-foreground font-medium font-sans">
               {wsStatus === "connected"
                 ? "Live (WS)"
                 : wsStatus === "connecting"
-                ? "Connecting..."
-                : "Offline"}
+                  ? "Connecting..."
+                  : "Offline"}
             </span>
           </div>
 
           <Button
             size="sm"
-            variant="outline"
+            variant="secondary"
             onClick={refetchTransactions}
             disabled={loading}
-            className="gap-1.5"
-            title="Refetch data from server with current active filters"
+            className="gap-1.5 text-xs rounded-xl p-3 h-max cursor-pointer"
+            title="Refetch data from server"
           >
             <ArrowsClockwiseIcon
               size={14}
-              weight="bold"
               className={cn(loading && "animate-spin")}
             />
             <span className="hidden sm:inline">Refresh</span>
@@ -523,43 +558,72 @@ export default function StreamerTransactionsPage() {
           <Button
             size="sm"
             onClick={() => setIsTestDialogOpen(true)}
-            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl p-3 h-max cursor-pointer text-xs"
           >
             <SparkleIcon size={15} weight="bold" />
-            <span>Send Test Alert</span>
+            <span>Simulate Tip</span>
           </Button>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 rounded-xl border border-border bg-card">
-        <div className="relative flex-1">
-          <MagnifyingGlassIcon
-            size={16}
-            weight="bold"
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-          />
-          <input
-            type="text"
-            placeholder="Search donor name or message..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <JellyRadio
+            items={TRANSACTION_STATUS_TABS}
+            value={selectedStatus}
+            disabled={false}
+            onChange={(value) => {
+              setSelectedStatus(value);
               setCurrentPage(1);
             }}
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg text-xs bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+            size="sm"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <FunnelIcon size={13} weight="bold" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="relative w-full sm:w-72">
+            <Input
+              type="text"
+              placeholder="Search supporter or message..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              startContent={<MagnifyingGlassIcon size={16} className="text-muted-foreground" />}
+              endContent={
+                searchQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setCurrentPage(1);
+                    }}
+                    className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors cursor-pointer"
+                    aria-label="Clear search"
+                  >
+                    <XIcon size={14} />
+                  </button>
+                ) : null
+              }
+              fontStyle={{
+                fontFamily: "var(--font-sans)",
+                fontWeight: "500",
+                fontSize: "14px",
+              }}
+              className="w-full"
+              classNames={{ base: "h-9 rounded-xl" }}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
             <select
               value={selectedProvider}
               onChange={(e) => {
                 setSelectedProvider(e.target.value);
                 setCurrentPage(1);
               }}
-              className="bg-background border border-border text-foreground text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-primary"
+              className="bg-card border border-border/80 text-foreground text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-primary font-medium"
             >
               <option value="ALL">All Gateways</option>
               <option value="BMAC">Buy Me a Coffee</option>
@@ -568,278 +632,418 @@ export default function StreamerTransactionsPage() {
               <option value="XENDIT">Xendit</option>
               <option value="FFP">PromptPay (FFP)</option>
             </select>
+
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(e.target.value as "createdAt" | "amount");
+                setCurrentPage(1);
+              }}
+              className="bg-card border border-border/80 text-foreground text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-primary font-medium"
+            >
+              <option value="createdAt">Sort: Date</option>
+              <option value="amount">Sort: Amount</option>
+            </select>
+
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))}
+              className="gap-1 text-xs rounded-xl h-9 px-3 cursor-pointer"
+              title={`Sorted by ${sortBy} ${sortOrder}`}
+            >
+              {sortOrder === "desc" ? (
+                <SortDescendingIcon size={15} weight="bold" />
+              ) : (
+                <SortAscendingIcon size={15} weight="bold" />
+              )}
+              <span className="hidden xl:inline">
+                {sortOrder === "desc" ? "Desc" : "Asc"}
+              </span>
+            </Button>
           </div>
-
-          <select
-            value={selectedStatus}
-            onChange={(e) => {
-              setSelectedStatus(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="bg-background border border-border text-foreground text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-primary"
-          >
-            <option value="ALL">All Status</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="PENDING">Pending</option>
-            <option value="FAILED">Failed</option>
-            <option value="REFUNDED">Refunded</option>
-          </select>
-
-          <select
-            value={sortBy}
-            onChange={(e) => {
-              setSortBy(e.target.value as "createdAt" | "amount");
-              setCurrentPage(1);
-            }}
-            className="bg-background border border-border text-foreground text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-primary"
-          >
-            <option value="createdAt">Sort: Date</option>
-            <option value="amount">Sort: Amount</option>
-          </select>
-
-          <Button
-            size="xs"
-            variant="ghost"
-            onClick={() => setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))}
-            className="gap-1 text-xs"
-            title={`Sorted by ${sortBy} ${sortOrder}`}
-          >
-            {sortOrder === "desc" ? (
-              <SortDescendingIcon size={15} weight="bold" />
-            ) : (
-              <SortAscendingIcon size={15} weight="bold" />
-            )}
-            <span className="hidden sm:inline">
-              {sortOrder === "desc" ? "Descending" : "Ascending"}
-            </span>
-          </Button>
         </div>
       </div>
 
-      <div className="relative rounded-xl border border-border bg-card overflow-hidden shadow-xs">
-        {loading && (
-          <div className="absolute inset-0 bg-background/50 backdrop-blur-xs flex items-center justify-center z-10">
-            <Spinner className="size-6 text-primary" />
-          </div>
-        )}
-
-        <Table className="w-full text-left border-collapse text-xs">
-          <TableHeader>
-            <TableRow className="border-b border-border bg-muted/30 text-muted-foreground font-medium uppercase tracking-wider text-[10px] hover:bg-muted/30">
-              <TableHead className="py-3 px-4 h-auto text-muted-foreground">Status & Type</TableHead>
-              <TableHead className="py-3 px-4 h-auto text-muted-foreground">Supporter</TableHead>
-              <TableHead className="py-3 px-4 h-auto text-muted-foreground">Amount</TableHead>
-              <TableHead className="py-3 px-4 h-auto text-muted-foreground">Gateway</TableHead>
-              <TableHead className="py-3 px-4 h-auto text-muted-foreground">Date</TableHead>
-              <TableHead className="py-3 px-4 text-right h-auto text-muted-foreground">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-border/60">
-            {transactions.length === 0 && !loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
-                  <div className="flex flex-col items-center gap-2">
-                    <MoneyIcon size={32} weight="duotone" className="text-muted-foreground/60" />
-                    <span className="font-medium text-foreground">No transactions recorded yet</span>
-                    <span className="text-[11px] max-w-sm">
-                      Incoming tips and donations from connected gateways will appear here in real-time.
-                    </span>
-                  </div>
-                </TableCell>
+      <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm flex flex-col justify-between">
+        <AutoHeight
+          deps={[loading, transactions.length, currentPage]}
+          transition={{
+            type: "spring",
+            stiffness: 280,
+            damping: 28,
+          }}
+        >
+          <Table
+            containerClassName={cn(
+              "w-full",
+              isAnimating ? "overflow-hidden" : "overflow-x-auto overflow-y-hidden"
+            )}
+            className="w-full text-left border-collapse text-xs"
+          >
+            <TableHeader>
+              <TableRow className="border-b border-border/60 bg-muted/20 text-muted-foreground text-[10px] tracking-wider uppercase font-semibold hover:bg-muted/20">
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Status & Type</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Supporter</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Amount</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Gateway</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Date</TableHead>
+                <TableHead className="py-3.5 px-4 text-right font-semibold text-muted-foreground/70 h-auto">Actions</TableHead>
               </TableRow>
-            ) : (
-                transactions.map((tx) => {
-                  const isCompleted = tx.status === "COMPLETED";
-                  const isFailed = tx.status === "FAILED";
-                  const isPending = tx.status === "PENDING";
-                  const isRefunded = tx.status === "REFUNDED";
-
-                  return (
-                    <TableRow
-                      key={tx.id}
-                      className={cn(
-                        "group transition-all duration-300 hover:bg-muted/30",
-                        liveTxId === tx.id && "bg-primary/10 ring-1 ring-inset ring-primary/40",
-                        tx.isDeleted && "opacity-40 border-dashed bg-muted/10 line-through text-muted-foreground",
-                      )}
-                    >
-                      <TableCell className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={cn(
-                              "size-2 rounded-full shrink-0",
-                              isCompleted && "bg-emerald-500",
-                              isPending && "bg-amber-500",
-                              isFailed && "bg-rose-500",
-                              isRefunded && "bg-zinc-500",
-                            )}
-                          />
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-foreground text-xs">
-                              {tx.type}
-                            </span>
-                            {tx.isTest && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-amber-500/15 text-amber-500 border border-amber-500/20">
-                                TEST
-                              </span>
-                            )}
-                            {tx.isDeleted && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-medium bg-rose-500/15 text-rose-500 border border-rose-500/20">
-                                DELETED
-                              </span>
-                            )}
+            </TableHeader>
+            <AnimatePresence
+              mode="wait"
+              initial={false}
+              onExitComplete={() => setIsAnimating(false)}
+            >
+              {loading ? (
+                <motion.tbody
+                  key="loading-skeleton"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  onAnimationStart={() => setIsAnimating(true)}
+                  onAnimationComplete={() => setIsAnimating(false)}
+                  className="divide-y divide-border/40 [&_tr:last-child]:border-0"
+                >
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <TableRow key={`skeleton-${idx}`} className="hover:bg-transparent">
+                      <TableCell className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="size-1.5 rounded-full shrink-0" />
+                            <Skeleton className="h-3.5 w-16 rounded" />
                           </div>
+                          <Skeleton className="h-2.5 w-10 ml-3.5 rounded" />
                         </div>
                       </TableCell>
-
-                      <TableCell className="py-3.5 px-4 min-w-50">
+                      <TableCell className="py-3 px-4 min-w-50">
                         <div className="flex items-start gap-2.5">
-                          <div className="size-7 rounded-full bg-primary/10 text-primary font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
-                            {getFallbackInitial(tx.senderName)}
-                          </div>
-                          <div className="grid leading-tight">
-                            <span className="font-semibold text-foreground truncate">
-                              {tx.senderName}
-                            </span>
-                            {tx.message && (
-                              <span
-                                className="text-[11px] text-muted-foreground truncate max-w-xs mt-0.5"
-                                title={tx.message}
-                              >
-                                &ldquo;{tx.message}&rdquo;
-                              </span>
-                            )}
+                          <Skeleton className="size-7 rounded-full shrink-0 mt-0.5" />
+                          <div className="grid gap-1.5 w-full max-w-xs">
+                            <Skeleton className="h-3.5 w-24 rounded" />
+                            <Skeleton className="h-2.5 w-36 rounded" />
                           </div>
                         </div>
                       </TableCell>
-
-                      <TableCell className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="flex items-baseline gap-1 font-mono font-bold text-sm text-foreground">
-                          <span>
-                            {tx.currency === "THB"
-                              ? "฿"
-                              : tx.currency === "USD"
-                              ? "$"
-                              : tx.currency === "EUR"
-                              ? "€"
-                              : ""}
-                            {(tx.amount / 100).toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground font-normal">
-                            {tx.currency}
-                          </span>
+                      <TableCell className="py-3 px-4 whitespace-nowrap">
+                        <Skeleton className="h-3.5 w-16 rounded" />
+                      </TableCell>
+                      <TableCell className="py-3 px-4 whitespace-nowrap">
+                        <Skeleton className="h-3.5 w-14 rounded" />
+                      </TableCell>
+                      <TableCell className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          <Skeleton className="h-3.5 w-20 rounded" />
+                          <Skeleton className="h-2.5 w-12 rounded" />
                         </div>
                       </TableCell>
-
-                      <TableCell className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="px-2 py-1 rounded-md text-[11px] font-medium bg-muted text-foreground border border-border">
-                          {tx.provider}
-                        </span>
-                      </TableCell>
-
-                      <TableCell className="py-3.5 px-4 whitespace-nowrap text-[11px] text-muted-foreground font-mono">
-                        {new Date(tx.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}{" "}
-                        <span className="opacity-75">
-                          {new Date(tx.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </TableCell>
-
-                      <TableCell className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <Popover>
-                          <PopoverTrigger
-                            render={
-                              <button
-                                aria-label="Transaction Actions"
-                                className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                              >
-                                <DotsThreeVerticalIcon size={16} weight="bold" />
-                              </button>
-                            }
-                          />
-                          <PopoverContent
-                            align="end"
-                            className="w-48 p-1.5 flex flex-col gap-1 rounded-xl bg-card border border-border shadow-xl text-xs"
-                          >
-                            <button
-                              onClick={() => handleResendAlert(tx)}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left font-medium"
-                            >
-                              <PaperPlaneTiltIcon size={14} weight="bold" className="text-primary" />
-                              <span>Resend Alert</span>
-                            </button>
-
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(tx.id);
-                                setCopiedId(tx.id);
-                                toast.success("Transaction ID copied");
-                                setTimeout(() => setCopiedId(null), 2000);
-                              }}
-                              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left"
-                            >
-                              {copiedId === tx.id ? (
-                                <CheckIcon size={14} weight="bold" className="text-emerald-500" />
-                              ) : (
-                                <CopyIcon size={14} weight="bold" />
-                              )}
-                              <span>Copy ID</span>
-                            </button>
-
-                            <div className="h-px bg-border my-0.5" />
-
-                            <button
-                              onClick={() => handleToggleSoftDelete(tx.id)}
-                              className={cn(
-                                "w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors text-left font-medium",
-                                tx.isDeleted
-                                  ? "hover:bg-emerald-500/10 text-emerald-500"
-                                  : "hover:bg-rose-500/10 text-rose-500",
-                              )}
-                            >
-                              {tx.isDeleted ? (
-                                <>
-                                  <ArrowCounterClockwiseIcon size={14} weight="bold" />
-                                  <span>Restore Row</span>
-                                </>
-                              ) : (
-                                <>
-                                  <TrashIcon size={14} weight="bold" />
-                                  <span>Soft Delete</span>
-                                </>
-                              )}
-                            </button>
-                          </PopoverContent>
-                        </Popover>
+                      <TableCell className="py-3 px-4 text-right whitespace-nowrap">
+                        <Skeleton className="size-6 rounded ml-auto" />
                       </TableCell>
                     </TableRow>
-                  );
-                })
+                  ))}
+                </motion.tbody>
+              ) : transactions.length === 0 ? (
+                <motion.tbody
+                  key="empty-state"
+                  initial={{ opacity: 0, y: 8, filter: "blur(3px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  onAnimationStart={() => setIsAnimating(true)}
+                  onAnimationComplete={() => setIsAnimating(false)}
+                  className="divide-y divide-border/40 [&_tr:last-child]:border-0"
+                >
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-16 text-center text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2.5">
+                        <MoneyIcon size={36} weight="duotone" className="text-muted-foreground/50" />
+                        <span className="font-medium text-foreground text-sm">No transactions recorded yet</span>
+                        <span className="text-xs text-muted-foreground max-w-sm">
+                          Incoming tips and donations from connected gateways will appear here in real-time.
+                        </span>
+                        {(searchQuery || selectedStatus !== "ALL" || selectedProvider !== "ALL") && (
+                          <Button
+                            variant="outline"
+                            size="xs"
+                            onClick={() => {
+                              setSearchQuery("");
+                              setSelectedStatus("ALL");
+                              setSelectedProvider("ALL");
+                              setCurrentPage(1);
+                            }}
+                            className="mt-2 text-xs rounded-lg cursor-pointer"
+                          >
+                            Reset filters
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </motion.tbody>
+              ) : (
+                <motion.tbody
+                  key={`transactions-page-${currentPage}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  onAnimationStart={() => setIsAnimating(true)}
+                  className="divide-y divide-border/60"
+                >
+                  {transactions.map((tx, idx) => {
+                    const isCompleted = tx.status === "COMPLETED";
+                    const isFailed = tx.status === "FAILED";
+                    const isPending = tx.status === "PENDING";
+                    const isRefunded = tx.status === "REFUNDED";
+
+                    return (
+                      <motion.tr
+                        key={tx.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: 0.2,
+                          delay: Math.min(idx * 0.03, 0.15),
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                        className={cn(
+                          "group transition-all duration-300 border-b",
+                          tx.isDeleted
+                            ? "opacity-20 border-dashed bg-muted/5 line-through text-muted-foreground hover:opacity-35"
+                            : "hover:bg-muted/30",
+                          liveTxId === tx.id && "bg-primary/10 ring-1 ring-inset ring-primary/40",
+                        )}
+                      >
+                        <TableCell className="py-3 px-4 whitespace-nowrap">
+                          <div className="flex flex-col leading-tight">
+                            <div className="inline-flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  "size-1.5 rounded-full shrink-0",
+                                  isCompleted && "bg-emerald-500",
+                                  isPending && "bg-amber-500",
+                                  isFailed && "bg-rose-500",
+                                  isRefunded && "bg-zinc-400",
+                                )}
+                              />
+                              <span className="font-medium text-foreground text-xs">
+                                {isCompleted
+                                  ? "Succeeded"
+                                  : isPending
+                                    ? "Pending"
+                                    : isFailed
+                                      ? "Failed"
+                                      : "Refunded"}
+                              </span>
+                              {tx.isTest && (
+                                <span className="text-[10px] text-amber-500/90 font-medium">
+                                  (Test)
+                                </span>
+                              )}
+                              {tx.isDeleted && (
+                                <span className="text-[10px] text-rose-500/90 font-medium">
+                                  (Deleted)
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-muted-foreground/70 pl-3.5 font-sans">
+                              {tx.type}
+                            </span>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="py-3 px-4 min-w-50">
+                          <div className="flex items-start gap-2.5">
+                            <Avatar className="size-7 rounded-full border border-border/60 shrink-0 mt-0.5">
+                              <AvatarFallback className="text-[10px] font-medium bg-muted text-foreground">
+                                {getFallbackInitial(tx.senderName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="grid leading-tight">
+                              <span className="font-medium text-foreground text-xs truncate">
+                                {tx.senderName}
+                              </span>
+                              {tx.message && (
+                                <span
+                                  className="text-[11px] text-muted-foreground/70 truncate max-w-xs mt-0.5"
+                                  title={tx.message}
+                                >
+                                  &ldquo;{tx.message}&rdquo;
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="py-3 px-4 whitespace-nowrap">
+                          <div className="flex items-baseline gap-1 font-sans font-medium tabular-nums text-xs text-foreground">
+                            <span>
+                              {tx.currency === "THB"
+                                ? "฿"
+                                : tx.currency === "USD"
+                                  ? "$"
+                                  : tx.currency === "EUR"
+                                    ? "€"
+                                    : ""}
+                              {(tx.amount / 100).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground/70 font-normal">
+                              {tx.currency}
+                            </span>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="py-3 px-4 whitespace-nowrap">
+                          <span className="text-xs text-muted-foreground/80 font-medium">
+                            {GATEWAY_NAMES[tx.provider.toUpperCase()] || tx.provider}
+                          </span>
+                        </TableCell>
+
+                        <TableCell className="py-3 px-4 whitespace-nowrap text-xs">
+                          <div className="flex flex-col leading-tight">
+                            <span className="text-foreground/90 font-sans">
+                              {formatTableDate(tx.createdAt)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground/60 font-sans">
+                              {new Date(tx.createdAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="py-3 px-4 text-right whitespace-nowrap">
+                          <Popover>
+                            <PopoverTrigger
+                              render={
+                                <button
+                                  aria-label="Transaction Actions"
+                                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  <DotsThreeVerticalIcon size={16} weight="bold" />
+                                </button>
+                              }
+                            />
+                            <PopoverContent
+                              align="end"
+                              className="w-48 p-1.5 flex flex-col gap-1 rounded-xl bg-card border border-border shadow-xl text-xs"
+                            >
+                              <button
+                                onClick={() => handleResendAlert(tx)}
+                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left font-medium"
+                              >
+                                <PaperPlaneTiltIcon size={14} weight="bold" className="text-primary" />
+                                <span>Resend Alert</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(tx.id);
+                                  setCopiedId(tx.id);
+                                  toast.success("Transaction ID copied");
+                                  setTimeout(() => setCopiedId(null), 2000);
+                                }}
+                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left"
+                              >
+                                {copiedId === tx.id ? (
+                                  <CheckIcon size={14} weight="bold" className="text-emerald-500" />
+                                ) : (
+                                  <CopyIcon size={14} weight="bold" />
+                                )}
+                                <span>Copy ID</span>
+                              </button>
+
+                              <div className="h-px bg-border my-0.5" />
+
+                              <button
+                                onClick={() => handleToggleSoftDelete(tx.id)}
+                                className={cn(
+                                  "w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors text-left font-medium",
+                                  tx.isDeleted
+                                    ? "hover:bg-emerald-500/10 text-emerald-500"
+                                    : "hover:bg-rose-500/10 text-rose-500",
+                                )}
+                              >
+                                {tx.isDeleted ? (
+                                  <>
+                                    <ArrowCounterClockwiseIcon size={14} weight="bold" />
+                                    <span>Restore Row</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <TrashIcon size={14} weight="bold" />
+                                    <span>Soft Delete</span>
+                                  </>
+                                )}
+                              </button>
+                            </PopoverContent>
+                          </Popover>
+                        </TableCell>
+                      </motion.tr>
+                    );
+                  })}
+                </motion.tbody>
               )}
-          </TableBody>
-        </Table>
+            </AnimatePresence>
+          </Table>
+        </AutoHeight>
 
         <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
-          <span>
-            Showing{" "}
-            <strong className="text-foreground">
-              {transactions.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}
-            </strong>{" "}
-            to{" "}
-            <strong className="text-foreground">
-              {Math.min(currentPage * PAGE_SIZE, totalCount)}
-            </strong>{" "}
-            of <strong className="text-foreground">{totalCount}</strong> transactions
-          </span>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>Showing</span>
+            <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={transactions.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="tabular-nums font-sans"
+                >
+                  {transactions.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+            <span>to</span>
+            <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={Math.min(currentPage * PAGE_SIZE, totalCount)}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="tabular-nums font-sans"
+                >
+                  {Math.min(currentPage * PAGE_SIZE, totalCount)}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+            <span>of</span>
+            <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={totalCount}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="tabular-nums font-sans"
+                >
+                  {totalCount}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+            <span>transactions</span>
+          </div>
 
           <div className="flex items-center gap-1.5">
             <Button
@@ -852,9 +1056,37 @@ export default function StreamerTransactionsPage() {
               <CaretLeftIcon size={12} weight="bold" />
               <span>Prev</span>
             </Button>
-            <span className="px-2 text-xs font-mono font-medium text-foreground">
-              {currentPage} / {totalPages}
-            </span>
+            <div className="flex items-center gap-1 px-2 text-xs text-muted-foreground font-sans">
+              <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <motion.span
+                    key={currentPage}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    className="tabular-nums font-sans"
+                  >
+                    {currentPage}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+              <span>/</span>
+              <span className="relative inline-flex items-center overflow-hidden h-4 font-medium text-foreground/80">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <motion.span
+                    key={totalPages}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    className="tabular-nums font-sans"
+                  >
+                    {totalPages}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+            </div>
             <Button
               size="xs"
               variant="outline"
@@ -896,14 +1128,14 @@ export default function StreamerTransactionsPage() {
                     {p === "BMAC"
                       ? "Buy Me a Coffee (BMAC)"
                       : p === "KOFI"
-                      ? "Ko-fi"
-                      : p === "STRIPE"
-                      ? "Stripe Payments"
-                      : p === "XENDIT"
-                      ? "Xendit"
-                      : p === "FFP"
-                      ? "PromptPay / FastPay"
-                      : p}
+                        ? "Ko-fi"
+                        : p === "STRIPE"
+                          ? "Stripe Payments"
+                          : p === "XENDIT"
+                            ? "Xendit"
+                            : p === "FFP"
+                              ? "PromptPay / FastPay"
+                              : p}
                   </option>
                 ))}
               </select>
@@ -921,7 +1153,7 @@ export default function StreamerTransactionsPage() {
                   value={testAmount}
                   onChange={(e) => setTestAmount(e.target.value)}
                   placeholder="100"
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs font-mono font-bold text-foreground focus:outline-none focus:border-primary"
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs font-sans font-semibold tabular-nums text-foreground focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -930,7 +1162,7 @@ export default function StreamerTransactionsPage() {
                 <select
                   value={testCurrency}
                   onChange={(e) => setTestCurrency(e.target.value)}
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary font-mono"
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary font-sans font-medium"
                 >
                   <option value="THB">THB (฿)</option>
                   <option value="USD">USD ($)</option>
@@ -988,6 +1220,6 @@ export default function StreamerTransactionsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

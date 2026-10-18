@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import {
   UserMentionChip,
   RoleMentionChip,
@@ -27,6 +28,7 @@ import {
   CheckIcon,
   XIcon,
   ShieldIcon,
+  CaretRightIcon,
 } from "@phosphor-icons/react";
 import { ORG_PERM_DEFINITIONS } from "@/consts/org";
 import {
@@ -36,8 +38,6 @@ import {
   STREAMER_PERM_LABELS,
   STREAMER_PERM_BITS,
 } from "@/consts/audit";
-
-export type { AuditCategory };
 
 export interface AuditActionInfo {
   title: string;
@@ -56,6 +56,18 @@ export function formatTableDate(dateString: string): string {
   } catch {
     return dateString;
   }
+}
+
+export function formatDonationAmount(amount: unknown, currency?: unknown): string {
+  if (amount === undefined || amount === null) return "";
+  const num = typeof amount === "number" ? amount : Number(amount);
+  const cur = currency ? String(currency).toUpperCase() : "";
+  if (isNaN(num)) return `${String(amount)} ${cur}`.trim();
+  const formatted = (num / 100).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return cur ? `${formatted} ${cur}` : formatted;
 }
 
 export function formatRelativeTime(dateString: string): string {
@@ -312,7 +324,7 @@ export function humanizeAuditAction(action: string, payload?: unknown): AuditAct
       return {
         title: "Deleted Transaction",
         description: p.senderName
-          ? `Soft-deleted transaction from ${String(p.senderName)}${p.amount !== undefined ? ` (${String(p.amount)} ${String(p.currency || "")})` : ""}.`
+          ? `Soft-deleted transaction from ${String(p.senderName)}${p.amount !== undefined ? ` (${formatDonationAmount(p.amount, p.currency)})` : ""}.`
           : "Soft-deleted a transaction record.",
         category: "Channels",
         filterCategory: "CHANNELS",
@@ -325,7 +337,7 @@ export function humanizeAuditAction(action: string, payload?: unknown): AuditAct
       return {
         title: "Restored Transaction",
         description: p.senderName
-          ? `Restored transaction from ${String(p.senderName)}${p.amount !== undefined ? ` (${String(p.amount)} ${String(p.currency || "")})` : ""}.`
+          ? `Restored transaction from ${String(p.senderName)}${p.amount !== undefined ? ` (${formatDonationAmount(p.amount, p.currency)})` : ""}.`
           : "Restored a deleted transaction record.",
         category: "Channels",
         filterCategory: "CHANNELS",
@@ -338,7 +350,7 @@ export function humanizeAuditAction(action: string, payload?: unknown): AuditAct
       return {
         title: "Resent Alert",
         description: p.senderName
-          ? `Re-triggered donation alert for ${String(p.senderName)}${p.amount !== undefined ? ` (${String(p.amount)} ${String(p.currency || "")})` : ""}.`
+          ? `Re-triggered donation alert for ${String(p.senderName)}${p.amount !== undefined ? ` (${formatDonationAmount(p.amount, p.currency)})` : ""}.`
           : "Re-triggered donation alert overlay.",
         category: "Channels",
         filterCategory: "CHANNELS",
@@ -396,7 +408,7 @@ export function formatPayloadSummary(
   if (p.amount !== undefined) {
     items.push({
       label: "Donation Amount",
-      value: `${String(p.amount)} ${String(p.currency || "")}`.trim(),
+      value: formatDonationAmount(p.amount, p.currency),
     });
   }
   if (p.transactionId) items.push({ label: "Transaction ID", value: `#${String(p.transactionId)}` });
@@ -699,7 +711,7 @@ export function renderAuditNarrative(ctx: AuditNarrativeContext): React.ReactNod
           {p.senderName ? (
             <span className="font-semibold text-foreground">
               from {String(p.senderName)}
-              {p.amount !== undefined ? ` (${String(p.amount)} ${String(p.currency || "")})` : ""}
+              {p.amount !== undefined ? ` (${formatDonationAmount(p.amount, p.currency)})` : ""}
             </span>
           ) : null}
           <span className="text-muted-foreground">on channel</span>
@@ -721,7 +733,7 @@ export function renderAuditNarrative(ctx: AuditNarrativeContext): React.ReactNod
           {p.senderName ? (
             <span className="font-semibold text-foreground">
               from {String(p.senderName)}
-              {p.amount !== undefined ? ` (${String(p.amount)} ${String(p.currency || "")})` : ""}
+              {p.amount !== undefined ? ` (${formatDonationAmount(p.amount, p.currency)})` : ""}
             </span>
           ) : null}
           <span className="text-muted-foreground">on channel</span>
@@ -743,7 +755,7 @@ export function renderAuditNarrative(ctx: AuditNarrativeContext): React.ReactNod
           {p.senderName ? (
             <span className="font-semibold text-foreground">
               for {String(p.senderName)}
-              {p.amount !== undefined ? ` (${String(p.amount)} ${String(p.currency || "")})` : ""}
+              {p.amount !== undefined ? ` (${formatDonationAmount(p.amount, p.currency)})` : ""}
             </span>
           ) : null}
           <span className="text-muted-foreground">on channel</span>
@@ -956,7 +968,7 @@ export function AuditDetailBreakdown({
                 </span>
               ))}
               {staticPerms.length > 10 && (
-                <span className="text-[10px] text-muted-foreground font-mono">
+                <span className="text-[10px] text-muted-foreground font-sans tabular-nums">
                   +{staticPerms.length - 10} more
                 </span>
               )}
@@ -1008,58 +1020,49 @@ export function AuditDetailBreakdown({
           </div>
 
           {changes ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-1">
-              {Object.entries(changes).map(([field, diff]) => {
-                const label =
-                  FIELD_FRIENDLY_NAMES[field] ||
-                  field.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
-                const fromVal = diff?.from;
-                const toVal = diff?.to;
+            <div className="rounded-lg border border-border/40 overflow-hidden bg-background/50">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-border/40 text-[10px] font-sans uppercase tracking-wider text-muted-foreground/60 bg-muted/15">
+                    <th className="py-1.5 px-3 font-medium">Property</th>
+                    <th className="py-1.5 px-3 font-medium">Previous</th>
+                    <th className="py-1.5 px-3 font-medium">Updated</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/25 text-[11px]">
+                  {Object.entries(changes).map(([field, diff]) => {
+                    const label =
+                      FIELD_FRIENDLY_NAMES[field] ||
+                      field.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
+                    const fromVal = diff?.from;
+                    const toVal = diff?.to;
 
-                return (
-                  <div
-                    key={field}
-                    className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-card"
-                  >
-                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      {label}
-                    </span>
-                    {field === "accentColor" ? (
-                      <div className="flex items-center gap-2">
-                        {Boolean(fromVal) ? (
-                          <span className="inline-flex items-center gap-1.5 font-mono text-[11px]">
-                            <span
-                              className="size-3 rounded-full shrink-0"
-                              style={{ backgroundColor: String(fromVal) }}
-                            />
-                            {String(fromVal)}
-                          </span>
-                        ) : null}
-                        <ArrowRightIcon size={10} className="text-muted-foreground shrink-0" />
-                        <span className="inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold text-foreground">
-                          <span
-                            className="size-3 rounded-full shrink-0"
-                            style={{ backgroundColor: String(toVal) }}
-                          />
-                          {String(toVal || "Default")}
-                        </span>
-                      </div>
-                    ) : field === "avatar" || field === "banner" ? (
-                      <span className="text-xs text-foreground/90 font-medium">New image uploaded & published</span>
-                    ) : (
-                      <div className="flex items-center gap-2 truncate text-xs">
-                        <span className="line-through text-muted-foreground truncate max-w-35">
-                          {String(fromVal || "(empty)")}
-                        </span>
-                        <ArrowRightIcon size={10} className="text-muted-foreground shrink-0" />
-                        <span className="font-semibold text-foreground truncate max-w-35">
-                          {String(toVal || "(cleared)")}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                    return (
+                      <tr key={field} className="hover:bg-muted/10 transition-colors">
+                        <td className="py-1.5 px-3 text-muted-foreground font-sans text-xs">
+                          {label}
+                        </td>
+                        <td className="py-1.5 px-3 text-muted-foreground/60 line-through">
+                          {String(fromVal ?? "—")}
+                        </td>
+                        <td className="py-1.5 px-3 text-foreground">
+                          {field === "accentColor" && toVal ? (
+                            <span className="inline-flex items-center gap-1.5">
+                              <span
+                                className="size-2.5 rounded-full shrink-0 border border-white/20"
+                                style={{ backgroundColor: String(toVal) }}
+                              />
+                              {String(toVal)}
+                            </span>
+                          ) : (
+                            String(toVal ?? "—")
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-1.5">
@@ -1094,11 +1097,11 @@ export function AuditDetailBreakdown({
       {hasTxDetails && (
         <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-lg bg-secondary/40 border border-border/60 text-xs">
           <span className="text-muted-foreground font-semibold uppercase text-[11px]">Transaction:</span>
-          {p.transactionId ? <span className="font-mono text-muted-foreground">#{String(p.transactionId)}</span> : null}
+          {p.transactionId ? <span className="font-sans tabular-nums text-muted-foreground">#{String(p.transactionId)}</span> : null}
           {p.senderName ? <span className="font-medium text-foreground">{String(p.senderName)}</span> : null}
           {p.amount !== undefined ? (
-            <span className="font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
-              {String(p.amount)} {String(p.currency || "")}
+            <span className="font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-sans tabular-nums">
+              {formatDonationAmount(p.amount, p.currency)}
             </span>
           ) : null}
           {p.provider ? (
@@ -1139,13 +1142,20 @@ export function AuditExpandedRowContent({
   targetStreamerLoading?: boolean;
   orgTarget?: string;
 }) {
+  const [copiedRaw, setCopiedRaw] = useState(false);
+
+  const hasPayload =
+    payload !== undefined &&
+    payload !== null &&
+    (typeof payload !== "object" || Object.keys(payload as object).length > 0);
+
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className="rounded-xl flex flex-col gap-4"
+      className="py-1 flex flex-col gap-3 font-sans"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="text-xs text-foreground/90 leading-relaxed font-normal">
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+        <div className="text-xs text-foreground/90 font-normal leading-relaxed">
           {renderAuditNarrative({
             actor,
             action,
@@ -1159,14 +1169,12 @@ export function AuditExpandedRowContent({
           })}
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap self-end sm:self-auto shrink-0 font-sans">
-          <span>{new Date(createdAt).toLocaleString()} · {formatRelativeTime(createdAt)}</span>
+        <div className="flex items-center gap-2 text-[11px] font-sans tabular-nums text-muted-foreground/60 shrink-0 select-text">
+          <span>{new Date(createdAt).toLocaleString()}</span>
           {ipAddress && (
             <>
               <span>·</span>
-              <span className="font-mono text-[11px] bg-secondary/60 px-1.5 py-0.5 rounded text-muted-foreground/80">
-                {ipAddress}
-              </span>
+              <span>{ipAddress}</span>
             </>
           )}
         </div>
@@ -1179,6 +1187,29 @@ export function AuditExpandedRowContent({
         targetId={targetId}
         orgTarget={orgTarget}
       />
+
+      {hasPayload && (
+        <details className="group/raw text-xs pt-1">
+          <summary className="cursor-pointer text-[11px] font-sans text-muted-foreground/70 hover:text-foreground inline-flex items-center gap-1 select-none py-0.5 transition-colors">
+            <CaretRightIcon size={10} className="transition-transform group-open/raw:rotate-90" />
+            <span>payload</span>
+          </summary>
+          <div className="relative mt-2 p-3 rounded-md bg-muted/20 border border-border/40 font-mono text-[11px] text-foreground/80 overflow-x-auto max-h-48 scrollbar-thin select-all">
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+                setCopiedRaw(true);
+                setTimeout(() => setCopiedRaw(false), 1500);
+              }}
+              className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted/80 border border-border/40 transition-colors cursor-pointer"
+            >
+              {copiedRaw ? "copied" : "copy"}
+            </button>
+            <pre className="leading-relaxed">{JSON.stringify(payload, null, 2)}</pre>
+          </div>
+        </details>
+      )}
     </div>
   );
 }
