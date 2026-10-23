@@ -7,17 +7,18 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { getFallbackInitial } from "@/lib/utils";
+import { cn, getFallbackInitial } from "@/lib/utils";
 import ContributionSkyline from "@/components/ui/contribution-skyline";
 import OrgAnalytics from "@/components/features/org/org-analytics";
 import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
 import { useState, useRef, useEffect } from "react";
+import { Input } from "react-smooth-input";
 
-export default function OrgOverviewPage() {
+export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, setName?: (name: string) => void }) {
   const { activeOrg } = useUserContext();
 
-  const streamers = activeOrg?.streamers || [];
-  const orgSlug = activeOrg?.slug || activeOrg?.id || "org";
+  const streamers = demo ? [] : activeOrg?.streamers || [];
+  const orgSlug = demo ? "" : activeOrg?.slug || activeOrg?.id || "org";
 
   const rootRef = useRef<HTMLDivElement>(null);
   const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null);
@@ -37,7 +38,7 @@ export default function OrgOverviewPage() {
   const bannerScale = useTransform(scrollY, [-120, 0, 300], [1.12, 1, 1.05]);
   const bannerOpacity = useTransform(scrollY, [0, 260], [1, 0.35]);
 
-  const bannerUrl = activeOrg?.banner;
+  const bannerUrl = demo ? "" : activeOrg?.banner;
   const [isBannerLoaded, setIsBannerLoaded] = useState(false);
   const [prevBannerUrl, setPrevBannerUrl] = useState(bannerUrl);
 
@@ -47,7 +48,7 @@ export default function OrgOverviewPage() {
   }
 
   return (
-    <div ref={rootRef} className="flex flex-col gap-6 relative">
+    <div ref={rootRef} className={cn("flex flex-col gap-6 relative", demo && "overflow-hidden")}>
       <AnimatePresence>
         {bannerUrl && (
           <motion.div
@@ -89,23 +90,57 @@ export default function OrgOverviewPage() {
           className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-1 z-10"
         >
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between **:font-heading gap-4">
-            <div>
+            <div className="w-full">
               <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
                 <BuildingsIcon size={16} weight="bold" />
                 <span>Organization Management</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-foreground mt-3">
-                {activeOrg?.name || "Organization Overview"}
-              </h1>
+              {
+                demo ? (
+                  <Input
+                    type="text"
+                    placeholder="e.g. Acme Studio, Team Vitality"
+                    onChange={(e) => setName?.(e.target.value)}
+                    fontStyle={{
+                      fontFamily: "var(--font-heading)",
+                      fontWeight: "500",
+                      fontSize: "36px"
+                    }}
+                    customMotion={{
+                      char: {
+                        initial: {
+                          x: 3,
+                          opacity: 0,
+                          filter: "blur(6px)"
+                        },
+                        animate: {
+                          x: 0,
+                          opacity: 1,
+                          filter: "blur(0px)"
+                        }
+                      }
+                    }}
+                    className="mt-2"
+                    classNames={{
+                      inputWrapper: "h-[stretch]",
+                      base: "h-max min-h-14 p-0 bg-transparent! data-[focused=true]:bg-transparent! data-[focused=true]:dark:bg-transparent! border-0! rounded-none",
+                    }}
+                  />
+                ) : (
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-foreground mt-3">
+                    {activeOrg?.name}
+                  </h1>
+                )
+              }
             </div>
           </div>
 
           <ContributionSkyline
-            orgId={activeOrg?.id || activeOrg?.slug}
+            orgId={demo ? "" : activeOrg?.id || activeOrg?.slug}
             unit="transaction"
           />
 
-          <OrgAnalytics orgId={activeOrg?.id || activeOrg?.slug} />
+          <OrgAnalytics orgId={demo ? "" : activeOrg?.id || activeOrg?.slug} />
         </motion.div>
 
         <div className="flex flex-col gap-3 w-full mx-auto max-w-384 px-12 pb-12 mt-6">

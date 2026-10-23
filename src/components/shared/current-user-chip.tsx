@@ -43,12 +43,25 @@ const itemVariants: Variants = {
 };
 
 function CurrentUserChip() {
-  const { userInfo, logout } = useUserContext();
+  const { userInfo, logout, activeStreamer } = useUserContext();
   const lang = useStore(coreStore, (state) => state.lang);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
   if (!userInfo) return null;
+
+  const displayName =
+    userInfo.displayName?.trim() ||
+    userInfo.name?.trim() ||
+    userInfo.email?.split("@")[0] ||
+    "User";
+
+  const username =
+    userInfo.name?.trim() ||
+    userInfo.email?.split("@")[0] ||
+    "user";
+
+  const avatarUrl = userInfo.avatar;
 
   return (
     <Popover data-force-visible="true" onOpenChange={setOpen} open={open} key={pathname}>
@@ -68,12 +81,12 @@ function CurrentUserChip() {
       >
         <div>
           <Avatar size="sm">
-            {userInfo.profile?.avatar && <AvatarImage src={userInfo.profile.avatar} />}
-            <AvatarFallback>{getFallbackInitial(userInfo.profile?.name || "?")}</AvatarFallback>
+            {avatarUrl && <AvatarImage src={avatarUrl} />}
+            <AvatarFallback>{getFallbackInitial(displayName)}</AvatarFallback>
           </Avatar>
         </div>
         <span className="text-xs text-foreground/60 ml-0.75 mr-1.5">
-          {userInfo.profile?.displayName}
+          {displayName}
         </span>
       </PopoverTrigger>
       <PopoverContent
@@ -102,10 +115,10 @@ function CurrentUserChip() {
           }}
           className="w-full flex flex-col relative overflow-hidden"
         >
-          {userInfo?.profile?.banner && (
+          {activeStreamer?.banner && (
             <>
               <Image
-                src={userInfo?.profile?.banner}
+                src={activeStreamer.banner}
                 alt="Banner"
                 className="w-full blur-lg aspect-video top-0 left-0 pointer-events-none object-cover absolute rounded-2xl z-0 opacity-30 select-none"
                 width={720}
@@ -117,16 +130,16 @@ function CurrentUserChip() {
           <PopoverHeader className="z-10">
             <PopoverTitle
               className={cn(
-                "text-foreground/40 text-xs my-1 bg-background mt-0 p-2.5 rounded-xl bg-linear-150 to-rose-900/20 from-transparent relative",
-                userInfo?.profile?.banner && "to-transparent",
+                "text-foreground/40 text-xs my-1 bg-background mt-0 p-2.5 rounded-xl bg-linear-150 to-rose-600/20 from-transparent relative",
+                activeStreamer?.banner && "to-transparent",
               )}
             >
-              {userInfo?.profile?.banner && (
+              {(avatarUrl || activeStreamer?.banner) && (
                 <div className="size-full top-0 left-0 pointer-events-none absolute overflow-hidden rounded-xl">
                   <Image
-                    src={userInfo?.profile?.banner}
+                    src={avatarUrl! || activeStreamer!.banner!}
                     alt="Banner"
-                    className="size-full top-0 left-0 pointer-events-none object-cover absolute z-0 mask-linear-160 mask-linear-from-10% mask-linear-to-92% blur-[1px] select-none"
+                    className="size-full top-0 left-0 pointer-events-none object-cover absolute z-0 mask-linear-160 mask-linear-from-10% mask-linear-to-92% blur-[2px] select-none"
                     width={720}
                     height={288}
                   />
@@ -134,17 +147,17 @@ function CurrentUserChip() {
               )}
               <div className="flex items-center gap-1.75 w-full z-10 relative">
                 <Avatar size="sm">
-                  {userInfo.profile?.avatar && <AvatarImage src={userInfo.profile.avatar} />}
+                  {avatarUrl && <AvatarImage src={avatarUrl} />}
                   <AvatarFallback>
-                    {getFallbackInitial(userInfo.profile?.name || "?")}
+                    {getFallbackInitial(displayName)}
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-xs text-foreground/60 mr-1.5 flex-1 min-w-0 overflow-hidden text-ellipsis">
-                  {userInfo.profile?.displayName}
+                  {displayName}
                 </span>
               </div>
               <span className="text-[10px] mt-1.5 block z-10 relative">
-                @{userInfo.profile?.name}
+                @{username}
               </span>
             </PopoverTitle>
             <motion.div
@@ -161,7 +174,7 @@ function CurrentUserChip() {
                 },
                 {
                   text: lang.data.header.user_chip.links.profile,
-                  href: userInfo.profile?.uri ? "/@" + userInfo.profile.uri : "/app",
+                  href: activeStreamer?.uri ? "/@" + activeStreamer.uri : "/app",
                   icon: <UserRectangleIcon weight="fill" size={16} />,
                 },
                 {

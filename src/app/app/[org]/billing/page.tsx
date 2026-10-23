@@ -9,7 +9,7 @@ import { motion } from "motion/react";
 export default function OrgBillingPage() {
   const { activeOrg } = useUserContext();
 
-  const role = (activeOrg?.role || "").toLowerCase();
+  const role = (typeof activeOrg?.role === "string" ? activeOrg.role : "").toLowerCase();
   const isOwnerOrAdmin = role === "owner" || role === "admin";
   const canManageBilling = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MANAGE);
 

@@ -325,11 +325,11 @@ function Header() {
                       fontWeight: isApp ? 500 : 500,
                       opacity: isApp ? 0.8 : 1,
                     }}
-                    className="text-base font-semibold tracking-wider -ml-0.5 font-sans flex items-center"
+                    className="text-base font-light tracking-wider -ml-0.5 font-momo-trust-display flex items-center"
                   >
                     AlertBox
-                    <span className="text-sm opacity-60 ml-0.5 font-light tracking-wider">
-                      .org
+                    <span className="text-xs opacity-60 ml-0.5 mt-1 font-light font-momo-trust-display tracking-wider">
+                      org
                     </span>
                     {isDocs && (
                       <span className="ml-2 text-sm font-extralight font-sans tracking-wider border-l border-foreground/40 pl-2">

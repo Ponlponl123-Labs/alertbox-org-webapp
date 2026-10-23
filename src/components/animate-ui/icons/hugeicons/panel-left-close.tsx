@@ -8,20 +8,18 @@ import {
   useAnimateIconContext,
   IconWrapper,
   type IconProps,
-} from '@/components/animate-ui/icons/icon';
+} from '@animate-ui/react/icons';
 
-type PanelLeftOpenProps = IconProps<keyof typeof animations>;
+type PanelLeftCloseProps = IconProps<keyof typeof animations>;
 
 const animations = {
   default: {
     rect: {},
     line: {
-      initial: { x1: 9, y1: 3, x2: 9, y2: 21 },
+      initial: { x: 0, y: 0 },
       animate: {
-        x1: 11,
-        y1: 3,
-        x2: 11,
-        y2: 21,
+        x: 2,
+        y: 0,
         transition: { type: 'spring', damping: 18, stiffness: 200 },
       },
     },
@@ -35,7 +33,7 @@ const animations = {
   } satisfies Record<string, Variants>,
 } as const;
 
-function IconComponent({ size, ...props }: PanelLeftOpenProps) {
+function IconComponent({ size, ...props }: PanelLeftCloseProps) {
   const { controls } = useAnimateIconContext();
   const variants = getVariants(animations);
 
@@ -48,32 +46,28 @@ function IconComponent({ size, ...props }: PanelLeftOpenProps) {
       fill="none"
       stroke="currentColor"
       strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
       {...props}
     >
-      <motion.rect
-        width={18}
-        height={18}
-        x={3}
-        y={3}
-        rx={2}
-        ry={2}
+      <motion.path
+        d="M21 11C21 7.22876 21 5.34315 19.8284 4.17157C18.6569 3 16.7712 3 13 3H11C7.22876 3 5.34315 3 4.17157 4.17157C3 5.34315 3 7.22876 3 11V13C3 16.7712 3 18.6569 4.17157 19.8284C5.34315 21 7.22876 21 11 21H13C16.7712 21 18.6569 21 19.8284 19.8284C21 18.6569 21 16.7712 21 13V11Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         variants={variants.rect}
         initial="initial"
         animate={controls}
       />
-      <motion.line
-        x1={9}
-        y1={3}
-        x2={9}
-        y2={21}
+      <motion.path
+        d="M9 3V21"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         variants={variants.line}
         initial="initial"
         animate={controls}
       />
       <motion.path
-        d="m14 9 3 3-3 3"
+        d="M14 9L15.1082 9.87868C16.3694 10.8787 17 11.3787 17 12C17 12.6213 16.3694 13.1213 15.1082 14.1213L14 15"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         variants={variants.arrow}
         initial="initial"
         animate={controls}
@@ -82,14 +76,14 @@ function IconComponent({ size, ...props }: PanelLeftOpenProps) {
   );
 }
 
-function PanelLeftOpen(props: PanelLeftOpenProps) {
+function PanelLeftClose(props: PanelLeftCloseProps) {
   return <IconWrapper icon={IconComponent} {...props} />;
 }
 
 export {
   animations,
-  PanelLeftOpen,
-  PanelLeftOpen as PanelLeftOpenIcon,
-  type PanelLeftOpenProps,
-  type PanelLeftOpenProps as PanelLeftOpenIconProps,
+  PanelLeftClose,
+  PanelLeftClose as PanelLeftCloseIcon,
+  type PanelLeftCloseProps,
+  type PanelLeftCloseProps as PanelLeftCloseIconProps,
 };

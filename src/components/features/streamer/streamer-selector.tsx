@@ -52,7 +52,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger
           className={cn(
-            "flex items-center gap-2 w-full px-2 py-1.5 rounded-lg border border-border/50 bg-foreground/2 hover:bg-foreground/6 text-xs select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
+            "flex items-center gap-2 w-full px-2 py-1.5 rounded-xl bg-foreground/2 hover:bg-foreground/6 text-xs select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
             isCollapsed && "justify-center p-1.5 border-0 bg-transparent hover:bg-foreground/5",
           )}
           title={
@@ -101,10 +101,10 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
         <PopoverContent
           align="start"
           sideOffset={6}
-          className="w-60 p-1.5 rounded-lg bg-popover border border-border text-popover-foreground shadow-lg"
+          className="w-60 p-1.5 rounded-xl bg-popover text-popover-foreground shadow-none border-none"
         >
-          <div className="flex flex-col gap-1">
-            <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          <div className="flex flex-col gap-0.5">
+            <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">
               Channel / Workspace
             </div>
 
@@ -117,7 +117,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
                   setOpen(false);
                 }}
                 className={cn(
-                  "flex items-center gap-2.5 w-full p-2 rounded-md text-left text-xs",
+                  "flex items-center gap-2.5 w-full p-2 rounded-lg text-left text-xs",
                   effectiveOrgMode
                     ? "bg-accent text-accent-foreground font-medium"
                     : "hover:bg-accent/60 text-foreground/80",
@@ -136,10 +136,6 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
               </button>
             )}
 
-            {canViewOrg && streamers.length > 0 && (
-              <div className="h-px bg-border my-1 -mx-1" />
-            )}
-
             <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto">
               {streamers.map((s) => {
                 const isSelected = !effectiveOrgMode && s.id === activeStreamer?.id;
@@ -155,7 +151,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
                       setOpen(false);
                     }}
                     className={cn(
-                      "flex items-center gap-2.5 w-full p-2 rounded-md text-left text-xs",
+                      "flex items-center gap-2.5 w-full p-2 rounded-lg text-left text-xs",
                       isSelected
                         ? "bg-accent text-accent-foreground font-medium"
                         : "hover:bg-accent/60 text-foreground/80",
@@ -193,14 +189,13 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
 
             {canCreateStreamer && (
               <>
-                <div className="h-px bg-border my-1 -mx-1" />
                 <Link
                   href={`/app/${activeOrg.slug || activeOrg.id}/streamers`}
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 w-full p-2 rounded-md hover:bg-accent text-xs font-medium text-muted-foreground hover:text-foreground"
+                  className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent text-xs font-medium text-muted-foreground hover:text-foreground"
                 >
-                  <div className="flex size-5 items-center justify-center rounded-md border border-dashed border-border bg-background shrink-0">
-                    <PlusIcon size={12} weight="bold" />
+                  <div className="flex size-6 items-center justify-center rounded-lg border border-dashed border-border shrink-0">
+                    <PlusIcon className="size-3.5" weight="bold" />
                   </div>
                   <span>Add channel</span>
                 </Link>

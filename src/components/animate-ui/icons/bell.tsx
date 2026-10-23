@@ -8,9 +8,9 @@ import {
   useAnimateIconContext,
   IconWrapper,
   type IconProps,
-} from '@/components/animate-ui/icons/icon';
+} from '@animate-ui/react/icons';
 
-type BellRingProps = IconProps<keyof typeof animations>;
+type BellProps = IconProps<keyof typeof animations>;
 
 const animations = {
   default: {
@@ -33,34 +33,11 @@ const animations = {
         transition: { duration: 1.1, ease: 'easeInOut' },
       },
     },
-    path2: {
-      initial: {
-        y: 0,
-        scale: 1,
-      },
-      animate: {
-        y: [0, 1, -0.5, 0.5, -0.25, 0],
-        scale: [1, 0.8, 0.9, 1, 1],
-
-        transition: { duration: 0.8, ease: 'easeInOut' },
-      },
-    },
-    path3: {
-      initial: {
-        y: 0,
-        scale: 1,
-      },
-      animate: {
-        y: [0, -0.5, 1, -0.5, 0.25, 0],
-        scale: [1, 0.8, 0.9, 1, 1],
-        transition: { duration: 0.8, ease: 'easeInOut' },
-      },
-    },
-    path4: {},
+    path2: {},
   } satisfies Record<string, Variants>,
 } as const;
 
-function IconComponent({ size, ...props }: BellRingProps) {
+function IconComponent({ size, ...props }: BellProps) {
   const { controls } = useAnimateIconContext();
   const variants = getVariants(animations);
 
@@ -87,20 +64,8 @@ function IconComponent({ size, ...props }: BellRingProps) {
         animate={controls}
       />
       <motion.path
-        d="M22 8c0-2.3-.8-4.3-2-6"
-        variants={variants.path2}
-        initial="initial"
-        animate={controls}
-      />
-      <motion.path
-        d="M4 2C2.8 3.7 2 5.7 2 8"
-        variants={variants.path3}
-        initial="initial"
-        animate={controls}
-      />
-      <motion.path
         d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"
-        variants={variants.path4}
+        variants={variants.path2}
         initial="initial"
         animate={controls}
       />
@@ -108,14 +73,14 @@ function IconComponent({ size, ...props }: BellRingProps) {
   );
 }
 
-function BellRing(props: BellRingProps) {
+function Bell(props: BellProps) {
   return <IconWrapper icon={IconComponent} {...props} />;
 }
 
 export {
   animations,
-  BellRing,
-  BellRing as BellRingIcon,
-  type BellRingProps,
-  type BellRingProps as BellRingIconProps,
+  Bell,
+  Bell as BellIcon,
+  type BellProps,
+  type BellProps as BellIconProps,
 };

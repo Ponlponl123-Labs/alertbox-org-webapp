@@ -1,12 +1,11 @@
 "use client";
-import { User, Organization, Streamer, Profile, OrganizationMember } from "@/types/user.types";
+import { User, Organization, Streamer, OrganizationMember } from "@/types/user.types";
 import {
   createContext,
   ReactNode,
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -43,21 +42,21 @@ export interface UserContext {
 const userContext = createContext<UserContext>({
   userInfo: null,
   login: async () => false,
-  logout: () => {},
-  patchUserInfo: () => {},
-  patchStreamer: () => {},
-  patchOrg: () => {},
-  removeStreamer: () => {},
-  removeOrganization: () => {},
-  addStreamer: () => {},
-  refreshUserInfo: async () => {},
+  logout: () => { },
+  patchUserInfo: () => { },
+  patchStreamer: () => { },
+  patchOrg: () => { },
+  removeStreamer: () => { },
+  removeOrganization: () => { },
+  addStreamer: () => { },
+  refreshUserInfo: async () => { },
   organizations: [],
   activeOrg: null,
   activeStreamer: null,
   isOrgMode: false,
-  setOrgMode: () => {},
-  setActiveOrgId: () => {},
-  setActiveStreamerId: () => {},
+  setOrgMode: () => { },
+  setActiveOrgId: () => { },
+  setActiveStreamerId: () => { },
   authFetch: async () => new Response(),
   isSelfHosted: true,
 });
@@ -110,15 +109,11 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
         const updated: User = {
           ...prev,
           ...(typeof p.name === "string" ? { name: p.name } : {}),
+          ...(typeof p.displayName === "string" ? { displayName: p.displayName } : {}),
           ...(typeof p.avatar === "string" ? { avatar: p.avatar } : {}),
           ...(typeof p.email === "string" ? { email: p.email } : {}),
           ...(Array.isArray(p.memberships) ? { memberships: p.memberships as OrganizationMember[] } : {}),
-          profile: prev.profile ? { ...prev.profile } : null,
         };
-
-        if (p.profile && typeof p.profile === "object") {
-          updated.profile = { ...(prev.profile || {}), ...p.profile } as Profile;
-        }
 
         return updated;
       });
@@ -126,22 +121,22 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     [],
   );
 
-const combineSignals = (a?: AbortSignal | null, b?: AbortSignal | null): AbortSignal | undefined => {
-  if (!a) return b || undefined;
-  if (!b) return a || undefined;
-  if (typeof AbortSignal !== "undefined" && typeof AbortSignal.any === "function") {
-    return AbortSignal.any([a, b]);
-  }
-  const c = new AbortController();
-  const onAbort = () => c.abort();
-  if (a.aborted || b.aborted) {
-    c.abort();
+  const combineSignals = (a?: AbortSignal | null, b?: AbortSignal | null): AbortSignal | undefined => {
+    if (!a) return b || undefined;
+    if (!b) return a || undefined;
+    if (typeof AbortSignal !== "undefined" && typeof AbortSignal.any === "function") {
+      return AbortSignal.any([a, b]);
+    }
+    const c = new AbortController();
+    const onAbort = () => c.abort();
+    if (a.aborted || b.aborted) {
+      c.abort();
+      return c.signal;
+    }
+    a.addEventListener("abort", onAbort, { once: true });
+    b.addEventListener("abort", onAbort, { once: true });
     return c.signal;
-  }
-  a.addEventListener("abort", onAbort, { once: true });
-  b.addEventListener("abort", onAbort, { once: true });
-  return c.signal;
-};
+  };
 
   const inFlightGetRequests = useRef(new Map<string, Promise<Response>>());
   const orgAbortControllerRef = useRef(new AbortController());
@@ -308,13 +303,7 @@ const combineSignals = (a?: AbortSignal | null, b?: AbortSignal | null): AbortSi
     })();
   }, []);
 
-  const effectiveUserInfo = useMemo(() => {
-    if (!userInfo) return null;
-    return {
-      ...userInfo,
-      profile: userInfo.profile,
-    };
-  }, [userInfo]);
+  const effectiveUserInfo = userInfo;
 
   const patchOrg = useCallback((patch: Partial<Organization>) => {
     const active = selectActiveOrg(orgStore.getState());
@@ -338,7 +327,7 @@ const combineSignals = (a?: AbortSignal | null, b?: AbortSignal | null): AbortSi
         setUserInfo(d);
         orgStore.getState().syncFromMemberships(d.memberships);
       }
-    } catch {}
+    } catch { }
   }, []);
 
   const removeStreamer = useCallback((streamerId: string) => {

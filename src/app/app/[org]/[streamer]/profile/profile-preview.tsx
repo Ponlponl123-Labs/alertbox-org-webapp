@@ -46,13 +46,14 @@ export default function ProfilePreview({
   onAvatarClick?: () => void;
   onBannerClick?: () => void;
 }) {
-  const { userInfo } = useUserContext();
+  const { activeStreamer } = useUserContext();
   const lang = useStore(coreStore, (state) => state.lang);
   const [viewMode, setViewMode] = useState<"mobile" | "desktop" | "responsive">(
     defaultViewMode,
   );
 
-  if (!publicProfile && (!userInfo || !userInfo.profile)) {
+  const fallbackProfile = activeStreamer;
+  if (!publicProfile && !fallbackProfile) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-foreground/40 text-sm">
         Loading preview...
@@ -61,7 +62,7 @@ export default function ProfilePreview({
   }
 
   const profile = {
-    ...(publicProfile || userInfo?.profile),
+    ...(publicProfile || fallbackProfile),
     ...liveData,
   };
   const isDashboardPreview = !publicProfile;

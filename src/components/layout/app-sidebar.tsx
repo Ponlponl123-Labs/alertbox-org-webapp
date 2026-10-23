@@ -5,42 +5,36 @@ import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
-import {
-  BellRingingIcon,
-  BroadcastIcon,
-  CaretDownIcon,
-  ChartLineIcon,
-  ClockCounterClockwiseIcon,
-  GearSixIcon,
-  HandCoinsIcon,
-  HandHeartIcon,
-  HandWavingIcon,
-  HeartIcon,
-  PlugsIcon,
-  ShieldCheckIcon,
-  SidebarSimpleIcon,
-  StorefrontIcon,
-  UserGearIcon,
-  UserIcon,
-  UsersIcon,
-  WarningOctagonIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { HandHeartIcon, XIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Accordion,
-  AccordionButton,
-  AccordionItem,
-  AccordionPanel,
-} from "@/components/animate-ui/components/headless/accordion";
-import { useDisclosure } from "@/components/animate-ui/primitives/headless/disclosure";
+import { Collapsible } from '@animate-ui/react/primitives/base-ui/collapsible';
 import OrgSwitcher from '@/components/features/org/org-switcher';
 import StreamerSelector from '@/components/features/streamer/streamer-selector';
 import NavUser from './nav-user';
 import { useUserContext } from "@/contexts/user";
 import { hasPermission, hasAnyPermission, canAccessStreamer } from "@/lib/rbac";
 import { OrgPerm, StreamerPerm } from "@/consts/permission";
+import { PanelLeftClose } from "../animate-ui/icons/hugeicons/panel-left-close";
+import { PanelLeftOpen } from "../animate-ui/icons/hugeicons/panel-left-open";
+import { AnimateIcon } from "@animate-ui/react/icons";
+import { Compass } from "../animate-ui/icons/hugeicons/compass";
+import { Settings02 } from "../animate-ui/icons/hugeicons/settings-02";
+import { ShieldCheck } from "../animate-ui/icons/hugeicons/shield-check";
+import { UserRound } from "../animate-ui/icons/hugeicons/user-round";
+import { OctagonAlert } from "../animate-ui/icons/hugeicons/octagon-alert";
+import { ArrowDown01 } from "../animate-ui/icons/hugeicons/arrow-down-01";
+import { UsersRound } from "../animate-ui/icons/hugeicons/users-round";
+import { ChartLine } from "../animate-ui/icons/hugeicons/chart-line";
+import { Clock02 } from "../animate-ui/icons/hugeicons/clock-02";
+import { CreditCard } from "../animate-ui/icons/hugeicons/credit-card";
+import { Clapperboard } from "../animate-ui/icons/hugeicons/clapperboard";
+import { MessageSquareHeart } from "../animate-ui/icons/hugeicons/message-square-heart";
+import { Route } from "../animate-ui/icons/hugeicons/route";
+import { Favourite } from "../animate-ui/icons/hugeicons/favourite";
+import { Activity01 } from "../animate-ui/icons/hugeicons/activity-01";
+import { Gift } from "../animate-ui/icons/hugeicons/gift";
+import { Tag } from "../animate-ui/icons/hugeicons/tag";
 
 interface SidebarLink {
   text: string;
@@ -74,22 +68,6 @@ function useIsMobile() {
   );
 }
 
-function AccordionStateSync({
-  hydrated,
-  onToggle,
-}: {
-  hydrated: boolean;
-  onToggle: (isOpen: boolean) => void;
-}) {
-  const { isOpen } = useDisclosure();
-  useEffect(() => {
-    if (hydrated) {
-      onToggle(isOpen);
-    }
-  }, [isOpen, hydrated, onToggle]);
-  return null;
-}
-
 function AppSidebar() {
   const lang = useStore(coreStore, (state) => state.lang);
   const isSidebarCollapsed = useStore(
@@ -107,11 +85,6 @@ function AppSidebar() {
   const setSidebarCollapsed = useStore(
     coreStore,
     (state) => state.setSidebarCollapsed,
-  );
-  const openAccordions = useStore(coreStore, (state) => state.openAccordions);
-  const setAccordionOpen = useStore(
-    coreStore,
-    (state) => state.setAccordionOpen,
   );
   const hydrateSidebar = useStore(coreStore, (state) => state.hydrateSidebar);
   const pathname = usePathname();
@@ -138,13 +111,13 @@ function AppSidebar() {
     if (!activeOrg) {
       return [
         {
-          id: "workspace",
-          title: "Workspace",
+          id: "home",
+          title: "",
           items: [
             {
-              id: "workspace-overview",
-              text: "Workspace Zone",
-              icon: <ChartLineIcon weight="bold" size={16} />,
+              id: "explore",
+              text: "Explore",
+              icon: <Compass size={16} />,
               href: "/app",
             },
           ],
@@ -156,21 +129,21 @@ function AppSidebar() {
             {
               id: "settings",
               text: lang.data.app.sidebar.links.settings.title,
-              icon: <GearSixIcon weight="bold" size={16} />,
+              icon: <Settings02 size={16} />,
               links: [
                 {
                   text: lang.data.app.sidebar.links.settings.account,
-                  icon: <UserGearIcon weight="bold" size={16} />,
+                  icon: <UserRound size={16} />,
                   href: "/app/account",
                 },
                 {
                   text: lang.data.app.sidebar.links.settings.security,
-                  icon: <ShieldCheckIcon weight="bold" size={16} />,
+                  icon: <ShieldCheck size={16} />,
                   href: "/app/account/security",
                 },
                 {
                   text: lang.data.app.sidebar.links.settings.danger,
-                  icon: <WarningOctagonIcon weight="bold" size={16} />,
+                  icon: <OctagonAlert size={16} />,
                   href: "/app/account/danger",
                 },
               ],
@@ -215,7 +188,7 @@ function AppSidebar() {
         orgItems.push({
           id: "org-overview",
           text: "Overview",
-          icon: <ChartLineIcon weight="bold" size={16} />,
+          icon: <ChartLine size={16} />,
           href: `/app/${orgKey}`,
         });
       }
@@ -223,7 +196,7 @@ function AppSidebar() {
         orgItems.push({
           id: "org-members",
           text: "Members & Staff",
-          icon: <UsersIcon weight="bold" size={16} />,
+          icon: <UsersRound size={16} />,
           href: `/app/${orgKey}/members`,
         });
       }
@@ -231,7 +204,7 @@ function AppSidebar() {
         orgItems.push({
           id: "org-streamers",
           text: "Channels",
-          icon: <BroadcastIcon weight="bold" size={16} />,
+          icon: <Clapperboard size={16} />,
           href: `/app/${orgKey}/streamers`,
         });
       }
@@ -239,14 +212,14 @@ function AppSidebar() {
         orgItems.push({
           id: "org-audit",
           text: "Audit Logs",
-          icon: <ClockCounterClockwiseIcon weight="bold" size={16} />,
+          icon: <Clock02 size={16} />,
           href: `/app/${orgKey}/audit`,
         });
       }
       orgItems.push({
         id: "org-settings",
         text: "Settings",
-        icon: <GearSixIcon weight="bold" size={16} />,
+        icon: <Settings02 size={16} />,
         href: `/app/${orgKey}/settings`,
       });
 
@@ -255,7 +228,7 @@ function AppSidebar() {
         financeItems.push({
           id: "org-billing",
           text: "Billing & Plans",
-          icon: <HandCoinsIcon weight="bold" size={16} />,
+          icon: <CreditCard size={16} />,
           href: `/app/${orgKey}/billing`,
         });
       }
@@ -275,34 +248,35 @@ function AppSidebar() {
           items: financeItems,
         });
       }
-      sections.push({
-        id: "account",
-        title: "Account",
-        items: [
-          {
-            id: "settings",
-            text: lang.data.app.sidebar.links.settings.title,
-            icon: <GearSixIcon weight="bold" size={16} />,
-            links: [
-              {
-                text: lang.data.app.sidebar.links.settings.account,
-                icon: <UserGearIcon weight="bold" size={16} />,
-                href: "/app/account",
-              },
-              {
-                text: lang.data.app.sidebar.links.settings.security,
-                icon: <ShieldCheckIcon weight="bold" size={16} />,
-                href: "/app/account/security",
-              },
-              {
-                text: lang.data.app.sidebar.links.settings.danger,
-                icon: <WarningOctagonIcon weight="bold" size={16} />,
-                href: "/app/account/danger",
-              },
-            ],
-          },
-        ],
-      });
+      sections.push(
+        {
+          id: "account",
+          title: "Account",
+          items: [
+            {
+              id: "settings",
+              text: lang.data.app.sidebar.links.settings.title,
+              icon: <Settings02 size={16} />,
+              links: [
+                {
+                  text: lang.data.app.sidebar.links.settings.account,
+                  icon: <UserRound size={16} />,
+                  href: "/app/account",
+                },
+                {
+                  text: lang.data.app.sidebar.links.settings.security,
+                  icon: <ShieldCheck size={16} />,
+                  href: "/app/account/security",
+                },
+                {
+                  text: lang.data.app.sidebar.links.settings.danger,
+                  icon: <OctagonAlert size={16} />,
+                  href: "/app/account/danger",
+                },
+              ],
+            },
+          ],
+        });
       return sections;
     }
 
@@ -332,7 +306,7 @@ function AppSidebar() {
       streamerItems.push({
         id: "dashboard",
         text: lang.data.header.user_chip.links.dashboard,
-        icon: <ChartLineIcon weight="bold" size={16} />,
+        icon: <ChartLine size={16} />,
         href: `/app/${orgKey}/${streamerKey}`,
       });
     }
@@ -341,7 +315,7 @@ function AppSidebar() {
       streamerItems.push({
         id: "profile",
         text: lang.data.app.sidebar.links.profile,
-        icon: <UserIcon weight="bold" size={16} />,
+        icon: <UserRound size={16} />,
         href: `/app/${orgKey}/${streamerKey}/profile`,
       });
     }
@@ -350,7 +324,7 @@ function AppSidebar() {
       streamerItems.push({
         id: "connections",
         text: lang.data.app.sidebar.links.connection,
-        icon: <PlugsIcon weight="bold" size={16} />,
+        icon: <Route size={16} />,
         href: `/app/${orgKey}/${streamerKey}/connections`,
       });
     }
@@ -359,21 +333,21 @@ function AppSidebar() {
       streamerItems.push({
         id: "alertbox",
         text: lang.data.app.sidebar.links.alertbox.title,
-        icon: <BellRingingIcon className="rotate-0!" weight="bold" size={16} />,
+        icon: <MessageSquareHeart className="rotate-0!" size={16} />,
         links: [
           {
             text: lang.data.app.sidebar.links.alertbox.donation,
-            icon: <HeartIcon weight="bold" size={16} />,
+            icon: <Favourite size={16} />,
             href: `/app/${orgKey}/${streamerKey}/alertbox/tip`,
           },
           {
             text: lang.data.app.sidebar.links.alertbox.subscription,
-            icon: <HandWavingIcon weight="bold" size={16} />,
+            icon: <Gift size={16} />,
             href: `/app/${orgKey}/${streamerKey}/alertbox/membership`,
           },
           {
             text: lang.data.app.sidebar.links.alertbox.purchased,
-            icon: <StorefrontIcon weight="bold" size={16} />,
+            icon: <Tag size={16} />,
             href: `/app/${orgKey}/${streamerKey}/alertbox/purchased`,
           },
         ],
@@ -384,11 +358,11 @@ function AppSidebar() {
       streamerItems.push({
         id: "member",
         text: "Supporters",
-        icon: <UsersIcon className="rotate-0!" weight="bold" size={16} />,
+        icon: <UsersRound className="rotate-0!" size={16} />,
         links: [
           {
             text: "Donation history",
-            icon: <HandCoinsIcon weight="bold" size={16} />,
+            icon: <CreditCard size={16} />,
             href: "/app/member/history",
           },
         ],
@@ -399,7 +373,7 @@ function AppSidebar() {
       streamerItems.push({
         id: "streamer-transactions",
         text: "Transactions",
-        icon: <StorefrontIcon weight="bold" size={16} />,
+        icon: <Activity01 size={16} />,
         href: `/app/${orgKey}/${streamerKey}/transactions`,
       });
     }
@@ -407,7 +381,7 @@ function AppSidebar() {
     streamerItems.push({
       id: "streamer-audit",
       text: "Audit Logs",
-      icon: <ClockCounterClockwiseIcon weight="bold" size={16} />,
+      icon: <Clock02 size={16} />,
       href: `/app/${orgKey}/${streamerKey}/audit`,
     });
 
@@ -425,21 +399,21 @@ function AppSidebar() {
           {
             id: "settings",
             text: lang.data.app.sidebar.links.settings.title,
-            icon: <GearSixIcon weight="bold" size={16} />,
+            icon: <Settings02 size={16} />,
             links: [
               {
                 text: lang.data.app.sidebar.links.settings.account,
-                icon: <UserGearIcon weight="bold" size={16} />,
+                icon: <UserRound size={16} />,
                 href: "/app/account",
               },
               {
                 text: lang.data.app.sidebar.links.settings.security,
-                icon: <ShieldCheckIcon weight="bold" size={16} />,
+                icon: <ShieldCheck size={16} />,
                 href: "/app/account/security",
               },
               {
                 text: lang.data.app.sidebar.links.settings.danger,
-                icon: <WarningOctagonIcon weight="bold" size={16} />,
+                icon: <OctagonAlert size={16} />,
                 href: "/app/account/danger",
               },
             ],
@@ -481,17 +455,17 @@ function AppSidebar() {
           isSidebarHiddenOnMobile ? "max-md:-translate-x-full" : "max-md:translate-x-0",
         )}
       >
-        <div className="md:hidden flex items-center justify-between px-2.5 py-2.5 mb-1.5 border-b border-border/40 shrink-0">
+        <div className={cn("flex items-center justify-between shrink-0 px-3 py-2", isSidebarCollapsed && "px-1.5")}>
           <div className="flex items-center gap-2">
-            <HandHeartIcon size={22} weight="fill" className="text-foreground" />
-            <span className="text-sm font-semibold font-sans">
-              AlertBox<span className="text-xs opacity-60 ml-0.5 font-light tracking-wider">.org</span>
+            <HandHeartIcon size={26} weight="fill" className="text-foreground" />
+            <span className={cn("text-sm font-light font-momo-trust-display tracking-wider transition-all", isSidebarCollapsed && "opacity-0 pointer-events-none")}>
+              AlertBox<span className="text-xs opacity-60 ml-0.5 font-light font-momo-trust-display tracking-wider">org</span>
             </span>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 rounded-lg text-foreground/50 hover:text-foreground"
+            className="md:hidden size-8 rounded-lg text-foreground/50 hover:text-foreground"
             onClick={() => setSidebarHiddenOnMobile(true)}
             aria-label="Close sidebar"
           >
@@ -506,26 +480,22 @@ function AppSidebar() {
           {sections.map((section) => (
             <div key={section.id} className="flex flex-col gap-0.5">
               {!isCollapsed && section.title && (
-                <div className="px-2 pt-2 pb-0.5 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">
+                <div className="px-2 pt-2 pb-0.5 text-xs font-semibold text-muted-foreground/60">
                   {section.title}
                 </div>
               )}
               {section.items.map((l: SidebarItem) =>
                 !l.href ? (
-                  <Accordion key={`${l.id}-${sidebarHydrated}`}>
-                    <AccordionItem defaultOpen={openAccordions[l.id] ?? true}>
-                      <AccordionStateSync
-                        hydrated={sidebarHydrated}
-                        onToggle={(isOpen) => setAccordionOpen(l.id, isOpen)}
-                      />
-                      <AccordionButton
+                  <Collapsible.Root key={`${l.id}-${sidebarHydrated}`} className={"group/collapsible"}>
+                    <AnimateIcon animateOnHover animateOnTap={"default-loop"} asChild>
+                      <Collapsible.Trigger
                         className={cn(
                           "rounded-lg whitespace-nowrap group overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start items-center flex no-underline!",
-                          "hover:bg-primary/5 hover:text-primary transition-colors",
+                          "hover:bg-primary/5 hover:text-primary",
                           isCollapsed &&
                           "aria-expanded:bg-background/80 aria-expanded:rounded-b-none",
+                          isSidebarCollapsed && "p-2.5"
                         )}
-                        showArrow={false}
                       >
                         <div className="size-4 shrink-0 flex items-center justify-center">{l.icon}</div>
                         <AnimatePresence initial={false} mode="popLayout">
@@ -550,34 +520,35 @@ function AppSidebar() {
                               transition={{ duration: 0.15, ease: "easeOut" }}
                               className="ml-auto flex items-center"
                             >
-                              <CaretDownIcon
-                                className="group-[data-headlessui-state]:rotate-180 transition-transform duration-200"
-                                weight="bold"
-                                size={12}
-                              />
+                              <div className="group-data-open/collapsible:rotate-180 transition-transform duration-200">
+                                <ArrowDown01 size={12} />
+                              </div>
                             </motion.div>
                           )}
                         </AnimatePresence>
-                      </AccordionButton>
-                      <AccordionPanel
-                        data-default-transition="false"
-                        className={cn(
-                          "py-0 flex flex-row gap-3 relative h-max",
-                          !isCollapsed && "pl-4.75 pr-0",
-                          isCollapsed && "bg-background/40 rounded-b-xl",
-                        )}
-                      >
-                        {!isCollapsed && (
-                          <div className="h-auto w-px bg-foreground/10" />
-                        )}
-                        <div className="flex flex-col relative gap-0.5 flex-1 min-w-0">
-                          {l.links &&
-                            l.links.map((ll: SidebarLink, ii: number) => (
-                              <Link key={ii} href={ll.href}>
+                      </Collapsible.Trigger>
+                    </AnimateIcon>
+                    <Collapsible.Panel
+                      data-default-transition="false"
+                      className={cn(
+                        "py-0 flex flex-row gap-3 relative h-max",
+                        !isCollapsed && "pl-4.75 pr-0",
+                        isCollapsed && "bg-background/40 rounded-b-xl",
+                      )}
+                    >
+                      {!isCollapsed && (
+                        <div className="h-auto w-px bg-foreground/10" />
+                      )}
+                      <div className="flex flex-col relative gap-0.5 flex-1 min-w-0">
+                        {l.links &&
+                          l.links.map((ll: SidebarLink, ii: number) => (
+                            <Link key={ii} href={ll.href}>
+                              <AnimateIcon animateOnHover asChild>
                                 <Button
                                   className={cn(
                                     "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative overflow-hidden",
                                     pathname === ll.href && "text-foreground",
+                                    isSidebarCollapsed && "p-2.5"
                                   )}
                                   variant="ghost"
                                 >
@@ -590,7 +561,7 @@ function AppSidebar() {
                                         data-default-transition="false"
                                         id="sidebar-link-active"
                                         layoutId="sidebar-link-active"
-                                        className="absolute inset-0 rounded-lg bg-foreground/10 z-10"
+                                        className="absolute inset-0 rounded-lg bg-foreground/10 z-50 transition-none!"
                                       />
                                     )}
                                   </AnimatePresence>
@@ -609,87 +580,101 @@ function AppSidebar() {
                                     )}
                                   </AnimatePresence>
                                 </Button>
-                              </Link>
-                            ))}
-                        </div>
-                      </AccordionPanel>
-                    </AccordionItem>
-                  </Accordion>
+                              </AnimateIcon>
+                            </Link>
+                          ))}
+                      </div>
+                    </Collapsible.Panel>
+                  </Collapsible.Root>
                 ) : (
                   <Link key={l.id} href={l.href}>
-                    <Button
-                      className={cn(
-                        "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative overflow-hidden",
-                        pathname === l.href && "text-foreground",
-                      )}
-                      variant="ghost"
-                    >
-                      <AnimatePresence mode="wait">
-                        {pathname === l.href && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            data-default-transition="false"
-                            id="sidebar-link-active"
-                            layoutId="sidebar-link-active"
-                            className="absolute inset-0 rounded-lg bg-foreground/10 z-10"
-                          />
+                    <AnimateIcon animateOnHover asChild>
+                      <Button
+                        className={cn(
+                          "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative overflow-hidden",
+                          pathname === l.href && "text-foreground",
+                          isSidebarCollapsed && "p-2.5"
                         )}
-                      </AnimatePresence>
-                      <div className="size-4 shrink-0 flex items-center justify-center">{l.icon}</div>
-                      <AnimatePresence initial={false} mode="popLayout">
-                        {!isCollapsed && (
-                          <motion.span
-                            initial={{ opacity: 0, x: -6 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -6 }}
-                            transition={{ duration: 0.15, ease: "easeOut" }}
-                            className="text-xs truncate"
-                          >
-                            {l.text}
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                    </Button>
+                        variant="ghost"
+                      >
+                        <AnimatePresence mode="wait">
+                          {pathname === l.href && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              data-default-transition="false"
+                              id="sidebar-link-active"
+                              layoutId="sidebar-link-active"
+                              className="absolute inset-0 rounded-lg bg-foreground/10 z-50 transition-none!"
+                            />
+                          )}
+                        </AnimatePresence>
+                        <div className="size-4 shrink-0 flex items-center justify-center">{l.icon}</div>
+                        <AnimatePresence initial={false} mode="popLayout">
+                          {!isCollapsed && (
+                            <motion.span
+                              initial={{ opacity: 0, x: -6 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -6 }}
+                              transition={{ duration: 0.15, ease: "easeOut" }}
+                              className="text-xs truncate"
+                            >
+                              {l.text}
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </Button>
+                    </AnimateIcon>
                   </Link>
                 ),
               )}
             </div>
           ))}
         </div>
-        <Button
-          className={cn(
-            "rounded-lg overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start mt-auto shrink-0 max-md:hidden",
-            "hover:bg-primary/5 hover:text-primary",
-          )}
-          variant="ghost"
-          onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
-        >
-          <div className="size-4 shrink-0 flex items-center justify-center">
-            <SidebarSimpleIcon
-              weight="bold"
-              size={14}
-              className={cn(
-                "transition-transform duration-300 ease-out",
-                isSidebarCollapsed && "rotate-180",
-              )}
-            />
-          </div>
-          <AnimatePresence initial={false} mode="popLayout">
-            {!isCollapsed && (
-              <motion.span
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -6 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-                className="text-xs truncate"
-              >
-                {lang.data.app.sidebar.collapse}
-              </motion.span>
+        <AnimateIcon animateOnHover asChild>
+          <Button
+            className={cn(
+              "rounded-lg overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start mt-auto shrink-0 max-md:hidden",
+              "hover:bg-primary/5 hover:text-primary",
+              isSidebarCollapsed && "p-2.5"
             )}
-          </AnimatePresence>
-        </Button>
+            variant="ghost"
+            onClick={() => setSidebarCollapsed(!isSidebarCollapsed)}
+          >
+            <div className={cn(
+              "size-4 shrink-0 flex items-center justify-center duration-300 ease-out",
+              isSidebarCollapsed && "rotate-180",
+            )}>
+              <PanelLeftClose
+                size={14}
+                className={cn(
+                  "rotate-180",
+                  !isSidebarCollapsed && "hidden",
+                )}
+              />
+              <PanelLeftOpen
+                size={14}
+                className={cn(
+                  isSidebarCollapsed && "hidden",
+                )}
+              />
+            </div>
+            <AnimatePresence initial={false} mode="popLayout">
+              {!isCollapsed && (
+                <motion.span
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -6 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  className="text-xs truncate"
+                >
+                  {lang.data.app.sidebar.collapse}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Button>
+        </AnimateIcon>
 
         <NavUser isCollapsed={isCollapsed} />
       </motion.aside>

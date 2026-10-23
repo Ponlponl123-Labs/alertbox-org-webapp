@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import {
+  Momo_Trust_Display,
   Noto_Serif_Thai,
   Afacad,
+  Inter,
   Inter_Tight,
+  DM_Sans,
+  Rubik,
   Fredoka,
   Geist_Mono,
   JetBrains_Mono,
@@ -21,6 +25,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import BackendLivenessChecker from "@/components/shared/backend-liveness-checker";
 import BackendLivenessBanner from "@/components/shared/backend-liveness-banner";
+
+const momoTrustDisplay = Momo_Trust_Display({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-momo-trust-display",
+  display: "swap",
+});
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -80,6 +91,24 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+const inter = Inter({
+  variable: "--font-inter-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const rubik = Rubik({
+  variable: "--font-rubik-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "AlertBox.org",
   description: "Alert Box Donation for Everyone",
@@ -96,6 +125,10 @@ export default function RootLayout({
       className={cn(
         "h-full",
         "antialiased",
+        momoTrustDisplay.variable,
+        inter.variable,
+        dmSans.variable,
+        rubik.variable,
         baiJamJuree.variable,
         fredokaSans.variable,
         geistMono.variable,
@@ -116,8 +149,10 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: preload }} />
       </head>
       <body className="min-h-[calc(100dvh-var(--status-banner-height,0))] flex flex-col relative transition-[margin-top] duration-200 ease-out"
+        suppressHydrationWarning
         style={{
-          overflow: "initial"
+          overflowX: "initial",
+          overflowY: "initial"
         }}
       >
         <Toaster />

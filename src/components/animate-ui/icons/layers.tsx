@@ -8,7 +8,7 @@ import {
   useAnimateIconContext,
   IconWrapper,
   type IconProps,
-} from '@/components/animate-ui/icons/icon';
+} from '@animate-ui/react/icons';
 
 type LayersProps = IconProps<keyof typeof animations>;
 

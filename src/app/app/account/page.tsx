@@ -87,7 +87,7 @@ function Page() {
     setIsSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append("name", newName.trim());
+      formData.append("displayName", newName.trim());
 
       const res = await authFetch(getApiUrl("/api/v1/me"), {
         method: "PATCH",
@@ -144,10 +144,13 @@ function Page() {
           >
             <Avatar className="size-full rounded-none group-hover:blur-xs transition-all">
               {userInfo?.avatar && (
-                <AvatarImage src={userInfo.avatar} alt={userInfo?.name || "User"} />
+                <AvatarImage
+                  src={userInfo.avatar}
+                  alt={userInfo?.displayName || userInfo?.name || "User"}
+                />
               )}
               <AvatarFallback className="text-3xl font-bold">
-                {getFallbackInitial(userInfo?.name || "?")}
+                {getFallbackInitial(userInfo?.displayName || userInfo?.name || "?")}
               </AvatarFallback>
             </Avatar>
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
@@ -170,13 +173,13 @@ function Page() {
           <div className="flex flex-col items-center sm:items-start gap-2 flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="font-bold text-2xl truncate">
-                {userInfo?.name || "User"}
+                {userInfo?.displayName || userInfo?.name || "User"}
               </h2>
               <Button
                 size={"icon"}
                 variant="ghost"
                 onClick={() => {
-                  setNewName(userInfo?.name || "");
+                  setNewName(userInfo?.displayName || userInfo?.name || "");
                   setIsNameDialogOpen(true);
                 }}
                 className="size-8 rounded-lg bg-foreground/5 hover:bg-foreground/10 text-foreground/70 transition-colors"
@@ -185,11 +188,17 @@ function Page() {
                 <PencilSimpleIcon weight="fill" className="size-4" />
               </Button>
             </div>
-            {userInfo?.email && (
-              <span className="text-foreground/50 text-sm font-medium">
-                {userInfo.email}
-              </span>
-            )}
+            <div className="flex flex-wrap items-center gap-2 text-foreground/50 text-sm font-medium">
+              {userInfo?.name && (
+                <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded-md text-foreground/70">
+                  @{userInfo.name}
+                </span>
+              )}
+              {userInfo?.name && userInfo?.email && <span>•</span>}
+              {userInfo?.email && (
+                <span>{userInfo.email}</span>
+              )}
+            </div>
           </div>
         </div>
       </div>

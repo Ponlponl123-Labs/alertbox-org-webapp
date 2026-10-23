@@ -27,7 +27,15 @@ export function canAccessStreamer(
   fallbackOrgPerm?: bigint,
 ): boolean {
   if (!activeOrg) return false;
-  const role = (activeOrg.role || "").toLowerCase();
+  const roleObj = activeOrg.role as unknown;
+  const rawRole = typeof activeOrg.role === "string"
+    ? activeOrg.role
+    : roleObj && typeof roleObj === "object" && "name" in roleObj && typeof (roleObj as Record<string, unknown>).name === "string"
+      ? ((roleObj as Record<string, unknown>).name as string)
+      : roleObj && typeof roleObj === "object" && "role" in roleObj && typeof (roleObj as Record<string, unknown>).role === "string"
+        ? ((roleObj as Record<string, unknown>).role as string)
+        : "";
+  const role = rawRole.toLowerCase();
   if (role === "owner" || role === "admin") return true;
 
   if (requiredStreamerPerm !== undefined && activeStreamer?.permissions !== undefined) {

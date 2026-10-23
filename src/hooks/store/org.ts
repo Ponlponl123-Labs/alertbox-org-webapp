@@ -25,22 +25,51 @@ export type OrgStoreActions = {
 
 export type OrgStore = OrgStoreState & OrgStoreActions;
 
+export const isInvalidOrgId = (id?: string | null): boolean =>
+  !id || /^\d{4}-\d{2}-\d{2}/.test(id) || id.includes("GMT") || id === "undefined" || id === "null";
+
+const getInitialOrgId = () => {
+  if (typeof window === "undefined") return null;
+  const stored = localStorage.getItem("ab_active_org_id");
+  if (isInvalidOrgId(stored)) {
+    localStorage.removeItem("ab_active_org_id");
+    return null;
+  }
+  return stored;
+};
+
 export const orgStore = createStore<OrgStore>()((set, get) => ({
   organizations: [],
-  activeOrgId: typeof window !== "undefined" ? localStorage.getItem("ab_active_org_id") : null,
+  activeOrgId: getInitialOrgId(),
   activeStreamerId: typeof window !== "undefined" ? localStorage.getItem("ab_active_streamer_id") : null,
   isOrgMode: typeof window !== "undefined" ? localStorage.getItem("ab_view_mode") === "org" : false,
 
   syncFromMemberships: (memberships) => {
-    const orgs: Organization[] = (memberships || []).map((m: OrganizationMember) => ({
-      ...m.organization,
-      role: m.role,
-      permissions: m.permissions,
-    }));
+    const orgs: Organization[] = (memberships || [])
+      .map((item: OrganizationMember | Record<string, unknown>) => {
+        const m = item as Record<string, unknown>;
+        const orgData = (m.organization || (m.slug ? m : null)) as Record<string, unknown> | null;
+        if (!orgData) return null;
+        const roleObj = m.role as unknown;
+        const roleStr = typeof m.role === "string"
+          ? m.role
+          : roleObj && typeof roleObj === "object" && "name" in roleObj && typeof (roleObj as Record<string, unknown>).name === "string"
+            ? ((roleObj as Record<string, unknown>).name as string)
+            : "";
+        const typeStr = typeof orgData?.type === "string" ? orgData.type : "COMMUNITY";
+        return {
+          ...orgData,
+          id: String(orgData.id),
+          type: typeStr as Organization["type"],
+          role: roleStr as Organization["role"],
+          permissions: m.permissions as string | undefined,
+        } as Organization;
+      })
+      .filter((o): o is Organization => Boolean(o && !isInvalidOrgId(o.id)));
 
     const state = get();
     let nextOrgId = state.activeOrgId;
-    if (!orgs.some((o) => o.id === nextOrgId) && orgs.length > 0) {
+    if ((isInvalidOrgId(nextOrgId) || !orgs.some((o) => o.id === nextOrgId)) && orgs.length > 0) {
       nextOrgId = orgs[0].id;
     }
 
@@ -63,7 +92,7 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
     }
 
     if (typeof window !== "undefined") {
-      if (nextOrgId) {
+      if (nextOrgId && !isInvalidOrgId(nextOrgId)) {
         localStorage.setItem("ab_active_org_id", nextOrgId);
         setCookie("ab_org_id", nextOrgId, { path: "/" });
       }
@@ -86,6 +115,7 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
   },
 
   setActiveOrgId: (id: string) => {
+    if (isInvalidOrgId(id)) return;
     const orgs = get().organizations;
     const org = orgs.find((o) => o.id === id);
     const isOwnerOrAdmin = org?.role === "OWNER" || org?.role === "ADMIN";

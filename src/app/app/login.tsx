@@ -11,8 +11,8 @@ import { Google, Streamlabs } from "@thesvg/react";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
 import { UndrawBiometricLogin } from "@/components/svg";
-import { BellRing } from "@/components/animate-ui/icons/bell-ring";
 import GradientASCII from "@/components/effects/gradient-ascii";
+import { Bell } from "@/components/animate-ui/icons/bell";
 
 function Login() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -59,7 +59,7 @@ function Login() {
               {lang.data.app.login.description}
             </p>
             <Alert className="mx-auto mt-1 -mb-1 text-[13px] rounded-xl border-2 bg-foreground/5 border-foreground/5 p-3 backdrop-blur-xl select-none pointer-events-none">
-              <BellRing animate="default" loop loopDelay={1} className={"size-5 mb-1"} />
+              <Bell animate="default" loop loopDelay={1} className={"size-5 mb-1"} />
               <strong className="font-medium">
                 {lang.data.app.login.beta.title}
               </strong>

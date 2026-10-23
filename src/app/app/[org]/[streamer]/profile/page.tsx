@@ -356,7 +356,7 @@ function Page() {
     }
   };
 
-  const role = (activeOrg?.role || "").toLowerCase();
+  const role = (typeof activeOrg?.role === "string" ? activeOrg.role : "").toLowerCase();
   const isOwner = role === "owner";
   const isOwnerOrAdmin = isOwner || role === "admin";
   const canEditProfile = canAccessStreamer(activeOrg, currentStreamer, StreamerPerm.STREAMER_MANAGE, OrgPerm.STREAMER_MANAGE);

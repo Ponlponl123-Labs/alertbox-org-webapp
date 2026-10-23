@@ -33,7 +33,7 @@ export default function NewStreamerPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const orgKey = activeOrg?.slug || activeOrg?.id || "org";
-  const role = (activeOrg?.role || "").toLowerCase();
+  const role = (typeof activeOrg?.role === "string" ? activeOrg.role : "").toLowerCase();
   const isOwnerOrAdmin = role === "owner" || role === "admin";
   const streamers = activeOrg?.streamers || [];
   const isEnterprise = activeOrg?.type === "ENTERPRISE";

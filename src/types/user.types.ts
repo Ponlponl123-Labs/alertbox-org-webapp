@@ -33,6 +33,7 @@ export interface User {
   type?: "REGULAR" | "SUPPORTER" | "OPERATOR";
   email: string;
   name?: string | null;
+  displayName?: string | null;
   avatar?: string | null;
   createWith: string;
   createdAt: string;
@@ -40,8 +41,6 @@ export interface User {
   disabledAt: string | null;
   deletedAt: string | null;
   memberships?: OrganizationMember[];
-  profile: Profile | null;
-  widgets: Widget[];
 }
 
 export interface Profile {

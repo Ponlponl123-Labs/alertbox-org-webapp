@@ -525,7 +525,7 @@ export default function ContributionSkyline({
   const isLoading = Boolean(orgId && !data)
 
   React.useEffect(() => {
-    if (!orgId || dataProp) return
+    if (!orgId || dataProp || /^\d{4}-\d{2}-\d{2}/.test(orgId) || orgId.includes("GMT")) return
     const isFresh = Boolean(cachedEntry && Date.now() - cachedEntry.timestamp < 120_000)
     if (isFresh) return
     let active = true

@@ -265,7 +265,7 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
   const [showSample, setShowSample] = React.useState(isDev);
 
   React.useEffect(() => {
-    if (!orgId) return;
+    if (!orgId || /^\d{4}-\d{2}-\d{2}/.test(orgId) || orgId.includes("GMT")) return;
     let active = true;
 
     authFetch(getApiUrl(`/api/v1/org/${orgId}/transactions/analytics?timeframe=${timeframe}`))

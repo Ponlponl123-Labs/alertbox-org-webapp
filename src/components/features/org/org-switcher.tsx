@@ -5,19 +5,23 @@ import { useRouter } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { GalleryVerticalEnd, ChevronsUpDown, Plus, Check, KeyRound } from "lucide-react";
+import { GalleryVerticalEnd, Plus, Check, KeyRound } from "lucide-react";
+import { ChevronUpDown } from "@/components/animate-ui/icons/chevron-up-down";
+import { AnimateIcon } from "@animate-ui/react/icons";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 
 export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
   const router = useRouter();
   const { userInfo, organizations, activeOrg, setActiveOrgId, setActiveStreamerId } = useUserContext();
   const [open, setOpen] = useState(false);
 
+  const userFallbackName = userInfo?.displayName?.trim() || userInfo?.name?.trim();
   const displayName =
     activeOrg?.name ||
     (organizations.length === 0
       ? "Workspace"
-      : userInfo?.name
-        ? `${userInfo.name}'s Org`
+      : userFallbackName
+        ? `${userFallbackName}'s Org`
         : "Workspace");
   const displayType =
     activeOrg?.type === "ENTERPRISE"
@@ -60,48 +64,50 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
   return (
     <div className="w-full shrink-0 mb-1">
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger
-          className={cn(
-            "flex items-center gap-3 w-full p-2 rounded-lg hover:bg-foreground/5 data-[state=open]:bg-foreground/5 text-left select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
-            isCollapsed && "justify-center p-1.5",
-          )}
-          title={displayName}
-        >
-          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-blue-600 text-white shrink-0 shadow-sm font-semibold text-xs">
-            {activeOrg?.avatar ? (
-              <Image
-                src={activeOrg.avatar}
-                alt={displayName}
-                width={32}
-                height={32}
-                className="size-full rounded-md object-cover"
-                unoptimized
-              />
-            ) : (
-              <GalleryVerticalEnd className="size-4" />
+        <AnimateIcon animateOnHover animation="default" asChild>
+          <PopoverTrigger
+            className={cn(
+              "flex items-center gap-3 w-full p-2 rounded-lg hover:bg-foreground/5 data-[state=open]:bg-foreground/5 text-left select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
+              isCollapsed && "justify-center p-1.5",
             )}
-          </div>
-
-          {!isCollapsed && (
-            <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
-              <span className="truncate font-semibold text-foreground text-sm">
-                {displayName}
-              </span>
-              <span className="truncate text-xs text-muted-foreground">
-                {displayType}
-              </span>
+            title={displayName}
+          >
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-foreground text-background shrink-0 shadow-sm font-semibold text-xs">
+              {activeOrg?.avatar ? (
+                <Image
+                  src={activeOrg.avatar}
+                  alt={displayName}
+                  width={32}
+                  height={32}
+                  className="size-full rounded-md object-cover"
+                  unoptimized
+                />
+              ) : (
+                <GalleryVerticalEnd className="size-4" />
+              )}
             </div>
-          )}
 
-          {!isCollapsed && (
-            <ChevronsUpDown className="ml-auto size-4 text-muted-foreground/70 shrink-0" />
-          )}
-        </PopoverTrigger>
+            {!isCollapsed && (
+              <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                <span className="truncate font-semibold text-foreground text-sm">
+                  {displayName}
+                </span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {displayType}
+                </span>
+              </div>
+            )}
+
+            {!isCollapsed && (
+              <ChevronUpDown className="ml-auto size-4 text-muted-foreground/70 shrink-0" />
+            )}
+          </PopoverTrigger>
+        </AnimateIcon>
 
         <PopoverContent
           align="start"
           sideOffset={6}
-          className="w-64 p-1.5 rounded-lg bg-popover border border-border text-popover-foreground shadow-lg"
+          className="w-64 p-1.5 rounded-xl bg-popover text-popover-foreground shadow-none border-none"
         >
           <div className="flex flex-col gap-1">
             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
@@ -132,13 +138,13 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                         setOpen(false);
                       }}
                       className={cn(
-                        "flex items-center gap-2.5 w-full p-2 rounded-md text-left text-xs",
+                        "flex items-center gap-2.5 w-full p-2 rounded-lg text-left text-xs",
                         isSelected
                           ? "bg-accent text-accent-foreground font-medium"
                           : "hover:bg-accent/60 text-foreground/80",
                       )}
                     >
-                      <div className="flex size-6 items-center justify-center rounded-md bg-blue-600/90 text-white font-semibold text-[10px] shrink-0">
+                      <div className="flex size-7 items-center justify-center rounded-md bg-foreground text-background font-semibold text-[10px] shrink-0">
                         {org.avatar ? (
                           <Image
                             src={org.avatar}
@@ -155,19 +161,19 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                       <div className="grid flex-1 min-w-0 leading-tight">
                         <span className="truncate font-medium">{org.name}</span>
                         <span className="truncate text-[10px] text-muted-foreground capitalize">
-                          {org.type?.toLowerCase() || "community"}
+                          {typeof org.type === "string" ? org.type.toLowerCase() : "community"}
                         </span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground ml-auto shrink-0 font-mono opacity-60">
-                        ⌘{index + 1}
-                      </span>
+                      <KbdGroup>
+                        <Kbd>Ctrl + {index + 1}</Kbd>
+                      </KbdGroup>
                       {isSelected && <Check className="size-3.5 text-primary shrink-0" />}
                     </button>
                   );
                 })
               ) : (
-                <div className="flex items-center gap-2.5 w-full p-2 rounded-md text-left text-xs text-muted-foreground">
-                  <div className="flex size-6 items-center justify-center rounded-md bg-muted text-muted-foreground font-semibold text-[10px] shrink-0">
+                <div className="flex items-center gap-2.5 w-full p-2 rounded-lg text-left text-xs text-muted-foreground">
+                  <div className="flex size-7 items-center justify-center rounded-lg bg-muted text-muted-foreground font-semibold text-[10px] shrink-0">
                     <GalleryVerticalEnd className="size-3" />
                   </div>
                   <div className="grid flex-1 min-w-0 leading-tight">
@@ -177,32 +183,28 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                 </div>
               )}
             </div>
-
-
-
-            <div className="h-px bg-border my-1 -mx-1" />
             <button
               type="button"
-              className="flex items-center gap-2.5 w-full p-2 rounded-md hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground/80 text-left"
+              className="flex items-center gap-2.5 w-full p-2 rounded-lg hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground/80 text-left"
               onClick={() => {
                 setOpen(false);
                 router.push("/app/org/create");
               }}
             >
-              <div className="flex size-6 items-center justify-center rounded-md border border-dashed border-border bg-background shrink-0">
+              <div className="flex size-7 items-center justify-center rounded-lg border border-dashed border-border shrink-0">
                 <Plus className="size-3.5" />
               </div>
               <span>Create organization</span>
             </button>
             <button
               type="button"
-              className="flex items-center gap-2.5 w-full p-2 rounded-md hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground/80 text-left"
+              className="flex items-center gap-2.5 w-full p-2 rounded-lg hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground/80 text-left"
               onClick={() => {
                 setOpen(false);
                 router.push("/app/org/join");
               }}
             >
-              <div className="flex size-6 items-center justify-center rounded-md border border-dashed border-border bg-background shrink-0">
+              <div className="flex size-7 items-center justify-center rounded-lg border border-dashed border-border shrink-0">
                 <KeyRound className="size-3.5" />
               </div>
               <span>Join organization</span>
