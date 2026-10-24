@@ -441,7 +441,7 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 h-36">
               <div className="relative rounded-2xl border border-border/80 bg-card/50 backdrop-blur-md p-5 flex flex-col justify-between overflow-hidden shadow-xs hover:border-border transition-colors">
                 <div className="absolute inset-x-0 bottom-0 h-20 pointer-events-none opacity-20 dark:opacity-25">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} className={"mask-l-from-0%"}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 200, height: 80 }} className={"mask-l-from-0%"}>
                     <AreaChart data={timeline} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                       <Area
                         type="monotone"
@@ -473,7 +473,7 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
 
               <div className="relative rounded-2xl border border-border/80 bg-card/50 backdrop-blur-md p-5 flex flex-col justify-between overflow-hidden shadow-xs hover:border-border transition-colors">
                 <div className="absolute inset-x-0 bottom-0 h-20 pointer-events-none opacity-20 dark:opacity-25">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} className={"mask-l-from-0%"}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 200, height: 80 }} className={"mask-l-from-0%"}>
                     <AreaChart data={timeline} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                       <Area
                         type="monotone"
@@ -503,7 +503,7 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
 
               <div className="relative rounded-2xl border border-border/80 bg-card/50 backdrop-blur-md p-5 flex flex-col justify-between overflow-hidden shadow-xs hover:border-border transition-colors">
                 <div className="absolute inset-x-0 bottom-0 h-20 pointer-events-none opacity-20 dark:opacity-25">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} className={"mask-l-from-0%"}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 200, height: 80 }} className={"mask-l-from-0%"}>
                     <AreaChart data={timeline} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                       <Area
                         type="monotone"

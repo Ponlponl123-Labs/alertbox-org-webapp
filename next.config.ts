@@ -23,6 +23,12 @@ const allowedDevOrigins = process.env.DEV_ALLOWED_HOST === "false"
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  poweredByHeader: false,
+  compress: false,
+  generateEtags: false,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react", "lucide-react"],
   },
@@ -42,6 +48,7 @@ const nextConfig: NextConfig = {
   },
   allowedDevOrigins,
   images: {
+    unoptimized: true,
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400,
     dangerouslyAllowLocalIP: allowedLocalhostWhen.includes(process.env.NODE_ENV || ""),
