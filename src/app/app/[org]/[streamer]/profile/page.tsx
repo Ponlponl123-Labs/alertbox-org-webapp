@@ -45,7 +45,7 @@ import { ImageCropperModal } from "@/components/features/modals/image-cropper-mo
 import Link from "next/link";
 import { Input } from "react-smooth-input";
 import { useStore } from "zustand";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import ProfilePreview from "./profile-preview";
 import {
   Dialog,

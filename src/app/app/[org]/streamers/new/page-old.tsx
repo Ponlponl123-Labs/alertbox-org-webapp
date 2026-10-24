@@ -16,7 +16,7 @@ import {
   ShieldCheckIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import { hasPermission } from "@/lib/rbac";
 import { OrgPerm } from "@/consts/permission";
 import { motion } from "motion/react";

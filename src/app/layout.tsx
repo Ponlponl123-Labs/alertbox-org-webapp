@@ -22,15 +22,16 @@ import { cn } from "@/lib/utils";
 import "@/styles/globals.css";
 import { UserContextProvider } from "@/contexts/user";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "@/components/ui/sonner";
 import BackendLivenessChecker from "@/components/shared/backend-liveness-checker";
 import BackendLivenessBanner from "@/components/shared/backend-liveness-banner";
+import Provider from "./provider";
 
 const momoTrustDisplay = Momo_Trust_Display({
   subsets: ["latin"],
   weight: ["400"],
   variable: "--font-momo-trust-display",
   display: "swap",
+  fallback: ['ui-sans-serif', 'system-ui', 'sans-serif']
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -155,17 +156,18 @@ export default function RootLayout({
           overflowY: "initial"
         }}
       >
-        <Toaster />
         <UserContextProvider>
           <BackendLivenessChecker />
           <BackendLivenessBanner />
           <TooltipProvider>
-            <Header />
-            <main id="app" className="w-[calc(100dvw-var(--scrollbar-margin,0))] min-h-[calc(100dvh-var(--status-banner-height,0))] flex flex-col">
-              {children}
-            </main>
-            <Footer />
-            <CountryFlagsPolyfill />
+            <Provider>
+              <Header />
+              <main id="app" className="w-[calc(100dvw-var(--scrollbar-margin,0))] min-h-[calc(100dvh-var(--status-banner-height,0))] flex flex-col">
+                {children}
+              </main>
+              <Footer />
+              <CountryFlagsPolyfill />
+            </Provider>
           </TooltipProvider>
         </UserContextProvider>
       </body>

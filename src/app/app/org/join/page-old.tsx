@@ -16,7 +16,7 @@ import {
   ShieldCheck,
   Building2,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import Link from "next/link";
 import { PersonSimpleHikeIcon } from "@phosphor-icons/react";
 import { UndrawTeamwork } from "@/components/svg";

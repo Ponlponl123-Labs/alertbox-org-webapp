@@ -21,7 +21,7 @@ import {
   MagnifyingGlassIcon,
   SignOutIcon,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -352,7 +352,7 @@ export default function OrgSettingsPage() {
                 alt="Organization Banner"
                 width={800}
                 height={208}
-                className="w-full rounded-3xl object-cover"
+                className="w-full rounded-3xl object-cover pointer-events-none select-none"
                 unoptimized
               />
             ) : (
@@ -615,6 +615,9 @@ export default function OrgSettingsPage() {
         cropShape={cropType === "avatar" ? "round" : "rect"}
         aspect={cropType === "avatar" ? 1 : 3}
         title={cropType === "avatar" ? "Crop Organization Logo" : "Crop Organization Banner"}
+        className={cn(
+          cropType === "avatar" ? "" : "max-w-2xl!"
+        )}
         onCropComplete={onCropComplete}
       />
 

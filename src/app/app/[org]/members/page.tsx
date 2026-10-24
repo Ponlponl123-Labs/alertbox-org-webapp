@@ -25,7 +25,7 @@ import {
   ShieldCheckeredIcon,
   PersonSimpleTaiChiIcon,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import { getFallbackInitial, cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { getApiUrl } from "@/lib/api";
 import { Input } from "react-smooth-input";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import {
   LockKeyIcon,
   GlobeIcon,

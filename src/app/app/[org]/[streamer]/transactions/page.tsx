@@ -23,7 +23,7 @@ import {
   MoneyIcon,
   XIcon,
 } from "@phosphor-icons/react";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";

@@ -7,7 +7,7 @@ import { orgStore } from "@/hooks/store/org";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Plus, ArrowLeft, ArrowRight, Info } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import Link from "next/link";
 import { UndrawAgreement } from "@/components/svg";
 import { Input } from "react-smooth-input";

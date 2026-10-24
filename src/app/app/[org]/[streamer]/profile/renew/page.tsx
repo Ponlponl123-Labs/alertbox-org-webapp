@@ -11,7 +11,7 @@ import {
 import { useEffect, useState } from "react";
 import { Input } from "react-smooth-input";
 import { useStore } from "zustand";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import { getApiUrl } from "@/lib/api";
 
 import { useUserContext } from "@/contexts/user";

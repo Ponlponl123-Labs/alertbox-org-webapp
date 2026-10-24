@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
@@ -9,6 +9,22 @@ import { gsap } from "gsap";
 import { Input } from "react-smooth-input";
 import { LiquidButton } from "@/components/animate-ui/buttons/liquid";
 import { useUserContext } from "@/contexts/user";
+import { AnimatePresence, motion } from "motion/react";
+import { CheckmarkCircle02 } from "@/components/animate-ui/icons/hugeicons/checkmark-circle-02";
+import { CircleX } from "@/components/animate-ui/icons/hugeicons/circle-x";
+import { getApiUrl } from "@/lib/api";
+import { Loading03 } from "@/components/animate-ui/icons/hugeicons/loading-03";
+import { cn } from "@/lib/utils";
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
+
+const availabilityCache = new Map<string, "available" | "taken">();
+const RESERVED_NAMES = new Set([
+  "admin", "administrator", "system", "alertbox", "tip-to", "tipto", "support",
+  "help", "api", "auth", "login", "logout", "signin", "signup", "register",
+  "account", "profile", "settings", "config", "root", "security", "legal",
+  "terms", "privacy", "about", "contact", "blog", "dev", "developer", "docs",
+  "status", "mail", "email", "webmaster", "hostmaster", "postmaster"
+]);
 
 interface CreateStepProps {
   onComplete?: () => void;
@@ -72,6 +88,44 @@ const to = {
 export default function CreateStep({ onComplete }: CreateStepProps) {
   const { userInfo } = useUserContext();
   const isDark = useStore(coreStore, (s) => s.isDark);
+  const [step, setStep] = useState<number>(0);
+  const [channelDisplayName, setChannelDisplayName] = useState("");
+  const channelHandle = channelDisplayName
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+  const [queriedResult, setQueriedResult] = useState<{ handle: string; status: "available" | "taken" } | null>(null);
+
+  const handleStatus: "idle" | "checking" | "available" | "taken" = !channelHandle
+    ? "idle"
+    : RESERVED_NAMES.has(channelHandle) || !/^[a-z0-9_-]+$/.test(channelHandle) || channelHandle.length > 50
+      ? "taken"
+      : availabilityCache.get(channelHandle) ?? (queriedResult?.handle === channelHandle ? queriedResult.status : "checking");
+
+  useEffect(() => {
+    if (!channelHandle || RESERVED_NAMES.has(channelHandle) || !/^[a-z0-9_-]+$/.test(channelHandle) || channelHandle.length > 50) return;
+    if (availabilityCache.has(channelHandle)) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(getApiUrl(`/api/v1/org/streamers/check-username/${encodeURIComponent(channelHandle)}`), {
+          signal: controller.signal,
+        });
+        const status = res.ok ? "available" : "taken";
+        availabilityCache.set(channelHandle, status);
+        setQueriedResult({ handle: channelHandle, status });
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") return;
+      }
+    }, 350);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [channelHandle]);
   const containerRef = useRef<HTMLDivElement>(null);
   const splitRef = useRef<HTMLDivElement>(null);
   const content2H1Ref = useRef<HTMLDivElement>(null);
@@ -191,7 +245,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
         >
           <SplitText
             text="The new journey is coming.."
-            className="text-5xl font-medium text-center"
+            className="text-5xl font-medium text-center overflow-visible"
             effect="blur"
             color={isDark ? "#ffffff" : "#000000"}
             accentColor="#f43f5e"
@@ -218,15 +272,15 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
             onLetterAnimationComplete={handleSplitComplete}
           />
         </div>
-        <div className="absolute w-full flex flex-col max-w-sm lg:max-w-lg xl:max-w-2xl">
+        <AutoHeight className="absolute w-full flex flex-col max-w-sm lg:max-w-lg xl:max-w-2xl">
           <h1
             ref={content2H1Ref}
-            className="text-3xl tracking-wide font-medium opacity-0"
+            className="text-4xl tracking-wide font-medium opacity-0"
           >
             Everyone should call you...
           </h1>
-          <p ref={content2PRef} className="text-sm text-muted-foreground tracking-wide opacity-0 mt-1 mb-4">
-            You can change this later
+          <p ref={content2PRef} className="text-sm text-foreground/40 tracking-wide font-sans opacity-0 mt-1 mb-4">
+            You can change this later <strong className="text-foreground/60 font-sans">but username cannot.</strong>
           </p>
           <div ref={content3Ref} className="opacity-0">
             <Input
@@ -237,6 +291,51 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                 fontWeight: "500",
                 fontSize: "14px",
               }}
+              disabled={handleStatus === "checking" || step !== 0}
+              value={channelDisplayName}
+              onChange={(e) => setChannelDisplayName(e.target.value)}
+              endContent={
+                <div className="mr-3 flex items-center justify-center w-4.5 h-4.5">
+                  <AnimatePresence mode="popLayout">
+                    {handleStatus === "available" && (
+                      <motion.div
+                        key="available"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.15 }}
+                        className="text-emerald-500"
+                      >
+                        <CheckmarkCircle02 size={18} />
+                      </motion.div>
+                    )}
+                    {handleStatus === "checking" && (
+                      <motion.div
+                        key="checking"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.15 }}
+                        className="text-foreground"
+                      >
+                        <Loading03 size={18} animate="default" />
+                      </motion.div>
+                    )}
+                    {handleStatus === "taken" && (
+                      <motion.div
+                        key="taken"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.15 }}
+                        className="text-rose-500"
+                      >
+                        <CircleX size={18} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              }
               customMotion={{
                 char: {
                   initial: {
@@ -255,75 +354,115 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
               classNames={{ base: "h-12 rounded-xl" }}
             />
           </div>
-          <div ref={content4Ref} className="opacity-0 mt-4 flex items-center justify-end w-full">
-            <LiquidButton className="rounded-xl py-3 px-6 h-max [--liquid-button-background-color:var(--muted)] [--liquid-button-color:var(--primary)] hover:text-primary-foreground">
-              Let&apos;s go
-            </LiquidButton>
+          <div ref={content4Ref} className="opacity-0 mt-4 flex justify-between w-full">
+            <AnimatePresence mode="wait">
+              {
+                channelHandle &&
+                <motion.span
+                  initial={{
+                    y: -6,
+                    opacity: 0,
+                    filter: "blur(6px)"
+                  }}
+                  animate={{
+                    y: 0,
+                    opacity: 1,
+                    filter: "blur(0px)"
+                  }}
+                  key={"channel-handle"}
+                  className="text-sm text-muted-foreground font-sans">@{channelHandle}</motion.span>
+              }
+            </AnimatePresence>
+            <div />
+            <AnimatePresence mode="wait">
+              {
+                step == 0 &&
+                <motion.div
+                  key="lets-go-button"
+                  initial={{ opacity: 0, scale: 0.8, filter: "blur(3px)" }}
+                  animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, scale: 0.8, filter: "blur(3px)" }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <LiquidButton
+                    onClick={() => setStep(1)}
+                    disabled={handleStatus !== "available"}
+                    className="rounded-xl py-3 px-6 h-max [--liquid-button-background-color:var(--muted)] [--liquid-button-color:var(--primary)] hover:text-primary-foreground">
+                    Let&apos;s go
+                  </LiquidButton>
+                </motion.div>
+              }
+            </AnimatePresence>
           </div>
-        </div>
+        </AutoHeight>
       </div>
 
-      {MOCK_PROFILES.map((p, i) => (
-        <div
-          key={p.handle}
-          className={`absolute select-none ${p.cls}`}
-        >
+      <div className={cn(
+        "absolute inset-0 flex items-center justify-center pointer-events-none transition-all ease-out duration-500",
+        step != 0 && "scale-150 opacity-0 blur-md pointer-events-none"
+      )}>
+        {MOCK_PROFILES.map((p, i) => (
           <div
-            ref={(el) => {
-              parallaxWrappersRef.current[i] = el;
-            }}
+            key={p.handle}
+            className={`absolute select-none ${p.cls}`}
           >
             <div
               ref={(el) => {
-                cardsRef.current[i] = el;
+                parallaxWrappersRef.current[i] = el;
               }}
-              style={{
-                boxShadow: `0 20px 40px -15px ${p.accent}33`,
-              }}
-              className="group w-48 sm:w-52 lg:w-56 xl:w-60 rounded-2xl bg-card overflow-hidden flex flex-col text-left opacity-0 will-change-transform"
             >
-              <div className="h-20 mask-b-from-0 w-full relative shrink-0 overflow-hidden">
-                <Image
-                  src={p.avatar}
-                  alt={p.name}
-                  width={40}
-                  height={40}
-                  className="size-full object-cover transition-transform duration-500"
-                  unoptimized
-                />
-              </div>
-
-              <div className="px-3 -mt-5 flex items-end justify-between relative z-10">
-                <div
-                  style={{ borderColor: p.accent }}
-                  className="size-10 rounded-xl overflow-hidden ring-2 ring-card bg-card shrink-0 shadow-xs transition-transform duration-300"
-                >
+              <div
+                ref={(el) => {
+                  cardsRef.current[i] = el;
+                }}
+                style={{
+                  boxShadow: `0 20px 40px -15px ${p.accent}33`,
+                }}
+                className="group w-48 sm:w-52 lg:w-56 xl:w-60 rounded-2xl bg-card overflow-hidden flex flex-col text-left opacity-0 will-change-transform"
+              >
+                <div className="h-20 mask-b-from-0 w-full relative shrink-0 overflow-hidden">
                   <Image
                     src={p.avatar}
                     alt={p.name}
                     width={40}
                     height={40}
-                    className="size-full object-cover"
+                    className="size-full object-cover transition-transform duration-500"
                     unoptimized
                   />
                 </div>
-              </div>
 
-              <div className="p-3 pt-1.5 flex flex-col gap-0.5">
-                <span className="text-xs font-bold text-foreground truncate">
-                  {p.name}
-                </span>
-                <span className="text-[10px] font-medium truncate leading-none">
-                  {p.handle}
-                </span>
-                <p className="text-[10px] text-muted-foreground/80 line-clamp-1 leading-snug mt-1">
-                  {p.bio}
-                </p>
+                <div className="px-3 -mt-5 flex items-end justify-between relative z-10">
+                  <div
+                    style={{ borderColor: p.accent }}
+                    className="size-10 rounded-xl overflow-hidden ring-2 ring-card bg-card shrink-0 shadow-xs transition-transform duration-300"
+                  >
+                    <Image
+                      src={p.avatar}
+                      alt={p.name}
+                      width={40}
+                      height={40}
+                      className="size-full object-cover"
+                      unoptimized
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 pt-1.5 flex flex-col gap-0.5">
+                  <span className="text-xs font-bold text-foreground truncate">
+                    {p.name}
+                  </span>
+                  <span className="text-[10px] font-medium truncate leading-none">
+                    {p.handle}
+                  </span>
+                  <p className="text-[10px] text-muted-foreground/80 line-clamp-1 leading-snug mt-1">
+                    {p.bio}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

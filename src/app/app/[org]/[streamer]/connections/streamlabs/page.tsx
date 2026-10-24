@@ -8,7 +8,7 @@ import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import { getApiUrl } from "@/lib/api";
 import {
   ArrowLeftIcon,

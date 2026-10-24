@@ -23,7 +23,7 @@ import Image from "next/image";
 import { useUserContext } from "@/contexts/user";
 import { getApiUrl } from "@/lib/api";
 import { orgStore } from "@/hooks/store/org";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import { Spinner } from "@/components/ui/spinner";
 
 interface VerifiedOrgInfo {

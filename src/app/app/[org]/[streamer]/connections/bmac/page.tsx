@@ -9,7 +9,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { getApiUrl } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "react-smooth-input";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import {
   LockKeyIcon,
   GlobeIcon,

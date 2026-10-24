@@ -14,7 +14,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { getFallbackInitial } from "@/lib/utils";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 
 export default function StreamerDashboardPage() {
   const { activeOrg, activeStreamer } = useUserContext();

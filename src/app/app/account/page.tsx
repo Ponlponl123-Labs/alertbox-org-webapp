@@ -12,7 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 import { Input } from "react-smooth-input";
-import { toast } from "sonner";
+import { toast } from "@/components/custom-ui/toast";
 import { useStore } from "zustand";
 import { getApiUrl } from "@/lib/api";
 import { ImageCropperModal } from "@/components/features/modals/image-cropper-modal";
