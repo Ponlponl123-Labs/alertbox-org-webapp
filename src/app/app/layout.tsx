@@ -7,7 +7,6 @@ import AppSidebar from "@/components/layout/app-sidebar";
 import { motion, useScroll, useTransform } from "motion/react";
 import { clamp, cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import StreamerModeProtection from "@/components/shared/streamer-mode-protection";
 import { GithubLogoIcon, HandHeartIcon } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -76,21 +75,18 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       {userInfo && <AppSidebar />}
       <motion.main
         id="webapp-main"
-        className="flex-1 flex flex-col min-w-0 bg-black/10 dark:bg-background md:rounded-bl-4xl md:border-l md:border-border relative overflow-hidden"
+        className="flex-1 flex flex-col min-w-0 bg-black/10 dark:bg-background relative overflow-hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ delay: 0.56 }}
       >
-        {(pathname.includes("/connections") || pathname.startsWith("/app/account/security")) && userInfo && (
-          <StreamerModeProtection />
-        )}
         {!userInfo && !pathname.startsWith("/app/login/") ? (
           <Login />
         ) : (
           <ScrollArea
             ref={setScrollarea}
-            className={"h-[calc(100dvh-var(--status-banner-height,0))] flex-1 flex flex-col relative"}
+            className={"h-[calc(100dvh-var(--status-banner-height,0)-8px)] flex-1 flex flex-col relative m-1 rounded-sm border border-border"}
           >
             <motion.div
               style={{ opacity: headerOpacity }}

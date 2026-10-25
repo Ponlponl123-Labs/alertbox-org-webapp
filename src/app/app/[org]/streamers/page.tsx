@@ -72,10 +72,10 @@ export default function OrgStreamersPage() {
                 key={s.id}
                 variant={"secondary"}
                 onClick={() => router.push(`/app/${orgKey}/${s.name}`)}
-                className="p-4 rounded-xl flex flex-col justify-between gap-4 h-max"
+                className="p-4 rounded-2xl flex flex-col justify-between gap-4 h-max"
               >
                 <div className="flex items-center gap-3 w-full">
-                  <div className="size-12 rounded-lg bg-blue-600/90 text-white font-bold text-sm flex items-center justify-center shrink-0">
+                  <div className="size-12 rounded-lg bg-foreground text-background font-bold text-sm flex items-center justify-center shrink-0">
                     {s.avatar ? (
                       <Image
                         src={s.avatar}

@@ -35,6 +35,8 @@ import { Favourite } from "../animate-ui/icons/hugeicons/favourite";
 import { Activity01 } from "../animate-ui/icons/hugeicons/activity-01";
 import { Gift } from "../animate-ui/icons/hugeicons/gift";
 import { Tag } from "../animate-ui/icons/hugeicons/tag";
+import { Home03 } from "../animate-ui/icons/hugeicons/home-03";
+import { ScrollArea } from "../ui/scroll-area";
 
 interface SidebarLink {
   text: string;
@@ -296,17 +298,13 @@ function AppSidebar() {
       canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_ANALYTICS_VIEW, OrgPerm.ANALYTICS_VIEW) ||
       canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_TRANSACTION_VIEW, OrgPerm.TRANSACTION_VIEW);
 
-    const streamerTitle = activeStreamer?.displayName || activeStreamer?.name
-      ? `Channel: ${activeStreamer.displayName || activeStreamer.name}`
-      : "Channel";
-
     const streamerItems: SidebarItem[] = [];
 
-    if (canViewStreamerBasic || canViewAnalytics) {
+    if (canViewStreamerBasic) {
       streamerItems.push({
         id: "dashboard",
-        text: lang.data.header.user_chip.links.dashboard,
-        icon: <ChartLine size={16} />,
+        text: "Home",
+        icon: <Home03 size={16} />,
         href: `/app/${orgKey}/${streamerKey}`,
       });
     }
@@ -357,15 +355,24 @@ function AppSidebar() {
     if (canViewAnalytics) {
       streamerItems.push({
         id: "member",
-        text: "Supporters",
-        icon: <UsersRound className="rotate-0!" size={16} />,
+        text: "My Supporters",
+        icon: <Favourite className="rotate-0!" size={16} />,
         links: [
           {
-            text: "Donation history",
-            icon: <CreditCard size={16} />,
-            href: "/app/member/history",
+            text: "Leaderboard",
+            icon: <UsersRound size={16} />,
+            href: `/app/${orgKey}/${streamerKey}/member/supporters`,
           },
         ],
+      });
+    }
+
+    if (canViewAnalytics) {
+      streamerItems.push({
+        id: "analytics",
+        text: "Analytics",
+        icon: <ChartLine size={16} />,
+        href: `/app/${orgKey}/${streamerKey}/analytics`,
       });
     }
 
@@ -389,7 +396,7 @@ function AppSidebar() {
     return [
       {
         id: "streamer",
-        title: streamerTitle,
+        title: "",
         items: streamerItems,
       },
       {
@@ -476,162 +483,178 @@ function AppSidebar() {
         <OrgSwitcher isCollapsed={isCollapsed} />
         <StreamerSelector isCollapsed={isCollapsed} />
 
-        <div className="flex-1 flex flex-col gap-2 overflow-y-auto overflow-x-hidden min-h-0 pt-0.5">
-          {sections.map((section) => (
-            <div key={section.id} className="flex flex-col gap-0.5">
-              {!isCollapsed && section.title && (
-                <div className="px-2 pt-2 pb-0.5 text-xs font-semibold text-muted-foreground/60">
-                  {section.title}
-                </div>
-              )}
-              {section.items.map((l: SidebarItem) =>
-                !l.href ? (
-                  <Collapsible.Root key={`${l.id}-${sidebarHydrated}`} className={"group/collapsible"}>
-                    <AnimateIcon animateOnHover animateOnTap={"default-loop"} asChild>
-                      <Collapsible.Trigger
-                        className={cn(
-                          "rounded-lg whitespace-nowrap group overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start items-center flex no-underline!",
-                          "hover:bg-primary/5 hover:text-primary",
-                          isCollapsed &&
-                          "aria-expanded:bg-background/80 aria-expanded:rounded-b-none",
-                          isSidebarCollapsed && "p-2.5"
-                        )}
-                      >
-                        <div className="size-4 shrink-0 flex items-center justify-center">{l.icon}</div>
-                        <AnimatePresence initial={false} mode="popLayout">
-                          {!isCollapsed && (
-                            <motion.span
-                              initial={{ opacity: 0, x: -6 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: -6 }}
-                              transition={{ duration: 0.15, ease: "easeOut" }}
-                              className="text-xs truncate flex-1 text-left"
-                            >
-                              {l.text}
-                            </motion.span>
-                          )}
-                        </AnimatePresence>
-                        <AnimatePresence initial={false} mode="popLayout">
-                          {!isCollapsed && (
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.8 }}
-                              transition={{ duration: 0.15, ease: "easeOut" }}
-                              className="ml-auto flex items-center"
-                            >
-                              <div className="group-data-open/collapsible:rotate-180 transition-transform duration-200">
-                                <ArrowDown01 size={12} />
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </Collapsible.Trigger>
-                    </AnimateIcon>
-                    <Collapsible.Panel
-                      data-default-transition="false"
-                      className={cn(
-                        "py-0 flex flex-row gap-3 relative h-max",
-                        !isCollapsed && "pl-4.75 pr-0",
-                        isCollapsed && "bg-background/40 rounded-b-xl",
-                      )}
-                    >
-                      {!isCollapsed && (
-                        <div className="h-auto w-px bg-foreground/10" />
-                      )}
-                      <div className="flex flex-col relative gap-0.5 flex-1 min-w-0">
-                        {l.links &&
-                          l.links.map((ll: SidebarLink, ii: number) => (
-                            <Link key={ii} href={ll.href}>
-                              <AnimateIcon animateOnHover asChild>
-                                <Button
-                                  className={cn(
-                                    "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative overflow-hidden",
-                                    pathname === ll.href && "text-foreground",
-                                    isSidebarCollapsed && "p-2.5"
-                                  )}
-                                  variant="ghost"
+        <ScrollArea className="min-h-0 flex-1">
+          <AnimatePresence mode="popLayout">
+            <motion.div
+              initial={{ opacity: 0, x: 12, filter: "blur(4px)" }}
+              animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, x: -12, filter: "blur(4px)" }}
+              transition={{
+                duration: 0.2,
+                type: "spring",
+                stiffness: 160,
+                damping: 24,
+              }}
+              key={activeOrg?.id + "-" + activeStreamer?.id || "null"}
+              className="flex-1 flex flex-col gap-2 min-h-0 pt-0.5"
+            >
+              {sections.map((section) => (
+                <div key={section.id} className="flex flex-col gap-0.5">
+                  {!isCollapsed && section.title && (
+                    <div className="px-2 pt-2 pb-0.5 text-xs font-semibold text-muted-foreground/60">
+                      {section.title}
+                    </div>
+                  )}
+                  {section.items.map((l: SidebarItem) =>
+                    !l.href ? (
+                      <Collapsible.Root key={`${l.id}-${sidebarHydrated}`} className={"group/collapsible"}>
+                        <AnimateIcon animateOnHover animateOnTap={"default-loop"} asChild>
+                          <Collapsible.Trigger
+                            className={cn(
+                              "rounded-lg whitespace-nowrap group overflow-hidden text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start items-center flex no-underline!",
+                              "hover:bg-primary/5 hover:text-primary",
+                              isCollapsed &&
+                              "aria-expanded:bg-background/80 aria-expanded:rounded-b-none",
+                              isSidebarCollapsed && "p-2.5"
+                            )}
+                          >
+                            <div className="size-4 shrink-0 flex items-center justify-center">{l.icon}</div>
+                            <AnimatePresence initial={false} mode="popLayout">
+                              {!isCollapsed && (
+                                <motion.span
+                                  initial={{ opacity: 0, x: -6 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  exit={{ opacity: 0, x: -6 }}
+                                  transition={{ duration: 0.15, ease: "easeOut" }}
+                                  className="text-xs truncate flex-1 text-left"
                                 >
-                                  <AnimatePresence mode="wait">
-                                    {pathname === ll.href && (
-                                      <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        data-default-transition="false"
-                                        id="sidebar-link-active"
-                                        layoutId="sidebar-link-active"
-                                        className="absolute inset-0 rounded-lg bg-foreground/10 z-50 transition-none!"
-                                      />
-                                    )}
-                                  </AnimatePresence>
-                                  <div className="size-4 shrink-0 flex items-center justify-center">{ll.icon}</div>
-                                  <AnimatePresence initial={false} mode="popLayout">
-                                    {!isCollapsed && (
-                                      <motion.span
-                                        initial={{ opacity: 0, x: -6 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -6 }}
-                                        transition={{ duration: 0.15, ease: "easeOut" }}
-                                        className="text-xs truncate"
-                                      >
-                                        {ll.text}
-                                      </motion.span>
-                                    )}
-                                  </AnimatePresence>
-                                </Button>
-                              </AnimateIcon>
-                            </Link>
-                          ))}
-                      </div>
-                    </Collapsible.Panel>
-                  </Collapsible.Root>
-                ) : (
-                  <Link key={l.id} href={l.href}>
-                    <AnimateIcon animateOnHover asChild>
-                      <Button
-                        className={cn(
-                          "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative overflow-hidden",
-                          pathname === l.href && "text-foreground",
-                          isSidebarCollapsed && "p-2.5"
-                        )}
-                        variant="ghost"
-                      >
-                        <AnimatePresence mode="wait">
-                          {pathname === l.href && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              data-default-transition="false"
-                              id="sidebar-link-active"
-                              layoutId="sidebar-link-active"
-                              className="absolute inset-0 rounded-lg bg-foreground/10 z-50 transition-none!"
-                            />
+                                  {l.text}
+                                </motion.span>
+                              )}
+                            </AnimatePresence>
+                            <AnimatePresence initial={false} mode="popLayout">
+                              {!isCollapsed && (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  exit={{ opacity: 0, scale: 0.8 }}
+                                  transition={{ duration: 0.15, ease: "easeOut" }}
+                                  className="ml-auto flex items-center"
+                                >
+                                  <div className="group-data-open/collapsible:rotate-180 transition-transform duration-200">
+                                    <ArrowDown01 size={12} />
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </Collapsible.Trigger>
+                        </AnimateIcon>
+                        <Collapsible.Panel
+                          data-default-transition="false"
+                          className={cn(
+                            "py-0 flex flex-row gap-3 relative h-max",
+                            !isCollapsed && "pl-4.75 pr-0",
+                            isCollapsed && "bg-background/40 rounded-b-xl",
                           )}
-                        </AnimatePresence>
-                        <div className="size-4 shrink-0 flex items-center justify-center">{l.icon}</div>
-                        <AnimatePresence initial={false} mode="popLayout">
+                        >
                           {!isCollapsed && (
-                            <motion.span
-                              initial={{ opacity: 0, x: -6 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: -6 }}
-                              transition={{ duration: 0.15, ease: "easeOut" }}
-                              className="text-xs truncate"
-                            >
-                              {l.text}
-                            </motion.span>
+                            <div className="h-auto w-px bg-foreground/10" />
                           )}
-                        </AnimatePresence>
-                      </Button>
-                    </AnimateIcon>
-                  </Link>
-                ),
-              )}
-            </div>
-          ))}
-        </div>
+                          <div className="flex flex-col relative gap-0.5 flex-1 min-w-0">
+                            {l.links &&
+                              l.links.map((ll: SidebarLink, ii: number) => (
+                                <Link key={ii} href={ll.href}>
+                                  <AnimateIcon animateOnHover asChild>
+                                    <Button
+                                      className={cn(
+                                        "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative overflow-hidden",
+                                        pathname === ll.href && "text-foreground",
+                                        isSidebarCollapsed && "p-2.5"
+                                      )}
+                                      variant="ghost"
+                                    >
+                                      <AnimatePresence mode="wait">
+                                        {pathname === ll.href && (
+                                          <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            data-default-transition="false"
+                                            id="sidebar-link-active"
+                                            layoutId="sidebar-link-active"
+                                            className="absolute inset-0 rounded-lg bg-foreground/10 z-50 transition-none!"
+                                          />
+                                        )}
+                                      </AnimatePresence>
+                                      <div className="size-4 shrink-0 flex items-center justify-center">{ll.icon}</div>
+                                      <AnimatePresence initial={false} mode="popLayout">
+                                        {!isCollapsed && (
+                                          <motion.span
+                                            initial={{ opacity: 0, x: -6 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -6 }}
+                                            transition={{ duration: 0.15, ease: "easeOut" }}
+                                            className="text-xs truncate"
+                                          >
+                                            {ll.text}
+                                          </motion.span>
+                                        )}
+                                      </AnimatePresence>
+                                    </Button>
+                                  </AnimateIcon>
+                                </Link>
+                              ))}
+                          </div>
+                        </Collapsible.Panel>
+                      </Collapsible.Root>
+                    ) : (
+                      <Link key={l.id} href={l.href}>
+                        <AnimateIcon animateOnHover asChild>
+                          <Button
+                            className={cn(
+                              "rounded-lg text-base gap-2.25 border-0 p-3 h-9 max-w-none text-foreground/40 w-full justify-start relative overflow-hidden",
+                              pathname === l.href && "text-foreground",
+                              isSidebarCollapsed && "p-2.5"
+                            )}
+                            variant="ghost"
+                          >
+                            <AnimatePresence mode="wait">
+                              {pathname === l.href && (
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  data-default-transition="false"
+                                  id="sidebar-link-active"
+                                  layoutId="sidebar-link-active"
+                                  className="absolute inset-0 rounded-lg bg-foreground/10 z-50 transition-none!"
+                                />
+                              )}
+                            </AnimatePresence>
+                            <div className="size-4 shrink-0 flex items-center justify-center">{l.icon}</div>
+                            <AnimatePresence initial={false} mode="popLayout">
+                              {!isCollapsed && (
+                                <motion.span
+                                  initial={{ opacity: 0, x: -6 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  exit={{ opacity: 0, x: -6 }}
+                                  transition={{ duration: 0.15, ease: "easeOut" }}
+                                  className="text-xs truncate"
+                                >
+                                  {l.text}
+                                </motion.span>
+                              )}
+                            </AnimatePresence>
+                          </Button>
+                        </AnimateIcon>
+                      </Link>
+                    ),
+                  )}
+                </div>
+              ))}
+            </motion.div>
+          </AnimatePresence>
+        </ScrollArea>
         <AnimateIcon animateOnHover asChild>
           <Button
             className={cn(

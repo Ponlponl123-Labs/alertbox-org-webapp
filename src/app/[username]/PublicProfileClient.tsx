@@ -341,8 +341,8 @@ export default function PublicProfileClient({
         } as React.CSSProperties
       }
     >
-      <div className="absolute w-[400px] h-[400px] rounded-full hidden supports-[filter:blur(1px)]:block blur-[120px] opacity-10 dark:opacity-20 pointer-events-none -top-40 -right-40 bg-primary" />
-      <div className="absolute w-[500px] h-[500px] rounded-full hidden supports-[filter:blur(1px)]:block blur-[150px] opacity-5 dark:opacity-10 pointer-events-none top-[60vh] -left-60 bg-primary" />
+      <div className="absolute w-100 h-100 rounded-full hidden supports-[filter:blur(1px)]:block blur-[120px] opacity-10 dark:opacity-20 pointer-events-none -top-40 -right-40 bg-primary" />
+      <div className="absolute w-125 h-125 rounded-full hidden supports-[filter:blur(1px)]:block blur-[150px] opacity-5 dark:opacity-10 pointer-events-none top-[60vh] -left-60 bg-primary" />
 
       <div className="absolute top-4 right-4 z-50 flex items-center gap-1.5 bg-background supports-backdrop-filter:bg-background/60 supports-backdrop-filter:backdrop-blur-md border border-foreground/10 px-2.5 py-1.5 rounded-2xl shadow-lg">
         <LanguageSwitcher />

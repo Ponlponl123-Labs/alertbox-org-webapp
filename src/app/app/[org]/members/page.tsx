@@ -529,13 +529,13 @@ export default function OrgMembersPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
+      <div className="rounded-2xl bg-card border shadow-xs overflow-hidden">
         <Table className="w-full text-left border-collapse">
           <TableHeader>
-            <TableRow className="border-b border-border text-xs text-muted-foreground bg-secondary/30 hover:bg-secondary/30">
+            <TableRow className="text-xs text-muted-foreground select-none border-b border-border/60 bg-muted/20">
               <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">User</TableHead>
               <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">Role & Permissions</TableHead>
-              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">Status</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground hidden">Status</TableHead>
               <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">Joined Date</TableHead>
               <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">Assigned Channels</TableHead>
               <TableHead className="py-3.5 px-6 font-semibold text-right h-auto text-muted-foreground">Actions</TableHead>
@@ -626,7 +626,7 @@ export default function OrgMembersPage() {
                       </div>
                     </TableCell>
 
-                    <TableCell className="py-4 px-6 whitespace-nowrap">
+                    <TableCell className="py-4 px-6 whitespace-nowrap hidden">
                       <span
                         className={cn(
                           "inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium leading-normal select-none",
@@ -643,7 +643,7 @@ export default function OrgMembersPage() {
                       </span>
                     </TableCell>
 
-                    <TableCell className="py-4 px-6 whitespace-nowrap text-xs text-muted-foreground font-mono">
+                    <TableCell className="py-4 px-6 whitespace-nowrap text-xs text-muted-foreground font-sans">
                       {formattedDate}
                     </TableCell>
 

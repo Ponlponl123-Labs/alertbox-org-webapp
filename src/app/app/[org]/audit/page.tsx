@@ -346,7 +346,7 @@ export default function OrgAuditPage() {
 
         <div className="flex items-center gap-2">
           <Button
-            variant="secondary"
+            variant="default"
             size="sm"
             onClick={() => {
               if (orgTarget) {
@@ -418,136 +418,136 @@ export default function OrgAuditPage() {
           }}
         >
           <Table containerClassName={cn(isAnimating ? "overflow-hidden" : "overflow-x-auto overflow-y-hidden")} className="w-full text-left text-xs border-collapse">
-          <TableHeader>
-            <TableRow className="border-b border-border/60 bg-muted/20 text-muted-foreground text-[10px] tracking-wider uppercase font-semibold hover:bg-muted/20">
-              <TableHead className="py-3.5 pl-4 pr-1 w-9 text-center h-auto"></TableHead>
-              <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Actor</TableHead>
-              <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Event</TableHead>
-              <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 hidden md:table-cell h-auto">Summary</TableHead>
-              <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">
-                <span className="flex items-center gap-1">
-                  <span>Timestamp</span>
-                  <CaretDownIcon size={11} className="text-muted-foreground/60" />
-                </span>
-              </TableHead>
-              <TableHead className="py-3.5 pr-6 pl-4 text-right font-semibold text-muted-foreground/70 h-auto">Origin IP</TableHead>
-            </TableRow>
-          </TableHeader>
+            <TableHeader>
+              <TableRow className="text-xs text-muted-foreground border-b border-border/60 bg-muted/20 select-none">
+                <TableHead className="py-3.5 pl-4 pr-1 w-9 text-center h-auto"></TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Actor</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Event</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 hidden md:table-cell h-auto">Summary</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">
+                  <span className="flex items-center gap-1">
+                    <span>Timestamp</span>
+                    <CaretDownIcon size={11} className="text-muted-foreground/60" />
+                  </span>
+                </TableHead>
+                <TableHead className="py-3.5 pr-6 pl-4 text-right font-semibold text-muted-foreground/70 h-auto">Origin IP</TableHead>
+              </TableRow>
+            </TableHeader>
 
-          <AnimatePresence mode="wait" initial={false}>
-            {loading ? (
-              <motion.tbody
-                key="loading-skeleton"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, y: 8, filter: "blur(4px)" }}
-                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                onAnimationStart={() => setIsAnimating(true)}
-                onAnimationComplete={() => setIsAnimating(false)}
-                className="divide-y divide-border/40 [&_tr:last-child]:border-0"
-              >
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <motion.tr
-                    key={i}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.22, delay: i * 0.025 }}
-                    className="hover:bg-transparent"
-                  >
-                    <TableCell className="py-3.5 pl-4 pr-1 text-center">
-                      <Skeleton className="size-5 rounded mx-auto" />
-                    </TableCell>
-                    <TableCell className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="size-8 rounded-full shrink-0" />
-                        <div className="flex flex-col gap-1.5">
-                          <Skeleton className="h-3 w-24" />
-                          <Skeleton className="h-2.5 w-32" />
+            <AnimatePresence mode="wait" initial={false}>
+              {loading ? (
+                <motion.tbody
+                  key="loading-skeleton"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  onAnimationStart={() => setIsAnimating(true)}
+                  onAnimationComplete={() => setIsAnimating(false)}
+                  className="divide-y divide-border/40 [&_tr:last-child]:border-0"
+                >
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <motion.tr
+                      key={i}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.22, delay: i * 0.025 }}
+                      className="hover:bg-transparent"
+                    >
+                      <TableCell className="py-3.5 pl-4 pr-1 text-center">
+                        <Skeleton className="size-5 rounded mx-auto" />
+                      </TableCell>
+                      <TableCell className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="size-8 rounded-full shrink-0" />
+                          <div className="flex flex-col gap-1.5">
+                            <Skeleton className="h-3 w-24" />
+                            <Skeleton className="h-2.5 w-32" />
+                          </div>
                         </div>
+                      </TableCell>
+                      <TableCell className="py-3.5 px-4">
+                        <div className="inline-flex items-center gap-2">
+                          <Skeleton className="size-1.5 rounded-full shrink-0" />
+                          <Skeleton className="h-3.5 w-24 rounded" />
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3.5 px-4 hidden md:table-cell">
+                        <Skeleton className="h-3 w-48" />
+                      </TableCell>
+                      <TableCell className="py-3.5 px-4">
+                        <div className="flex flex-col gap-1">
+                          <Skeleton className="h-3 w-16" />
+                          <Skeleton className="h-2.5 w-12" />
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3.5 pr-6 pl-4 text-right">
+                        <Skeleton className="h-5 w-24 ml-auto rounded-md" />
+                      </TableCell>
+                    </motion.tr>
+                  ))}
+                </motion.tbody>
+              ) : paginatedLogs.length === 0 ? (
+                <motion.tbody
+                  key="empty-state"
+                  initial={{ opacity: 0, y: 8, filter: "blur(3px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  onAnimationStart={() => setIsAnimating(true)}
+                  onAnimationComplete={() => setIsAnimating(false)}
+                  className="divide-y divide-border/40 [&_tr:last-child]:border-0"
+                >
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-20 text-center">
+                      <div className="flex flex-col items-center justify-center max-w-sm mx-auto text-center gap-2">
+                        <MagnifyingGlassIcon className="size-8 text-foreground/60 mb-4" />
+                        <span className="font-semibold text-foreground text-sm">No activity records found</span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {searchQuery || categoryFilter !== "ALL"
+                            ? "No audit events match your active filters or search query."
+                            : "There are no security or audit events recorded for this organization yet."}
+                        </p>
+                        {(searchQuery || categoryFilter !== "ALL") && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={handleResetFilters}
+                            className="mt-2 text-xs rounded-lg p-3 h-max"
+                          >
+                            Reset filters
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
-                    <TableCell className="py-3.5 px-4">
-                      <div className="inline-flex items-center gap-2">
-                        <Skeleton className="size-1.5 rounded-full shrink-0" />
-                        <Skeleton className="h-3.5 w-24 rounded" />
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3.5 px-4 hidden md:table-cell">
-                      <Skeleton className="h-3 w-48" />
-                    </TableCell>
-                    <TableCell className="py-3.5 px-4">
-                      <div className="flex flex-col gap-1">
-                        <Skeleton className="h-3 w-16" />
-                        <Skeleton className="h-2.5 w-12" />
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3.5 pr-6 pl-4 text-right">
-                      <Skeleton className="h-5 w-24 ml-auto rounded-md" />
-                    </TableCell>
-                  </motion.tr>
-                ))}
-              </motion.tbody>
-            ) : paginatedLogs.length === 0 ? (
-              <motion.tbody
-                key="empty-state"
-                initial={{ opacity: 0, y: 8, filter: "blur(3px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, y: 8, filter: "blur(4px)" }}
-                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                onAnimationStart={() => setIsAnimating(true)}
-                onAnimationComplete={() => setIsAnimating(false)}
-                className="divide-y divide-border/40 [&_tr:last-child]:border-0"
-              >
-                <TableRow>
-                  <TableCell colSpan={6} className="py-20 text-center">
-                    <div className="flex flex-col items-center justify-center max-w-sm mx-auto text-center gap-2">
-                      <MagnifyingGlassIcon className="size-8 text-muted mb-4" />
-                      <span className="font-semibold text-foreground text-sm">No activity records found</span>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {searchQuery || categoryFilter !== "ALL"
-                          ? "No audit events match your active filters or search query."
-                          : "There are no security or audit events recorded for this organization yet."}
-                      </p>
-                      {(searchQuery || categoryFilter !== "ALL") && (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={handleResetFilters}
-                          className="mt-2 text-xs rounded-lg p-3 h-max"
-                        >
-                          Reset filters
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              </motion.tbody>
-            ) : (
-              <motion.tbody
-                key={`page-${currentPage}-${categoryFilter}-${debouncedSearch}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, y: 8, filter: "blur(4px)" }}
-                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                onAnimationStart={() => setIsAnimating(true)}
-                onAnimationComplete={() => setIsAnimating(false)}
-                className="divide-y divide-border/40 [&_tr:last-child]:border-0"
-              >
-                {paginatedLogs.map((log, idx) => (
-                  <AuditRow
-                    key={log.id}
-                    log={log}
-                    index={idx}
-                    isExpanded={expandedId === log.id}
-                    onToggle={() => toggleRow(log.id)}
-                    orgTarget={orgTarget}
-                  />
-                ))}
-              </motion.tbody>
-            )}
-          </AnimatePresence>
-        </Table>
-      </AutoHeight>
+                  </TableRow>
+                </motion.tbody>
+              ) : (
+                <motion.tbody
+                  key={`page-${currentPage}-${categoryFilter}-${debouncedSearch}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, y: 8, filter: "blur(4px)" }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  onAnimationStart={() => setIsAnimating(true)}
+                  onAnimationComplete={() => setIsAnimating(false)}
+                  className="divide-y divide-border/40 [&_tr:last-child]:border-0"
+                >
+                  {paginatedLogs.map((log, idx) => (
+                    <AuditRow
+                      key={log.id}
+                      log={log}
+                      index={idx}
+                      isExpanded={expandedId === log.id}
+                      onToggle={() => toggleRow(log.id)}
+                      orgTarget={orgTarget}
+                    />
+                  ))}
+                </motion.tbody>
+              )}
+            </AnimatePresence>
+          </Table>
+        </AutoHeight>
 
         <div className="flex items-center justify-between px-6 py-3 border-t border-border/60 bg-muted/20 text-xs text-muted-foreground select-none">
           <div className="flex items-center gap-1.5">

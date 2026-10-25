@@ -1,9 +1,12 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import { orgStore } from "@/hooks/store/org";
+import type { Streamer } from "@/types/user.types";
 import SplitText from "@/components/SplitText";
 import { gsap } from "gsap";
 import { Input } from "react-smooth-input";
@@ -16,6 +19,8 @@ import { getApiUrl } from "@/lib/api";
 import { Loading03 } from "@/components/animate-ui/icons/hugeicons/loading-03";
 import { cn } from "@/lib/utils";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
+import { toast } from "@/components/custom-ui/toast";
+import { ShimmeringText } from "@animate-ui/react/primitives/texts/shimmering";
 
 const availabilityCache = new Map<string, "available" | "taken">();
 const RESERVED_NAMES = new Set([
@@ -86,10 +91,13 @@ const to = {
 }
 
 export default function CreateStep({ onComplete }: CreateStepProps) {
-  const { userInfo } = useUserContext();
+  const router = useRouter();
+  const { authFetch, activeOrg, userInfo, addStreamer } = useUserContext();
   const isDark = useStore(coreStore, (s) => s.isDark);
   const [step, setStep] = useState<number>(0);
-  const [channelDisplayName, setChannelDisplayName] = useState("");
+  const [channelDisplayName, setChannelDisplayName] = useState<string>("");
+  const [isChannelCreated, setIsChannelCreated] = useState<boolean>(false);
+  const [serverResChannel, setServerResChannel] = useState<Streamer | null>(null);
   const channelHandle = channelDisplayName
     .trim()
     .toLowerCase()
@@ -128,6 +136,10 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   }, [channelHandle]);
   const containerRef = useRef<HTMLDivElement>(null);
   const splitRef = useRef<HTMLDivElement>(null);
+  const split1Ref = useRef<HTMLDivElement>(null);
+  const split2Ref = useRef<HTMLDivElement>(null);
+  const split3Ref = useRef<HTMLDivElement>(null);
+  const content2Ref = useRef<HTMLDivElement>(null);
   const content2H1Ref = useRef<HTMLDivElement>(null);
   const content2PRef = useRef<HTMLDivElement>(null);
   const content3Ref = useRef<HTMLDivElement>(null);
@@ -231,6 +243,107 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
       );
     });
   };
+  const handleSplitComplete1 = () => {
+    gsap.delayedCall(1.2, () => {
+      const chars = split1Ref.current?.querySelectorAll(".split-char");
+      const targets = chars && chars.length > 0 ? chars : split1Ref.current;
+      gsap.to(targets, {
+        opacity: 0,
+        y: -24,
+        filter: "blur(8px)",
+        duration: 0.5,
+        stagger: { each: 0.02, from: "start" },
+        ease: "power2.in",
+        onComplete: () => {
+          setStep(2);
+        },
+      });
+    });
+  }
+  const handleSplitComplete2 = () => {
+    gsap.delayedCall(1.2, () => {
+      const chars = split2Ref.current?.querySelectorAll(".split-char");
+      const targets = chars && chars.length > 0 ? chars : split2Ref.current;
+      gsap.to(targets, {
+        opacity: 0,
+        y: -24,
+        filter: "blur(8px)",
+        duration: 0.5,
+        stagger: { each: 0.02, from: "start" },
+        ease: "power2.in",
+        onComplete: () => {
+          setStep(3);
+        },
+      });
+    });
+  }
+  const handleSplitComplete3 = () => {
+    gsap.delayedCall(1.2, () => {
+      setStep(4);
+
+      setTimeout(() => {
+        if (isChannelCreated && serverResChannel && activeOrg) {
+          setStep(5);
+
+          toast.success(`Channel "${serverResChannel.displayName}" created!`);
+          orgStore.getState().setActiveOrgId(String(activeOrg.id));
+          orgStore.getState().setActiveStreamerId(String(serverResChannel.id));
+          orgStore.getState().setOrgMode(false);
+
+          const orgKey = activeOrg.slug || activeOrg.id;
+          const targetUrl = `/app/${orgKey}/${serverResChannel.name || serverResChannel.id}`;
+
+          setTimeout(() => {
+            gsap.to(containerRef.current, {
+              opacity: 0,
+              y: -64,
+              filter: "blur(12px)",
+              duration: 0.8,
+              ease: "power2.inOut",
+              onComplete: () => {
+                setTimeout(() => {
+                  router.push(targetUrl);
+                }, 500)
+              }
+            })
+          }, 1000)
+        }
+      }, 1000)
+    });
+  }
+
+  const createChannelHandle = async () => {
+    if (!authFetch || !activeOrg?.id || step !== 0 || handleStatus !== "available") return;
+    setStep(1);
+
+    try {
+      const res = await authFetch(getApiUrl(`/api/v1/org/${activeOrg.id}/streamers`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: channelHandle,
+          displayName: channelDisplayName.trim() || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        toast.error(msg || "Failed to create channel");
+        setStep(0);
+        return;
+      }
+
+      const created = await res.json();
+      addStreamer(created as unknown as Streamer);
+      setServerResChannel(created as unknown as Streamer);
+      setIsChannelCreated(true);
+
+      onComplete?.();
+    } catch {
+      toast.error("Network error while creating channel");
+      setStep(0);
+    }
+  };
 
   return (
     <div
@@ -272,7 +385,10 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
             onLetterAnimationComplete={handleSplitComplete}
           />
         </div>
-        <AutoHeight className="absolute w-full flex flex-col max-w-sm lg:max-w-lg xl:max-w-2xl">
+        <AutoHeight id="content-step1" ref={content2Ref} className={cn(
+          "absolute w-full flex flex-col max-w-sm lg:max-w-lg xl:max-w-2xl transition-all duration-500",
+          step === 0 ? "opacity-100" : "opacity-0 blur-sm **:pointer-events-none"
+        )}>
           <h1
             ref={content2H1Ref}
             className="text-4xl tracking-wide font-medium opacity-0"
@@ -291,7 +407,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                 fontWeight: "500",
                 fontSize: "14px",
               }}
-              disabled={handleStatus === "checking" || step !== 0}
+              disabled={step !== 0}
               value={channelDisplayName}
               onChange={(e) => setChannelDisplayName(e.target.value)}
               endContent={
@@ -370,7 +486,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                     filter: "blur(0px)"
                   }}
                   key={"channel-handle"}
-                  className="text-sm text-muted-foreground font-sans">@{channelHandle}</motion.span>
+                  className="text-sm text-muted-foreground font-sans select-none">@{channelHandle}</motion.span>
               }
             </AnimatePresence>
             <div />
@@ -385,7 +501,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                   transition={{ duration: 0.15 }}
                 >
                   <LiquidButton
-                    onClick={() => setStep(1)}
+                    onClick={() => createChannelHandle()}
                     disabled={handleStatus !== "available"}
                     className="rounded-xl py-3 px-6 h-max [--liquid-button-background-color:var(--muted)] [--liquid-button-color:var(--primary)] hover:text-primary-foreground">
                     Let&apos;s go
@@ -395,11 +511,166 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
             </AnimatePresence>
           </div>
         </AutoHeight>
+        {
+          step != 0 && <motion.div className="absolute inset-0 flex flex-col items-center justify-center">
+            <AutoHeight>
+              <div className="flex flex-col items-center justify-center pointer-events-none select-none">
+                {
+                  step == 1 && <div
+                    className="origin-center will-change-transform z-10 absolute pointer-events-none select-none"
+                    ref={split1Ref}
+                  >
+                    <SplitText
+                      text={"Hello " + channelDisplayName + "!"}
+                      className="text-5xl font-medium text-center overflow-visible"
+                      effect="blur"
+                      color={isDark ? "#ffffff" : "#000000"}
+                      accentColor="#f43f5e"
+                      from={{
+                        y: 8,
+                        opacity: 0,
+                        filter: "blur(6px)",
+                      }}
+                      to={{
+                        y: 0,
+                        opacity: 1,
+                        filter: "blur(0px)",
+                      }}
+                      splitType="chars"
+                      delay={45}
+                      duration={1.1}
+                      staggerFrom="start"
+                      loop={false}
+                      loopDelay={1.5}
+                      mask={false}
+                      threshold={0.1}
+                      rootMargin="-100px"
+                      textAlign="center"
+                      onLetterAnimationComplete={handleSplitComplete1}
+                    />
+                  </div>
+                }
+                {
+                  step == 2 && <div
+                    className="origin-center will-change-transform z-10 absolute pointer-events-none select-none"
+                    ref={split2Ref}
+                  >
+                    <SplitText
+                      text={"Glad to see you here"}
+                      className="text-5xl font-medium text-center overflow-visible"
+                      effect="blur"
+                      color={isDark ? "#ffffff" : "#000000"}
+                      accentColor="#f43f5e"
+                      from={{
+                        y: 8,
+                        opacity: 0,
+                        filter: "blur(6px)",
+                      }}
+                      to={{
+                        y: 0,
+                        opacity: 1,
+                        filter: "blur(0px)",
+                      }}
+                      splitType="chars"
+                      delay={45}
+                      duration={1.1}
+                      staggerFrom="start"
+                      loop={false}
+                      loopDelay={1.5}
+                      mask={false}
+                      threshold={0.1}
+                      rootMargin="-100px"
+                      textAlign="center"
+                      onLetterAnimationComplete={handleSplitComplete2}
+                    />
+                  </div>
+                }
+                {
+                  (step == 3 || step == 4 || step == 5) && <div
+                    className="origin-center will-change-transform z-10 absolute pointer-events-none select-none"
+                    ref={split3Ref}
+                  >
+                    <SplitText
+                      text={"Almost done..."}
+                      className="text-5xl font-medium text-center overflow-visible"
+                      effect="blur"
+                      color={isDark ? "#ffffff" : "#000000"}
+                      accentColor="#f43f5e"
+                      from={{
+                        y: 8,
+                        opacity: 0,
+                        filter: "blur(6px)",
+                      }}
+                      to={{
+                        y: 0,
+                        opacity: 1,
+                        filter: "blur(0px)",
+                      }}
+                      splitType="chars"
+                      delay={45}
+                      duration={1.1}
+                      staggerFrom="start"
+                      loop={false}
+                      loopDelay={1.5}
+                      mask={false}
+                      threshold={0.1}
+                      rootMargin="-100px"
+                      textAlign="center"
+                      onLetterAnimationComplete={handleSplitComplete3}
+                    />
+                  </div>
+                }
+              </div>
+              <AnimatePresence mode="popLayout">
+                {
+                  step == 4 && (
+                    <motion.div
+                      key="state2-processing"
+                      initial={{ opacity: 0, filter: "blur(10px)", y: 16 }}
+                      animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+                      exit={{ opacity: 0, filter: "blur(10px)", y: -16 }}
+                      transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
+                      className="mt-6"
+                    >
+                      <ShimmeringText
+                        wave={false}
+                        color="var(--muted)"
+                        shimmeringColor="var(--foreground)"
+                        className="text-base font-sans tracking-wide my-6"
+                        text="We're still working on"
+                      />
+                    </motion.div>
+                  )
+                }
+                {
+                  step === 5 && (
+                    <motion.div
+                      key="state2-redirect"
+                      initial={{ opacity: 0, filter: "blur(10px)", y: 16 }}
+                      animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+                      exit={{ opacity: 0, filter: "blur(10px)", y: -16 }}
+                      transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
+                      className="mt-6"
+                    >
+                      <ShimmeringText
+                        wave={false}
+                        color="var(--muted)"
+                        shimmeringColor="var(--foreground)"
+                        className="text-base font-sans tracking-wide my-6"
+                        text="Now let's bring you to the stage..."
+                      />
+                    </motion.div>
+                  )
+                }
+              </AnimatePresence>
+            </AutoHeight>
+          </motion.div>
+        }
       </div>
 
       <div className={cn(
         "absolute inset-0 flex items-center justify-center pointer-events-none transition-all ease-out duration-500",
-        step != 0 && "scale-150 opacity-0 blur-md pointer-events-none"
+        step > 0 ? "scale-110 opacity-40 blur-md pointer-events-none" : step > 4 && "scale-150 opacity-0 blur-md pointer-events-none"
       )}>
         {MOCK_PROFILES.map((p, i) => (
           <div

@@ -39,10 +39,11 @@ import { hasPermission } from "@/lib/rbac";
 import { OrgPerm } from "@/consts/permission";
 import type { CropType, TransferStep, OrgMemberOption } from "@/types";
 import { TRANSFER_CONFIRM_PHRASE } from "@/consts/org";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 
 export default function OrgSettingsPage() {
   const routeParams = useParams();
@@ -346,21 +347,34 @@ export default function OrgSettingsPage() {
       <div className="flex flex-col gap-6">
         <div className="rounded-3xl flex flex-col">
           <div className="relative w-full rounded-3xl bg-linear-to-r from-secondary/80 via-secondary/40 to-muted/60 border-b border-border flex items-center justify-center group min-h-64">
-            {banner ? (
-              <Image
-                src={banner}
-                alt="Organization Banner"
-                width={800}
-                height={208}
-                className="w-full rounded-3xl object-cover pointer-events-none select-none"
-                unoptimized
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-muted-foreground/60 select-none">
-                <ImageIcon size={36} weight="duotone" />
-                <span className="text-xs font-medium">No banner uploaded</span>
-              </div>
-            )}
+            <AutoHeight>
+              <AnimatePresence mode="wait">
+                {banner ? (
+                  <motion.div
+                    initial={{ opacity: 0, filter: "blur(16px)" }}
+                    animate={{ opacity: 1, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, filter: "blur(16px)" }}
+                    transition={{
+                      duration: 1
+                    }}
+                    key={banner}>
+                    <Image
+                      src={banner}
+                      alt="Organization Banner"
+                      width={800}
+                      height={208}
+                      className="w-full rounded-3xl object-cover pointer-events-none select-none"
+                      unoptimized
+                    />
+                  </motion.div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground/60 select-none">
+                    <ImageIcon size={36} weight="duotone" />
+                    <span className="text-xs font-medium">No banner uploaded</span>
+                  </div>
+                )}
+              </AnimatePresence>
+            </AutoHeight>
 
             {canManageSettings && (
               <div className="absolute top-3 right-3 flex items-center gap-2">
@@ -422,7 +436,7 @@ export default function OrgSettingsPage() {
                 {activeOrg?.name || "Organization"}
               </h2>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                <span className="font-mono text-primary font-medium">/app/{activeOrg?.slug}</span>
+                <span className="font-rubik text-primary font-semibold">/app/{activeOrg?.slug}</span>
                 <span>•</span>
                 <span>{activeOrg?.memberCount ?? 1} members</span>
               </div>
@@ -486,7 +500,6 @@ export default function OrgSettingsPage() {
                     <span>Organization Handle</span>
                     <LockSimpleIcon size={12} weight="bold" className="text-muted-foreground" />
                   </FieldLabel>
-                  <span className="text-[10px] text-muted-foreground font-mono">Immutable</span>
                 </div>
                 <Input
                   type="text"
@@ -501,14 +514,14 @@ export default function OrgSettingsPage() {
                   className="w-full opacity-80 cursor-not-allowed bg-muted/40 rounded-xl"
                   classNames={{ base: "h-10" }}
                 />
-                <FieldDescription className="text-[11px] font-mono">
+                <FieldDescription className="text-[11px] font-sans">
                   Slug handle is permanently locked: /app/{activeOrg?.slug || "org"}
                 </FieldDescription>
               </Field>
             </div>
 
             {canManageSettings && (
-              <div className="pt-3 border-t border-border/50 flex justify-end">
+              <div className="pt-3 flex justify-end">
                 <Button
                   type="submit"
                   disabled={isSaving || !name.trim() || name.trim() === activeOrg?.name}
@@ -521,23 +534,13 @@ export default function OrgSettingsPage() {
             )}
           </form>
         </div>
-
+        <div className="py-6" />
         {isOwner && (
-          <div className="p-6 rounded-2xl bg-amber-500/5 shadow-xs flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                <ArrowsLeftRightIcon size={20} weight="bold" />
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-foreground">Transfer Ownership</h2>
-                <p className="text-xs text-muted-foreground">Transfer primary tenancy and owner rights to another active team member.</p>
-              </div>
-            </div>
-
+          <div className="py-6 border-t border-border flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
               <div className="max-w-md">
-                <p className="text-sm font-semibold text-foreground">Designate a new organization owner</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                <p className="text-xl font-medium text-foreground font-sans">Designate a new organization owner</p>
+                <p className="text-sm text-muted-foreground mt-3 font-sans max-w-2xl leading-relaxed">
                   Each organization can have only a single owner. You will become an Admin with full administrative privileges once transferred.
                 </p>
               </div>
@@ -554,22 +557,12 @@ export default function OrgSettingsPage() {
           </div>
         )}
 
-        <div className="p-6 rounded-2xl bg-destructive/5 shadow-xs flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <div className="size-12 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center">
-              <WarningOctagonIcon size={20} weight="bold" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-destructive">Danger Zone</h2>
-              <p className="text-xs text-muted-foreground">Irreversible actions and membership departure.</p>
-            </div>
-          </div>
-
+        <div className="py-6 border-t border-border flex flex-col gap-4">
           {!isOwner ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 pt-2">
               <div>
-                <p className="text-sm font-semibold text-foreground">Leave this organization</p>
-                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                <p className="text-xl font-medium text-foreground font-sans">Leave this organization</p>
+                <p className="text-sm text-muted-foreground mt-3 font-sans max-w-2xl leading-relaxed">
                   Revoke your membership and leave this organization. You will immediately lose access to all channels, widgets, and settings. You can only rejoin if an administrator re-invites you.
                 </p>
               </div>
@@ -586,8 +579,8 @@ export default function OrgSettingsPage() {
           ) : (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 pt-2">
               <div>
-                <p className="text-sm font-semibold text-foreground">Delete this organization</p>
-                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                <h3 className="text-xl font-medium text-foreground font-sans">Destroy this organization</h3>
+                <p className="text-sm text-muted-foreground mt-3 font-sans leading-relaxed max-w-2xl">
                   Permanently delete this organization, all attached streamer channels, widgets, and team memberships. As the owner, you cannot leave without deleting or transferring ownership first.
                 </p>
               </div>

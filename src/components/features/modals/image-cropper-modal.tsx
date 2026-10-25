@@ -42,7 +42,7 @@ export function ImageCropperModal({
   className,
 }: ImageCropperModalProps) {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(0.95);
+  const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -154,6 +154,8 @@ export function ImageCropperModal({
                   image={image}
                   crop={crop}
                   zoom={zoom}
+                  minZoom={1}
+                  objectFit={aspect > 1 ? "horizontal-cover" : "cover"}
                   rotation={rotation}
                   aspect={aspect}
                   cropShape={cropShape}
@@ -173,7 +175,7 @@ export function ImageCropperModal({
             <div className="mt-5 flex flex-col gap-4">
               <PhotoStraightenSlider
                 label={zoomLabel}
-                min={0.95}
+                min={1}
                 max={3}
                 step={0.05}
                 defaultValue={1}

@@ -18,6 +18,7 @@ import {
   type HTMLMotionProps,
   type MotionValue
 } from 'motion/react';
+import { AnimateIcon } from '@animate-ui/react/icons';
 
 export type JellyRadioItem = string | { value: string; label: ReactNode; icon?: ReactNode; disabled?: boolean };
 
@@ -255,27 +256,28 @@ const JellyRadio: React.FC<JellyRadioProps> = ({
       }
     >
       {list.map((it, i) => (
-        <Chip
-          key={it.value}
-          mv={mvFor(i)}
-          ref={el => {
-            chipRefs.current[i] = el;
-          }}
-          type="button"
-          role="radio"
-          aria-checked={i === at}
-          tabIndex={i === at ? 0 : -1}
-          disabled={disabled || !!it.disabled}
-          className="group/chip relative m-0 cursor-pointer touch-manipulation border-0 bg-transparent p-0 text-inherit outline-none [font:inherit] origin-center [-webkit-tap-highlight-color:transparent] data-[on=true]:cursor-default disabled:cursor-default disabled:opacity-40 group-data-[disabled]:disabled:opacity-100"
-          data-on={i === at ? 'true' : 'false'}
-          onClick={e => commit(i, e.detail === 0)}
-          onKeyDown={e => onKeyDown(e, i)}
-        >
-          <span className="relative inline-flex items-center justify-center gap-[0.4em] overflow-hidden rounded-[var(--jr-radius)] bg-[var(--jr-chip)] leading-none font-medium whitespace-nowrap [color:var(--jr-text)] [height:var(--jr-h)] [padding:0_var(--jr-px)] [font-size:var(--jr-font)] [transition:transform_160ms_cubic-bezier(0.23,1,0.32,1),background-color_200ms_ease,color_200ms_ease] group-active/chip:scale-[0.97] motion-reduce:group-active/chip:scale-100 group-data-[on=true]/chip:bg-[var(--jr-active)] group-data-[on=true]/chip:[color:var(--jr-active-text)] before:pointer-events-none before:absolute before:inset-0 before:bg-[var(--jr-text)] before:opacity-0 before:[transition:opacity_160ms_ease] before:content-[''] [@media(hover:hover)_and_(pointer:fine)]:group-hover/chip:group-enabled/chip:group-data-[on=false]/chip:before:opacity-[0.11]">
-            {it.icon ? <span className="inline-flex">{it.icon}</span> : null}
-            <span className="jelly-radio__label">{it.label}</span>
-          </span>
-        </Chip>
+        <AnimateIcon animateOnHover key={it.value}>
+          <Chip
+            mv={mvFor(i)}
+            ref={el => {
+              chipRefs.current[i] = el;
+            }}
+            type="button"
+            role="radio"
+            aria-checked={i === at}
+            tabIndex={i === at ? 0 : -1}
+            disabled={disabled || !!it.disabled}
+            className="group/chip relative m-0 cursor-pointer touch-manipulation border-0 bg-transparent p-0 text-inherit outline-none [font:inherit] origin-center [-webkit-tap-highlight-color:transparent] data-[on=true]:cursor-default disabled:cursor-default disabled:opacity-40 group-data-[disabled]:disabled:opacity-100"
+            data-on={i === at ? 'true' : 'false'}
+            onClick={e => commit(i, e.detail === 0)}
+            onKeyDown={e => onKeyDown(e, i)}
+          >
+            <span className="relative inline-flex items-center justify-center gap-[0.4em] overflow-hidden rounded-[var(--jr-radius)] bg-[var(--jr-chip)] leading-none font-medium whitespace-nowrap [color:var(--jr-text)] [height:var(--jr-h)] [padding:0_var(--jr-px)] [font-size:var(--jr-font)] [transition:transform_160ms_cubic-bezier(0.23,1,0.32,1),background-color_200ms_ease,color_200ms_ease] group-active/chip:scale-[0.97] motion-reduce:group-active/chip:scale-100 group-data-[on=true]/chip:bg-[var(--jr-active)] group-data-[on=true]/chip:[color:var(--jr-active-text)] before:pointer-events-none before:absolute before:inset-0 before:bg-[var(--jr-text)] before:opacity-0 before:[transition:opacity_160ms_ease] before:content-[''] [@media(hover:hover)_and_(pointer:fine)]:group-hover/chip:group-enabled/chip:group-data-[on=false]/chip:before:opacity-[0.11]">
+              {it.icon ? <span className="inline-flex">{it.icon}</span> : null}
+              <span className="jelly-radio__label">{it.label}</span>
+            </span>
+          </Chip>
+        </AnimateIcon>
       ))}
     </div>
   );

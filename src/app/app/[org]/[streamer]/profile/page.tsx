@@ -57,10 +57,15 @@ import {
 } from "@/components/ui/dialog";
 import { hasPermission, canAccessStreamer } from "@/lib/rbac";
 import { OrgPerm, StreamerPerm } from "@/consts/permission";
+import { motion } from "motion/react";
+import { PencilEdit02 } from "@/components/animate-ui/icons/hugeicons/pencil-edit-02";
+import { AnimateIcon } from "@animate-ui/react/icons";
+import { View } from "@/components/animate-ui/icons/hugeicons/view";
+import { EyeOff } from "@/components/animate-ui/icons/hugeicons/eye-off";
 
 function useUriCooldown(cooldownDateStr?: string | null): boolean {
   return React.useSyncExternalStore(
-    () => () => {},
+    () => () => { },
     () => Boolean(cooldownDateStr && new Date(cooldownDateStr).getTime() > Date.now()),
     () => false,
   );
@@ -365,283 +370,179 @@ function Page() {
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 z-10 relative">
-        <div className="flex flex-col">
-          <span className="tracking-wider text-xs mt-1.5 text-foreground/40">
-            {lang.data.app.profile.my_uri}:{" "}
-            {currentStreamer?.uri ? (
-              <Link
-                href={`/@${currentStreamer.uri}`}
-                className="text-blue-500 hover:underline"
-                target="_blank"
-              >
-                alertbox.org/@{currentStreamer.uri}
-                <ArrowUpRightIcon className="inline ml-px" weight="bold" size={12} />
-              </Link>
-            ) : (
-              <span className="text-muted-foreground/60 italic">No public handle</span>
-            )}
-          </span>
-          {isUriCooldown && currentStreamer?.uriCooldownEnd && (
-            <span className="tracking-wider text-xs mt-1.5 text-foreground/40">
-              {lang.data.app.profile.get_started.reset_in.replace(
-                "{time}",
-                new Date(currentStreamer.uriCooldownEnd).toLocaleDateString(lang.key, {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                }),
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-6 z-10 min-h-0 flex-1"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="w-full">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-tight text-foreground my-3">
+              My Profile
+            </h1>
+            <div className="flex justify-between w-full items-center">
+              <div className="flex flex-col">
+                <span className="tracking-wider text-sm text-foreground/40">
+                  {lang.data.app.profile.my_uri}:{" "}
+                  {currentStreamer?.uri ? (
+                    <Link
+                      href={`/@${currentStreamer.uri}`}
+                      className="text-blue-500 hover:underline"
+                      target="_blank"
+                    >
+                      tip-to.me/@{currentStreamer.uri}
+                      <ArrowUpRightIcon className="inline ml-px" weight="bold" size={12} />
+                    </Link>
+                  ) : (
+                    <span className="text-muted-foreground/60 italic">No public handle</span>
+                  )}
+                </span>
+                {isUriCooldown && currentStreamer?.uriCooldownEnd && (
+                  <span className="tracking-wider text-sm text-foreground/40">
+                    {lang.data.app.profile.get_started.reset_in.replace(
+                      "{time}",
+                      new Date(currentStreamer.uriCooldownEnd).toLocaleDateString(lang.key, {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }),
+                    )}
+                  </span>
+                )}
+              </div>
+              {canEditProfile && (
+                <div className="flex items-center gap-2">
+                  {currentStreamer?.publishedAt ? (
+                    <AnimateIcon animateOnHover>
+                      <Button
+                        variant="destructive"
+                        className="rounded-2xl px-3 py-2.5 text-[11px] font-semibold h-max"
+                        onClick={handleUnpublish}
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? <Spinner className="mr-1" /> : <>
+                          <EyeOff />
+                          {lang.data.app.profile.manage.unpublish}
+                        </>}
+                      </Button>
+                    </AnimateIcon>
+                  ) : (
+                    <AnimateIcon animateOnHover>
+                      <Button
+                        variant="secondary"
+                        className="rounded-2xl px-3 py-2.5 text-[11px] font-semibold h-max bg-emerald-400 hover:bg-emerald-400/60 text-black"
+                        onClick={handlePublish}
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? <Spinner className="mr-1" /> : <>
+                          <View />
+                          {lang.data.app.profile.manage.publish}
+                        </>}
+                      </Button>
+                    </AnimateIcon>
+                  )}
+                  <Link
+                    href={`/app/${activeOrg?.slug || activeOrg?.id}/${currentStreamer?.name || "channel"}/profile/renew`}
+                    className={cn(isUriCooldown && "pointer-events-none")}
+                  >
+                    <AnimateIcon animateOnHover>
+                      <Button
+                        variant="default"
+                        className="rounded-2xl px-3 py-2.5 text-[11px] font-semibold h-max"
+                        disabled={isUriCooldown}
+                      >
+                        <PencilEdit02 />
+                        {lang.data.app.profile.get_started.change}
+                      </Button>
+                    </AnimateIcon>
+                  </Link>
+                </div>
               )}
-            </span>
-          )}
+            </div>
+          </div>
         </div>
-        {canEditProfile && (
-          <div>
-            <Link
-              href={`/app/${activeOrg?.slug || activeOrg?.id}/${currentStreamer?.name || "channel"}/profile/renew`}
-              className={cn(isUriCooldown && "pointer-events-none")}
-            >
-              <Button
-                variant="default"
-                className="rounded-2xl p-2.5 text-[10px] font-semibold mt-4 cursor-pointer"
-                disabled={isUriCooldown}
-              >
-                {lang.data.app.profile.get_started.change}
-              </Button>
-            </Link>
+
+        {!canEditProfile && (
+          <div className="w-full flex items-center select-none gap-3 p-3 rounded-2xl bg-muted/40 text-sm font-medium text-muted-foreground z-10 relative">
+            <EyeIcon size={20} weight="bold" className="shrink-0 text-foreground/40" />
+            <span>You have read-only access to this channel profile. Profile modifications require editor permissions.</span>
           </div>
         )}
-      </div>
 
-      {canEditProfile ? (
-        <div className="w-full flex items-center bg-foreground/5 mt-3 px-3 py-1.5 rounded-2xl gap-1.5 z-10 relative">
-          <strong className="text-xs text-foreground/40">
-            {lang.data.app.profile.manage.title}
-          </strong>
-          {currentStreamer?.publishedAt ? (
-            <Button
-              variant="destructive"
-              className="rounded-xl p-2.5 text-[10px] font-semibold h-8 cursor-pointer"
-              onClick={handleUnpublish}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <Spinner className="mr-1" /> : lang.data.app.profile.manage.unpublish}
-            </Button>
-          ) : (
-            <Button
-              variant="secondary"
-              className="rounded-xl p-2.5 text-[10px] font-semibold bg-emerald-400/10 hover:bg-emerald-400/15 text-emerald-400 h-8 cursor-pointer"
-              onClick={handlePublish}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? <Spinner className="mr-1" /> : lang.data.app.profile.manage.publish}
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="w-full flex items-center gap-2 p-2.5 mt-3 rounded-2xl bg-muted/40 border border-border/80 text-xs text-muted-foreground z-10 relative">
-          <EyeIcon size={14} weight="bold" className="shrink-0 text-muted-foreground" />
-          <span>You have read-only access to this channel profile. Profile modifications require editor permissions.</span>
-        </div>
-      )}
-
-      <div className="flex max-md:flex-col gap-1.5 min-h-0 flex-1 mt-3">
-        <div className="md:w-64 flex flex-col h-max z-10 relative gap-1.5">
-          <Accordion className="w-full bg-card rounded-2xl">
-            <AccordionItem defaultOpen={true}>
-              <AccordionButton
-                className={cn(
-                  "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
-                  "hover:bg-foreground/5",
-                  "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
-                )}
-                showArrow={false}
-              >
-                <PersonIcon
-                  size={16}
-                  weight="fill"
-                  className="rotate-0! text-foreground/40 group-data-open:text-foreground"
-                />
-                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
-                  {lang.data.app.profile.basic_info}
-                </h1>
-              </AccordionButton>
-              <AccordionPanel keepRendered={true} data-default-transition="false" className="p-0">
-                <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
-                  <div className="flex flex-col rounded-lg p-1.5 gap-1.5">
-                    <div className="flex gap-1.5 opacity-40 items-center">
-                      <UserIcon className="size-4" />
-                      <h1 className="font-semibold text-xs">{lang.data.app.account.display_name}</h1>
-                    </div>
-                    <Input
-                      type="text"
-                      placeholder="Display Name"
-                      pattern={allowed_chars.source}
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      disabled={!canEditProfile}
-                      readOnly={!canEditProfile}
-                      className="w-full"
-                      classNames={{ base: "rounded-md bg-background/30! p-1" }}
-                      fontStyle={{ fontFamily: "var(--font-sans)", fontSize: "10px" }}
-                    />
-                  </div>
-
-                  <div className="flex flex-col rounded-lg p-1.5 gap-1.5">
-                    <div className="flex gap-1.5 opacity-40 items-center">
-                      <UserFocusIcon className="size-4" />
-                      <h1 className="font-semibold text-xs">{lang.data.app.account.bio}</h1>
-                    </div>
-                    <textarea
-                      placeholder="Share a short bio or stream schedule..."
-                      value={bio}
-                      onChange={(e) => setBio(e.target.value)}
-                      disabled={!canEditProfile}
-                      readOnly={!canEditProfile}
-                      rows={3}
-                      className="w-full rounded-md bg-background/30 p-1.5 border-2 border-transparent hover:border-foreground/10 min-h-8 outline-0 focus-visible:border-foreground/10 focus-visible:bg-foreground/5 font-sans text-[10px] resize-y disabled:opacity-70 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-                {canEditProfile && (
-                  <div className="flex items-center p-2.5 rounded-t-4xl w-full gap-1.5">
-                    <Button
-                      variant="secondary"
-                      className="rounded-xl border-2 p-4.5 w-full cursor-pointer"
-                      onClick={handleSaveBasicInfo}
-                      disabled={isSavingBasic || !displayName.trim()}
-                    >
-                      {isSavingBasic ? <Spinner className="mr-2" /> : lang.data.app.profile.socials.save}
-                    </Button>
-                  </div>
-                )}
-              </AccordionPanel>
-            </AccordionItem>
-          </Accordion>
-
-          <Accordion className="w-full bg-card rounded-2xl">
-            <AccordionItem>
-              <AccordionButton
-                className={cn(
-                  "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
-                  "hover:bg-foreground/5",
-                  "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
-                )}
-                showArrow={false}
-              >
-                <SparkleIcon
-                  size={16}
-                  weight="fill"
-                  className="rotate-0! text-foreground/40 group-data-open:text-foreground"
-                />
-                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
-                  {lang.data.app.profile.socials.title}
-                </h1>
-              </AccordionButton>
-              <AccordionPanel data-default-transition="false" className="p-0">
-                <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
-                  {[
-                    { id: "socialTwitch", icon: <TwitchTv className="size-4" />, title: lang.data.app.profile.socials.twitch, placeholder: lang.data.app.profile.socials.placeholder, pattern: allowed_chars },
-                    { id: "socialYoutube", icon: <Youtube className="size-4" />, title: lang.data.app.profile.socials.youtube, placeholder: lang.data.app.profile.socials.placeholder, pattern: allowed_chars },
-                    { id: "socialTwitter", icon: <Twitter className="size-4" />, title: lang.data.app.profile.socials.twitter, placeholder: lang.data.app.profile.socials.placeholder, pattern: allowed_chars },
-                    { id: "socialFacebook", icon: <Facebook className="size-4" />, title: lang.data.app.profile.socials.facebook, placeholder: lang.data.app.profile.socials.placeholder, pattern: allowed_chars },
-                    { id: "socialReddit", icon: <Reddit className="size-4" />, title: lang.data.app.profile.socials.reddit, placeholder: lang.data.app.profile.socials.placeholder, pattern: allowed_chars },
-                    { id: "socialDiscord", icon: <Discord className="size-4" />, title: lang.data.app.profile.socials.discord, placeholder: lang.data.app.profile.socials.discord_placeholder, pattern: /^[a-zA-Z0-9]+$/ },
-                  ].map((l, i) => (
-                    <div className="flex flex-col rounded-lg p-1.5 gap-1.5" key={i}>
+        <div className="flex max-md:flex-col gap-1.5 min-h-0 flex-1">
+          <div className="md:w-64 flex flex-col h-max z-10 relative gap-1.5">
+            <Accordion className="w-full bg-card rounded-2xl">
+              <AccordionItem defaultOpen={true}>
+                <AccordionButton
+                  className={cn(
+                    "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
+                    "hover:bg-foreground/5",
+                    "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
+                  )}
+                  showArrow={false}
+                >
+                  <PersonIcon
+                    size={16}
+                    weight="fill"
+                    className="rotate-0! text-foreground/40 group-data-open:text-foreground"
+                  />
+                  <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
+                    {lang.data.app.profile.basic_info}
+                  </h1>
+                </AccordionButton>
+                <AccordionPanel keepRendered={true} data-default-transition="false" className="p-0">
+                  <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
+                    <div className="flex flex-col rounded-lg p-1.5 gap-1.5">
                       <div className="flex gap-1.5 opacity-40 items-center">
-                        {l.icon}
-                        <h1 className="font-semibold text-xs">{l.title}</h1>
+                        <UserIcon className="size-4" />
+                        <h1 className="font-semibold text-xs">{lang.data.app.account.display_name}</h1>
                       </div>
                       <Input
                         type="text"
-                        placeholder={l.placeholder}
-                        pattern={l.pattern.source}
-                        value={socials[l.id as keyof typeof socials]}
-                        onChange={(e) => handleSocialChange(l.id as keyof typeof socials, e.target.value, l.pattern)}
+                        placeholder="Display Name"
+                        pattern={allowed_chars.source}
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
                         disabled={!canEditProfile}
                         readOnly={!canEditProfile}
-                        maxLength={32}
+                        className="w-full"
                         classNames={{ base: "rounded-md bg-background/30! p-1" }}
                         fontStyle={{ fontFamily: "var(--font-sans)", fontSize: "10px" }}
                       />
                     </div>
-                  ))}
-                </div>
-                {canEditProfile && (
-                  <div className="flex items-center p-2.5 rounded-t-4xl w-full gap-1.5">
-                    <Button
-                      variant="secondary"
-                      className="rounded-xl border-2 p-4.5 w-full cursor-pointer"
-                      onClick={handleSaveSocials}
-                      disabled={isSavingSocials}
-                    >
-                      {isSavingSocials ? <Spinner className="mr-2" /> : lang.data.app.profile.socials.save}
-                    </Button>
-                  </div>
-                )}
-              </AccordionPanel>
-            </AccordionItem>
-          </Accordion>
 
-          <Accordion className="w-full bg-card rounded-2xl">
-            <AccordionItem>
-              <AccordionButton
-                className={cn(
-                  "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
-                  "hover:bg-foreground/5",
-                  "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
-                )}
-                showArrow={false}
-              >
-                <PaletteIcon
-                  size={16}
-                  weight="fill"
-                  className="rotate-0! text-foreground/40 group-data-open:text-foreground"
-                />
-                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
-                  {lang.data.app.profile.accent_color}
-                </h1>
-              </AccordionButton>
-              <AccordionPanel data-default-transition="false" className="p-0">
-                <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
-                  <div className="flex flex-col rounded-lg p-1.5 gap-1.5">
-                    <p className="text-foreground/40 text-[10px] leading-normal">
-                      {lang.data.app.profile.accent_color_description}
-                    </p>
-                    <div className="flex flex-col gap-3 items-center mt-2 w-full">
-                      <div className="flex gap-2 items-center w-full bg-background/20 p-2 rounded-xl border border-foreground/5 justify-between">
-                        <span className="text-[10px] font-semibold opacity-60">Color Hex:</span>
-                        <span className="text-xs font-mono uppercase font-bold tracking-wider">{accentColor}</span>
+                    <div className="flex flex-col rounded-lg p-1.5 gap-1.5">
+                      <div className="flex gap-1.5 opacity-40 items-center">
+                        <UserFocusIcon className="size-4" />
+                        <h1 className="font-semibold text-xs">{lang.data.app.account.bio}</h1>
                       </div>
-                      {canEditProfile ? (
-                        <ColorPicker color={accentColor} onChange={setAccentColor} />
-                      ) : (
-                        <div
-                          className="w-full h-8 rounded-xl border border-border/60 shadow-xs"
-                          style={{ backgroundColor: accentColor }}
-                        />
-                      )}
+                      <textarea
+                        placeholder="Share a short bio or stream schedule..."
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        disabled={!canEditProfile}
+                        readOnly={!canEditProfile}
+                        rows={3}
+                        className="w-full rounded-md bg-background/30 p-1.5 border-2 border-transparent hover:border-foreground/10 min-h-8 outline-0 focus-visible:border-foreground/10 focus-visible:bg-foreground/5 font-sans text-[10px] resize-y disabled:opacity-70 disabled:cursor-not-allowed"
+                      />
                     </div>
                   </div>
-                </div>
-                {canEditProfile && (
-                  <div className="flex items-center p-2.5 rounded-t-4xl w-full gap-1.5">
-                    <Button
-                      variant="secondary"
-                      className="rounded-xl border-2 p-4.5 w-full flex items-center justify-center gap-1.5 cursor-pointer"
-                      onClick={handleSaveAccentColor}
-                      disabled={isSavingColor}
-                    >
-                      {isSavingColor ? <Spinner className="mr-2" /> : lang.data.app.profile.socials.save}
-                    </Button>
-                  </div>
-                )}
-              </AccordionPanel>
-            </AccordionItem>
-          </Accordion>
+                  {canEditProfile && (
+                    <div className="flex items-center p-2.5 rounded-t-4xl w-full gap-1.5">
+                      <Button
+                        variant="secondary"
+                        className="rounded-xl border-2 p-4.5 w-full cursor-pointer"
+                        onClick={handleSaveBasicInfo}
+                        disabled={isSavingBasic || !displayName.trim()}
+                      >
+                        {isSavingBasic ? <Spinner className="mr-2" /> : lang.data.app.profile.socials.save}
+                      </Button>
+                    </div>
+                  )}
+                </AccordionPanel>
+              </AccordionItem>
+            </Accordion>
 
-          {canEditProfile && (
             <Accordion className="w-full bg-card rounded-2xl">
               <AccordionItem>
                 <AccordionButton
@@ -652,176 +553,300 @@ function Page() {
                   )}
                   showArrow={false}
                 >
-                  <CameraIcon
+                  <SparkleIcon
                     size={16}
                     weight="fill"
                     className="rotate-0! text-foreground/40 group-data-open:text-foreground"
                   />
                   <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
-                    Avatar & Banner
+                    {lang.data.app.profile.socials.title}
                   </h1>
                 </AccordionButton>
                 <AccordionPanel data-default-transition="false" className="p-0">
                   <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
-                    <div className="flex flex-col rounded-lg p-1.5 gap-2">
+                    {[
+                      { id: "socialTwitch", icon: <TwitchTv className="size-4" />, title: lang.data.app.profile.socials.twitch, placeholder: lang.data.app.profile.socials.placeholder, pattern: allowed_chars },
+                      { id: "socialYoutube", icon: <Youtube className="size-4" />, title: lang.data.app.profile.socials.youtube, placeholder: lang.data.app.profile.socials.placeholder, pattern: allowed_chars },
+                      { id: "socialTwitter", icon: <Twitter className="size-4" />, title: lang.data.app.profile.socials.twitter, placeholder: lang.data.app.profile.socials.placeholder, pattern: allowed_chars },
+                      { id: "socialFacebook", icon: <Facebook className="size-4" />, title: lang.data.app.profile.socials.facebook, placeholder: lang.data.app.profile.socials.placeholder, pattern: allowed_chars },
+                      { id: "socialReddit", icon: <Reddit className="size-4" />, title: lang.data.app.profile.socials.reddit, placeholder: lang.data.app.profile.socials.placeholder, pattern: allowed_chars },
+                      { id: "socialDiscord", icon: <Discord className="size-4" />, title: lang.data.app.profile.socials.discord, placeholder: lang.data.app.profile.socials.discord_placeholder, pattern: /^[a-zA-Z0-9]+$/ },
+                    ].map((l, i) => (
+                      <div className="flex flex-col rounded-lg p-1.5 gap-1.5" key={i}>
+                        <div className="flex gap-1.5 opacity-40 items-center">
+                          {l.icon}
+                          <h1 className="font-semibold text-xs">{l.title}</h1>
+                        </div>
+                        <Input
+                          type="text"
+                          placeholder={l.placeholder}
+                          pattern={l.pattern.source}
+                          value={socials[l.id as keyof typeof socials]}
+                          onChange={(e) => handleSocialChange(l.id as keyof typeof socials, e.target.value, l.pattern)}
+                          disabled={!canEditProfile}
+                          readOnly={!canEditProfile}
+                          maxLength={32}
+                          classNames={{ base: "rounded-md bg-background/30! p-1" }}
+                          fontStyle={{ fontFamily: "var(--font-sans)", fontSize: "10px" }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {canEditProfile && (
+                    <div className="flex items-center p-2.5 rounded-t-4xl w-full gap-1.5">
                       <Button
                         variant="secondary"
-                        className="rounded-xl p-2.5 text-xs font-semibold justify-start gap-2 bg-background/50 hover:bg-background/80 cursor-pointer"
-                        onClick={() => avatarInputRef.current?.click()}
+                        className="rounded-xl border-2 p-4.5 w-full cursor-pointer"
+                        onClick={handleSaveSocials}
+                        disabled={isSavingSocials}
                       >
-                        <CameraIcon size={16} weight="fill" />
-                        {lang.data.app.account.change_avatar}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        className="rounded-xl p-2.5 text-xs font-semibold justify-start gap-2 bg-background/50 hover:bg-background/80 cursor-pointer"
-                        onClick={() => bannerInputRef.current?.click()}
-                      >
-                        <CameraIcon size={16} weight="fill" />
-                        {lang.data.app.account.change_banner}
-                      </Button>
-                    </div>
-                  </div>
-                </AccordionPanel>
-              </AccordionItem>
-            </Accordion>
-          )}
-
-          <Accordion className="w-full bg-card rounded-2xl">
-            <AccordionItem>
-              <AccordionButton
-                className={cn(
-                  "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
-                  "hover:bg-foreground/5",
-                  "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
-                )}
-                showArrow={false}
-              >
-                <BrowsersIcon
-                  size={16}
-                  weight="fill"
-                  className="rotate-0! text-foreground/40 group-data-open:text-foreground"
-                />
-                <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
-                  OBS Overlay & Tokens
-                </h1>
-              </AccordionButton>
-              <AccordionPanel data-default-transition="false" className="p-0">
-                <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl p-2.5 gap-2.5 flex flex-col">
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-foreground/80">
-                      <span>Browser Source URL</span>
-                      <button
-                        type="button"
-                        onClick={() => setShowObsUrl(!showObsUrl)}
-                        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        {showObsUrl ? <EyeSlashIcon size={12} /> : <EyeIcon size={12} />}
-                        <span>{showObsUrl ? "Hide" : "Show"}</span>
-                      </button>
-                    </div>
-                    <div className="p-2 rounded-lg bg-background/50 border border-border/60 font-mono text-[10px] truncate select-all">
-                      {showObsUrl ? obsBrowserSourceUrl : "https://widget.alertbox.org/alert/••••••••••••"}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(obsBrowserSourceUrl);
-                        setCopiedObs(true);
-                        toast.success("OBS Browser Source URL copied!");
-                        setTimeout(() => setCopiedObs(false), 2000);
-                      }}
-                      className="gap-1 text-xs rounded-xl h-8 cursor-pointer"
-                    >
-                      {copiedObs ? <CheckIcon size={13} className="text-emerald-500" /> : <CopySimpleIcon size={13} />}
-                      <span>{copiedObs ? "Copied" : "Copy OBS URL"}</span>
-                    </Button>
-                  </div>
-
-                  {canRotateTokens && (
-                    <div className="pt-2 border-t border-border/50 flex flex-col gap-1.5">
-                      <span className="text-[10px] text-muted-foreground">In case of accidental stream leak:</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsRotateConfirmOpen(true)}
-                        className="gap-1.5 text-xs rounded-xl h-8 cursor-pointer border-amber-500/30 hover:bg-amber-500/10 text-amber-400"
-                      >
-                        <KeyIcon size={13} weight="bold" />
-                        <span>Rotate Tokens</span>
+                        {isSavingSocials ? <Spinner className="mr-2" /> : lang.data.app.profile.socials.save}
                       </Button>
                     </div>
                   )}
-                </div>
-              </AccordionPanel>
-            </AccordionItem>
-          </Accordion>
+                </AccordionPanel>
+              </AccordionItem>
+            </Accordion>
 
-          {canDeleteStreamer && (
-            <Accordion className="w-full bg-card rounded-2xl border border-destructive/20">
+            <Accordion className="w-full bg-card rounded-2xl">
               <AccordionItem>
                 <AccordionButton
                   className={cn(
                     "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
-                    "hover:bg-destructive/5",
+                    "hover:bg-foreground/5",
                     "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
                   )}
                   showArrow={false}
                 >
-                  <WarningOctagonIcon
+                  <PaletteIcon
                     size={16}
                     weight="fill"
-                    className="rotate-0! text-destructive group-data-open:text-destructive"
+                    className="rotate-0! text-foreground/40 group-data-open:text-foreground"
                   />
-                  <h1 className="font-semibold text-sm text-destructive m-0 translate-y-px">
-                    Channel Danger Zone
+                  <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
+                    {lang.data.app.profile.accent_color}
                   </h1>
                 </AccordionButton>
                 <AccordionPanel data-default-transition="false" className="p-0">
-                  <div className="flex-1 min-h-1 w-full bg-destructive/5 rounded-2xl p-2.5 gap-2 flex flex-col">
-                    <p className="text-[11px] text-muted-foreground leading-tight">
-                      Permanently delete this channel and disable donation pages.
-                    </p>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => {
-                        setConfirmHandle("");
-                        setIsDeleteOpen(true);
-                      }}
-                      className="gap-1.5 text-xs rounded-xl h-8 cursor-pointer mt-1 font-semibold"
-                    >
-                      <TrashIcon size={13} weight="bold" />
-                      <span>Delete Channel</span>
-                    </Button>
+                  <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
+                    <div className="flex flex-col rounded-lg p-1.5 gap-1.5">
+                      <p className="text-foreground/40 text-[10px] leading-normal">
+                        {lang.data.app.profile.accent_color_description}
+                      </p>
+                      <div className="flex flex-col gap-3 items-center mt-2 w-full">
+                        <div className="flex gap-2 items-center w-full bg-background/20 p-2 rounded-xl border border-foreground/5 justify-between">
+                          <span className="text-[10px] font-semibold opacity-60">Color Hex:</span>
+                          <span className="text-xs font-mono uppercase font-bold tracking-wider">{accentColor}</span>
+                        </div>
+                        {canEditProfile ? (
+                          <ColorPicker color={accentColor} onChange={setAccentColor} />
+                        ) : (
+                          <div
+                            className="w-full h-8 rounded-xl border border-border/60 shadow-xs"
+                            style={{ backgroundColor: accentColor }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {canEditProfile && (
+                    <div className="flex items-center p-2.5 rounded-t-4xl w-full gap-1.5">
+                      <Button
+                        variant="secondary"
+                        className="rounded-xl border-2 p-4.5 w-full flex items-center justify-center gap-1.5 cursor-pointer"
+                        onClick={handleSaveAccentColor}
+                        disabled={isSavingColor}
+                      >
+                        {isSavingColor ? <Spinner className="mr-2" /> : lang.data.app.profile.socials.save}
+                      </Button>
+                    </div>
+                  )}
+                </AccordionPanel>
+              </AccordionItem>
+            </Accordion>
+
+            {canEditProfile && (
+              <Accordion className="w-full bg-card rounded-2xl">
+                <AccordionItem>
+                  <AccordionButton
+                    className={cn(
+                      "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
+                      "hover:bg-foreground/5",
+                      "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
+                    )}
+                    showArrow={false}
+                  >
+                    <CameraIcon
+                      size={16}
+                      weight="fill"
+                      className="rotate-0! text-foreground/40 group-data-open:text-foreground"
+                    />
+                    <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
+                      Avatar & Banner
+                    </h1>
+                  </AccordionButton>
+                  <AccordionPanel data-default-transition="false" className="p-0">
+                    <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl py-2 px-1.75 gap-1.5 flex flex-col">
+                      <div className="flex flex-col rounded-lg p-1.5 gap-2">
+                        <Button
+                          variant="secondary"
+                          className="rounded-xl p-2.5 text-xs font-semibold justify-start gap-2 bg-background/50 hover:bg-background/80 cursor-pointer"
+                          onClick={() => avatarInputRef.current?.click()}
+                        >
+                          <CameraIcon size={16} weight="fill" />
+                          {lang.data.app.account.change_avatar}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          className="rounded-xl p-2.5 text-xs font-semibold justify-start gap-2 bg-background/50 hover:bg-background/80 cursor-pointer"
+                          onClick={() => bannerInputRef.current?.click()}
+                        >
+                          <CameraIcon size={16} weight="fill" />
+                          {lang.data.app.account.change_banner}
+                        </Button>
+                      </div>
+                    </div>
+                  </AccordionPanel>
+                </AccordionItem>
+              </Accordion>
+            )}
+
+            <Accordion className="w-full bg-card rounded-2xl">
+              <AccordionItem>
+                <AccordionButton
+                  className={cn(
+                    "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
+                    "hover:bg-foreground/5",
+                    "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
+                  )}
+                  showArrow={false}
+                >
+                  <BrowsersIcon
+                    size={16}
+                    weight="fill"
+                    className="rotate-0! text-foreground/40 group-data-open:text-foreground"
+                  />
+                  <h1 className="font-semibold text-sm text-foreground/40 group-data-open:text-foreground m-0 translate-y-px">
+                    OBS Overlay & Tokens
+                  </h1>
+                </AccordionButton>
+                <AccordionPanel data-default-transition="false" className="p-0">
+                  <div className="flex-1 min-h-1 w-full bg-muted rounded-2xl p-2.5 gap-2.5 flex flex-col">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-foreground/80">
+                        <span>Browser Source URL</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowObsUrl(!showObsUrl)}
+                          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          {showObsUrl ? <EyeSlashIcon size={12} /> : <EyeIcon size={12} />}
+                          <span>{showObsUrl ? "Hide" : "Show"}</span>
+                        </button>
+                      </div>
+                      <div className="p-2 rounded-lg bg-background/50 border border-border/60 font-mono text-[10px] truncate select-all">
+                        {showObsUrl ? obsBrowserSourceUrl : "https://widget.alertbox.org/alert/••••••••••••"}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(obsBrowserSourceUrl);
+                          setCopiedObs(true);
+                          toast.success("OBS Browser Source URL copied!");
+                          setTimeout(() => setCopiedObs(false), 2000);
+                        }}
+                        className="gap-1 text-xs rounded-xl h-8 cursor-pointer"
+                      >
+                        {copiedObs ? <CheckIcon size={13} className="text-emerald-500" /> : <CopySimpleIcon size={13} />}
+                        <span>{copiedObs ? "Copied" : "Copy OBS URL"}</span>
+                      </Button>
+                    </div>
+
+                    {canRotateTokens && (
+                      <div className="pt-2 border-t border-border/50 flex flex-col gap-1.5">
+                        <span className="text-[10px] text-muted-foreground">In case of accidental stream leak:</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsRotateConfirmOpen(true)}
+                          className="gap-1.5 text-xs rounded-xl h-8 cursor-pointer border-amber-500/30 hover:bg-amber-500/10 text-amber-400"
+                        >
+                          <KeyIcon size={13} weight="bold" />
+                          <span>Rotate Tokens</span>
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </AccordionPanel>
               </AccordionItem>
             </Accordion>
-          )}
-        </div>
 
-        <div className="w-full max-md:-order-1 flex flex-col overflow-hidden min-h-0 bg-foreground/5 rounded-4xl flex-1 border-2 border-dashed border-foreground/10 z-10 relative">
-          <ProfilePreview
-            onAvatarClick={canEditProfile ? () => avatarInputRef.current?.click() : undefined}
-            onBannerClick={canEditProfile ? () => bannerInputRef.current?.click() : undefined}
-            liveData={{
-              displayName,
-              bio,
-              avatar: currentStreamer?.avatar,
-              banner: currentStreamer?.banner,
-              twitch: socials.socialTwitch || null,
-              youtube: socials.socialYoutube || null,
-              twitter: socials.socialTwitter || null,
-              facebook: socials.socialFacebook || null,
-              reddit: socials.socialReddit || null,
-              discord: socials.socialDiscord || null,
-              accentColor: hexColorToNumber(accentColor),
-            }}
-          />
+            {canDeleteStreamer && (
+              <Accordion className="w-full bg-card rounded-2xl border border-destructive/20">
+                <AccordionItem>
+                  <AccordionButton
+                    className={cn(
+                      "flex group items-center p-3.5 rounded-2xl h-max min-h-0 w-full gap-2.25 no-underline! justify-start",
+                      "hover:bg-destructive/5",
+                      "data-open:rounded-b-lg data-open:pb-16 data-open:-mb-13",
+                    )}
+                    showArrow={false}
+                  >
+                    <WarningOctagonIcon
+                      size={16}
+                      weight="fill"
+                      className="rotate-0! text-destructive group-data-open:text-destructive"
+                    />
+                    <h1 className="font-semibold text-sm text-destructive m-0 translate-y-px">
+                      Channel Danger Zone
+                    </h1>
+                  </AccordionButton>
+                  <AccordionPanel data-default-transition="false" className="p-0">
+                    <div className="flex-1 min-h-1 w-full bg-destructive/5 rounded-2xl p-2.5 gap-2 flex flex-col">
+                      <p className="text-[11px] text-muted-foreground leading-tight">
+                        Permanently delete this channel and disable donation pages.
+                      </p>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setConfirmHandle("");
+                          setIsDeleteOpen(true);
+                        }}
+                        className="gap-1.5 text-xs rounded-xl h-8 cursor-pointer mt-1 font-semibold"
+                      >
+                        <TrashIcon size={13} weight="bold" />
+                        <span>Delete Channel</span>
+                      </Button>
+                    </div>
+                  </AccordionPanel>
+                </AccordionItem>
+              </Accordion>
+            )}
+          </div>
+
+          <div className="w-full max-md:-order-1 flex flex-col overflow-hidden min-h-0 bg-foreground/5 rounded-4xl flex-1 border-2 border-dashed border-foreground/10 z-10 relative">
+            <ProfilePreview
+              onAvatarClick={canEditProfile ? () => avatarInputRef.current?.click() : undefined}
+              onBannerClick={canEditProfile ? () => bannerInputRef.current?.click() : undefined}
+              liveData={{
+                displayName,
+                bio,
+                avatar: currentStreamer?.avatar,
+                banner: currentStreamer?.banner,
+                twitch: socials.socialTwitch || null,
+                youtube: socials.socialYoutube || null,
+                twitter: socials.socialTwitter || null,
+                facebook: socials.socialFacebook || null,
+                reddit: socials.socialReddit || null,
+                discord: socials.socialDiscord || null,
+                accentColor: hexColorToNumber(accentColor),
+              }}
+            />
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       <input
         type="file"

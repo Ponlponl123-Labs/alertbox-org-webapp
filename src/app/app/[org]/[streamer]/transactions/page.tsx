@@ -759,14 +759,14 @@ export default function StreamerTransactionsPage() {
                   <TableRow>
                     <TableCell colSpan={6} className="py-16 text-center text-muted-foreground">
                       <div className="flex flex-col items-center gap-2.5">
-                        <MoneyIcon size={36} weight="duotone" className="text-muted-foreground/50" />
+                        <MoneyIcon size={36} weight="duotone" className="text-foreground/60" />
                         <span className="font-medium text-foreground text-sm">No transactions recorded yet</span>
                         <span className="text-xs text-muted-foreground max-w-sm">
                           Incoming tips and donations from connected gateways will appear here in real-time.
                         </span>
                         {(searchQuery || selectedStatus !== "ALL" || selectedProvider !== "ALL") && (
                           <Button
-                            variant="outline"
+                            variant="secondary"
                             size="xs"
                             onClick={() => {
                               setSearchQuery("");

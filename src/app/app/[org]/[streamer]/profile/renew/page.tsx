@@ -13,9 +13,16 @@ import { Input } from "react-smooth-input";
 import { useStore } from "zustand";
 import { toast } from "@/components/custom-ui/toast";
 import { getApiUrl } from "@/lib/api";
+import { AnimatePresence, motion } from "motion/react";
 
 import { useUserContext } from "@/contexts/user";
 import { useRouter } from "next/navigation";
+import { CircleX } from "@/components/animate-ui/icons/hugeicons/circle-x";
+import { Loading03 } from "@/components/animate-ui/icons/hugeicons/loading-03";
+import { CheckmarkCircle02 } from "@/components/animate-ui/icons/hugeicons/checkmark-circle-02";
+import { Tag } from "@/components/animate-ui/icons/hugeicons/tag";
+import { AnimateIcon } from "@animate-ui/react/icons";
+import { Link01 } from "@/components/animate-ui/icons/hugeicons/link-01";
 
 function RegisURIPage() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -132,8 +139,6 @@ function RegisURIPage() {
     if (!isValidUri(value) && value !== "") return;
     setCurrentUriInputValue(value);
 
-    if (!isValidUri(value)) return;
-
     if (!value) {
       setIsRefreshing(false);
       setIsRegistrable(false);
@@ -143,74 +148,120 @@ function RegisURIPage() {
   };
 
   return (
-    <div className="w-full text-center flex flex-col items-center justify-center min-h-0 bg-foreground/5 mt-6 py-12 rounded-4xl flex-1 border-2 border-dashed border-foreground/10">
-      <div className="bg-indigo/10 flex items-center justify-center size-12 mx-auto mb-4 rounded-xl text-amber-500 bg-amber-500/10">
-        <HandWavingIcon weight="fill" className="m-auto" size={24} />
+    <motion.div
+      initial={{ opacity: 0, y: 6, filter: "blur(3px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0)" }}
+      className="w-full mx-auto max-w-384 min-h-0 flex-1 p-12 pb-0 flex flex-col gap-6 z-10"
+    >
+      <div className="w-full text-center flex flex-col items-center justify-center min-h-0 bg-foreground/5 py-12 rounded-4xl flex-1 border-2 border-dashed border-foreground/10">
+        <div className="flex items-center justify-center mx-auto mb-6">
+          <Link01 animate delay={1000} className="m-auto text-foreground/60 size-12" />
+        </div>
+        <h2 className="text-2xl font-bold font-sans mb-2 select-none">
+          {lang.data.app.profile.get_started.title}
+        </h2>
+        <p className="mb-6 text-sm font-sans text-foreground/40 max-w-md select-none">
+          {lang.data.app.profile.get_started.description}
+        </p>
+        <div className="min-w-0 w-full h-max flex items-center justify-center">
+          <Input
+            type="text"
+            fontStyle={{
+              fontFamily: "var(--font-sans)",
+              fontWeight: "500",
+              fontSize: "14px",
+            }}
+            startContent={
+              <span className="text-sm font-sans ml-2 relative flex -mr-2.75 text-foreground/40">
+                tip-to.me/@
+              </span>
+            }
+            disabled={isSubmitting}
+            value={currentUriInputValue}
+            onChange={handleUriChange}
+            maxLength={50}
+            pattern="^[a-zA-Z0-9_]+$"
+            placeholder={lang.data.pages.index.actions.yourname}
+            endContent={
+              <div className="mr-3 flex items-center justify-center w-4.5 h-4.5">
+                <AnimatePresence mode="popLayout">
+                  {!currentUriInputValue.trim() ? null : isRefreshing ? (
+                    <motion.div
+                      key="checking"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.15 }}
+                      className="text-foreground"
+                    >
+                      <Loading03 size={18} animate="default" />
+                    </motion.div>
+                  ) : isRegistrable ? <motion.div
+                    key="available"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.15 }}
+                    className="text-emerald-500"
+                  >
+                    <CheckmarkCircle02 size={18} />
+                  </motion.div> : (
+                    <motion.div
+                      key="taken"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.15 }}
+                      className="text-rose-500"
+                    >
+                      <CircleX size={18} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            }
+            customMotion={{
+              char: {
+                initial: {
+                  x: 3,
+                  opacity: 0,
+                  filter: "blur(6px)"
+                },
+                animate: {
+                  x: 0,
+                  opacity: 1,
+                  filter: "blur(0px)"
+                }
+              }
+            }}
+            className="w-full"
+            classNames={{ base: "h-12 rounded-2xl max-w-96 mx-auto" }}
+          />
+        </div>
+        <AnimateIcon animateOnHover>
+          <Button
+            variant="default"
+            className="rounded-2xl p-3 h-max text-xs font-semibold mt-4"
+            onClick={handleRegisURI}
+            disabled={
+              !currentUriInputValue.trim() ||
+              !isRegistrable ||
+              isRefreshing ||
+              isSubmitting
+            }
+          >
+            {isSubmitting ? (
+              <Spinner className="mr-2" />
+            ) : (
+              <>
+                <Tag />
+                {lang.data.app.profile.get_started.regis}
+              </>
+            )}
+          </Button>
+        </AnimateIcon>
       </div>
-      <h2 className="text-xl font-bold mb-2">
-        {lang.data.app.profile.get_started.title}
-      </h2>
-      <p className="mb-4 text-xs text-foreground/40 max-w-sm">
-        {lang.data.app.profile.get_started.description}
-      </p>
-      <div className="min-w-0 w-full h-max flex items-center justify-center">
-        <Input
-          type="text"
-          startContent={
-            <span className="text-xs font-baijamjuree translate-y-0.5 ml-2 relative flex -mr-2.75 text-foreground/40">
-              tip-to.me/@
-            </span>
-          }
-          endContent={
-            <>
-              {!currentUriInputValue.trim() ? null : isRefreshing ? (
-                <Spinner className="size-4 text-foreground/40" />
-              ) : isRegistrable ? (
-                <CheckCircleIcon
-                  weight="fill"
-                  className="size-4 text-emerald-500"
-                />
-              ) : (
-                <XCircleIcon
-                  weight="fill"
-                  className="size-4 text-destructive"
-                />
-              )}
-            </>
-          }
-          fontStyle={{
-            fontFamily: "var(--font-baijamjuree)",
-            fontSize: "12px",
-          }}
-          value={currentUriInputValue}
-          onChange={handleUriChange}
-          maxLength={50}
-          pattern="^[a-zA-Z0-9_]+$"
-          placeholder={lang.data.pages.index.actions.yourname}
-          classNames={{
-            base: "h-10 rounded-full supports-backdrop-filter:backdrop-blur-xs",
-            container: "min-w-0 max-w-64 max-md:min-w-88 flex-1",
-          }}
-        />
-      </div>
-      <Button
-        variant="default"
-        className="rounded-2xl p-2.5 text-[10px] font-semibold mt-4"
-        onClick={handleRegisURI}
-        disabled={
-          !currentUriInputValue.trim() ||
-          !isRegistrable ||
-          isRefreshing ||
-          isSubmitting
-        }
-      >
-        {isSubmitting ? (
-          <Spinner className="mr-2" />
-        ) : (
-          lang.data.app.profile.get_started.regis
-        )}
-      </Button>
-    </div>
+    </motion.div>
   );
 }
 

@@ -9,6 +9,7 @@ import { GalleryVerticalEnd, Plus, Check, KeyRound } from "lucide-react";
 import { ChevronUpDown } from "@/components/animate-ui/icons/chevron-up-down";
 import { AnimateIcon } from "@animate-ui/react/icons";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { AnimatePresence, motion } from "motion/react";
 
 export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
   const router = useRouter();
@@ -67,40 +68,54 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
         <AnimateIcon animateOnHover animation="default" asChild>
           <PopoverTrigger
             className={cn(
-              "flex items-center gap-3 w-full p-2 rounded-lg hover:bg-foreground/5 data-[state=open]:bg-foreground/5 text-left select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
-              isCollapsed && "justify-center p-1.5",
+              "w-full p-1.5 rounded-2xl hover:bg-foreground/10 border-2 border-transparent data-popup-open:border-border data-popup-open:bg-foreground/5 text-left select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
+              isCollapsed && "justify-center p-0",
             )}
             title={displayName}
           >
-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-foreground text-background shrink-0 shadow-sm font-semibold text-xs">
-              {activeOrg?.avatar ? (
-                <Image
-                  src={activeOrg.avatar}
-                  alt={displayName}
-                  width={32}
-                  height={32}
-                  className="size-full rounded-md object-cover"
-                  unoptimized
-                />
-              ) : (
-                <GalleryVerticalEnd className="size-4" />
-              )}
-            </div>
+            <AnimatePresence mode="popLayout">
+              <motion.div
+                initial={{ opacity: 0, y: 6, scale: 0.95, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -6, scale: 0.95, filter: "blur(4px)" }}
+                transition={{
+                  duration: 0.36,
+                  ease: "easeOut",
+                }}
+                className="flex items-center gap-2"
+                key={activeOrg?.id}
+              >
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-foreground text-background shrink-0 shadow-sm font-semibold text-xs">
+                  {activeOrg?.avatar ? (
+                    <Image
+                      src={activeOrg.avatar}
+                      alt={displayName}
+                      width={32}
+                      height={32}
+                      className="size-full rounded-lg object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <GalleryVerticalEnd className="size-4" />
+                  )}
+                </div>
 
-            {!isCollapsed && (
-              <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
-                <span className="truncate font-semibold text-foreground text-sm">
-                  {displayName}
-                </span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {displayType}
-                </span>
-              </div>
-            )}
+                {!isCollapsed && (
+                  <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                    <span className="truncate font-medium text-foreground text-xs">
+                      {displayName}
+                    </span>
+                    <span className="truncate text-[10px] text-muted-foreground">
+                      {displayType}
+                    </span>
+                  </div>
+                )}
 
-            {!isCollapsed && (
-              <ChevronUpDown className="ml-auto size-4 text-muted-foreground/70 shrink-0" />
-            )}
+                {!isCollapsed && (
+                  <ChevronUpDown className="ml-auto size-4 text-muted-foreground/70 shrink-0" />
+                )}
+              </motion.div>
+            </AnimatePresence>
           </PopoverTrigger>
         </AnimateIcon>
 
@@ -109,7 +124,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
           sideOffset={6}
           className="w-64 p-1.5 rounded-xl bg-popover text-popover-foreground shadow-none border-none"
         >
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-0.5">
             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
               Organizations
             </div>
@@ -165,7 +180,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                         </span>
                       </div>
                       <KbdGroup>
-                        <Kbd>Ctrl + {index + 1}</Kbd>
+                        <Kbd className="rounded-sm bg-background">Ctrl + {index + 1}</Kbd>
                       </KbdGroup>
                       {isSelected && <Check className="size-3.5 text-primary shrink-0" />}
                     </button>
@@ -185,7 +200,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
             </div>
             <button
               type="button"
-              className="flex items-center gap-2.5 w-full p-2 rounded-lg hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground/80 text-left"
+              className="flex items-center gap-2.5 w-full p-2 rounded-lg hover:bg-accent/60 hover:text-accent-foreground text-xs font-medium text-foreground/80 text-left"
               onClick={() => {
                 setOpen(false);
                 router.push("/app/org/create");
@@ -198,7 +213,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
             </button>
             <button
               type="button"
-              className="flex items-center gap-2.5 w-full p-2 rounded-lg hover:bg-accent hover:text-accent-foreground text-xs font-medium text-foreground/80 text-left"
+              className="flex items-center gap-2.5 w-full p-2 rounded-lg hover:bg-accent/60 hover:text-accent-foreground text-xs font-medium text-foreground/80 text-left"
               onClick={() => {
                 setOpen(false);
                 router.push("/app/org/join");

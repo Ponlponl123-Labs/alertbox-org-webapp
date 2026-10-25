@@ -8,13 +8,15 @@ import { cn, getFallbackInitial } from "@/lib/utils";
 import {
   BroadcastIcon,
   BuildingsIcon,
-  CaretUpDownIcon,
   CheckIcon,
   PlusIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { hasPermission } from "@/lib/rbac";
 import { OrgPerm } from "@/consts/permission";
+import { AnimateIcon } from "@animate-ui/react/icons";
+import { ChevronUpDown } from "@/components/animate-ui/icons/chevron-up-down";
+import { motion, AnimatePresence } from "motion/react";
 
 export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
   const router = useRouter();
@@ -50,53 +52,65 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
   return (
     <div className="w-full shrink-0 mb-1.5 px-0.5">
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger
-          className={cn(
-            "flex items-center gap-2 w-full px-2 py-1.5 rounded-xl bg-foreground/2 hover:bg-foreground/6 text-xs select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
-            isCollapsed && "justify-center p-1.5 border-0 bg-transparent hover:bg-foreground/5",
-          )}
-          title={
-            effectiveOrgMode
-              ? "Organization Overview"
-              : activeStreamer?.displayName || activeStreamer?.name || "Select Channel"
-          }
-        >
-          {effectiveOrgMode ? (
-            <div className="flex size-5 items-center justify-center rounded-md bg-muted text-muted-foreground shrink-0">
-              <BuildingsIcon size={13} weight="bold" />
-            </div>
-          ) : (
-            <div className="flex size-5 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
-              {activeStreamer?.avatar ? (
-                <Image
-                  src={activeStreamer.avatar}
-                  alt={activeStreamer.name}
-                  width={20}
-                  height={20}
-                  className="size-full rounded-md object-cover"
-                  unoptimized
-                />
-              ) : (
-                <BroadcastIcon size={13} weight="fill" />
-              )}
-            </div>
-          )}
+        <AnimateIcon animateOnHover animation="default" asChild>
+          <PopoverTrigger
+            className={cn(
+              "flex items-center gap-2 w-full p-1.5 rounded-xl -mt-1 border-2 border-transparent data-popup-open:border-border data-popup-open:bg-foreground/5 bg-transparent hover:bg-foreground/10 text-xs select-none outline-none focus-visible:ring-1 focus-visible:ring-primary",
+              isCollapsed && "justify-center p-1 border-0 bg-transparent hover:bg-foreground/5",
+            )}
+            title={
+              effectiveOrgMode
+                ? "Organization Overview"
+                : activeStreamer?.displayName || activeStreamer?.name || "Select Channel"
+            }
+          >
+            <AnimatePresence mode="popLayout">
+              <motion.div
+                initial={{ opacity: 0, y: 6, scale: 0.95, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -6, scale: 0.95, filter: "blur(4px)" }}
+                transition={{
+                  duration: 0.36,
+                  ease: "easeOut",
+                }}
+                className="flex items-center gap-2 w-full"
+                key={`${activeStreamer?.name}-${effectiveOrgMode}`}
+              >
+                {effectiveOrgMode ? (
+                  <div className="flex size-6 items-center justify-center rounded-md bg-muted text-muted-foreground shrink-0">
+                    <BuildingsIcon size={13} weight="bold" />
+                  </div>
+                ) : (
+                  <div className="flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
+                    {activeStreamer?.avatar ? (
+                      <Image
+                        src={activeStreamer.avatar}
+                        alt={activeStreamer.name}
+                        width={20}
+                        height={20}
+                        className="size-full rounded-lg object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <BroadcastIcon size={13} weight="fill" />
+                    )}
+                  </div>
+                )}
 
-          {!isCollapsed && (
-            <div className="flex flex-1 items-center justify-between min-w-0">
-              <span className="truncate font-medium text-foreground/80 text-[11px]">
-                {effectiveOrgMode
-                  ? "Org Overview"
-                  : activeStreamer?.displayName || activeStreamer?.name || "No Channel"}
-              </span>
-              <CaretUpDownIcon
-                size={12}
-                weight="bold"
-                className="text-muted-foreground/60 shrink-0 ml-1"
-              />
-            </div>
-          )}
-        </PopoverTrigger>
+                {!isCollapsed && (
+                  <div className="flex flex-1 items-center justify-between min-w-0">
+                    <span className="truncate font-medium text-foreground/80 text-xs tracking-wide">
+                      {effectiveOrgMode
+                        ? "Org Overview"
+                        : activeStreamer?.displayName || activeStreamer?.name || "No Channel"}
+                    </span>
+                    <ChevronUpDown className="ml-auto size-3 text-muted-foreground/70 shrink-0" />
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </PopoverTrigger>
+        </AnimateIcon>
 
         <PopoverContent
           align="start"
