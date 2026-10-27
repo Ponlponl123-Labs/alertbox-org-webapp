@@ -5,14 +5,19 @@ import { useUserContext } from "@/contexts/user";
 import { getApiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowsClockwiseIcon,
   MagnifyingGlassIcon,
   CaretRightIcon,
   CaretDownIcon,
-  CaretLeftIcon,
   BroadcastIcon,
   XIcon,
 } from "@phosphor-icons/react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { toast } from "@/components/custom-ui/toast";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,6 +41,8 @@ import {
 import { DEFAULT_AUDIT_PAGE_SIZE } from "@/consts/audit";
 import { useTinyUser, useTinyStreamer } from "@/lib/tiny-user-cache";
 import type { AuditLogItem } from "@/types";
+import { AnimateIcon } from "@animate-ui/react/icons";
+import { RefreshCcw } from "@/components/animate-ui/icons/hugeicons/refresh-ccw";
 
 const PAGE_SIZE = DEFAULT_AUDIT_PAGE_SIZE;
 const CLIENT_CACHE_TTL = 3 * 60 * 1000;
@@ -331,37 +338,43 @@ export default function StreamerAuditPage() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-6 z-10"
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-6 z-10 min-h-0 flex-1"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
-        <div>
-          <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
-            <BroadcastIcon size={16} weight="bold" />
-            <span>Channel Security Trail</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="w-full">
+          <div className="flex gap-4 items-center my-3">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-tight text-foreground">
+              Channel Audit Logs
+            </h1>
           </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
-            Channel Audit Logs
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Security audit trail of OBS overlay regenerations, gateway modifications, and profile edits for @{streamerTarget}.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              const cacheKey = `${orgTarget}:${streamerTarget}`;
-              streamerAuditCache.delete(cacheKey);
-              fetchLogs(true);
-            }}
-            disabled={loading}
-            className="gap-1.5 text-xs rounded-xl p-3 h-max cursor-pointer"
-          >
-            <ArrowsClockwiseIcon size={14} className={loading ? "animate-spin" : ""} />
-            <span>Refresh</span>
-          </Button>
+          <div className="flex justify-between w-full items-center">
+            <div className="flex flex-col">
+              <span className="tracking-wider text-sm text-foreground/40">
+                Here&apos;s where you manage everything related to your transactions.
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <AnimateIcon animateOnHover>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    const cacheKey = `${orgTarget}:${streamerTarget}`;
+                    streamerAuditCache.delete(cacheKey);
+                    fetchLogs(true);
+                  }}
+                  disabled={loading}
+                  className="gap-1.5 text-xs rounded-xl p-3 h-max"
+                >
+                  <RefreshCcw
+                    size={14}
+                    className={cn(loading && "animate-spin")}
+                  />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+              </AnimateIcon>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -404,7 +417,7 @@ export default function StreamerAuditPage() {
               fontSize: "14px",
             }}
             className="w-full"
-            classNames={{ base: "h-9 rounded-xl" }}
+            classNames={{ base: "h-10 rounded-xl" }}
           />
         </div>
       </div>
@@ -516,7 +529,7 @@ export default function StreamerAuditPage() {
                               setCategoryFilter("ALL");
                               setCurrentPage(1);
                             }}
-                            className="mt-2 text-xs rounded-lg cursor-pointer"
+                            className="mt-2 text-xs rounded-xl p-3 h-max"
                           >
                             Reset filters
                           </Button>
@@ -619,26 +632,42 @@ export default function StreamerAuditPage() {
                 </AnimatePresence>
               </span>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                disabled={currentPage <= 1}
-                aria-label="Previous page"
-                className="p-1 rounded-md border border-border/60 bg-card hover:bg-secondary/80 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-              >
-                <CaretLeftIcon size={13} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                disabled={currentPage >= totalPages}
-                aria-label="Next page"
-                className="p-1 rounded-md border border-border/60 bg-card hover:bg-secondary/80 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-              >
-                <CaretRightIcon size={13} />
-              </button>
-            </div>
+            <Pagination className="mx-0 w-auto">
+              <PaginationContent className="gap-1">
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage((p) => Math.max(p - 1, 1));
+                    }}
+                    aria-disabled={currentPage <= 1}
+                    tabIndex={currentPage <= 1 ? -1 : undefined}
+                    className={cn(
+                      "cursor-pointer",
+                      currentPage <= 1 && "pointer-events-none opacity-40 cursor-not-allowed"
+                    )}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage((p) => Math.min(p + 1, totalPages));
+                    }}
+                    aria-disabled={currentPage >= totalPages}
+                    tabIndex={currentPage >= totalPages ? -1 : undefined}
+                    className={cn(
+                      "cursor-pointer",
+                      currentPage >= totalPages && "pointer-events-none opacity-40 cursor-not-allowed"
+                    )}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </div>
       </div>

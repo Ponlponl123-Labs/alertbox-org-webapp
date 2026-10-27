@@ -1,16 +1,13 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
 import { getApiUrl } from "@/lib/api";
 import { getCookie } from "cookies-next";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowsClockwiseIcon,
   MagnifyingGlassIcon,
-  SortAscendingIcon,
-  SortDescendingIcon,
   DotsThreeVerticalIcon,
   PaperPlaneTiltIcon,
   TrashIcon,
@@ -18,8 +15,6 @@ import {
   CopyIcon,
   CheckIcon,
   SparkleIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
   MoneyIcon,
   XIcon,
 } from "@phosphor-icons/react";
@@ -55,6 +50,13 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatTableDate } from "@/lib/audit-format";
 import { DEFAULT_TRANSACTION_PAGE_SIZE } from "@/consts/payment";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/custom-ui/select";
+import { Route } from "@/components/animate-ui/icons/hugeicons/route";
+import { ArrowUpDown } from "@/components/animate-ui/icons/hugeicons/arrow-up-down";
+import { AnimateIcon } from "@animate-ui/react/icons";
+import { RefreshCcw } from "@/components/animate-ui/icons/hugeicons/refresh-ccw";
+import { Sparkles } from "@/components/animate-ui/icons/hugeicons/sparkles";
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const GATEWAY_NAMES: Record<string, string> = {
   STRIPE: "Stripe",
@@ -107,7 +109,7 @@ export default function StreamerTransactionsPage() {
     activeStreamer?.id || activeStreamer?.name || (routeParams?.streamer as string);
 
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+  const [_totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -122,18 +124,22 @@ export default function StreamerTransactionsPage() {
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
   // Keep references to active filters for client-side live WebSocket evaluation
-  const filterProviderRef = useRef(selectedProvider);
-  const filterStatusRef = useRef(selectedStatus);
-  const filterSearchRef = useRef(searchQuery);
-  const sortByRef = useRef(sortBy);
-  const sortOrderRef = useRef(sortOrder);
+  const filtersRef = useRef({
+    provider: selectedProvider,
+    status: selectedStatus,
+    search: searchQuery,
+    sortBy,
+    sortOrder,
+  });
 
   useEffect(() => {
-    filterProviderRef.current = selectedProvider;
-    filterStatusRef.current = selectedStatus;
-    filterSearchRef.current = searchQuery;
-    sortByRef.current = sortBy;
-    sortOrderRef.current = sortOrder;
+    filtersRef.current = {
+      provider: selectedProvider,
+      status: selectedStatus,
+      search: searchQuery,
+      sortBy,
+      sortOrder,
+    };
   }, [selectedProvider, selectedStatus, searchQuery, sortBy, sortOrder]);
 
   // Test Transaction Dialog
@@ -204,9 +210,7 @@ export default function StreamerTransactionsPage() {
     authFetch,
   ]);
 
-  const refetchTransactions = useCallback(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+  const refetchTransactions = fetchTransactions;
 
   useEffect(() => {
     let ignore = false;
@@ -288,16 +292,24 @@ export default function StreamerTransactionsPage() {
             if (data.type === "transaction:new" && data.transaction) {
               const incoming: TransactionItem = data.transaction;
 
+              const {
+                provider: curProvider,
+                status: curStatus,
+                search: curSearch,
+                sortBy: curSortBy,
+                sortOrder: curSortOrder,
+              } = filtersRef.current;
+
               // Client-side predicate check to eliminate server load
               const matchProvider =
-                filterProviderRef.current === "ALL" ||
-                incoming.provider.toUpperCase() === filterProviderRef.current.toUpperCase();
+                curProvider === "ALL" ||
+                incoming.provider.toUpperCase() === curProvider.toUpperCase();
 
               const matchStatus =
-                filterStatusRef.current === "ALL" ||
-                incoming.status.toUpperCase() === filterStatusRef.current.toUpperCase();
+                curStatus === "ALL" ||
+                incoming.status.toUpperCase() === curStatus.toUpperCase();
 
-              const q = filterSearchRef.current.trim().toLowerCase();
+              const q = curSearch.trim().toLowerCase();
               const matchSearch =
                 !q ||
                 incoming.senderName?.toLowerCase().includes(q) ||
@@ -309,7 +321,7 @@ export default function StreamerTransactionsPage() {
               if (passesFilter) {
                 setTransactions((prev) => {
                   if (prev.some((t) => t.id === incoming.id)) return prev;
-                  if (sortByRef.current === "createdAt" && sortOrderRef.current === "desc") {
+                  if (curSortBy === "createdAt" && curSortOrder === "desc") {
                     return [incoming, ...prev.slice(0, PAGE_SIZE - 1)];
                   }
                   return [incoming, ...prev];
@@ -493,76 +505,81 @@ export default function StreamerTransactionsPage() {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.ceil(transactions.length / PAGE_SIZE) || 1;
+  const startIndex = transactions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const endIndex = Math.min(currentPage * PAGE_SIZE, transactions.length);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-6 z-10"
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-6 z-10 min-h-0 flex-1"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
-        <div>
-          <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
-            <MoneyIcon size={16} weight="bold" />
-            <span>Channel Financials</span>
-          </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
-            Transactions & Tips
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Consolidated supporter donations, tips, and gateway event history for @{streamerTarget}.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-border/80 bg-card/60 shadow-xs backdrop-blur-xs">
-            <span
-              className={cn(
-                "relative flex h-2 w-2 rounded-full",
-                wsStatus === "connected"
-                  ? "bg-emerald-500"
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="w-full">
+          <div className="flex gap-4 items-center my-3">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-tight text-foreground">
+              Transactions
+            </h1>
+            <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl select-none text-xs font-medium bg-muted/80 opacity-60">
+              <span
+                className={cn(
+                  "relative flex h-2 w-2 rounded-full",
+                  wsStatus === "connected"
+                    ? "bg-emerald-500"
+                    : wsStatus === "connecting"
+                      ? "bg-amber-500"
+                      : "bg-zinc-400",
+                )}
+              >
+                {wsStatus === "connected" && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                )}
+              </span>
+              <span className="text-xs text-muted-foreground font-medium font-sans">
+                {wsStatus === "connected"
+                  ? "Connected (Live Feed)"
                   : wsStatus === "connecting"
-                    ? "bg-amber-500"
-                    : "bg-zinc-400",
-              )}
-            >
-              {wsStatus === "connected" && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              )}
-            </span>
-            <span className="text-[11px] text-muted-foreground font-medium font-sans">
-              {wsStatus === "connected"
-                ? "Live (WS)"
-                : wsStatus === "connecting"
-                  ? "Connecting..."
-                  : "Offline"}
-            </span>
+                    ? "Connecting..."
+                    : "Connection lost"}
+              </span>
+            </div>
           </div>
+          <div className="flex justify-between w-full items-center">
+            <div className="flex flex-col">
+              <span className="tracking-wider text-sm text-foreground/40">
+                Here&apos;s where you manage everything related to your transactions.
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <AnimateIcon animateOnHover>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={refetchTransactions}
+                  disabled={loading}
+                  className="gap-1.5 text-xs rounded-xl p-3 h-max"
+                >
+                  <RefreshCcw
+                    size={14}
+                    className={cn(loading && "animate-spin")}
+                  />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+              </AnimateIcon>
 
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={refetchTransactions}
-            disabled={loading}
-            className="gap-1.5 text-xs rounded-xl p-3 h-max cursor-pointer"
-            title="Refetch data from server"
-          >
-            <ArrowsClockwiseIcon
-              size={14}
-              className={cn(loading && "animate-spin")}
-            />
-            <span className="hidden sm:inline">Refresh</span>
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={() => setIsTestDialogOpen(true)}
-            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl p-3 h-max cursor-pointer text-xs"
-          >
-            <SparkleIcon size={15} weight="bold" />
-            <span>Simulate Tip</span>
-          </Button>
+              <AnimateIcon animateOnHover>
+                <Button
+                  size="sm"
+                  onClick={() => setIsTestDialogOpen(true)}
+                  className="gap-2 rounded-xl p-3 h-max text-xs"
+                >
+                  <Sparkles size={15} />
+                  <span>Simulate Tip</span>
+                </Button>
+              </AnimateIcon>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -612,55 +629,105 @@ export default function StreamerTransactionsPage() {
                 fontSize: "14px",
               }}
               className="w-full"
-              classNames={{ base: "h-9 rounded-xl" }}
+              classNames={{ base: "h-10 rounded-xl" }}
             />
           </div>
 
           <div className="flex items-center gap-2">
-            <select
-              value={selectedProvider}
-              onChange={(e) => {
-                setSelectedProvider(e.target.value);
+            <Select
+              items={[
+                { label: 'All Gateways', value: 'ALL' },
+                { label: 'Buy Me a Coffee', value: 'BMAC' },
+                { label: 'Ko-fi', value: 'KOFI' },
+                { label: 'Stripe', value: 'STRIPE' },
+                { label: 'Xendit', value: 'XENDIT' },
+                { label: 'PromptPay (FFP)', value: 'FFP' },
+              ]}
+              defaultValue="ALL"
+              onValueChange={(e) => {
+                setSelectedProvider(e as string);
                 setCurrentPage(1);
-              }}
-              className="bg-card border border-border/80 text-foreground text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-primary font-medium"
-            >
-              <option value="ALL">All Gateways</option>
-              <option value="BMAC">Buy Me a Coffee</option>
-              <option value="KOFI">Ko-fi</option>
-              <option value="STRIPE">Stripe</option>
-              <option value="XENDIT">Xendit</option>
-              <option value="FFP">PromptPay (FFP)</option>
-            </select>
+              }}>
+              <AnimateIcon animateOnHover>
+                <SelectTrigger className="w-48 p-2.5 bg-secondary! border-0 rounded-xl h-max!">
+                  <Route className="text-muted-foreground size-3.5" />
+                  <SelectValue />
+                </SelectTrigger>
+              </AnimateIcon>
+              <SelectContent className="-translate-x-4 -translate-y-1">
+                <SelectGroup>
+                  {[
+                    { label: 'All Gateways', value: 'ALL' },
+                    { label: 'Buy Me a Coffee', value: 'BMAC' },
+                    { label: 'Ko-fi', value: 'KOFI' },
+                    { label: 'Stripe', value: 'STRIPE' },
+                    { label: 'Xendit', value: 'XENDIT' },
+                    { label: 'PromptPay (FFP)', value: 'FFP' },
+                  ].map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
-            <select
-              value={sortBy}
-              onChange={(e) => {
-                setSortBy(e.target.value as "createdAt" | "amount");
+            <Select
+              items={[
+                { label: 'Date', value: 'createdAt' },
+                { label: 'Amount', value: 'amount' },
+              ]}
+              defaultValue="createdAt"
+              onValueChange={(e) => {
+                setSortBy(e as "createdAt" | "amount");
                 setCurrentPage(1);
-              }}
-              className="bg-card border border-border/80 text-foreground text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-primary font-medium"
-            >
-              <option value="createdAt">Sort: Date</option>
-              <option value="amount">Sort: Amount</option>
-            </select>
+              }}>
+              <AnimateIcon animateOnHover>
+                <SelectTrigger className="w-32 p-2.5 bg-secondary! border-0 rounded-xl h-max!">
+                  <ArrowUpDown className="text-muted-foreground size-3.5" />
+                  <SelectValue />
+                </SelectTrigger>
+              </AnimateIcon>
+              <SelectContent className="-translate-x-5 -translate-y-1">
+                <SelectGroup>
+                  {[
+                    { label: 'Date', value: 'createdAt' },
+                    { label: 'Amount', value: 'amount' },
+                  ].map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
 
-            <Button
-              size="xs"
-              variant="outline"
-              onClick={() => setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))}
-              className="gap-1 text-xs rounded-xl h-9 px-3 cursor-pointer"
-              title={`Sorted by ${sortBy} ${sortOrder}`}
-            >
-              {sortOrder === "desc" ? (
-                <SortDescendingIcon size={15} weight="bold" />
-              ) : (
-                <SortAscendingIcon size={15} weight="bold" />
-              )}
-              <span className="hidden xl:inline">
-                {sortOrder === "desc" ? "Desc" : "Asc"}
-              </span>
-            </Button>
+            <AnimateIcon animateOnHover>
+              <Button
+                size="xs"
+                variant="secondary"
+                onClick={() => setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))}
+                className="gap-1.5 text-xs rounded-xl p-3 w-20 h-max"
+              >
+                <ArrowUpDown className="text-muted-foreground size-3.5" />
+                <AnimatePresence mode="popLayout">
+                  <motion.span
+                    key={sortOrder}
+                    initial={{ opacity: 0, x: 5, filter: "blur(2px)" }}
+                    animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, x: -5, filter: "blur(2px)" }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 280,
+                      damping: 28,
+                    }}
+                    className="hidden xl:inline"
+                  >
+                    {sortOrder === "desc" ? "Desc" : "Asc"}
+                  </motion.span>
+                </AnimatePresence>
+              </Button>
+            </AnimateIcon>
           </div>
         </div>
       </div>
@@ -774,7 +841,7 @@ export default function StreamerTransactionsPage() {
                               setSelectedProvider("ALL");
                               setCurrentPage(1);
                             }}
-                            className="mt-2 text-xs rounded-lg cursor-pointer"
+                            className="mt-2 text-xs rounded-xl p-3 h-max"
                           >
                             Reset filters
                           </Button>
@@ -995,35 +1062,19 @@ export default function StreamerTransactionsPage() {
           </Table>
         </AutoHeight>
 
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/10 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>Showing</span>
-            <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
+        <div className="flex items-center justify-between px-6 py-3.5 border-t border-border/60 bg-secondary/20 text-xs text-muted-foreground select-none">
+          <div className="flex items-center gap-1.5">
+            <span className="relative inline-flex items-center overflow-hidden h-4 font-medium text-foreground/80">
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.span
-                  key={transactions.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}
+                  key={`${startIndex}–${endIndex}`}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   className="tabular-nums font-sans"
                 >
-                  {transactions.length > 0 ? (currentPage - 1) * PAGE_SIZE + 1 : 0}
-                </motion.span>
-              </AnimatePresence>
-            </span>
-            <span>to</span>
-            <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
-              <AnimatePresence mode="popLayout" initial={false}>
-                <motion.span
-                  key={Math.min(currentPage * PAGE_SIZE, totalCount)}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  className="tabular-nums font-sans"
-                >
-                  {Math.min(currentPage * PAGE_SIZE, totalCount)}
+                  {transactions.length > 0 ? `${startIndex}–${endIndex}` : "0"}
                 </motion.span>
               </AnimatePresence>
             </span>
@@ -1031,32 +1082,23 @@ export default function StreamerTransactionsPage() {
             <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.span
-                  key={totalCount}
+                  key={transactions.length}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   className="tabular-nums font-sans"
                 >
-                  {totalCount}
+                  {transactions.length}
                 </motion.span>
               </AnimatePresence>
             </span>
-            <span>transactions</span>
+            <span>events</span>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <Button
-              size="xs"
-              variant="outline"
-              disabled={currentPage <= 1 || loading}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="gap-1"
-            >
-              <CaretLeftIcon size={12} weight="bold" />
-              <span>Prev</span>
-            </Button>
-            <div className="flex items-center gap-1 px-2 text-xs text-muted-foreground font-sans">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground/80 font-sans">
+              <span>Page</span>
               <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.span
@@ -1071,7 +1113,7 @@ export default function StreamerTransactionsPage() {
                   </motion.span>
                 </AnimatePresence>
               </span>
-              <span>/</span>
+              <span>of</span>
               <span className="relative inline-flex items-center overflow-hidden h-4 font-medium text-foreground/80">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.span
@@ -1087,16 +1129,42 @@ export default function StreamerTransactionsPage() {
                 </AnimatePresence>
               </span>
             </div>
-            <Button
-              size="xs"
-              variant="outline"
-              disabled={currentPage >= totalPages || loading}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              className="gap-1"
-            >
-              <span>Next</span>
-              <CaretRightIcon size={12} weight="bold" />
-            </Button>
+            <Pagination className="mx-0 w-auto">
+              <PaginationContent className="gap-1">
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage((p) => Math.max(p - 1, 1));
+                    }}
+                    aria-disabled={currentPage <= 1}
+                    tabIndex={currentPage <= 1 ? -1 : undefined}
+                    className={cn(
+                      "cursor-pointer",
+                      currentPage <= 1 && "pointer-events-none opacity-40 cursor-not-allowed"
+                    )}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage((p) => Math.min(p + 1, totalPages));
+                    }}
+                    aria-disabled={currentPage >= totalPages}
+                    tabIndex={currentPage >= totalPages ? -1 : undefined}
+                    className={cn(
+                      "cursor-pointer",
+                      currentPage >= totalPages && "pointer-events-none opacity-40 cursor-not-allowed"
+                    )}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </div>
       </div>

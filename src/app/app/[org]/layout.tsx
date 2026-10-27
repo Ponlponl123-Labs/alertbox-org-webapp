@@ -3,7 +3,6 @@ import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { orgStore } from "@/hooks/store/org";
 import { useStore } from "zustand";
-
 export default function OrgLayout({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const orgParam = params?.org as string | undefined;

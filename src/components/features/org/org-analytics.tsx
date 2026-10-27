@@ -251,7 +251,7 @@ function OrgAnalyticsSkeleton() {
   );
 }
 
-export default function OrgAnalytics({ orgId }: { orgId?: string }) {
+const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: string }) {
   const { authFetch } = useUserContext();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
@@ -738,4 +738,6 @@ export default function OrgAnalytics({ orgId }: { orgId?: string }) {
       </AnimatePresence>
     </section>
   );
-}
+});
+
+export default OrgAnalytics;

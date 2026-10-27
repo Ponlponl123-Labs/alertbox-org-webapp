@@ -70,7 +70,7 @@ function useIsMobile() {
   );
 }
 
-function AppSidebar() {
+const AppSidebar = React.memo(function AppSidebar() {
   const lang = useStore(coreStore, (state) => state.lang);
   const isSidebarCollapsed = useStore(
     coreStore,
@@ -108,6 +108,17 @@ function AppSidebar() {
   }, [pathname, setSidebarHiddenOnMobile]);
 
   const { activeOrg, activeStreamer, isOrgMode } = useUserContext();
+
+  const orgKey = activeOrg?.slug || activeOrg?.id || "org";
+  const streamerKey = activeStreamer?.name || activeStreamer?.id || "streamer";
+  const isOrgRoute =
+    pathname === `/app/${orgKey}` ||
+    pathname.startsWith(`/app/${orgKey}/members`) ||
+    pathname.startsWith(`/app/${orgKey}/streamers`) ||
+    pathname.startsWith(`/app/${orgKey}/audit`) ||
+    pathname.startsWith(`/app/${orgKey}/settings`) ||
+    pathname.startsWith(`/app/${orgKey}/billing`) ||
+    pathname.startsWith(`/app/${orgKey}/transactions`);
 
   const sections: SidebarSection[] = useMemo(() => {
     if (!activeOrg) {
@@ -166,14 +177,6 @@ function AppSidebar() {
     const canViewAudit = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MANAGE);
     const canViewBilling = isOwnerOrAdmin;
     const canViewTransactions = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.TRANSACTION_VIEW);
-
-    const orgKey = activeOrg?.slug || activeOrg?.id || "org";
-    const streamerKey = activeStreamer?.name || activeStreamer?.id || "streamer";
-
-    const orgPages = ["/members", "/streamers", "/audit", "/settings", "/billing", "/transactions"];
-    const isOrgRoute =
-      pathname === `/app/${orgKey}` ||
-      orgPages.some((p) => pathname.startsWith(`/app/${orgKey}${p}`));
     const hasAnyOrgAccess =
       isOwnerOrAdmin ||
       canViewOrg ||
@@ -428,7 +431,7 @@ function AppSidebar() {
         ],
       },
     ];
-  }, [lang, activeOrg, activeStreamer, isOrgMode, pathname]);
+  }, [lang, activeOrg, activeStreamer, isOrgMode, isOrgRoute, orgKey, streamerKey]);
 
   return (
     <>
@@ -703,6 +706,6 @@ function AppSidebar() {
       </motion.aside>
     </>
   );
-}
+});
 
 export default AppSidebar;

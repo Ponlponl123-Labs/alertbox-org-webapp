@@ -11,11 +11,19 @@ import { cn, getFallbackInitial } from "@/lib/utils";
 import ContributionSkyline from "@/components/ui/contribution-skyline";
 import OrgAnalytics from "@/components/features/org/org-analytics";
 import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
-import { useState, useRef, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Input } from "react-smooth-input";
 
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, setName?: (name: string) => void }) {
-  const { activeOrg } = useUserContext();
+  const params = useParams();
+  const orgParam = params?.org as string | undefined;
+  const { organizations, activeOrg: storeActiveOrg } = useUserContext();
+  const activeOrg = demo
+    ? null
+    : organizations.find((o) => o.id === orgParam || o.slug === orgParam) || storeActiveOrg;
 
   const streamers = demo ? [] : activeOrg?.streamers || [];
   const orgSlug = demo ? "" : activeOrg?.slug || activeOrg?.id || "org";
@@ -23,10 +31,9 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
   const rootRef = useRef<HTMLDivElement>(null);
   const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (rootRef.current) {
-      const viewport = rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]');
-      if (viewport) setScrollContainer(viewport);
+      setScrollContainer(rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]'));
     }
   }, []);
 
@@ -48,7 +55,10 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
   }
 
   return (
-    <div ref={rootRef} className={cn("flex flex-col gap-6 relative", demo && "overflow-hidden")}>
+    <div
+      ref={rootRef}
+      className={cn("flex flex-col gap-6 relative", demo && "overflow-hidden")}
+    >
       <AnimatePresence>
         {bannerUrl && (
           <motion.div

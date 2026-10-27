@@ -21,7 +21,7 @@ export default function Soon() {
         <h1 className="tracking-wider text-foreground/40 text-lg font-semibold">
           {lang.data.common.comming_soon}
         </h1>
-        <p className="tracking-wider text-foreground/30 text-xs -mt-1.5">
+        <p className="tracking-wider text-foreground/30 font-sans text-xs -mt-1.5">
           {lang.data.app.alertbox.donation.description}
         </p>
       </div>
@@ -33,11 +33,11 @@ export default function Soon() {
         <h1 className="tracking-wider text-foreground/40 text-lg font-semibold">
           {lang.data.app.alertbox.donation.streamlabs.title}
         </h1>
-        <p className="tracking-wider text-foreground/30 text-xs text-center max-w-2xl mx-auto">
+        <p className="tracking-wider text-foreground/30 font-sans text-xs text-center max-w-2xl mx-auto">
           {lang.data.app.alertbox.donation.streamlabs.description}
         </p>
         <Link href={triggerHref}>
-          <Button className={"rounded-full"}>
+          <Button className={"rounded-2xl h-max p-3 font-semibold"}>
             {lang.data.app.alertbox.donation.streamlabs.button}
           </Button>
         </Link>

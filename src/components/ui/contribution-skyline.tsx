@@ -477,7 +477,7 @@ function Stat({
 
 const inFlightActivity = new Map<string, Promise<ContributionDay[] | null>>()
 
-export default function ContributionSkyline({
+const ContributionSkyline = React.memo(function ContributionSkyline({
   orgId,
   data: dataProp,
   endDate,
@@ -1739,4 +1739,6 @@ export default function ContributionSkyline({
       </p>
     </section>
   )
-}
+});
+
+export default ContributionSkyline;

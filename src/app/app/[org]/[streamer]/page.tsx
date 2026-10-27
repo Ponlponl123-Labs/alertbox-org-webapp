@@ -11,6 +11,8 @@ import Image from "next/image";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
 
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? React.useLayoutEffect : useEffect;
+
 export default function StreamerDashboardPage() {
   const { activeOrg, activeStreamer } = useUserContext();
   const bannerUrl = activeStreamer?.banner;
@@ -25,10 +27,9 @@ export default function StreamerDashboardPage() {
   const rootRef = useRef<HTMLDivElement>(null);
   const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (rootRef.current) {
-      const viewport = rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]');
-      if (viewport) setScrollContainer(viewport);
+      setScrollContainer(rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]'));
     }
   }, []);
 
@@ -59,22 +60,22 @@ export default function StreamerDashboardPage() {
   return (
     <div ref={rootRef} className={cn("flex flex-col gap-6 relative")}>
       <AnimatePresence mode="popLayout">
-        {bannerUrl && (
+        <motion.div
+          key={bannerUrl}
+          initial={{ opacity: 0, filter: "blur(6px)" }}
+          animate={{
+            opacity: !bannerUrl || isBannerLoaded ? 1 : 0,
+            filter: !bannerUrl || isBannerLoaded ? "blur(0px)" : "blur(6px)",
+          }}
+          exit={{ opacity: 0, filter: "blur(6px)" }}
+          transition={{ duration: 1 }}
+          className="w-full pointer-events-none bg-primary top-0 left-0 z-0 mask-b-from-0% overflow-hidden -mb-48"
+        >
           <motion.div
-            key={bannerUrl}
-            initial={{ opacity: 0, filter: "blur(6px)" }}
-            animate={{
-              opacity: isBannerLoaded ? 1 : 0,
-              filter: isBannerLoaded ? "blur(0px)" : "blur(6px)",
-            }}
-            exit={{ opacity: 0, filter: "blur(6px)" }}
-            transition={{ duration: 1 }}
-            className="w-full pointer-events-none top-0 left-0 z-0 mask-b-from-0% overflow-hidden -mb-48"
+            style={{ y: bannerY, scale: bannerScale, opacity: bannerOpacity }}
+            className="w-full origin-top min-h-96"
           >
-            <motion.div
-              style={{ y: bannerY, scale: bannerScale, opacity: bannerOpacity }}
-              className="w-full origin-top"
-            >
+            {bannerUrl && (
               <Image
                 src={bannerUrl}
                 alt="Banner"
@@ -85,9 +86,9 @@ export default function StreamerDashboardPage() {
                 unoptimized
                 onLoad={() => setIsBannerLoaded(true)}
               />
-            </motion.div>
+            )}
           </motion.div>
-        )}
+        </motion.div>
       </AnimatePresence>
 
       <AnimatePresence mode="popLayout">

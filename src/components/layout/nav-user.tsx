@@ -1,5 +1,5 @@
 "use client";
-import { useSyncExternalStore } from "react";
+import { memo, useSyncExternalStore } from "react";
 import { useUserContext } from "@/contexts/user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover } from '@animate-ui/react/primitives/base-ui/popover';
@@ -18,11 +18,10 @@ import Image from "next/image";
 
 const emptySubscribe = () => () => { };
 
-export function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
+export const NavUser = memo(function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
   const { userInfo, logout } = useUserContext();
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const isDark = useStore(coreStore, (state) => state.isDark);
-  const toggleTheme = coreStore.getState().toggleTheme;
 
   if (!userInfo) return null;
 
@@ -118,7 +117,7 @@ export function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
                 <AnimateIcon animateOnHover asChild>
                   <button
                     type="button"
-                    onClick={() => toggleTheme()}
+                    onClick={() => coreStore.getState().toggleTheme()}
                     className="flex items-center justify-between px-2 py-1.5 rounded-md text-xs hover:bg-accent hover:text-accent-foreground w-full text-left cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
@@ -151,6 +150,6 @@ export function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
       </Popover.Root>
     </div>
   );
-}
+});
 
 export default NavUser;

@@ -16,7 +16,6 @@ const Footer = memo(function Footer({
   force?: boolean;
 } = {}) {
   const pathname = usePathname();
-  const lang = useStore(coreStore, (state) => state.lang);
 
   if (
     !force &&
@@ -24,8 +23,14 @@ const Footer = memo(function Footer({
       pathname.startsWith("/docs") ||
       pathname.startsWith("/app"))
   ) {
-    return <></>;
+    return null;
   }
+
+  return <FooterContent pathname={pathname} />;
+});
+
+function FooterContent({ pathname }: { pathname: string }) {
+  const lang = useStore(coreStore, (state) => state.lang);
 
   const FOOTER_LINKS = [
     {
@@ -160,6 +165,6 @@ const Footer = memo(function Footer({
       </footer>
     </>
   );
-});
+}
 
 export default Footer;

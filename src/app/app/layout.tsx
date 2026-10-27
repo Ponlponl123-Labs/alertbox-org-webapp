@@ -12,8 +12,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import { PageTransition } from "@/components/animate-ui/components/page-transition";
 
-export function AppFooter() {
+export const AppFooter = React.memo(function AppFooter() {
   const lang = useStore(coreStore, (state) => state.lang);
 
   return (
@@ -52,8 +53,8 @@ export function AppFooter() {
         </Link>
       </div>
     </footer>
-  )
-}
+  );
+});
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const [scrollarea, setScrollarea] = useState<HTMLDivElement | null>(null);
@@ -88,16 +89,19 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             ref={setScrollarea}
             className={"h-[calc(100dvh-var(--status-banner-height,0)-8px)] flex-1 flex flex-col relative m-1 rounded-sm border border-border"}
           >
-            <motion.div
-              style={{ opacity: headerOpacity }}
-              className="w-full h-24 -mb-24 sticky top-0 bg-background mask-b-from-0% z-20 pointer-events-none"
-            />
-            <div className="flex-1 w-full min-h-[calc(100%-4rem-var(--status-banner-height,0))] flex flex-col z-10">
-              <div className="min-h-0 flex-1 w-full flex flex-col pb-8">
-                {children}
+
+            <PageTransition effect="fade" className="relative min-w-0 h-[calc(100dvh-var(--status-banner-height,0)-8px)] flex-1">
+              <motion.div
+                style={{ opacity: headerOpacity }}
+                className="w-full h-24 -mb-24 sticky top-0 bg-background mask-b-from-0% z-20 pointer-events-none"
+              />
+              <div className="flex-1 w-full min-h-[calc(100%-4rem-var(--status-banner-height,0))] flex flex-col z-10">
+                <div className="min-h-0 flex-1 w-full flex flex-col pb-8">
+                  {children}
+                </div>
               </div>
-            </div>
-            <AppFooter />
+              <AppFooter />
+            </PageTransition>
           </ScrollArea>
         )}
       </motion.main>

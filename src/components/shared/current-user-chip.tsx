@@ -22,7 +22,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, type Variants } from "motion/react";
-import { useState } from "react";
+import { memo, useState } from "react";
 
 const menuVariants: Variants = {
   hidden: { opacity: 0 },
@@ -42,7 +42,7 @@ const itemVariants: Variants = {
   },
 };
 
-function CurrentUserChip() {
+const CurrentUserChip = memo(function CurrentUserChip() {
   const { userInfo, logout, activeStreamer } = useUserContext();
   const lang = useStore(coreStore, (state) => state.lang);
   const [open, setOpen] = useState(false);
@@ -232,6 +232,6 @@ function CurrentUserChip() {
       </PopoverContent>
     </Popover>
   );
-}
+});
 
 export default CurrentUserChip;

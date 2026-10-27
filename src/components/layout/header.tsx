@@ -112,8 +112,7 @@ function NavActions({
   );
 }
 
-function Header() {
-  const pathname = usePathname();
+function HeaderContent({ pathname }: { pathname: string }) {
   const lang = useStore(coreStore, (state) => state.lang);
   const [isNavActive, setIsNavActive] = useState(false);
   const [instantTop, setInstantTop] = useState(false);
@@ -129,8 +128,6 @@ function Header() {
     setInstantTop(true);
     setIsNavActive((prev) => !prev);
   };
-
-  const { userInfo } = useUserContext();
   const { scrollY } = useScroll();
   const [isScrolled, setIsScrolled] = useState(false);
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -192,8 +189,6 @@ function Header() {
       : isIndex && isScrolled && windowWidth >= 768
         ? 760
         : is6xlChildHeader ? Math.min(windowWidth, 1120) : Math.min(windowWidth, 1448);
-
-  if (pathname.startsWith("/@") || (pathname.startsWith("/app") && userInfo)) return null;
 
   return (
     <>
@@ -422,4 +417,9 @@ function Header() {
   );
 }
 
-export default Header;
+export default function Header() {
+  const pathname = usePathname();
+  const { userInfo } = useUserContext();
+  if (pathname.startsWith("/@") || (pathname.startsWith("/app") && userInfo)) return null;
+  return <HeaderContent pathname={pathname} />;
+}

@@ -22,9 +22,11 @@ import {
   Tabs,
   TabsContent,
   TabsContents,
+  TabsHighlight,
+  TabsHighlightItem,
   TabsList,
   TabsTrigger,
-} from "@/components/animate-ui/components/animate/tabs";
+} from '@animate-ui/react/primitives/tabs';
 import {
   ContactlessPaymentIcon,
   FacebookLogoIcon,
@@ -34,6 +36,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { canAccessStreamer } from "@/lib/rbac";
 import { OrgPerm, StreamerPerm } from "@/consts/permission";
+import { motion } from "motion/react";
 
 function Page() {
   const [connections, setConnections] = useState<Connections | null>(null);
@@ -88,18 +91,27 @@ function Page() {
       .then((data) => {
         if (data) setConnections(data);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [logout, userInfo, authFetch, targetOrg, targetStreamer]);
 
   return (
-    <>
-      <h1 className="font-semibold text-3xl mt-1.5">
-        {lang.data.app.connections.title}
-      </h1>
-      <p className="mt-1.5 text-sm text-foreground/40">
-        {lang.data.app.connections.description}
-      </p>
-      <div className="w-full flex flex-col min-h-0 mt-6 flex-1 gap-1.5">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-6 z-10 min-h-0 flex-1"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="w-full">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-tight text-foreground my-3">
+            {lang.data.app.connections.title}
+          </h1>
+          <p className="text-sm font-sans text-muted-foreground mt-3">
+            {lang.data.app.connections.description}
+          </p>
+        </div>
+      </div>
+
+      <div className="w-full flex flex-col min-h-0 flex-1 gap-1.5">
         {!connections && (
           <div className="w-full flex items-center justify-center min-h-0 bg-foreground/5 rounded-4xl py-6 flex-1 border-2 border-dashed border-foreground/10">
             <Spinner className="size-6 text-foreground/40 mx-auto my-8" />
@@ -113,17 +125,23 @@ function Page() {
                 : "payment"
             }
           >
-            <TabsList className="w-full h-max p-0 bg-transparent gap-1.5">
-              <TabsTrigger value="payment" className="xl:p-2.5 p-5">
-                <ContactlessPaymentIcon weight="bold" size={32} />
-                {lang.data.app.connections.tabs.payment}
-              </TabsTrigger>
-              <TabsTrigger value="trigger" className="xl:p-2.5 p-5">
-                <WebhooksLogoIcon weight="bold" size={32} />
-                {lang.data.app.connections.tabs.trigger}
-              </TabsTrigger>
-            </TabsList>
-            <TabsContents className="rounded-2xl">
+            <TabsHighlight className="absolute inset-0 rounded-2xl bg-muted">
+              <TabsList className="flex rounded-lg gap-3">
+                <TabsHighlightItem value="payment" className="flex-1">
+                  <TabsTrigger value="payment" className="w-full h-full flex gap-2 p-4 font-medium text-sm items-center justify-center hover:bg-muted/30 rounded-2xl">
+                    <ContactlessPaymentIcon weight="bold" size={20} />
+                    {lang.data.app.connections.tabs.payment}
+                  </TabsTrigger>
+                </TabsHighlightItem>
+                <TabsHighlightItem value="trigger" className="flex-1">
+                  <TabsTrigger value="trigger" className="w-full h-full flex gap-2 p-4 font-medium text-sm items-center justify-center hover:bg-muted/30 rounded-2xl">
+                    <WebhooksLogoIcon weight="bold" size={20} />
+                    {lang.data.app.connections.tabs.trigger}
+                  </TabsTrigger>
+                </TabsHighlightItem>
+              </TabsList>
+            </TabsHighlight>
+            <TabsContents className="rounded-2xl mt-3">
               <TabsContent
                 value="payment"
                 className="flex flex-col xl:grid xl:grid-cols-2 gap-1.5"
@@ -345,7 +363,7 @@ function Page() {
           </Tabs>
         )}
       </div>
-    </>
+    </motion.div>
   );
 }
 

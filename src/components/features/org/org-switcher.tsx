@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
@@ -15,6 +15,11 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
   const router = useRouter();
   const { userInfo, organizations, activeOrg, setActiveOrgId, setActiveStreamerId } = useUserContext();
   const [open, setOpen] = useState(false);
+
+  const stateRef = useRef({ organizations, activeOrg });
+  useEffect(() => {
+    stateRef.current = { organizations, activeOrg };
+  }, [organizations, activeOrg]);
 
   const userFallbackName = userInfo?.displayName?.trim() || userInfo?.name?.trim();
   const displayName =
@@ -37,10 +42,11 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
         const num = parseInt(e.key, 10);
-        if (!isNaN(num) && num >= 1 && num <= organizations.length) {
+        const { organizations: orgs, activeOrg: currentOrg } = stateRef.current;
+        if (!isNaN(num) && num >= 1 && num <= orgs.length) {
           e.preventDefault();
-          const targetOrg = organizations[num - 1];
-          if (targetOrg && targetOrg.id !== activeOrg?.id) {
+          const targetOrg = orgs[num - 1];
+          if (targetOrg && targetOrg.id !== currentOrg?.id) {
             setActiveOrgId(targetOrg.id);
             const orgKey = targetOrg.slug || targetOrg.id;
             const isOwnerOrAdmin = targetOrg.role === "OWNER" || targetOrg.role === "ADMIN";
@@ -60,7 +66,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [organizations, activeOrg, setActiveOrgId, setActiveStreamerId, router]);
+  }, [setActiveOrgId, setActiveStreamerId, router]);
 
   return (
     <div className="w-full shrink-0 mb-1">

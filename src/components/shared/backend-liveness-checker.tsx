@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useStore } from "zustand";
 import { coreStore, SystemStatus } from "@/hooks/store/core";
 import { getApiUrl } from "@/lib/api";
 
@@ -33,12 +32,11 @@ interface BetterStackPayload {
 }
 
 export default function BackendLivenessChecker() {
-  const setBackendAlive = useStore(coreStore, (state) => state.setBackendAlive);
-  const setSystemStatuses = useStore(coreStore, (state) => state.setSystemStatuses);
   const activeRef = useRef(true);
 
   useEffect(() => {
     activeRef.current = true;
+    const { setBackendAlive, setSystemStatuses } = coreStore.getState();
 
     const checkLiveness = async (): Promise<void> => {
       if (typeof document !== "undefined" && document.hidden) return;
@@ -166,7 +164,7 @@ export default function BackendLivenessChecker() {
       clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [setBackendAlive, setSystemStatuses]);
+  }, []);
 
   return null;
 }

@@ -53,25 +53,15 @@ function Connection({
 
   const isUserSecretFlow = skey === "kofi" || skey === "bmac";
 
-  const getInitialUsername = () => {
-    if (secret && typeof secret === "object" && "username" in secret) {
-      return (secret as { username: string }).username;
-    }
-    return "";
-  };
+  const initialUsername = (secret && typeof secret === "object" && "username" in secret)
+    ? (secret as { username: string }).username
+    : "";
+  const initialSecret = (secret && typeof secret === "object" && "secret" in secret)
+    ? (secret as { secret: string }).secret
+    : typeof secret === "string" ? secret : "";
 
-  const getInitialSecret = () => {
-    if (secret && typeof secret === "object" && "secret" in secret) {
-      return (secret as { secret: string }).secret;
-    }
-    return typeof secret === "string" ? secret : "";
-  };
-
-  const [username, setUsername] = useState(getInitialUsername());
-  const [currentSecret, setCurrentSecret] = useState(getInitialSecret());
-
-  const initialUsername = getInitialUsername();
-  const initialSecret = getInitialSecret();
+  const [username, setUsername] = useState(initialUsername);
+  const [currentSecret, setCurrentSecret] = useState(initialSecret);
 
   const update = async (endpoint: string, key: string) => {
     setIsLoading(true);
@@ -132,7 +122,7 @@ function Connection({
     : (currentSecret !== initialSecret);
 
   return (
-    <div className="w-full bg-card supports-backdrop-filter:bg-card/80 supports-backdrop-filter:backdrop-blur-sm supports-backdrop-filter:backdrop-saturate-200 p-4 rounded-3xl group z-10">
+    <div className="w-full bg-card supports-backdrop-filter:bg-card/80 supports-backdrop-filter:backdrop-blur-sm supports-backdrop-filter:backdrop-saturate-200 p-4 rounded-4xl group z-10">
       <div className="flex flex-col size-full min-w-0 min-h-0 flex-1 gap-1.5">
         {icon}
         <div className="flex items-center justify-between w-full">
@@ -174,7 +164,7 @@ function Connection({
           {soon ? (
             <Button
               variant="outline"
-              className="rounded-xl p-4 min-w-0 flex-1 w-full border-2 border-dashed"
+              className="rounded-2xl p-3 min-w-0 flex-1 w-full border-2 border-dashed h-max"
               disabled
             >
               {lang.data.app.connections.soon}
@@ -183,7 +173,7 @@ function Connection({
             readOnly && !isConnected ? (
               <Button
                 variant="outline"
-                className="rounded-xl p-4 w-full cursor-not-allowed opacity-70"
+                className="rounded-2xl p-3 w-full cursor-not-allowed opacity-70 h-max"
                 disabled
               >
                 Not Connected (Read-only)
@@ -195,7 +185,7 @@ function Connection({
               >
                 <Button
                   variant={isConnected ? "secondary" : "default"}
-                  className="rounded-xl p-4 w-full"
+                  className="rounded-2xl p-3 w-full h-max"
                 >
                   {isConnected
                     ? (lang.key === "th-TH" ? "ตั้งค่าการใช้งาน" : "Configure")
@@ -207,7 +197,7 @@ function Connection({
             <>
               {!secret ? (
                 <Button
-                  className="rounded-xl p-4 min-w-0 flex-1 w-full border-2 border-dashed"
+                  className="rounded-2xl p-3 min-w-0 flex-1 w-full border-2 border-dashed h-max"
                   onClick={async () => {
                     if (readOnly) return;
                     setIsLoading(true);
@@ -234,7 +224,7 @@ function Connection({
                 >
                   <Button
                     variant={"secondary"}
-                    className="rounded-xl p-4 w-full"
+                    className="rounded-2xl p-3 w-full h-max"
                   >
                     {lang.key === "th-TH" ? "ตั้งค่าการใช้งาน" : "Configure"}
                   </Button>
@@ -280,7 +270,7 @@ function Connection({
                       {readOnly ? (
                         <Button
                           variant="secondary"
-                          className="rounded-xl p-4 cursor-not-allowed opacity-70"
+                          className="rounded-2xl p-3 cursor-not-allowed opacity-70 h-max"
                           disabled
                         >
                           Read-only
@@ -288,7 +278,7 @@ function Connection({
                       ) : canSave && hasChanges ? (
                         <Button
                           variant="default"
-                          className="rounded-xl p-4 -mr-1"
+                          className="rounded-2xl p-3 -mr-1 h-max"
                           disabled={isLoading}
                           onClick={() => update(api_endpoint, skey)}
                         >
@@ -301,7 +291,7 @@ function Connection({
                       ) : (
                         <Button
                           variant="secondary"
-                          className="rounded-xl p-4"
+                          className="rounded-2xl p-3 h-max"
                           disabled={isLoading}
                           onClick={async () => {
                             if (isConnected) {
@@ -323,7 +313,7 @@ function Connection({
                   <>
                     <Button
                       variant="default"
-                      className="rounded-xl p-4 min-w-0 flex-1 w-full"
+                      className="rounded-2xl p-3 min-w-0 flex-1 w-full h-max"
                       onClick={() => setIsShowSecret(true)}
                       disabled={readOnly}
                     >
@@ -333,7 +323,7 @@ function Connection({
                       href={targetHref}
                       className="min-w-0 flex-1 w-full"
                     >
-                      <Button variant="secondary" className="rounded-xl p-4 w-full">
+                      <Button variant="secondary" className="rounded-2xl p-3 w-full h-max">
                         {lang.data.app.connections.howto}
                       </Button>
                     </Link>

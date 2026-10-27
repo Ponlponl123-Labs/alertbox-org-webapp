@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -387,30 +388,53 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const contextValue = useMemo(
+    () => ({
+      userInfo: effectiveUserInfo,
+      login,
+      logout,
+      patchUserInfo,
+      patchStreamer,
+      patchOrg,
+      removeStreamer,
+      removeOrganization,
+      addStreamer,
+      refreshUserInfo,
+      organizations,
+      activeOrg,
+      activeStreamer,
+      isOrgMode,
+      setOrgMode,
+      setActiveOrgId,
+      setActiveStreamerId,
+      authFetch,
+      isSelfHosted: selfHosted,
+    }),
+    [
+      effectiveUserInfo,
+      login,
+      logout,
+      patchUserInfo,
+      patchStreamer,
+      patchOrg,
+      removeStreamer,
+      removeOrganization,
+      addStreamer,
+      refreshUserInfo,
+      organizations,
+      activeOrg,
+      activeStreamer,
+      isOrgMode,
+      setOrgMode,
+      setActiveOrgId,
+      setActiveStreamerId,
+      authFetch,
+      selfHosted,
+    ],
+  );
+
   return (
-    <userContext.Provider
-      value={{
-        userInfo: effectiveUserInfo,
-        login,
-        logout,
-        patchUserInfo,
-        patchStreamer,
-        patchOrg,
-        removeStreamer,
-        removeOrganization,
-        addStreamer,
-        refreshUserInfo,
-        organizations,
-        activeOrg,
-        activeStreamer,
-        isOrgMode,
-        setOrgMode,
-        setActiveOrgId,
-        setActiveStreamerId,
-        authFetch,
-        isSelfHosted: selfHosted,
-      }}
-    >
+    <userContext.Provider value={contextValue}>
       {children}
     </userContext.Provider>
   );
