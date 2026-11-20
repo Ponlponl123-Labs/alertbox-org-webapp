@@ -13,6 +13,8 @@ import Link from "next/link";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { PageTransition } from "@/components/animate-ui/components/page-transition";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/custom-ui/dialog";
+import HelpfulRating from "@/components/kokonutui/helpful-rating";
 
 export const AppFooter = React.memo(function AppFooter() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -74,6 +76,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       className={cn("flex min-w-0 h-[calc(100dvh-var(--status-banner-height,0))] -mb-(--status-banner-height,0) w-dvw", userInfo && "bg-sidebar")}
     >
       {userInfo && <AppSidebar />}
+      <div className="fixed bottom-2 right-2 z-50">
+        <Dialog>
+          <DialogTrigger render={<Button variant="outline" className="rounded-xs" />}>
+            Tell us
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-sm">
+            <HelpfulRating className="bg-transparent! border-0 **:font-sans **:overflow-visible" />
+          </DialogContent>
+        </Dialog>
+      </div>
       <motion.main
         id="webapp-main"
         className="flex-1 flex flex-col min-w-0 bg-black/10 dark:bg-background relative overflow-hidden"

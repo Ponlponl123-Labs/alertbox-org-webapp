@@ -752,6 +752,11 @@
             "connected_description": "You can now forward donations from your viewers to Streamlabs",
             "failed_description": "Please try again later"
           }
+        },
+        "discord": {
+          "name": "Discord",
+          "description": "Instantly send a notification to your Discord community when your stream goes live or triggers an alert.",
+          "privacy": "Strong. We only send notifications to your configured webhook or channel. Your account remains secure."
         }
       },
       "placeholder": "Webhook Secret Here",

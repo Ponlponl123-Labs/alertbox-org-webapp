@@ -3,11 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { coreStore } from "@/hooks/store/core";
 import { isValidUri } from "@/lib/utils";
-import {
-  CheckCircleIcon,
-  HandWavingIcon,
-  XCircleIcon,
-} from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Input } from "react-smooth-input";
 import { useStore } from "zustand";

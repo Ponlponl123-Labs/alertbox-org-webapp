@@ -25,6 +25,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import BackendLivenessChecker from "@/components/shared/backend-liveness-checker";
 import BackendLivenessBanner from "@/components/shared/backend-liveness-banner";
 import Provider from "./provider";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const momoTrustDisplay = Momo_Trust_Display({
   subsets: ["latin"],
@@ -124,7 +125,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={cn(
-        "h-full",
+        "h-dvh overflow-hidden",
         "antialiased",
         momoTrustDisplay.variable,
         inter.variable,
@@ -157,18 +158,20 @@ export default function RootLayout({
         }}
       >
         <UserContextProvider>
-          <BackendLivenessChecker />
-          <BackendLivenessBanner />
-          <TooltipProvider>
-            <Provider>
-              <Header />
-              <main id="app" className="w-[calc(100dvw-var(--scrollbar-margin,0))] min-h-[calc(100dvh-var(--status-banner-height,0))] flex flex-col">
-                {children}
-              </main>
-              <Footer />
-              <CountryFlagsPolyfill />
-            </Provider>
-          </TooltipProvider>
+          <ScrollArea className={"w-dvw h-dvh z-50"}>
+            <BackendLivenessChecker />
+            <BackendLivenessBanner />
+            <TooltipProvider>
+              <Provider>
+                <Header />
+                <main id="app" className="w-[calc(100dvw-var(--scrollbar-margin,0))] min-h-[calc(100dvh-var(--status-banner-height,0))] flex flex-col">
+                  {children}
+                </main>
+                <Footer />
+                <CountryFlagsPolyfill />
+              </Provider>
+            </TooltipProvider>
+          </ScrollArea>
         </UserContextProvider>
       </body>
     </html>

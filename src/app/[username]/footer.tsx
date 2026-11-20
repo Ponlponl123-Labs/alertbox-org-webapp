@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { PublicProfileData } from "./PublicProfileClient";
+import { LanguageSwitcher } from "@/components/shared";
 
 export default function Footer({
   initialData,
@@ -13,7 +14,8 @@ export default function Footer({
 }) {
   const lang = useStore(coreStore, (state) => state.lang);
   return (
-    <footer className="px-6 py-12 text-foreground/40 text-xs w-full flex flex-col gap-3 mt-auto">
+    <footer className="px-6 pt-24 pb-12 text-foreground/40 text-xs w-full flex flex-col items-center gap-3 mt-auto select-none">
+      <LanguageSwitcher showLabel={true} />
       <div className="flex gap-3 items-center">
         <Link href={"https://law.ponlponl123.com/privacy"} target="_blank">
           {lang.data.footer.links.legal.privacy}

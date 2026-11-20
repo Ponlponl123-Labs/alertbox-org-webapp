@@ -33,6 +33,8 @@ import { BuyMeACoffee } from "@thesvg/react";
 import { Connections } from "@/types/user.types";
 import { canAccessStreamer } from "@/lib/rbac";
 import { OrgPerm, StreamerPerm } from "@/consts/permission";
+import { motion } from "motion/react";
+import { AnimateIcon } from "@animate-ui/react/icons";
 
 function BmacPage() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -184,38 +186,54 @@ function BmacPage() {
   const isConnected = !!connections?.bmac;
 
   return (
-    <div className="w-full mx-auto flex flex-col min-h-0 flex-1 py-4 animate-fade-in duration-300">
-      <Link
-        href={backHref}
-        className="flex items-center gap-1 text-sm font-semibold text-foreground/50 hover:text-foreground/80 w-max mb-6 mt-3 transition-colors font-sans"
-      >
-        <ArrowLeftIcon size={16} weight="bold" />
-        {t.back}
-      </Link>
-
-      <div className="flex items-center gap-4 mb-8 font-sans">
-        <div className="p-3 bg-amber-100 text-amber-500 rounded-2xl">
-          <BuyMeACoffee className="size-10" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight font-sans">
-            {t.title}
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-6 z-10 min-h-0 flex-1"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="w-full">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-tight text-foreground my-3">
+            {lang.data.app.connections.title}
           </h1>
-          <p className="text-sm text-foreground/50 mt-1">{t.description}</p>
+          <p className="text-sm font-sans text-muted-foreground mt-3">
+            {lang.data.app.connections.description}
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start font-sans">
+      <AnimateIcon animateOnHover>
+        <Link href={backHref}>
+          <Button variant="ghost" className="flex items-center gap-1 p-2 h-max text-sm font-semibold text-foreground/50 hover:text-foreground/80 w-max rounded-xl font-sans">
+            <ArrowLeftIcon size={16} weight="bold" />
+            {t.back}
+          </Button>
+        </Link>
+      </AnimateIcon>
+
+      <div className="flex items-center gap-4 mb-8 font-sans">
+        <div className="p-3">
+          <BuyMeACoffee className="size-10 *:fill-amber-300" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight font-sans">
+            {t.title}
+          </h1>
+          <p className="text-sm text-foreground/50 font-sans">{t.description}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start font-sans">
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-card/40 p-4 md:p-6 rounded-3xl">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <div className="bg-card p-4 md:p-6 rounded-3xl">
+            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
               <GlobeIcon size={22} className="text-foreground/75" />
               {t.steps_title}
             </h2>
 
-            <div className="space-y-6 relative border-l border-foreground/10 pl-6 ml-3 text-sm group">
-              <div className="relative group-hover:opacity-30 hover:opacity-100">
-                <span className="absolute -left-9.5 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
+            <div className="space-y-6 relative border-l-2 border-foreground/10 pl-8 ml-3 text-sm group">
+              <div className="relative group-hover:opacity-30 hover:opacity-100 transition-all duration-200">
+                <span className="absolute -left-11.75 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
                   1
                 </span>
                 <h3 className="font-bold text-base mb-1">{t.step1_title}</h3>
@@ -233,8 +251,8 @@ function BmacPage() {
                 </div>
               </div>
 
-              <div className="relative group-hover:opacity-30 hover:opacity-100">
-                <span className="absolute -left-9.5 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
+              <div className="relative group-hover:opacity-30 hover:opacity-100 transition-all duration-200">
+                <span className="absolute -left-11.75 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
                   2
                 </span>
                 <h3 className="font-bold text-base mb-1">{t.step2_title}</h3>
@@ -260,8 +278,8 @@ function BmacPage() {
                 </div>
               </div>
 
-              <div className="relative group-hover:opacity-30 hover:opacity-100">
-                <span className="absolute -left-9.5 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
+              <div className="relative group-hover:opacity-30 hover:opacity-100 transition-all duration-200">
+                <span className="absolute -left-11.75 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
                   3
                 </span>
                 <h3 className="font-bold text-base mb-1">{t.step3_title}</h3>
@@ -284,8 +302,8 @@ function BmacPage() {
                 </div>
               </div>
 
-              <div className="relative group-hover:opacity-30 hover:opacity-100">
-                <span className="absolute -left-9.5 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
+              <div className="relative group-hover:opacity-30 hover:opacity-100 transition-all duration-200">
+                <span className="absolute -left-11.75 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
                   4
                 </span>
                 <h3 className="font-bold text-base mb-1">{t.step4_title}</h3>
@@ -294,8 +312,8 @@ function BmacPage() {
                 </p>
               </div>
 
-              <div className="relative group-hover:opacity-30 hover:opacity-100">
-                <span className="absolute -left-9.5 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
+              <div className="relative group-hover:opacity-30 hover:opacity-100 transition-all duration-200">
+                <span className="absolute -left-11.75 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
                   5
                 </span>
                 <h3 className="font-bold text-base mb-1">{t.step5_title}</h3>
@@ -308,16 +326,16 @@ function BmacPage() {
         </div>
 
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-card/40 p-4 md:p-6 rounded-3xl">
+          <div className="bg-card p-4 md:p-6 rounded-3xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold">{t.settings_title}</h2>
               {isConnected ? (
-                <span className="text-xs font-semibold px-2.5 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center gap-1 select-none animate-fade-in">
+                <span className="text-xs font-semibold px-3 py-2 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center gap-2 select-none animate-fade-in">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   {lang.data.app.connections.status.connected}
                 </span>
               ) : (
-                <span className="text-xs font-semibold px-2.5 py-0.5 bg-foreground/10 text-foreground/40 rounded-full flex items-center gap-1 select-none">
+                <span className="text-xs font-semibold px-3 py-2 bg-foreground/10 text-foreground/40 rounded-xl flex items-center gap-2 select-none">
                   <span className="w-1.5 h-1.5 rounded-full bg-foreground/40" />
                   {lang.data.app.connections.status.notconnected}
                 </span>
@@ -339,15 +357,15 @@ function BmacPage() {
                     maxLength={64}
                     onChange={(e) => setUsername(e.target.value)}
                     startContent={
-                      <span className="text-xs text-foreground/40 font-semibold select-none font-sans -mr-0.5">
+                      <span className="text-sm text-foreground/40 font-medium select-none font-sans">
                         buymeacoffee.com/
                       </span>
                     }
                     className="text-foreground flex-1 min-w-0"
                     fontStyle={{
                       fontFamily: "var(--font-sans)",
-                      fontWeight: "600",
-                      fontSize: "12px",
+                      fontWeight: "500",
+                      fontSize: "14px",
                     }}
                     classNames={{
                       base: "h-12 rounded-xl w-full gap-0",
@@ -361,7 +379,7 @@ function BmacPage() {
 
               <div className="flex flex-col gap-2 font-sans">
                 <label className="text-xs font-bold uppercase tracking-wider text-foreground/45 flex items-center gap-1 font-sans">
-                  <LockKeyIcon size={14} className="inline" />
+                  <LockKeyIcon size={14} weight="bold" className="inline" />
                   {t.secret}
                 </label>
                 <Input
@@ -375,8 +393,8 @@ function BmacPage() {
                   className="text-foreground flex-1 min-w-0 font-sans"
                   fontStyle={{
                     fontFamily: "var(--font-sans)",
-                    fontWeight: "600",
-                    fontSize: "12px",
+                    fontWeight: "500",
+                    fontSize: "14px",
                   }}
                   classNames={{
                     base: "h-12 rounded-xl px-3 border-2 border-transparent dark:bg-white/10 bg-black/10 hover:bg-black/5 hover:border-black/10 dark:hover:bg-white/5 dark:hover:border-white/10 focus-within:bg-black/5! focus-within:border-black/10! focus-within:dark:bg-white/5! focus-within:dark:border-white/10! w-full",
@@ -472,7 +490,7 @@ function BmacPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </motion.div>
   );
 }
 

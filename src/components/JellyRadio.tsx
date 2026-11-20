@@ -4,6 +4,7 @@ import React, {
   forwardRef,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -121,21 +122,24 @@ const JellyRadio: React.FC<JellyRadioProps> = ({
   const groupRef = useRef<HTMLDivElement>(null);
   const chipRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const widths = useRef<number[]>([]);
-  const mvs = useRef<ChipValues[]>([]);
   const applied = useRef(at);
   const cfg = useRef<Config>({} as Config);
-  cfg.current = { swell, barge, shrink, jelly, bounce, stagger, stiffness, reduce, count: list.length };
+  useEffect(() => {
+    cfg.current = { swell, barge, shrink, jelly, bounce, stagger, stiffness, reduce, count: list.length };
+  });
   const [h, font, px] = SIZES[size] ?? SIZES.md;
   const itemsKey = list.map(it => it.value).join('|');
 
-  const mvFor = (i: number) => {
-    let mv = mvs.current[i];
-    if (!mv) {
-      mv = { x: motionValue(0), sx: motionValue(1), sy: motionValue(1) };
-      mvs.current[i] = mv;
-    }
-    return mv;
-  };
+  const mvs = useMemo(() => {
+    return list.map(() => ({
+      x: motionValue(0),
+      sx: motionValue(1),
+      sy: motionValue(1),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemsKey]);
+
+  const mvFor = (i: number) => mvs[i];
 
   const apply = (sel: number, instant: boolean) => {
     const C = cfg.current;
@@ -197,12 +201,12 @@ const JellyRadio: React.FC<JellyRadioProps> = ({
   }, [at]);
   useEffect(
     () => () =>
-      mvs.current.forEach(mv => {
+      mvs.forEach(mv => {
         mv.x.destroy();
         mv.sx.destroy();
         mv.sy.destroy();
       }),
-    []
+    [mvs]
   );
 
   const commit = (i: number, instant: boolean) => {

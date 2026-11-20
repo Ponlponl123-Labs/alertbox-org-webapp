@@ -260,7 +260,9 @@ const TearTicket: React.FC<TearTicketProps> = ({
     [width, height, stubSize, radius, holes, holeSize, notch, roughness, vertical]
   );
   const cfg = useRef<Cfg>({} as Cfg);
-  cfg.current = { geo, tearAngle, stretch, resistance, height, notch, reduce, onTear, controlled };
+  useEffect(() => {
+    cfg.current = { geo, tearAngle, stretch, resistance, height, notch, reduce, onTear, controlled };
+  });
   const sim = useRef<Sim>({
     raf: 0,
     last: 0,
@@ -296,9 +298,6 @@ const TearTicket: React.FC<TearTicketProps> = ({
   const tiltY = useSpring(0, TILT_SPRING);
   const plane = useMotionTemplate`perspective(${perspective}px) rotate(${rotate}deg) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
   const depth = tiltMax > 0 ? parallax / tiltMax : 0;
-  const artX = useTransform(tiltY, v => -v * depth);
-  const artY = useTransform(tiltX, v => v * depth);
-  const art = useMotionTemplate`translate(${artX}px, ${artY}px)`;
   const inkX = useTransform(tiltY, v => v * depth * 0.22);
   const inkY = useTransform(tiltX, v => -v * depth * 0.22);
   const ink = useMotionTemplate`translate(${inkX}px, ${inkY}px)`;
@@ -517,7 +516,7 @@ const TearTicket: React.FC<TearTicketProps> = ({
       if (s.phase === 'idle' && stubRef.current) stubRef.current.style.visibility = 'hidden';
       return;
     }
-    setInstant(false);
+    queueMicrotask(() => setInstant(false));
     reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [used]);

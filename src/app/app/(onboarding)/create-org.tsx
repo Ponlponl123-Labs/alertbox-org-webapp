@@ -143,10 +143,12 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
           duration: 0.8,
           ease: "power2.inOut",
           onComplete: () => {
+            onComplete?.();
             router.push(`/app/${orgSlug}`);
           },
         });
       } else {
+        onComplete?.();
         router.push(`/app/${orgSlug}`);
       }
     } catch {

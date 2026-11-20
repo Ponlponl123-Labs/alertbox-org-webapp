@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useStore } from "zustand";
 import "@scalar/api-reference-react/style.css";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,12 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { getCookie } from "cookies-next/client";
 
+const emptySubscribe = () => () => {};
+
 export default function DocsPage() {
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const isDark = useStore(coreStore, (state) => state.isDark);
+  const currentDark = mounted ? isDark : true;
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo } = useUserContext();
   const [isCredentialDialogOpen, setIsCredentialDialogOpen] = useState(false);
@@ -33,8 +37,9 @@ export default function DocsPage() {
     <div
       className={cn(
         "flex-1 flex flex-col pt-12",
-        isDark ? "dark-mode" : "light-mode",
+        currentDark ? "dark-mode" : "light-mode",
       )}
+      suppressHydrationWarning
     >
       <header className="h-12 w-full fixed left-0 top-[calc(3rem + var(--status-banner-height, 0))] apply-smooth-transition bg-background/80 border-b border-border backdrop-blur-md z-50 flex items-center justify-between pl-4 pr-2">
         <h2 className="text-sm text-foreground/40 font-light tracking-widest pointer-events-none">{lang.data.pages.docs.devtools}</h2>
@@ -84,8 +89,8 @@ export default function DocsPage() {
           url: getApiUrl("openapi/json"),
           layout: "modern",
           theme: "elysiajs",
-          darkMode: isDark,
-          forceDarkModeState: isDark ? "dark" : "light",
+          darkMode: currentDark,
+          forceDarkModeState: currentDark ? "dark" : "light",
           hideDarkModeToggle: true,
           showDeveloperTools: "never",
           localization: (lang.key || "en") as ApiReferenceConfiguration["localization"],

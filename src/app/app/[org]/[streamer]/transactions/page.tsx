@@ -109,7 +109,7 @@ export default function StreamerTransactionsPage() {
     activeStreamer?.id || activeStreamer?.name || (routeParams?.streamer as string);
 
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
-  const [_totalCount, setTotalCount] = useState(0);
+  const [, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -1170,13 +1170,13 @@ export default function StreamerTransactionsPage() {
       </div>
 
       <Dialog open={isTestDialogOpen} onOpenChange={setIsTestDialogOpen}>
-        <DialogContent className="max-w-md rounded-2xl bg-card border border-border p-6 shadow-2xl">
+        <DialogContent className="max-w-md! rounded-2xl bg-card border border-border p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
-              <SparkleIcon size={20} weight="bold" className="text-primary" />
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <SparkleIcon size={24} weight="fill" className="text-primary" />
               <span>Simulate Donation Transaction</span>
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
+            <DialogDescription className="text-xs font-sans text-muted-foreground">
               Dispatch a mock donation alert through any configured payment gateway to test on-screen OBS alertbox widgets.
             </DialogDescription>
           </DialogHeader>
@@ -1267,7 +1267,7 @@ export default function StreamerTransactionsPage() {
           <DialogFooter className="flex items-center justify-end gap-2 mt-2">
             <DialogClose
               render={
-                <Button size="sm" variant="ghost" disabled={sendingTest}>
+                <Button size="sm" variant="ghost" className="h-max p-3 rounded-xl" disabled={sendingTest}>
                   Cancel
                 </Button>
               }
@@ -1276,7 +1276,7 @@ export default function StreamerTransactionsPage() {
               size="sm"
               onClick={handleSendTest}
               disabled={sendingTest}
-              className="gap-2 bg-primary text-primary-foreground"
+              className="gap-2 font-sans h-max p-3 rounded-xl bg-primary text-primary-foreground"
             >
               {sendingTest ? (
                 <Spinner className="size-4" />

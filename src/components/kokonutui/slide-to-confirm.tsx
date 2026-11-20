@@ -95,7 +95,9 @@ export default function SlideToConfirm({
   const dragRef = useRef({ pointer: 0, from: 0, moved: false });
   const runRef = useRef(0);
   const confirmRef = useRef(onConfirm);
-  confirmRef.current = onConfirm;
+  useEffect(() => {
+    confirmRef.current = onConfirm;
+  }, [onConfirm]);
 
   const x = useMotionValue(0);
   const width = useMotionValue(0);

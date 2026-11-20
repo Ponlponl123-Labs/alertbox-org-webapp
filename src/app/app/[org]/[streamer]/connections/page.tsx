@@ -16,6 +16,7 @@ import {
   Twitch,
   Patreon,
   Xendit,
+  Discord,
 } from "@thesvg/react";
 import { FeelFreePay } from "@/components/icons";
 import {
@@ -340,6 +341,18 @@ function Page() {
                     isConnected: connections?.streamlabs,
                     key: "streamlabs",
                     soon: false,
+                  },
+                  {
+                    api_endpoint: getProviderEndpoint("discord"),
+                    icon: <Discord className="size-8" />,
+                    name: lang.data.app.connections.providers.discord.name,
+                    description:
+                      lang.data.app.connections.providers.discord.description,
+                    privacy:
+                      lang.data.app.connections.providers.discord.privacy,
+                    isConnected: connections?.discord ? true : false,
+                    key: "discord",
+                    soon: true,
                   },
                 ].map((c, i) => (
                   <Connection

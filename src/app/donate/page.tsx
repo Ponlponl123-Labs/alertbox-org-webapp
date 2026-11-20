@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
@@ -17,8 +17,12 @@ import { Button } from "@/components/ui/button";
 const MotionButton = motion.create(Button);
 const MotionLink = motion.create(Link);
 
+const emptySubscribe = () => () => {};
+
 export default function DonatePage() {
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const isDark = useStore(coreStore, (state) => state.isDark);
+  const currentDark = mounted ? isDark : true;
   const lang = useStore(coreStore, (state) => state.lang);
   const t: DonatePageData = lang.data.donate;
 
@@ -35,7 +39,7 @@ export default function DonatePage() {
     <div className="w-full min-h-dvh flex flex-col justify-center items-center px-6 py-32 relative overflow-hidden text-foreground select-none">
       <div className="absolute inset-0 opacity-40 not-dark:opacity-10">
         <PixelSnow
-          color={isDark ? "#ffffff" : "#a0a0a0"}
+          color={currentDark ? "#ffffff" : "#a0a0a0"}
           flakeSize={0.01}
           minFlakeSize={1.25}
           pixelResolution={200}

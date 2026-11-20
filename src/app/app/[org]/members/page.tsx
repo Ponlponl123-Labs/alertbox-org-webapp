@@ -271,10 +271,13 @@ export default function OrgMembersPage() {
       const isOwnerOrAdmin = dialogRole === "OWNER" || dialogRole === "ADMIN";
       const finalAssignments = isOwnerOrAdmin
         ? streamers.map((s) => ({
-          streamerId: s.id,
+          streamerId: String(s.id),
           permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key),
         }))
-        : dialogAssignments;
+        : dialogAssignments.map((a) => ({
+          ...a,
+          streamerId: String(a.streamerId),
+        }));
 
       const sanitizedPerms = (dialogPerms & ~OrgPerm.ORG_DELETE).toString();
       const payload = {

@@ -441,6 +441,7 @@ function PageTransition({
         ref={localRef}
         data-slot="page-transition"
         {...props}
+        suppressHydrationWarning
         style={{
           viewTransitionClass: `page-transition ${className}`,
           ...props.style,
@@ -492,6 +493,7 @@ function PageTransitionShared({
         ref={localRef}
         data-slot="page-transition-shared"
         {...props}
+        suppressHydrationWarning
         style={{
           viewTransitionClass: 'page-transition-shared',
           ...props.style,

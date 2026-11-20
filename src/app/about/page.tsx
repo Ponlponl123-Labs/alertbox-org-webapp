@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
@@ -27,8 +27,12 @@ const fadeInUp = {
   },
 };
 
+const emptySubscribe = () => () => {};
+
 export default function AboutPage() {
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const isDark = useStore(coreStore, (state) => state.isDark);
+  const currentDark = mounted ? isDark : true;
   const lang = useStore(coreStore, (state) => state.lang);
   const t: AboutPageData = lang.data.about;
 
@@ -54,8 +58,8 @@ export default function AboutPage() {
           <div className="inline-flex items-center gap-2 text-xs md:text-sm font-mono tracking-wider uppercase text-foreground/70">
             <ShinyText
               text="Ponlponl123 Labs"
-              color={isDark ? "#888888" : "#666666"}
-              shineColor={isDark ? "#ffffff" : "#111111"}
+              color={currentDark ? "#888888" : "#666666"}
+              shineColor={currentDark ? "#ffffff" : "#111111"}
               speed={2.5}
             />
           </div>
@@ -86,9 +90,9 @@ export default function AboutPage() {
               shapes="mixed"
               cellSize={4}
               dotSize={0.64}
-              color={isDark ? "#ff1855" : "#300310"}
+              color={currentDark ? "#ff1855" : "#300310"}
               hoverColor="#ffffff"
-              backgroundColor={isDark ? "#101010" : "#ededed"}
+              backgroundColor={currentDark ? "#101010" : "#ededed"}
               speed={1}
               scale={1}
               contrast={1}

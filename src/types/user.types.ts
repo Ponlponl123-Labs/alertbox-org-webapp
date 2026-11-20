@@ -148,6 +148,7 @@ export interface Connections {
   twitch: string | null;
   patreon: string | null;
   streamlabs: boolean;
+  discord?: boolean | null;
 }
 
 export interface Device {

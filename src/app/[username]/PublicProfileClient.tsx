@@ -1,31 +1,22 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { getApiUrl } from "@/lib/api";
 import { getActiveBadges } from "@/lib/badges";
-import { cn, getFallbackInitial, getSocialUrl } from "@/lib/utils";
+import { cn, getFallbackInitial } from "@/lib/utils";
 import { numberToHexColor, getAccentForeground, hexToOklch } from "@/lib/color";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import {
-  TwitchTv,
-  Youtube as YoutubeIcon,
-  Twitter as TwitterIcon,
-  Facebook as FacebookIcon,
-  Reddit as RedditIcon,
-  Discord as DiscordIcon,
   FeelFreePay,
 } from "@/components/icons";
 import { Stripe, BuyMeACoffee, KoFi, Xendit } from "@thesvg/react";
 import {
   SealCheckIcon,
-  CheckCircleIcon,
-  HeartIcon,
-  CreditCardIcon,
   GhostIcon,
 } from "@phosphor-icons/react";
 import {
@@ -33,11 +24,26 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Input } from "react-smooth-input";
-import LanguageSwitcher from "@/components/shared/language-switcher";
-import ThemeSwitcher from "@/components/shared/theme-switcher";
-import { motion, Variants } from "motion/react";
+import { AnimatePresence, motion, useIsomorphicLayoutEffect, useScroll, useTransform, Variants } from "motion/react";
+import { SocialLinks } from "@/components/shared";
+import PullCord from "@/components/kokonutui/pull-cord";
+import DrapeBackground from "@/components/kokonutui/drape-background";
+import { PageTransition } from "@/components/animate-ui/components/page-transition";
+import { Button } from "@/components/ui/button";
+import { ArrowRight01 } from "@/components/animate-ui/icons/hugeicons/arrow-right-01";
+import { AnimateIcon } from "@animate-ui/react/icons";
+import { ArrowLeft01 } from "@/components/animate-ui/icons/hugeicons/arrow-left-01";
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import Link from "next/link";
+
+type PaymentMethodType =
+  | "stripe"
+  | "xendit"
+  | "omise"
+  | "2c2p"
+  | "feelfreepay"
+  | "kofi"
+  | "bmac";
 
 const staggerContainer: Variants = {
   hidden: { opacity: 0 },
@@ -104,46 +110,33 @@ export default function PublicProfileClient({
   const [profileData, setProfileData] = useState<PublicProfileData | null>(
     initialData,
   );
+  const bannerUrl = profileData?.banner;
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType | null>(null);
+  const [isBannerLoaded, setIsBannerLoaded] = React.useState(false);
+  const [prevBannerUrl, setPrevBannerUrl] = React.useState(bannerUrl);
 
-  const [tipAmount, setTipAmount] = useState<string>(() => {
-    const isThai = lang.key === "th-TH";
-    return isThai ? "100" : "10";
-  });
-  const [donorName, setDonorName] = useState<string>("");
-  const [donorMessage, setDonorMessage] = useState<string>("");
-  type PaymentMethodType =
-    | "stripe"
-    | "xendit"
-    | "omise"
-    | "2c2p"
-    | "feelfreepay"
-    | "kofi"
-    | "bmac";
+  if (prevBannerUrl !== bannerUrl) {
+    setPrevBannerUrl(bannerUrl);
+    setIsBannerLoaded(false);
+  }
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>(() => {
-    if (initialData?.integrations) {
-      const methodsOrder: PaymentMethodType[] = [
-        "stripe",
-        "xendit",
-        "omise",
-        "2c2p",
-        "feelfreepay",
-        "kofi",
-        "bmac",
-      ];
-      const firstActive = methodsOrder.find(
-        (m) => initialData.integrations?.[m],
-      );
-      if (firstActive) {
-        return firstActive;
-      }
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null);
+
+  useIsomorphicLayoutEffect(() => {
+    if (rootRef.current) {
+      setScrollContainer(rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]'));
     }
-    return "stripe";
+  }, []);
+
+  const { scrollY } = useScroll({
+    container: scrollContainer ? { current: scrollContainer } : undefined,
   });
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const bannerY = useTransform(scrollY, [0, 300], [0, 95]);
+  const bannerScale = useTransform(scrollY, [-120, 0, 300], [1.12, 1, 1.05]);
+  const bannerOpacity = useTransform(scrollY, [0, 260], [1, 0.35]);
 
   const [prevInitialData, setPrevInitialData] = useState(initialData);
   if (prevInitialData !== initialData) {
@@ -171,11 +164,9 @@ export default function PublicProfileClient({
         }
         const data: PublicProfileData = await res.json();
         setProfileData(data);
-        const isThai = lang.key === "th-TH";
-        setTipAmount(isThai ? "100" : "10");
 
         if (data.integrations) {
-          const methodsOrder: (typeof paymentMethod)[] = [
+          const methodsOrder: PaymentMethodType[] = [
             "stripe",
             "xendit",
             "omise",
@@ -186,7 +177,7 @@ export default function PublicProfileClient({
           ];
           const firstActive = methodsOrder.find((m) => data.integrations?.[m]);
           if (firstActive) {
-            setPaymentMethod(firstActive);
+            setSelectedMethod(firstActive);
           }
         }
       } catch {
@@ -212,16 +203,19 @@ export default function PublicProfileClient({
 
   if (error || !profileData) {
     return (
-      <div className="flex flex-col min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 font-sans">
-        <div className="flex flex-col items-center gap-4 animate-fade-in-up duration-300">
-          <div className="p-5 rounded-full bg-foreground/5 text-foreground/40 shadow-sm border border-foreground/5">
-            <GhostIcon size={48} weight="duotone" />
-          </div>
+      <div className="flex flex-col min-h-screen items-center justify-center font-sans relative">
+        <div className="absolute inset-0 mask-b-from-0">
+          <DrapeBackground className="absolute inset-0">
+            <></>
+          </DrapeBackground>
+        </div>
+        <div className="flex flex-col items-center gap-4 animate-fade-in-up duration-300 z-10">
+          <GhostIcon size={64} weight="fill" />
           <div className="text-center">
-            <h2 className="text-xl font-bold text-foreground mb-1">
+            <h2 className="text-3xl font-semibold font-rubik text-foreground mb-1">
               Streamer not ready
             </h2>
-            <p className="text-sm text-foreground/50">
+            <p className="text-sm text-muted-foreground font-sans">
               This streamer hasn&apos;t quite set up their page yet.
             </p>
           </div>
@@ -240,18 +234,6 @@ export default function PublicProfileClient({
   const primaryOklch = hexToOklch(accentHex);
   const primaryForegroundOklch = hexToOklch(accentForegroundHex);
 
-  const isThai = lang.key === "th-TH";
-  const currencySymbol = isThai ? "฿" : "$";
-  const presets = isThai
-    ? ["50", "100", "300", "500"]
-    : ["5", "10", "25", "50"];
-
-  const isCustomizable = (method: string) => {
-    return ["stripe", "xendit", "omise", "2c2p", "feelfreepay"].includes(
-      method,
-    );
-  };
-
   const paymentMethodsList = [
     { id: "stripe", label: "Stripe", icon: Stripe },
     { id: "xendit", label: "Xendit", icon: Xendit },
@@ -267,70 +249,6 @@ export default function PublicProfileClient({
     return !!integrations?.[item.id as keyof typeof integrations];
   });
 
-  const socialList = [
-    {
-      value: profileData.twitch,
-      icon: TwitchTv,
-      label: "Twitch",
-      color: "hover:text-[#9146FF] hover:bg-[#9146FF]/10",
-    },
-    {
-      value: profileData.youtube,
-      icon: YoutubeIcon,
-      label: "YouTube",
-      color: "hover:text-[#FF0000] hover:bg-[#FF0000]/10",
-    },
-    {
-      value: profileData.twitter,
-      icon: TwitterIcon,
-      label: "Twitter",
-      color:
-        "hover:text-[#1DA1F2] hover:bg-[#1DA1F2]/10 dark:hover:text-white dark:hover:bg-white/10",
-    },
-    {
-      value: profileData.facebook,
-      icon: FacebookIcon,
-      label: "Facebook",
-      color: "hover:text-[#1877F2] hover:bg-[#1877F2]/10",
-    },
-    {
-      value: profileData.reddit,
-      icon: RedditIcon,
-      label: "Reddit",
-      color: "hover:text-[#FF4500] hover:bg-[#FF4500]/10",
-    },
-    {
-      value: profileData.discord,
-      icon: DiscordIcon,
-      label: "Discord",
-      color: "hover:text-[#5865F2] hover:bg-[#5865F2]/10",
-    },
-  ];
-
-  const handleTipSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!tipAmount) return;
-    const amount = parseFloat(tipAmount);
-    if (isNaN(amount) || amount <= 0) return;
-    if (profileData) {
-      const min = profileData.minTipAmount ?? 1;
-      const max = profileData.maxTipAmount ?? 10000;
-      if (amount < min || amount > max) return;
-    }
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSuccess(true);
-    }, 2000);
-  };
-
-  const handleReset = () => {
-    setDonorName("");
-    setDonorMessage("");
-    setIsSuccess(false);
-    setTipAmount(isThai ? "100" : "10");
-  };
-
   return (
     <div
       className="flex flex-col min-h-screen bg-linear-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-black relative font-sans"
@@ -340,53 +258,42 @@ export default function PublicProfileClient({
           "--primary-foreground": primaryForegroundOklch,
         } as React.CSSProperties
       }
+      ref={rootRef}
     >
-      <div className="absolute w-100 h-100 rounded-full hidden supports-[filter:blur(1px)]:block blur-[120px] opacity-10 dark:opacity-20 pointer-events-none -top-40 -right-40 bg-primary" />
-      <div className="absolute w-125 h-125 rounded-full hidden supports-[filter:blur(1px)]:block blur-[150px] opacity-5 dark:opacity-10 pointer-events-none top-[60vh] -left-60 bg-primary" />
-
-      <div className="absolute top-4 right-4 z-50 flex items-center gap-1.5 bg-background supports-backdrop-filter:bg-background/60 supports-backdrop-filter:backdrop-blur-md border border-foreground/10 px-2.5 py-1.5 rounded-2xl shadow-lg">
-        <LanguageSwitcher />
-        <ThemeSwitcher />
+      <div className="fixed top-0 right-0 z-50 zoom-50">
+        <PullCord />
       </div>
-      {profileData.banner && (
-        <Image
-          src={profileData.banner}
-          alt="Banner Backdrop"
-          className="w-full h-128 absolute pointer-events-none select-none object-cover opacity-30 dark:opacity-20 hidden supports-[filter:blur(1px)]:block blur-2xl"
-          width={1600}
-          height={400}
-          priority
-        />
-      )}
-      {profileData.avatar && (
-        <Image
-          src={profileData.avatar}
-          alt="Avatar Backdrop"
-          className="size-full blur-3xl fixed pointer-events-none select-none object-cover opacity-30 saturate-200 dark:opacity-10"
-          width={400}
-          height={400}
-          priority
-        />
-      )}
-      <motion.div
-        initial={{ opacity: 0, scale: 1.05 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="w-full h-48 md:h-96 relative overflow-hidden shrink-0 border-b border-foreground/5 shadow-inner mask-b-from-60%"
-      >
-        {profileData.banner ? (
-          <Image
-            src={profileData.banner}
-            alt="Banner"
-            className="size-full object-cover pointer-events-none select-none"
-            width={1600}
-            height={400}
-            priority
-          />
-        ) : (
-          <div className="size-full opacity-80 bg-linear-to-br from-primary to-[#1e1b4b]" />
-        )}
-      </motion.div>
+      <AnimatePresence mode="popLayout">
+        <motion.div
+          key={bannerUrl}
+          initial={{ opacity: 0, filter: "blur(6px)" }}
+          animate={{
+            opacity: !bannerUrl || isBannerLoaded ? 1 : 0,
+            filter: !bannerUrl || isBannerLoaded ? "blur(0px)" : "blur(6px)",
+          }}
+          exit={{ opacity: 0, filter: "blur(6px)" }}
+          transition={{ duration: 1 }}
+          className="w-full pointer-events-none bg-primary top-0 left-0 z-0 mask-b-from-0% overflow-hidden -mb-48"
+        >
+          <motion.div
+            style={{ y: bannerY, scale: bannerScale, opacity: bannerOpacity }}
+            className="w-full origin-top min-h-96"
+          >
+            {bannerUrl && (
+              <Image
+                src={bannerUrl}
+                alt="Banner"
+                className="w-full min-h-96 object-cover select-none"
+                width={720}
+                height={288}
+                priority
+                unoptimized
+                onLoad={() => setIsBannerLoaded(true)}
+              />
+            )}
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
 
       <motion.main
         initial="hidden"
@@ -398,9 +305,9 @@ export default function PublicProfileClient({
           <div className="flex flex-col items-start">
             <motion.div
               variants={fadeInUp}
-              className="relative p-1 bg-primary border border-foreground/10 rounded-full shadow-2xl"
+              className="relative bg-primary border border-foreground/10 rounded-full shadow-2xl"
             >
-              <Avatar className="size-28 md:size-40 shadow-inner">
+              <Avatar className="size-32 md:size-42 shadow-inner">
                 {profileData.avatar && <AvatarImage src={profileData.avatar} />}
                 <AvatarFallback className="text-3xl md:text-5xl font-bold bg-muted text-foreground/50">
                   {getFallbackInitial(profileData.displayName || "?")}
@@ -410,7 +317,7 @@ export default function PublicProfileClient({
 
             <motion.h1
               variants={fadeInUp}
-              className="text-3xl md:text-5xl font-extrabold tracking-tight mt-6 text-foreground font-sans flex items-center gap-2"
+              className="text-3xl md:text-5xl font-extrabold tracking-tight mt-6 text-foreground font-heading flex items-center gap-2 select-none"
             >
               {profileData.displayName || "Display Name"}
               {isVerified && (
@@ -430,7 +337,7 @@ export default function PublicProfileClient({
 
             <motion.span
               variants={fadeInUp}
-              className="text-sm md:text-base text-foreground/40 font-medium mt-1"
+              className="text-sm md:text-base text-foreground/40 font-medium mt-1 select-none"
             >
               @{profileData.name || "username"}
             </motion.span>
@@ -438,7 +345,7 @@ export default function PublicProfileClient({
             {badges.length > 0 && (
               <motion.div
                 variants={fadeInUp}
-                className="flex flex-wrap gap-1.5 mt-4"
+                className="flex flex-wrap gap-1 mt-4"
               >
                 {badges.map((badge) => {
                   const Icon = badge.icon;
@@ -447,12 +354,12 @@ export default function PublicProfileClient({
                       key={badge.name}
                       variant="default"
                       className={cn(
-                        "text-sm px-3 py-1 h-auto gap-1 rounded-md border-0 font-semibold shadow-xs select-none",
+                        "text-xs px-2 py-1 h-auto gap-1 rounded-sm border-0 font-semibold select-none",
                         badge.className,
                         "bg-primary/10 hover:bg-primary/15 text-primary",
                       )}
                     >
-                      <Icon className="size-3 shrink-0" weight="fill" />
+                      <Icon className="size-4 shrink-0" weight="fill" />
                       {badge.label}
                     </Badge>
                   );
@@ -462,36 +369,18 @@ export default function PublicProfileClient({
 
             <motion.p
               variants={fadeInUp}
-              className="text-sm md:text-base text-foreground/75 mt-8 leading-relaxed whitespace-pre-wrap max-w-xl wrap-break-word"
+              className="text-sm font-sans text-muted-foreground mt-8 leading-relaxed whitespace-pre-wrap max-w-xl wrap-break-word select-none"
             >
               {profileData.bio || lang.data.app.profile.preview.no_bio}
             </motion.p>
 
             <motion.div
-              variants={fadeInUp}
-              className="flex flex-wrap gap-2.5 mt-10"
+              initial={{ opacity: 0, y: 4, filter: "blur(6px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+              className="flex items-center gap-2 mt-3 select-none **:cursor-default"
             >
-              {socialList.map((soc, i) => {
-                if (!soc.value) return null;
-                const Icon = soc.icon;
-                return (
-                  <motion.a
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    key={i}
-                    href={getSocialUrl(soc.label, soc.value)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      "p-2.5 rounded-xl bg-primary/10 text-primary transition-all duration-300 flex items-center justify-center shadow-xs",
-                      soc.color,
-                    )}
-                    title={`${soc.label}: ${soc.value}`}
-                  >
-                    <Icon className="size-5 md:size-6" />
-                  </motion.a>
-                );
-              })}
+              <SocialLinks socials={profileData} iconSize={22} colored />
             </motion.div>
           </div>
         </div>
@@ -499,260 +388,91 @@ export default function PublicProfileClient({
           variants={fadeInUp}
           className="md:col-span-5 flex flex-col justify-start"
         >
-          <div className="w-full max-w-md mx-auto md:mx-0 bg-background supports-backdrop-filter:bg-background/40 supports-backdrop-filter:backdrop-saturate-200 supports-backdrop-filter:backdrop-blur-lg border-2 border-foreground/10 p-6 md:p-8 rounded-[2rem] shadow-2xl flex flex-col relative md:sticky md:top-8 gap-6">
-            {activeMethods.length === 0 ? (
-              <div className="flex flex-col items-center text-center py-10 animate-fade-in-up duration-300">
-                <div className="p-4 rounded-full bg-foreground/5 text-foreground/40 mb-4">
-                  <CreditCardIcon className="size-8 text-foreground/60" />
-                </div>
-                <h3 className="text-sm font-bold text-foreground">
-                  {lang.data.app.profile.preview.no_gateways}
-                </h3>
-                <p className="text-xs text-foreground/50 mt-2 leading-relaxed px-4">
-                  {lang.data.app.profile.preview.no_gateways_desc.replace(
-                    "{name}",
-                    profileData.displayName || "",
-                  )}
-                </p>
-              </div>
-            ) : isSuccess ? (
-              <div className="flex flex-col items-center text-center py-6 animate-fade-in-up duration-300">
-                <div className="size-16 rounded-full flex items-center justify-center text-white mb-6 shadow-lg shadow-emerald-500/20 bg-primary">
-                  <CheckCircleIcon size={36} weight="bold" />
-                </div>
-                <h2 className="text-2xl font-bold text-foreground">
-                  {lang.data.app.profile.preview.tip_success_title}
-                </h2>
-                <p className="text-xs text-foreground/60 mt-3 leading-relaxed px-4">
-                  {lang.data.app.profile.preview.tip_success_desc
-                    .replace("{name}", profileData.displayName || "")
-                    .replace("{amount}", `${currencySymbol}${tipAmount}`)}
-                </p>
-                {donorMessage && (
-                  <div className="w-full bg-foreground/3 border border-foreground/5 rounded-2xl p-4 mt-6 text-left text-xs leading-relaxed text-foreground/75 italic">
-                    &ldquo;{donorMessage}&rdquo;
-                  </div>
-                )}
-                <button
-                  onClick={handleReset}
-                  className="w-full mt-8 py-3 rounded-2xl text-xs font-bold tracking-wider hover:opacity-90 active:scale-[0.98] transition-all duration-200 cursor-pointer shadow-md bg-primary text-primary-foreground"
+          {activeMethods.length > 0 && (
+            <>
+              <AutoHeight>
+                <PageTransition
+                  effect="slide"
+                  pageKey={String(selectedMethod)}
+                  className={`flex flex-col flex-1 min-w-0 items-center gap-3 bg-background/0 overflow-visible relative`}
                 >
-                  {lang.data.app.profile.preview.send_another_tip}
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleTipSubmit} className="flex flex-col gap-6">
-                <div>
-                  <h2 className="text-lg font-bold text-foreground flex items-center gap-1.5 leading-snug">
-                    <HeartIcon
-                      className="size-5 shrink-0 text-primary"
-                      weight="fill"
-                    />
-                    {lang.data.app.profile.preview.support_title}
-                  </h2>
-                  <p className="text-sm text-foreground/50 mt-2 leading-snug">
-                    {lang.data.app.profile.preview.support_desc}
-                  </p>
-                </div>
-
-                {isCustomizable(paymentMethod) && (
-                  <>
-                    <div className="flex flex-col gap-2.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/40">
-                        {lang.data.app.profile.preview.select_amount}
-                      </span>
-                      <div className="grid grid-cols-4 gap-2">
-                        {presets.map((val) => (
-                          <button
-                            key={val}
-                            type="button"
-                            onClick={() => setTipAmount(val)}
-                            className={cn(
-                              "py-2 rounded-xl text-xs font-bold transition-all border duration-200 cursor-pointer",
-                              tipAmount === val
-                                ? "bg-foreground text-background border-transparent"
-                                : "bg-foreground/3 hover:bg-foreground/5 border-foreground/5 text-foreground",
-                            )}
-                          >
-                            {currencySymbol}
-                            {val}
-                          </button>
-                        ))}
+                  {
+                    activeMethods.length > 0 && selectedMethod &&
+                    <AnimateIcon animateOnHover className="group w-full">
+                      <Button
+                        variant="secondary"
+                        className="p-2 backdrop-blur-xl bg-secondary/20 w-max font-semibold h-max rounded-xl flex items-center justify-start gap-3"
+                        onClick={() => React.startTransition(() => {
+                          React.addTransitionType("nav-back")
+                          setSelectedMethod(null)
+                        })}
+                      >
+                        <ArrowLeft01 />
+                        Select other tipping method
+                      </Button>
+                    </AnimateIcon>
+                  }
+                  {
+                    selectedMethod === null ? (<>
+                      <h2 className="w-full text-3xl font-medium text-foreground">
+                        Continue with
+                      </h2>
+                      <div className="w-full flex flex-col gap-1">
+                        {
+                          activeMethods.map((mthd, idx) => {
+                            const Icon = mthd.icon;
+                            return (
+                              <AnimateIcon animateOnHover key={idx} className="group w-full">
+                                <Button
+                                  variant="outline"
+                                  className="p-4 w-full border-2 backdrop-blur-xl group-first:rounded-b-sm group-last:rounded-t-sm font-semibold h-max rounded-xl flex items-center justify-start gap-3"
+                                  onClick={() => React.startTransition(() => {
+                                    React.addTransitionType("nav-forward")
+                                    setSelectedMethod(mthd.id as PaymentMethodType)
+                                  })}
+                                >
+                                  {Icon && <Icon className="size-5 shrink-0" />}
+                                  {mthd.logo && (
+                                    <Image
+                                      src={mthd.logo}
+                                      alt={mthd.label}
+                                      width={20}
+                                      height={20}
+                                      className="size-5 object-contain shrink-0"
+                                    />
+                                  )}
+                                  <span>{mthd.label}</span>
+                                  <ArrowRight01 className={"ml-auto"} />
+                                </Button>
+                              </AnimateIcon>
+                            );
+                          })
+                        }
                       </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        required
-                        value={tipAmount}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "" || /^\d*\.?\d*$/.test(val)) {
-                            setTipAmount(val);
-                          }
-                        }}
-                        placeholder={
-                          lang.data.app.profile.preview.custom_amount
-                        }
-                        startContent={
-                          <span className="text-sm font-bold text-foreground/40 translate-y-0.5 ml-1.5 mr-0.5">
-                            {currencySymbol}
-                          </span>
-                        }
-                        fontStyle={{
-                          fontFamily: "var(--font-sans)",
-                          fontSize: "14px",
-                          fontWeight: "700",
-                        }}
-                        classNames={{
-                          base: "h-11 rounded-2xl px-3 border-2 border-transparent dark:bg-white/10 bg-black/10 hover:bg-black/5 hover:border-black/10 dark:hover:bg-white/5 dark:hover:border-white/10 focus-within:bg-black/5! focus-within:border-black/10! focus-within:dark:bg-white/5! focus-within:dark:border-white/10!",
-                        }}
+                    </>) : selectedMethod === "kofi" ? <>
+                      <iframe
+                        className="w-96 h-172 border-0 rounded-sm bg-white"
+                        src={`https://ko-fi.com/${profileData.kofiUsername}/?hidefeed=true&widget=true&embed=true&preview=true`}
+                        title="Ko-Fi"
+                        style={{ colorScheme: "light", scrollbarWidth: "thin" }}
+                        loading="lazy"
                       />
-                    </div>
-
-                    <div className="flex flex-col gap-3.5">
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/40">
-                          {lang.data.app.profile.preview.name}
-                        </span>
-                        <Input
-                          type="text"
-                          value={donorName}
-                          onChange={(e) => setDonorName(e.target.value)}
-                          placeholder={
-                            profileData.defaultDonorName || "Anonymous"
-                          }
-                          maxLength={48}
-                          fontStyle={{
-                            fontFamily: "var(--font-sans)",
-                            fontSize: "12px",
-                            fontWeight: "500",
-                          }}
-                          classNames={{
-                            base: "h-11 rounded-2xl px-3 border-2 border-transparent dark:bg-white/10 bg-black/10 hover:bg-black/5 hover:border-black/10 dark:hover:bg-white/5 dark:hover:border-white/10 focus-within:bg-black/5! focus-within:border-black/10! focus-within:dark:bg-white/5! focus-within:dark:border-white/10!",
-                          }}
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/40">
-                          {lang.data.app.profile.preview.support_message}
-                        </span>
-                        <textarea
-                          value={donorMessage}
-                          onChange={(e) => setDonorMessage(e.target.value)}
-                          placeholder={
-                            lang.data.app.profile.preview.message_placeholder
-                          }
-                          maxLength={200}
-                          rows={3}
-                          className={cn(
-                            "w-full rounded-2xl border-2 border-transparent dark:bg-white/10 bg-black/10 px-4 py-3 outline-none text-xs text-foreground transition-all duration-200 resize-none",
-                            "hover:bg-black/5 dark:hover:bg-white/5 hover:border-black/10 dark:hover:border-white/10",
-                            "focus:bg-black/5! focus:dark:bg-white/5! focus:border-black/10! focus:dark:border-white/10!",
-                          )}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <div className="flex flex-col gap-2.5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-foreground/40">
-                    {lang.data.app.profile.preview.payment_gateway}
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {activeMethods.map((item) => {
-                      const ProviderIcon = item.icon;
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setPaymentMethod(item.id as PaymentMethodType)}
-                          className={cn(
-                            "py-2.5 px-1 rounded-lg flex flex-col items-center justify-center border-2 transition-all duration-200 cursor-pointer gap-1",
-                            paymentMethod === item.id
-                              ? "bg-primary/10 border-primary/40"
-                              : "bg-transparent border-transparent hover:bg-primary/10 opacity-40 hover:opacity-75",
-                          )}
-                        >
-                          {ProviderIcon ? (
-                            <ProviderIcon className="h-4.5 max-w-[80%] shrink-0 text-foreground" />
-                          ) : item.logo ? (
-                            <Image
-                              src={item.logo}
-                              alt={item.label}
-                              width={80}
-                              height={18}
-                              unoptimized
-                              className="h-4.5 max-w-[80%] w-auto object-contain shrink-0 dark:invert"
-                            />
-                          ) : null}
-                          <span className="text-[8px] font-bold tracking-wide uppercase mt-0.5 text-foreground">
-                            {item.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {isCustomizable(paymentMethod) ? (
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-3 rounded-2xl text-xs font-bold tracking-wider hover:opacity-90 active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-md disabled:cursor-not-allowed bg-primary text-primary-foreground"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Spinner className="size-4 shrink-0 text-current" />
-                        <span>
-                          {lang.data.app.profile.preview.initializing_checkout}
-                        </span>
-                      </>
-                    ) : (
-                      <span>
-                        {lang.data.app.profile.preview.tip_action
-                          .replace("{symbol}", currencySymbol)
-                          .replace("{amount}", tipAmount || "0")
-                          .replace(
-                            "{name}",
-                            (profileData.displayName || "").toUpperCase(),
-                          )}
-                      </span>
-                    )}
-                  </button>
-                ) : (
-                  <Link
-                    href={
-                      paymentMethod === "kofi"
-                        ? `https://ko-fi.com/${profileData.kofiUsername || profileData.name}`
-                        : `https://buymeacoffee.com/${profileData.bmacUsername || profileData.name}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-3 rounded-2xl text-xs font-bold tracking-wider hover:opacity-90 active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-md text-center bg-primary text-primary-foreground"
-                  >
-                    <span>
-                      {lang.data.app.profile.preview.support_on
-                        .replace(
-                          "{name}",
-                          (profileData.displayName || "").toUpperCase(),
-                        )
-                        .replace(
-                          "{method}",
-                          paymentMethod === "kofi"
-                            ? "KO-FI"
-                            : "BUY ME A COFFEE",
-                        )}
-                    </span>
-                  </Link>
-                )}
-              </form>
-            )}
-          </div>
+                    </> : selectedMethod === "bmac" ? <>
+                      <iframe
+                        className="w-full h-172 border-0 rounded-sm bg-white"
+                        src={`https://www.buymeacoffee.com/widget/page/${profileData.bmacUsername}`}
+                        title="Ko-Fi"
+                        style={{ colorScheme: "light", scrollbarWidth: "thin" }}
+                        loading="lazy"
+                      />
+                    </> : selectedMethod === "stripe" ? <>
+                    </> : <></>
+                  }
+                </PageTransition>
+              </AutoHeight>
+              <span className="text-xs text-muted-foreground text-center mt-4 block">By processing to donation means you&apos;re agreeing to both our <Link className="text-blue-500" href="/terms-of-service">terms of service</Link> and the payment provider&apos;s terms</span>
+            </>
+          )}
         </motion.div>
       </motion.main>
     </div>

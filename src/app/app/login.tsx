@@ -59,7 +59,7 @@ function Login() {
               {lang.data.app.login.description}
             </p>
             <Alert className="mx-auto mt-1 -mb-1 text-[13px] rounded-xl border-2 bg-foreground/5 border-foreground/5 p-3 backdrop-blur-xl select-none pointer-events-none">
-              <Bell animate="default" loop loopDelay={1} className={"size-5 mb-1"} />
+              <Bell animate="default" loop loopDelay={1} className={"size-4 m-0.5 ml-0"} />
               <strong className="font-medium">
                 {lang.data.app.login.beta.title}
               </strong>

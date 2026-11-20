@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useStore } from "zustand";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
@@ -11,11 +10,7 @@ import { Input } from "react-smooth-input";
 import { toast } from "@/components/custom-ui/toast";
 import {
   LockKeyIcon,
-  GlobeIcon,
-  ArrowLeftIcon,
   LinkBreakIcon,
-  CheckIcon,
-  CopyIcon,
 } from "@phosphor-icons/react";
 import {
   AlertDialog,
@@ -32,6 +27,17 @@ import { KoFi } from "@thesvg/react";
 import { Connections } from "@/types/user.types";
 import { canAccessStreamer } from "@/lib/rbac";
 import { StreamerPerm, OrgPerm } from "@/consts/permission";
+import { motion } from "motion/react";
+import { AnimateIcon } from "@animate-ui/react/icons";
+import { Collapsible } from "@animate-ui/react/primitives/base-ui/collapsible";
+import { ArrowDown01 } from "@/components/animate-ui/icons/hugeicons/arrow-down-01";
+import { Accordion } from "@animate-ui/react/primitives/base-ui/accordion";
+import { Check } from "@/components/animate-ui/icons/hugeicons/check";
+import { CopyButton, CopyButtonIcon } from '@animate-ui/react/primitives/buttons/copy';
+import { SquareArrowOutUpRight } from "@/components/animate-ui/icons/hugeicons/square-arrow-out-up-right";
+import Link from "next/link";
+import { Clipboard } from "@/components/animate-ui/icons/hugeicons/clipboard";
+import { ClipboardCheck } from "@/components/animate-ui/icons/hugeicons/clipboard-check";
 
 function KofiPage() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -49,23 +55,21 @@ function KofiPage() {
   const [connections, setConnections] = useState<Connections | null>(null);
   const [username, setUsername] = useState("");
   const [secret, setSecret] = useState("");
-  const [isCopied, setIsCopied] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [step, setStep] = useState(0);
+  const [focusOnStep, setFocusOnStep] = useState<string[]>(["item-0"]);
 
   const isFetched = useRef(false);
   const webhookUrl = "https://api.alertbox.org/v1/webhook/kofi";
 
   const t = lang.data.app.connections.kofi_setup;
 
-  const orgKey = activeOrg?.slug || activeOrg?.id;
-  const streamerKey = activeStreamer?.name || activeStreamer?.id;
   const connectionsEndpoint = activeOrg && activeStreamer
     ? getApiUrl(`/api/v1/org/${activeOrg.id}/streamers/${activeStreamer.id}/connections`)
     : getApiUrl("/api/v1/me/connection");
   const kofiEndpoint = activeOrg && activeStreamer
     ? getApiUrl(`/api/v1/org/${activeOrg.id}/streamers/${activeStreamer.id}/connections/kofi`)
     : getApiUrl("/api/v1/me/connection/kofi");
-  const backHref = orgKey && streamerKey ? `/app/${orgKey}/${streamerKey}/connections?t=payment` : "/app/connections?t=payment";
 
   useEffect(() => {
     if (isFetched.current || !userInfo) return;
@@ -93,17 +97,6 @@ function KofiPage() {
         setIsLoading(false);
       });
   }, [logout, userInfo, authFetch, connectionsEndpoint]);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(webhookUrl);
-      setIsCopied(true);
-      toast.success(t.copied);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch {
-      // ignore
-    }
-  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,116 +179,191 @@ function KofiPage() {
   const isConnected = !!connections?.kofi;
 
   return (
-    <div className="w-full mx-auto flex flex-col min-h-0 flex-1 py-4 animate-fade-in duration-300">
-      <Link
-        href={backHref}
-        className="flex items-center gap-1 text-sm font-semibold text-foreground/50 hover:text-foreground/80 w-max mb-6 mt-3 transition-colors font-sans"
-      >
-        <ArrowLeftIcon size={16} weight="bold" />
-        {t.back}
-      </Link>
-
-      <div className="flex items-center gap-4 mb-8 font-sans">
-        <div className="p-3 bg-red-100 text-red-500 rounded-2xl">
-          <KoFi className="size-10" />
-        </div>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-6 z-10 min-h-0 flex-1"
+    >
+      <div className="flex items-center w-full justify-between gap-4 mb-8 font-sans">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight font-sans">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-tight text-foreground my-3">
             {t.title}
           </h1>
-          <p className="text-sm text-foreground/50 mt-1">{t.description}</p>
+          <p className="text-sm font-sans text-muted-foreground mt-3">
+            {t.description}
+          </p>
+        </div>
+        <div className="p-3">
+          <KoFi className="size-12" />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start font-sans">
-        <div className="lg:col-span-7 space-y-6">
-          <div className="bg-card/40 p-4 md:p-6 rounded-3xl">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <GlobeIcon size={22} className="text-foreground/75" />
-              {t.steps_title}
-            </h2>
+      <Collapsible.Root defaultOpen>
+        <AnimateIcon animateOnHover="default-loop">
+          <Collapsible.Trigger className="w-full p-3 rounded-xl not-data-panel-open:bg-muted/40 data-panel-open:bg-muted font-semibold text-xs flex gap-3 items-center justify-start text-start group/accordion-trigger">
+            <ArrowDown01 animateOnHover className="size-4 group-aria-expanded/accordion-trigger:rotate-180 transition-all" />
+            How to setup
+          </Collapsible.Trigger>
+        </AnimateIcon>
+        <Collapsible.Panel>
+          <div className="p-1 mt-3 rounded-xl">
 
-            <div className="space-y-6 relative border-l border-foreground/10 pl-6 ml-3 text-sm group">
-              <div className="relative group-hover:opacity-30 hover:opacity-100">
-                <span className="absolute -left-9.5 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
-                  1
-                </span>
-                <h3 className="font-bold text-base mb-1">{t.step1_title}</h3>
-                <div className="text-foreground/60 leading-relaxed font-sans text-xs">
-                  {t.step1_desc_prefix}
-                  <a
-                    href="https://ko-fi.com/manage/webhooks"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-indigo-400 hover:underline"
-                  >
-                    {t.step1_desc_link}
-                  </a>
-                  {t.step1_desc_suffix}
-                </div>
-              </div>
-
-              <div className="relative group-hover:opacity-30 hover:opacity-100">
-                <span className="absolute -left-9.5 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
-                  2
-                </span>
-                <h3 className="font-bold text-base mb-1">{t.step2_title}</h3>
-                <p className="text-foreground/60 leading-relaxed mb-3 text-xs">
-                  {t.step2_desc}
-                </p>
-
-                <div className="flex items-center gap-2 bg-foreground/5 rounded-3xl p-1 font-mono text-xs w-full max-w-full overflow-hidden">
-                  <span className="truncate flex-1 text-foreground/60 select-all font-mono ml-1.5">
-                    {webhookUrl}
-                  </span>
-                  <button
-                    onClick={handleCopy}
-                    className="p-2 hover:bg-foreground/10 rounded-xl transition-all cursor-pointer shrink-0 text-foreground/60 hover:text-foreground"
-                    title={lang.key === "th-TH" ? "คัดลอก URL" : "Copy URL"}
-                  >
-                    {isCopied ? (
-                      <CheckIcon size={16} className="text-emerald-500" />
-                    ) : (
-                      <CopyIcon size={16} />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="relative group-hover:opacity-30 hover:opacity-100">
-                <span className="absolute -left-9.5 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
-                  3
-                </span>
-                <h3 className="font-bold text-base mb-1">{t.step3_title}</h3>
-                <p className="text-foreground/60 leading-relaxed font-sans text-xs">
-                  {t.step3_desc}
-                </p>
-              </div>
-
-              <div className="relative group-hover:opacity-30 hover:opacity-100">
-                <span className="absolute -left-9.5 top-0 flex items-center justify-center size-7 rounded-xl bg-muted text-muted-foreground font-bold text-xs select-none">
-                  4
-                </span>
-                <h3 className="font-bold text-base mb-1">{t.step4_title}</h3>
-                <p className="text-foreground/60 leading-relaxed font-sans text-xs">
-                  {t.step4_desc}
-                </p>
-              </div>
-            </div>
+            <Accordion.Root value={focusOnStep} onValueChange={setFocusOnStep}>
+              {[
+                {
+                  title: "First, finish your Ko-fi account.",
+                  children: <>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground">
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ipsa saepe deleniti esse sit soluta ipsum, accusantium non. Ea aliquid omnis tempora, similique porro possimus aperiam ullam officiis suscipit vitae sint!
+                      </span>
+                      <div className="flex items-center mt-3 gap-1">
+                        <AnimateIcon animateOnHover>
+                          <Button onClick={() => { setStep(1); setFocusOnStep(["item-1"]) }} variant="default" className="rounded-xl h-max p-3 font-semibold">
+                            <Check />
+                            Mark as done
+                          </Button>
+                        </AnimateIcon>
+                      </div>
+                    </div>
+                  </>
+                },
+                {
+                  title: t.step1_title,
+                  children: <>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground">
+                        {t.step1_desc_prefix}
+                        <Link
+                          href="https://ko-fi.com/manage/webhooks"
+                          target="_blank"
+                          className="text-indigo-400 hover:underline"
+                        >
+                          {t.step1_desc_link}
+                        </Link>
+                        {t.step1_desc_suffix}
+                      </span>
+                      <div className="flex items-center mt-3 gap-1">
+                        <Link href="https://ko-fi.com/manage/webhooks" target="_blank">
+                          <AnimateIcon animateOnHover>
+                            <Button variant="default" className="rounded-xl h-max p-3 font-semibold">
+                              <SquareArrowOutUpRight />
+                              Go to Ko-fi Integrations Page
+                            </Button>
+                          </AnimateIcon>
+                        </Link>
+                        <AnimateIcon animateOnHover>
+                          <Button onClick={() => { setStep(2); setFocusOnStep(["item-2"]) }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
+                            <Check />
+                            Mark as done
+                          </Button>
+                        </AnimateIcon>
+                      </div>
+                    </div>
+                  </>
+                },
+                {
+                  title: t.step2_title,
+                  children: <>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground">
+                        {t.step2_desc}
+                      </span>
+                      <span tabIndex={0} className="bg-muted mt-3 text-xs tracking-tighter font-lexendexa rounded-lg p-2 select-all cursor-text">
+                        {webhookUrl}
+                      </span>
+                      <div className="flex items-center mt-3 gap-1">
+                        <CopyButton asChild content={webhookUrl} aria-label="Copy">
+                          <AnimateIcon animateOnHover>
+                            <Button variant="default" className="rounded-xl h-max p-3 font-semibold">
+                              <CopyButtonIcon icon={<Clipboard />} copiedIcon={<ClipboardCheck />} />
+                              Copy your endpoint
+                            </Button>
+                          </AnimateIcon>
+                        </CopyButton>
+                        <AnimateIcon animateOnHover>
+                          <Button onClick={() => { setStep(3); setFocusOnStep(["item-3"]) }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
+                            <Check />
+                            Mark as done
+                          </Button>
+                        </AnimateIcon>
+                      </div>
+                    </div>
+                  </>
+                },
+                {
+                  title: t.step3_title,
+                  children: <>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground">
+                        {t.step3_desc}
+                      </span>
+                      <div className="flex items-center mt-3 gap-1">
+                        <AnimateIcon animateOnHover>
+                          <Button onClick={() => { setStep(4); setFocusOnStep(["item-4"]) }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
+                            <Check />
+                            Mark as done
+                          </Button>
+                        </AnimateIcon>
+                      </div>
+                    </div>
+                  </>
+                },
+                {
+                  title: t.step4_title,
+                  children: <>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted-foreground">
+                        {t.step4_desc}
+                      </span>
+                      <div className="flex items-center mt-3 gap-1">
+                        <AnimateIcon animateOnHover>
+                          <Button onClick={() => { setStep(5); setFocusOnStep(["item-5"]) }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
+                            <Check />
+                            Mark as done
+                          </Button>
+                        </AnimateIcon>
+                      </div>
+                    </div>
+                  </>
+                }
+              ].map((item, idx) => (
+                <Accordion.Item key={idx} value={"item-" + idx} className="relative pb-3 group/accordion-item" {...step > idx && { "data-finished": true }}>
+                  <div className="w-1 h-[calc(100%-2rem)] not-group-data-finished/accordion-item:not-group-data-open/accordion-item:max-h-0 max-h-full transition-all bg-secondary group-data-finished/accordion-item:bg-primary absolute top-9 not-group-data-finished/accordion-item:mask-b-from-0 left-4.5 group-last/accordion-item:hidden" />
+                  <Accordion.Header>
+                    <AnimateIcon animateOnHover="default-loop">
+                      <Accordion.Trigger className="w-full p-1 rounded-2xl hover:bg-foreground/10 font-semibold text-xs flex gap-3 items-center justify-start text-start group/accordion-trigger active:scale-100 not-group-data-finished/accordion-item:not-aria-expanded:opacity-60 not-group-data-finished/accordion-item:not-aria-expanded:blur-[1px]">
+                        <div className="size-8 flex items-center justify-center z-10 rounded-2xl not-group-data-finished/accordion-item:border-2 border-secondary group-data-finished/accordion-item:bg-primary group-data-finished/accordion-item:text-primary-foreground">
+                          {idx + 1}
+                        </div>
+                        {item.title}
+                        <ArrowDown01 animateOnHover className="size-4 group-aria-expanded/accordion-trigger:rotate-180 transition-all ml-auto" />
+                      </Accordion.Trigger>
+                    </AnimateIcon>
+                  </Accordion.Header>
+                  <Accordion.Panel>
+                    <div className="p-1 pb-3 pl-12 mt-1 rounded-xl">
+                      {item.children}
+                    </div>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              ))}
+            </Accordion.Root>
           </div>
-        </div>
-
-        <div className="lg:col-span-5 space-y-6">
-          <div className="bg-card/40 p-4 md:p-6 rounded-3xl">
+        </Collapsible.Panel>
+      </Collapsible.Root>
+      <div className="grid grid-cols-1 gap-3 items-start font-sans">
+        <div className="space-y-6">
+          <div className="bg-card p-4 md:p-6 rounded-3xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold">{t.settings_title}</h2>
               {isConnected ? (
-                <span className="text-xs font-semibold px-2.5 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center gap-1 select-none animate-fade-in">
+                <span className="text-xs font-semibold px-3 py-2 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center gap-2 select-none animate-fade-in">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   {lang.data.app.connections.status.connected}
                 </span>
               ) : (
-                <span className="text-xs font-semibold px-2.5 py-0.5 bg-foreground/10 text-foreground/40 rounded-full flex items-center gap-1 select-none">
+                <span className="text-xs font-semibold px-3 py-2 bg-foreground/10 text-foreground/40 rounded-xl flex items-center gap-2 select-none">
                   <span className="w-1.5 h-1.5 rounded-full bg-foreground/40" />
                   {lang.data.app.connections.status.notconnected}
                 </span>
@@ -317,18 +385,18 @@ function KofiPage() {
                     maxLength={64}
                     onChange={(e) => setUsername(e.target.value)}
                     startContent={
-                      <span className="text-xs text-foreground/40 font-semibold select-none font-sans">
+                      <span className="text-sm text-foreground/40 font-medium select-none font-sans">
                         ko-fi.com/
                       </span>
                     }
                     className="text-foreground flex-1 min-w-0"
                     fontStyle={{
                       fontFamily: "var(--font-sans)",
-                      fontWeight: "600",
-                      fontSize: "12px",
+                      fontWeight: "500",
+                      fontSize: "14px",
                     }}
                     classNames={{
-                      base: "h-12 rounded-xl w-full gap-0",
+                      base: "h-12 rounded-xl w-full border-2 gap-0",
                     }}
                   />
                 </div>
@@ -339,7 +407,7 @@ function KofiPage() {
 
               <div className="flex flex-col gap-2 font-sans">
                 <label className="text-xs font-bold uppercase tracking-wider text-foreground/45 flex items-center gap-1 font-sans">
-                  <LockKeyIcon size={14} className="inline" />
+                  <LockKeyIcon size={14} weight="bold" className="inline" />
                   {t.secret}
                 </label>
                 <Input
@@ -353,8 +421,8 @@ function KofiPage() {
                   className="text-foreground flex-1 min-w-0 font-sans"
                   fontStyle={{
                     fontFamily: "var(--font-sans)",
-                    fontWeight: "600",
-                    fontSize: "12px",
+                    fontWeight: "500",
+                    fontSize: "14px",
                   }}
                   classNames={{
                     base: "h-12 rounded-xl px-3 border-2 border-transparent dark:bg-white/10 bg-black/10 hover:bg-black/5 hover:border-black/10 dark:hover:bg-white/5 dark:hover:border-white/10 focus-within:bg-black/5! focus-within:border-black/10! focus-within:dark:bg-white/5! focus-within:dark:border-white/10! w-full",
@@ -450,7 +518,7 @@ function KofiPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </motion.div>
   );
 }
 

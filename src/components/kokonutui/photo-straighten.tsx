@@ -292,8 +292,8 @@ export default function PhotoStraighten({
       {/* The ruler slides under a fixed centre mark. */}
       <div
         aria-label="Straighten"
-        aria-valuemax={MAX}
-        aria-valuemin={-MAX}
+        aria-valuemax={45}
+        aria-valuemin={-45}
         aria-valuenow={value}
         aria-valuetext={formatAngle(value)}
         className="relative mt-2 h-12 cursor-ew-resize touch-none overflow-hidden rounded-lg outline-none [mask-image:linear-gradient(to_right,transparent,black_20%,black_80%,transparent)] focus-visible:ring-2 focus-visible:ring-zinc-400"
