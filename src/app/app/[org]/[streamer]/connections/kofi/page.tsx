@@ -54,10 +54,18 @@ function KofiPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [connections, setConnections] = useState<Connections | null>(null);
   const [username, setUsername] = useState("");
+  const [debouncedUsername, setDebouncedUsername] = useState("");
   const [secret, setSecret] = useState("");
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [focusOnStep, setFocusOnStep] = useState<string[]>(["item-0"]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedUsername(username.trim());
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [username]);
 
   const isFetched = useRef(false);
   const webhookUrl = "https://api.alertbox.org/v1/webhook/kofi";
@@ -88,6 +96,8 @@ function KofiPage() {
         if (data.kofi) {
           setUsername(data.kofi.username || "");
           setSecret(data.kofi.secret || "");
+          if (data.kofi.username) setStep(4);
+          if (data.kofi.secret) setStep(5);
         }
       })
       .catch(() => {
@@ -352,11 +362,12 @@ function KofiPage() {
           </div>
         </Collapsible.Panel>
       </Collapsible.Root>
-      <div className="grid grid-cols-1 gap-3 items-start font-sans">
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start font-sans">
         <div className="space-y-6">
-          <div className="bg-card p-4 md:p-6 rounded-3xl">
+          <div className="">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold">{t.settings_title}</h2>
+              <h2 className="text-2xl font-medium">{t.settings_title}</h2>
               {isConnected ? (
                 <span className="text-xs font-semibold px-3 py-2 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center gap-2 select-none animate-fade-in">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -428,15 +439,30 @@ function KofiPage() {
                     base: "h-12 rounded-xl px-3 border-2 border-transparent dark:bg-white/10 bg-black/10 hover:bg-black/5 hover:border-black/10 dark:hover:bg-white/5 dark:hover:border-white/10 focus-within:bg-black/5! focus-within:border-black/10! focus-within:dark:bg-white/5! focus-within:dark:border-white/10! w-full",
                   }}
                 />
+                <p className="text-[10px] text-foreground/40 font-sans">
+                  Please ensure the secret is correct, because when the widget is works didn&apos;t mean the secret is correct. its will cause to cannot regonize any alerts if its wrong.
+                </p>
               </div>
 
-              <div className="flex flex-col gap-2 font-sans">
+              <div className="flex gap-2 justify-end font-sans">
+                {isConnected && canManageIntegrations && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    disabled={isSaving}
+                    onClick={() => setIsConfirmOpen(true)}
+                    className="h-max p-4 rounded-xl text-xs tracking-wider flex items-center justify-center gap-2"
+                  >
+                    <LinkBreakIcon size={16} />
+                    {t.btn_disconnect}
+                  </Button>
+                )}
                 {canManageIntegrations ? (
                   <Button
                     type="submit"
-                    variant="secondary"
+                    variant="default"
                     disabled={isSaving || !username.trim() || !secret.trim()}
-                    className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-max p-4 rounded-xl text-xs tracking-wider flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSaving ? (
                       <Spinner className="size-4 text-current" />
@@ -451,26 +477,34 @@ function KofiPage() {
                     type="button"
                     variant="secondary"
                     disabled
-                    className="w-full h-12 rounded-xl text-xs font-bold tracking-wider opacity-60 cursor-not-allowed"
+                    className="h-max p-4 rounded-xl text-xs tracking-wider opacity-60 cursor-not-allowed"
                   >
                     Read-only (No Permission)
                   </Button>
                 )}
-
-                {isConnected && canManageIntegrations && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    disabled={isSaving}
-                    onClick={() => setIsConfirmOpen(true)}
-                    className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                  >
-                    <LinkBreakIcon size={16} />
-                    {t.btn_disconnect}
-                  </Button>
-                )}
               </div>
             </form>
+          </div>
+        </div>
+        <div className="rounded-2xl flex flex-col bg-muted">
+          <span className="px-3 py-1 font-semibold text-muted-foreground select-none text-sm">Live Preview</span>
+          <div className="flex items-center justify-center border-2 border-muted rounded-2xl bg-card overflow-hidden">
+            {
+              debouncedUsername.length >= 3 ? (
+                <iframe
+                  className="w-96 h-172 border-0 rounded-sm bg-white scale-75 pointer-events-none"
+                  tabIndex={-1}
+                  src={`https://ko-fi.com/${debouncedUsername}/?hidefeed=true&widget=true&embed=true&preview=true`}
+                  title="Ko-Fi"
+                  style={{ colorScheme: "light", scrollbarWidth: "thin" }}
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-96 h-172 bg-foreground/10 rounded-sm scale-75 flex items-center justify-center text-xs text-muted-foreground select-none">
+                  {username.trim().length > 0 ? "Loading preview..." : "Enter username to preview"}
+                </div>
+              )
+            }
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useStore } from "zustand";
 import { getCookie } from "cookies-next/client";
 import { useUserContext } from "@/contexts/user";
@@ -71,8 +71,11 @@ function StreamlabsPage() {
     OrgPerm.INTEGRATION_MANAGE
   );
 
-  const orgKey = activeOrg?.slug || activeOrg?.id;
-  const streamerKey = activeStreamer?.name || activeStreamer?.id;
+  const routeParams = useParams();
+  const routeOrg = routeParams?.org as string | undefined;
+  const routeStreamer = routeParams?.streamer as string | undefined;
+  const orgKey = activeOrg?.slug || activeOrg?.id || routeOrg;
+  const streamerKey = activeStreamer?.name || activeStreamer?.id || routeStreamer;
   const backHref = orgKey && streamerKey ? `/app/${orgKey}/${streamerKey}/connections?t=trigger` : "/app/connections?t=trigger";
 
   const [isLoading, setIsLoading] = useState(true);
@@ -158,7 +161,15 @@ function StreamlabsPage() {
   // Handle OAuth code exchange flow if code & state exist in URL
   useEffect(() => {
     if (code && state) {
-      authFetch(getApiUrl("/api/v1/me/connection/integration/streamlabs"), {
+      const parts = state.split(".");
+      const orgId = parts.length >= 2 ? parts[1] : activeOrg?.id;
+      const streamerId = parts.length >= 2 ? parts[0] : activeStreamer?.id;
+      const targetEndpoint =
+        orgId && streamerId
+          ? `/api/v1/org/${orgId}/streamers/${streamerId}/connections/streamlabs`
+          : "/api/v1/me/connection/integration/streamlabs";
+
+      authFetch(getApiUrl(targetEndpoint), {
         method: "POST",
         body: code,
       })
@@ -182,7 +193,7 @@ function StreamlabsPage() {
       isFetched.current = true;
       loadSettingsAndLogs();
     }
-  }, [code, state, router, userInfo, loadSettingsAndLogs, authFetch, backHref]);
+  }, [code, state, router, userInfo, loadSettingsAndLogs, authFetch, backHref, activeOrg?.id, activeStreamer?.id]);
 
   // Handle realtime logs WebSocket connection
   useEffect(() => {
@@ -533,13 +544,12 @@ function StreamlabsPage() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span
-                          className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                            log.status === "COMPLETED"
+                          className={`w-1.5 h-1.5 rounded-full shrink-0 ${log.status === "COMPLETED"
                               ? "bg-emerald-500"
                               : log.status === "FAILED"
                                 ? "bg-rose-500"
                                 : "bg-amber-500"
-                          }`}
+                            }`}
                         />
                         <span className="font-semibold text-foreground/80 truncate">
                           {log.senderName}

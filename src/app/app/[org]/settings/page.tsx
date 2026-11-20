@@ -44,6 +44,7 @@ import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
+import HoldButton from "@/components/HoldButton";
 
 export default function OrgSettingsPage() {
   const routeParams = useParams();
@@ -645,6 +646,7 @@ export default function OrgSettingsPage() {
               className="w-full"
               classNames={{ base: "h-10 rounded-xl" }}
             />
+            <span className="text-xs text-destructive select-none font-sans">This action cannot be undo.</span>
           </Field>
 
           <DialogFooter className="mt-5 gap-2">
@@ -657,16 +659,29 @@ export default function OrgSettingsPage() {
             >
               Cancel
             </Button>
-            <Button
-              variant="destructive"
+            <HoldButton
+              doneLabel="Deleted"
+              backgroundColor="var(--muted)"
+              fillColor="#f43f5e"
+              textColor="var(--muted-foreground)"
+              fillTextColor="#ffffff"
               size="sm"
-              onClick={handleDeleteOrg}
+              radius={14}
+              fillDirection="right"
+              className="h-max p-3.5 text-xs"
+              holdTime={2000}
+              releaseTime={200}
+              pressScale={1}
+              wave
+              waveAmplitude={6}
+              glow={false}
+              resetAfter={1200}
               disabled={isDeleting || confirmSlug !== activeOrg?.slug}
-              className="gap-1.5 text-xs font-semibold rounded-xl p-3 h-max"
+              onHold={handleDeleteOrg}
             >
               {isDeleting && <Spinner className="size-3.5" />}
-              <span>Delete Permanently</span>
-            </Button>
+              Hold to delete
+            </HoldButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -694,16 +709,29 @@ export default function OrgSettingsPage() {
             >
               Cancel
             </Button>
-            <Button
-              variant="destructive"
+            <HoldButton
+              doneLabel="Deleted"
+              backgroundColor="var(--muted)"
+              fillColor="#f43f5e"
+              textColor="var(--muted-foreground)"
+              fillTextColor="#ffffff"
               size="sm"
-              onClick={handleLeaveOrg}
+              radius={14}
+              fillDirection="right"
+              className="h-max p-3.5 text-xs"
+              holdTime={2000}
+              releaseTime={200}
+              pressScale={1}
+              wave
+              waveAmplitude={6}
+              glow={false}
+              resetAfter={1200}
               disabled={isLeaving}
-              className="gap-1.5 text-xs font-semibold rounded-xl p-3 h-max"
+              onHold={handleLeaveOrg}
             >
               {isLeaving && <Spinner className="size-3.5" />}
-              <span>Confirm & Leave</span>
-            </Button>
+              Hold to leave
+            </HoldButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -956,16 +984,29 @@ export default function OrgSettingsPage() {
                       <ArrowLeftIcon size={14} weight="bold" />
                       <span>Back</span>
                     </Button>
-                    <Button
-                      variant="destructive"
+                    <HoldButton
+                      doneLabel="Deleted"
+                      backgroundColor="var(--muted)"
+                      fillColor="#f43f5e"
+                      textColor="var(--muted-foreground)"
+                      fillTextColor="#ffffff"
                       size="sm"
-                      onClick={handleTransferOwnership}
+                      radius={14}
+                      fillDirection="right"
+                      className="h-max p-3.5 text-xs"
+                      holdTime={2000}
+                      releaseTime={200}
+                      pressScale={1}
+                      wave
+                      waveAmplitude={6}
+                      glow={false}
+                      resetAfter={1200}
                       disabled={isTransferring || confirmPhrase !== TRANSFER_CONFIRM_PHRASE}
-                      className="gap-2 text-xs font-semibold rounded-xl p-3 h-max"
+                      onHold={handleTransferOwnership}
                     >
-                      {isTransferring && <Spinner className="size-3.5" />}
-                      <span>Confirm & Transfer</span>
-                    </Button>
+                      {isLeaving && <Spinner className="size-3.5" />}
+                      Hold to transfer
+                    </HoldButton>
                   </DialogFooter>
                 </>
               )}

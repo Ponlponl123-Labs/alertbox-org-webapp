@@ -149,6 +149,7 @@ export interface Connections {
   patreon: string | null;
   streamlabs: boolean;
   discord?: boolean | null;
+  disabled?: Record<string, boolean>;
 }
 
 export interface Device {

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { coreStore } from "@/hooks/store/core";
 import { isValidUri } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Input } from "react-smooth-input";
 import { useStore } from "zustand";
 import { toast } from "@/components/custom-ui/toast";
@@ -19,10 +19,19 @@ import { Tag } from "@/components/animate-ui/icons/hugeicons/tag";
 import { AnimateIcon } from "@animate-ui/react/icons";
 import { Link01 } from "@/components/animate-ui/icons/hugeicons/link-01";
 
+function useUriCooldown(cooldownDateStr?: string | null): boolean {
+  return useSyncExternalStore(
+    () => () => { },
+    () => Boolean(cooldownDateStr && new Date(cooldownDateStr).getTime() > Date.now()),
+    () => false,
+  );
+}
+
 function RegisURIPage() {
   const lang = useStore(coreStore, (state) => state.lang);
   const { authFetch, activeOrg, activeStreamer, patchStreamer } = useUserContext();
   const router = useRouter();
+  const isUriCooldown = useUriCooldown(activeStreamer?.uriCooldownEnd);
   const [isRegistrable, setIsRegistrable] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +41,7 @@ function RegisURIPage() {
   const streamerKey = activeStreamer?.name || activeStreamer?.id;
 
   const handleRegisURI = async () => {
-    if (!currentUriInputValue || !isRegistrable || isRefreshing || isSubmitting)
+    if (!currentUriInputValue || !isRegistrable || isRefreshing || isSubmitting || isUriCooldown)
       return;
 
     setIsSubmitting(true);
@@ -158,6 +167,23 @@ function RegisURIPage() {
         <p className="mb-6 text-sm font-sans text-foreground/40 max-w-md select-none">
           {lang.data.app.profile.get_started.description}
         </p>
+        {isUriCooldown && activeStreamer?.uriCooldownEnd && (
+          <div className="mb-6 max-w-md w-full p-4 rounded-xl bg-amber-500/10 *:font-sans text-amber-500 text-xs text-left">
+            <p className="font-semibold">{lang.data.app.profile.get_started.youre_in_cooldown}</p>
+            <p className="mt-1 text-foreground/60">
+              {lang.data.app.profile.get_started.reset_in.replace(
+                "{time}",
+                new Date(activeStreamer.uriCooldownEnd).toLocaleDateString(lang.key, {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+              )}
+            </p>
+          </div>
+        )}
         <div className="min-w-0 w-full h-max flex items-center justify-center">
           <Input
             type="text"
@@ -171,7 +197,7 @@ function RegisURIPage() {
                 tip-to.me/@
               </span>
             }
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUriCooldown}
             value={currentUriInputValue}
             onChange={handleUriChange}
             maxLength={50}
@@ -242,7 +268,8 @@ function RegisURIPage() {
               !currentUriInputValue.trim() ||
               !isRegistrable ||
               isRefreshing ||
-              isSubmitting
+              isSubmitting ||
+              isUriCooldown
             }
           >
             {isSubmitting ? (

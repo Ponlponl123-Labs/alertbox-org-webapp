@@ -21,6 +21,7 @@ import { useState } from "react";
 import { useStore } from "zustand";
 import { getApiUrl } from "@/lib/api";
 import { motion } from "motion/react";
+import HoldButton from "@/components/HoldButton";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -90,20 +91,40 @@ function Page() {
                 <AlertDialogDescription>
                   {lang.data.app.danger.delete_account.description}
                 </AlertDialogDescription>
+                <span className="text-xs text-destructive select-none font-sans">This action cannot be undo.</span>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel
                   variant="secondary"
-                  className="rounded-xl"
+                  className="rounded-xl p-3 h-max"
                   disabled={isDeleting}
                 >
                   {lang.data.app.danger.delete_account.cancel}
                 </AlertDialogCancel>
                 <AlertDialogAction
-                  variant="destructive"
-                  className="rounded-xl"
-                  onClick={() => void handleDelete()}
-                  disabled={isDeleting}
+                  variant={"destructive"}
+                  className={"rounded-xl"}
+                  render={
+                    <HoldButton
+                      doneLabel="Deleted"
+                      backgroundColor="var(--muted)"
+                      fillColor="#f43f5e"
+                      textColor="var(--muted-foreground)"
+                      fillTextColor="#ffffff"
+                      size="sm"
+                      radius={14}
+                      fillDirection="right"
+                      className="h-max p-3.25 text-xs"
+                      holdTime={2000}
+                      releaseTime={200}
+                      pressScale={1}
+                      wave
+                      waveAmplitude={6}
+                      glow={false}
+                      resetAfter={1200}
+                      disabled={isDeleting}
+                      onHold={() => void handleDelete()}
+                    />}
                 >
                   {isDeleting ? (
                     <Spinner className="size-4" />

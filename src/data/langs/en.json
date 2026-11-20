@@ -558,6 +558,7 @@
         "title": "Claim Your Profile URL",
         "description": "Choose a unique username for your donation page. This will be the link you share with your fans.",
         "regis": "Claim URL",
+        "youre_in_cooldown": "You recently updated your profile link. You can only change your profile URL once every 7 days.",
         "reset_in": "You will be able to change your profile link after {time}.",
         "change": "Change Profile URL"
       },
@@ -669,6 +670,15 @@
       "tabs": {
         "payment": "Payment Integrations",
         "trigger": "Chain Trigger"
+      },
+      "sections": {
+        "active": "Active Integrations",
+        "active_desc": "Currently connected and actively receiving donation webhook alerts.",
+        "active_empty": "No active integrations yet. Connect an available integration below.",
+        "available": "Available Integrations",
+        "available_desc": "Ready to configure and connect to your Alertbox account right now.",
+        "unavailable": "Unavailable Integrations",
+        "unavailable_desc": "Upcoming integrations currently under development on our roadmap."
       },
       "privacy": "Privacy",
       "payout": "Payout",

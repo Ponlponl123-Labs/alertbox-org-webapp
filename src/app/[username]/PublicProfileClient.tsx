@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import Image from "next/image";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
@@ -35,6 +35,15 @@ import { AnimateIcon } from "@animate-ui/react/icons";
 import { ArrowLeft01 } from "@/components/animate-ui/icons/hugeicons/arrow-left-01";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import Link from "next/link";
+import { useUserContext } from "@/contexts/user";
+import { canAccessStreamer } from "@/lib/rbac";
+import { OrgPerm, StreamerPerm } from "@/consts/permission";
+import { toast } from "@/components/custom-ui/toast";
+import { ImageCropperModal } from "@/components/features";
+import { CameraIcon, TrashIcon } from "@phosphor-icons/react/dist/ssr";
+import { PencilEdit02 } from "@/components/animate-ui/icons/hugeicons/pencil-edit-02";
+import { Input as ShadcnInput } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type PaymentMethodType =
   | "stripe"
@@ -97,12 +106,16 @@ export interface PublicProfileData {
 export default function PublicProfileClient({
   username,
   initialData,
+  isMock = false,
 }: {
   username: string;
   initialData: PublicProfileData | null;
+  isMock?: boolean;
 }) {
+  const routeParams = useParams();
   const lang = useStore(coreStore, (state) => state.lang);
   const decodedUsername = decodeURIComponent(username);
+  const { patchStreamer, authFetch, activeOrg, activeStreamer } = useUserContext();
 
   const uri = decodedUsername.startsWith("@")
     ? decodedUsername.slice(1)
@@ -116,12 +129,26 @@ export default function PublicProfileClient({
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType | null>(null);
   const [isBannerLoaded, setIsBannerLoaded] = React.useState(false);
   const [prevBannerUrl, setPrevBannerUrl] = React.useState(bannerUrl);
+  const [isEditingName, setIsEditingName] = React.useState(false);
+  const [isEditingBio, setIsEditingBio] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [isAnythingChanged, setIsAnythingChanged] = React.useState(false);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [cropType, setCropType] = useState<"avatar" | "banner">("avatar");
+  const [displayName, setDisplayName] = useState(activeStreamer?.displayName || "");
+  const [bio, setBio] = useState(activeStreamer?.bio || "");
+  const prevStreamerIdRef = useRef(activeStreamer?.id);
 
   if (prevBannerUrl !== bannerUrl) {
     setPrevBannerUrl(bannerUrl);
     setIsBannerLoaded(false);
   }
 
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const targetOrg = activeOrg?.slug || activeOrg?.id || (routeParams?.org as string);
+  const canEditProfile = canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_MANAGE, OrgPerm.STREAMER_MANAGE);
   const rootRef = useRef<HTMLDivElement>(null);
   const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null);
 
@@ -130,6 +157,14 @@ export default function PublicProfileClient({
       setScrollContainer(rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]'));
     }
   }, []);
+
+  useEffect(() => {
+    if (isMock && activeStreamer && activeStreamer.id !== prevStreamerIdRef.current) {
+      prevStreamerIdRef.current = activeStreamer.id;
+      setDisplayName(activeStreamer.displayName || "");
+      setBio(activeStreamer.bio || "");
+    }
+  }, [isMock, activeStreamer]);
 
   const { scrollY } = useScroll({
     container: scrollContainer ? { current: scrollContainer } : undefined,
@@ -149,7 +184,7 @@ export default function PublicProfileClient({
   }
 
   useEffect(() => {
-    if (initialData) return;
+    if (isMock || initialData) return;
 
     async function fetchProfile() {
       try {
@@ -187,7 +222,7 @@ export default function PublicProfileClient({
       }
     }
     fetchProfile();
-  }, [uri, lang.key, initialData]);
+  }, [isMock, uri, lang.key, initialData]);
 
   if (loading) {
     return (
@@ -197,7 +232,7 @@ export default function PublicProfileClient({
     );
   }
 
-  if (!decodedUsername.startsWith("@") || error === "not_found") {
+  if (!isMock && (!decodedUsername.startsWith("@") || error === "not_found")) {
     notFound();
   }
 
@@ -249,6 +284,121 @@ export default function PublicProfileClient({
     return !!integrations?.[item.id as keyof typeof integrations];
   });
 
+  const targetStreamer = activeStreamer?.name || (routeParams?.streamer as string);
+  const streamerPatchEndpoint =
+    targetOrg && targetStreamer
+      ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}`)
+      : "";
+
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "avatar" | "banner",
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImageToCrop(reader.result as string);
+        setCropType(type);
+        setCropperOpen(true);
+        e.target.value = "";
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveMedia = async (type: "avatar" | "banner") => {
+    if (!streamerPatchEndpoint || !activeStreamer) return;
+    try {
+      const res = await authFetch(streamerPatchEndpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [type]: null }),
+      });
+
+      if (res.ok) {
+        patchStreamer(activeStreamer.id, { [cropType]: null });
+        toast.success(`Organization ${type} removed`);
+      } else {
+        toast.error(`Failed to remove ${type}`);
+      }
+    } catch {
+      toast.error(`Network error removing ${type}`);
+    }
+  };
+
+  const onCropComplete = async (croppedImage: Blob): Promise<void> => {
+    if (!streamerPatchEndpoint || !activeStreamer) return;
+    try {
+      const formData = new FormData();
+      formData.append(cropType, croppedImage, `${cropType}.webp`);
+
+      const res = await authFetch(streamerPatchEndpoint, {
+        method: "PATCH",
+        body: formData,
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        patchStreamer(activeStreamer.id, { [cropType]: updated[cropType] });
+        toast.success(lang.data.app.account.success);
+      } else if (res.status === 451) {
+        const detail = await res.text().catch(() => "");
+        toast.error(detail || lang.data.app.account.illegal_content);
+      } else {
+        toast.error(lang.data.app.account.error);
+      }
+    } catch {
+      toast.error(lang.data.app.account.fatal);
+    }
+  };
+
+  const handleSaveBasic = async () => {
+    if (!streamerPatchEndpoint || !activeStreamer || isSaving) return;
+    setIsSaving(true);
+    try {
+      const trimmedName = displayName.trim();
+      const trimmedBio = bio.trim() || null;
+      const res = await authFetch(streamerPatchEndpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: trimmedName || undefined,
+          bio: trimmedBio,
+        }),
+      });
+
+      if (res.ok) {
+        patchStreamer(activeStreamer.id, {
+          displayName: trimmedName || activeStreamer.displayName,
+          bio: trimmedBio,
+        });
+        setProfileData((prev) =>
+          prev
+            ? {
+              ...prev,
+              displayName: trimmedName || prev.displayName,
+              bio: trimmedBio,
+            }
+            : prev,
+        );
+        setIsEditingName(false);
+        setIsEditingBio(false);
+        setIsAnythingChanged(false);
+        toast.success(lang.data.app.account.success);
+      } else if (res.status === 451) {
+        const detail = await res.text().catch(() => "");
+        toast.error(detail || lang.data.app.account.illegal_content);
+      } else {
+        toast.error(lang.data.app.account.error);
+      }
+    } catch {
+      toast.error(lang.data.app.account.fatal);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div
       className="flex flex-col min-h-screen bg-linear-to-b from-zinc-50 to-zinc-100 dark:from-zinc-950 dark:to-black relative font-sans"
@@ -260,6 +410,20 @@ export default function PublicProfileClient({
       }
       ref={rootRef}
     >
+      <input
+        type="file"
+        ref={avatarInputRef}
+        onChange={(e) => handleFileChange(e, "avatar")}
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={bannerInputRef}
+        onChange={(e) => handleFileChange(e, "banner")}
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+      />
       <div className="fixed top-0 right-0 z-50 zoom-50">
         <PullCord />
       </div>
@@ -273,11 +437,11 @@ export default function PublicProfileClient({
           }}
           exit={{ opacity: 0, filter: "blur(6px)" }}
           transition={{ duration: 1 }}
-          className="w-full pointer-events-none bg-primary top-0 left-0 z-0 mask-b-from-0% overflow-hidden -mb-48"
+          className="w-full bg-primary top-0 left-0 z-0 mask-b-from-0% overflow-hidden -mb-48 relative"
         >
           <motion.div
             style={{ y: bannerY, scale: bannerScale, opacity: bannerOpacity }}
-            className="w-full origin-top min-h-96"
+            className="w-full origin-top min-h-96 pointer-events-none"
           >
             {bannerUrl && (
               <Image
@@ -292,6 +456,33 @@ export default function PublicProfileClient({
               />
             )}
           </motion.div>
+          {isMock && canEditProfile && (
+            <div className="absolute inset-0 p-1 z-50">
+              <div className="absolute inset-0">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => bannerInputRef.current?.click()}
+                  className="inset-0 w-full h-full scale-110! opacity-0 hover:opacity-40 text-xs font-semibold gap-1.5"
+                >
+                  <span>{profileData.banner ? "Change Banner" : "Upload Banner"}</span>
+                </Button>
+              </div>
+              {profileData.banner && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => handleRemoveMedia("banner")}
+                  className="p-2 h-max rounded-xl absolute left-1/2 -translate-x-1/2 text-xs font-semibold z-10 backdrop-blur-lg"
+                >
+                  <TrashIcon size={14} weight="bold" />
+                  Remove banner
+                </Button>
+              )}
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
 
@@ -305,7 +496,7 @@ export default function PublicProfileClient({
           <div className="flex flex-col items-start">
             <motion.div
               variants={fadeInUp}
-              className="relative bg-primary border border-foreground/10 rounded-full shadow-2xl"
+              className="relative group/avatar bg-primary border border-foreground/10 rounded-full shadow-2xl"
             >
               <Avatar className="size-32 md:size-42 shadow-inner">
                 {profileData.avatar && <AvatarImage src={profileData.avatar} />}
@@ -313,27 +504,89 @@ export default function PublicProfileClient({
                   {getFallbackInitial(profileData.displayName || "?")}
                 </AvatarFallback>
               </Avatar>
+              {isMock && canEditProfile && (
+                <Button
+                  type="button"
+                  variant={"ghost"}
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="absolute inset-0 size-32 md:size-42 rounded-full bg-black/50 group-hover/avatar:backdrop-blur-[2px] opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center text-white"
+                  title="Change Avatar"
+                >
+                  <CameraIcon size={18} weight="bold" />
+                  <span className="text-[10px] font-semibold mt-0.5">Edit</span>
+                </Button>
+              )}
             </motion.div>
 
-            <motion.h1
-              variants={fadeInUp}
-              className="text-3xl md:text-5xl font-extrabold tracking-tight mt-6 text-foreground font-heading flex items-center gap-2 select-none"
-            >
-              {profileData.displayName || "Display Name"}
-              {isVerified && (
-                <Tooltip>
-                  <TooltipTrigger>
-                    <SealCheckIcon
-                      className="size-7 md:size-9 text-primary shrink-0 select-none cursor-pointer"
-                      weight="fill"
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent className="rounded-2xl">
-                    <p>{lang.data.app.profile.preview.official_account}</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </motion.h1>
+            {
+              isEditingName ?
+                <div className="flex items-center gap-2 mt-4 -mb-3 w-full max-w-xl">
+                  <ShadcnInput
+                    type="text"
+                    autoFocus
+                    placeholder={profileData.displayName || "Display Name"}
+                    value={displayName}
+                    onChange={(e) => {
+                      setDisplayName(e.target.value);
+                      setIsAnythingChanged(true);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveBasic();
+                      } else if (e.key === "Escape") {
+                        setDisplayName(profileData.displayName || "");
+                        setIsEditingName(false);
+                        if (!isEditingBio) setIsAnythingChanged(false);
+                      }
+                    }}
+                    maxLength={64}
+                    className="text-3xl md:text-5xl mt-2 mb-1 font-extrabold tracking-tight rounded-xl font-heading h-auto! py-1! px-2! border-foreground/20 bg-background/50 backdrop-blur-md w-full"
+                  />
+                  {isVerified && (
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <SealCheckIcon
+                          className="size-7 md:size-9 text-primary shrink-0 select-none cursor-pointer"
+                          weight="fill"
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent className="rounded-2xl">
+                        <p className="font-sans">{lang.data.app.profile.preview.official_account}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div> : (
+                  <motion.h1
+                    variants={fadeInUp}
+                    className={cn(
+                      "text-3xl md:text-5xl font-extrabold tracking-tight mt-6 text-foreground font-heading flex items-center gap-2 select-none",
+                      isMock && canEditProfile && "p-1 -m-1 mt-6 hover:bg-foreground/10 rounded-sm transition-interactive cursor-pointer group"
+                    )}
+                    onClick={() => {
+                      if (isMock && canEditProfile) {
+                        setDisplayName(profileData.displayName || "");
+                        setIsEditingName(true);
+                      }
+                    }}
+                  >
+                    <span>{profileData.displayName || "Display Name"}</span>
+                    {isVerified && (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <SealCheckIcon
+                            className="size-7 md:size-9 text-primary shrink-0 select-none cursor-pointer"
+                            weight="fill"
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent className="rounded-2xl">
+                          <p className="font-sans">{lang.data.app.profile.preview.official_account}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </motion.h1>
+                )
+            }
 
             <motion.span
               variants={fadeInUp}
@@ -367,20 +620,64 @@ export default function PublicProfileClient({
               </motion.div>
             )}
 
-            <motion.p
-              variants={fadeInUp}
-              className="text-sm font-sans text-muted-foreground mt-8 leading-relaxed whitespace-pre-wrap max-w-xl wrap-break-word select-none"
-            >
-              {profileData.bio || lang.data.app.profile.preview.no_bio}
-            </motion.p>
+            {
+              isEditingBio ?
+                <Textarea
+                  autoFocus
+                  placeholder={profileData.bio || "Tell them about yourself..."}
+                  value={bio}
+                  onChange={(e) => {
+                    setBio(e.target.value);
+                    setIsAnythingChanged(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                      e.preventDefault();
+                      handleSaveBasic();
+                    } else if (e.key === "Escape") {
+                      setBio(profileData.bio || "");
+                      setIsEditingBio(false);
+                      if (!isEditingName) setIsAnythingChanged(false);
+                    }
+                  }}
+                  maxLength={1000}
+                  className="text-sm! mt-8 rounded-xl p-2.5 bg-background/50 backdrop-blur-md border border-foreground/20 leading-relaxed font-sans max-w-xl w-full"
+                />
+                : (
+                  <motion.p
+                    variants={fadeInUp}
+                    className={cn(
+                      "text-sm font-sans text-muted-foreground mt-8 leading-relaxed whitespace-pre-wrap max-w-xl wrap-break-word select-none",
+                      isMock && canEditProfile && "p-1 -m-1 mt-8 hover:bg-foreground/10 rounded-sm transition-interactive cursor-pointer group flex items-start gap-1.5"
+                    )}
+                    onClick={() => {
+                      if (isMock && canEditProfile) {
+                        setBio(profileData.bio || "");
+                        setIsEditingBio(true);
+                      }
+                    }}
+                  >
+                    <span>{profileData.bio || lang.data.app.profile.preview.no_bio}</span>
+                    {isMock && canEditProfile && (
+                      <PencilEdit02 size={14} className="text-foreground/40 group-hover:text-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
+                    )}
+                  </motion.p>
+                )
+            }
 
             <motion.div
               initial={{ opacity: 0, y: 4, filter: "blur(6px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ delay: 0.4, duration: 0.4 }}
-              className="flex items-center gap-2 mt-3 select-none **:cursor-default"
+              className={cn("flex items-center gap-2 mt-3 select-none **:cursor-default",
+                // isMock && canEditProfile && "p-1 -m-1 mt-3 hover:bg-foreground/10 rounded-sm transition-interactive"
+              )
+              }
             >
               <SocialLinks socials={profileData} iconSize={22} colored />
+              {
+                // isMock && canEditProfile && <PencilEdit02 size={16} className={"size-8 p-1.75"} animateOnHover />
+              }
             </motion.div>
           </div>
         </div>
@@ -475,6 +772,65 @@ export default function PublicProfileClient({
           )}
         </motion.div>
       </motion.main>
+      <AnimatePresence key={(isEditingName || isEditingBio || isAnythingChanged) ? "active" : "hide"} mode="wait">
+        {
+          isMock && canEditProfile && (isEditingName || isEditingBio || isAnythingChanged) &&
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: "100%",
+              x: "-50%"
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              x: "-50%"
+            }}
+            exit={{
+              opacity: 0,
+              y: "100%",
+              x: "-50%"
+            }}
+            className="absolute bottom-16 left-1/2"
+          >
+            <Button
+              variant={"secondary"}
+              className={"rounded-2xl rounded-r-sm h-max p-3"}
+              onClick={() => {
+                setDisplayName(profileData.displayName || "");
+                setBio(profileData.bio || "");
+                setIsEditingName(false);
+                setIsEditingBio(false);
+                setIsAnythingChanged(false);
+              }}
+              disabled={isSaving}
+            >
+              Cancel
+            </Button>
+            <Button
+              className={"rounded-2xl rounded-l-sm h-max p-3"}
+              onClick={handleSaveBasic}
+              disabled={isSaving}
+            >
+              {isSaving ? <Spinner className="mr-2" /> : lang.data.app.profile.socials.save}
+            </Button>
+          </motion.div>
+        }
+      </AnimatePresence>
+      {
+        isMock && <ImageCropperModal
+          open={cropperOpen}
+          onClose={() => setCropperOpen(false)}
+          image={imageToCrop}
+          cropShape={cropType === "avatar" ? "round" : "rect"}
+          aspect={cropType === "avatar" ? 1 : 3}
+          title={cropType === "avatar" ? "Crop Avatar" : "Crop Banner"}
+          className={cn(
+            cropType === "avatar" ? "" : "max-w-2xl!"
+          )}
+          onCropComplete={onCropComplete}
+        />
+      }
     </div>
   );
 }

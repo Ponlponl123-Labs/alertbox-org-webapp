@@ -237,49 +237,49 @@ export function GlobeBars({
               transition: "opacity 0.4s, filter 0.4s, transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
             }}
           >
-          <span
-            style={{
-              fontFamily: "monospace",
-              fontSize: "0.55rem",
-              fontWeight: 600,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase" as const,
-              color: "var(--muted-foreground, #888)",
-            }}
-          >
-            {m.label}
-          </span>
-          <span
-            style={{
-              width: "100%",
-              height: 6,
-              background: "var(--muted, #eee)",
-              borderRadius: 3,
-              overflow: "hidden",
-            }}
-          >
+            <span
+              className="font-sans"
+              style={{
+                fontSize: "0.55rem",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase" as const,
+                color: "var(--muted-foreground, #888)",
+              }}
+            >
+              {m.label}
+            </span>
             <span
               style={{
-                display: "block",
-                height: "100%",
-                width: `${m.value}%`,
-                background: "var(--primary, #1a1a2e)",
+                width: "100%",
+                height: 6,
+                background: "var(--muted, #eee)",
                 borderRadius: 3,
-                ["--value" as string]: `${m.value}%`,
+                overflow: "hidden",
               }}
-            />
-          </span>
-          <span
-            style={{
-              fontFamily: "monospace",
-              fontSize: "0.65rem",
-              fontWeight: 600,
-              color: "var(--foreground, #1a1a2e)",
-            }}
-          >
-            {m.value}%
-          </span>
-        </div>
+            >
+              <span
+                style={{
+                  display: "block",
+                  height: "100%",
+                  width: `${m.value}%`,
+                  background: "var(--primary, #1a1a2e)",
+                  borderRadius: 3,
+                  ["--value" as string]: `${m.value}%`,
+                }}
+              />
+            </span>
+            <span
+              className="font-sans"
+              style={{
+                fontSize: "0.65rem",
+                fontWeight: 600,
+                color: "var(--foreground, #1a1a2e)",
+              }}
+            >
+              {m.value}%
+            </span>
+          </div>
         );
       })}
     </div>
