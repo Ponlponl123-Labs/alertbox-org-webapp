@@ -59,6 +59,11 @@
     "typescript": "^5.9.3"
   },
   "overrides": {
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.15",
+    "@codemirror/language": "6.13.1",
+    "@codemirror/autocomplete": "6.20.4",
+    "@lezer/common": "1.5.5",
     "baseline-browser-mapping": "^2.11.39",
     "brace-expansion": "^1.1.22",
     "browserslist": "^4.29.6",
