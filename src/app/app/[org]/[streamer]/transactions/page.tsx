@@ -398,7 +398,7 @@ export default function StreamerTransactionsPage() {
     if (!orgTarget || !streamerTarget) return;
 
     authFetch(
-      getApiUrl(`/api/v1/org/${orgTarget}/streamers/${streamerTarget}/connections`),
+      getApiUrl(`/api/v1/org/${orgTarget}/streamers/${streamerTarget}/integration`),
     )
       .then((r) => (r.ok ? r.json() : null))
       .then((conns: StreamerConnections | null) => {

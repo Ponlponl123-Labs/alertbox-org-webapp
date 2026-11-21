@@ -36,12 +36,16 @@ import { Check } from "@/components/animate-ui/icons/hugeicons/check";
 import { CopyButton, CopyButtonIcon } from '@animate-ui/react/primitives/buttons/copy';
 import { SquareArrowOutUpRight } from "@/components/animate-ui/icons/hugeicons/square-arrow-out-up-right";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { Clipboard } from "@/components/animate-ui/icons/hugeicons/clipboard";
 import { ClipboardCheck } from "@/components/animate-ui/icons/hugeicons/clipboard-check";
 
 function KofiPage() {
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo, logout, authFetch, activeOrg, activeStreamer } = useUserContext();
+  const routeParams = useParams();
+  const targetOrg = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
+  const targetStreamer = activeStreamer?.id || activeStreamer?.name || (routeParams?.streamer as string);
 
   const canManageIntegrations = canAccessStreamer(
     activeOrg,
@@ -72,15 +76,15 @@ function KofiPage() {
 
   const t = lang.data.app.connections.kofi_setup;
 
-  const connectionsEndpoint = activeOrg && activeStreamer
-    ? getApiUrl(`/api/v1/org/${activeOrg.id}/streamers/${activeStreamer.id}/connections`)
-    : getApiUrl("/api/v1/me/connection");
-  const kofiEndpoint = activeOrg && activeStreamer
-    ? getApiUrl(`/api/v1/org/${activeOrg.id}/streamers/${activeStreamer.id}/connections/kofi`)
-    : getApiUrl("/api/v1/me/connection/kofi");
+  const connectionsEndpoint = targetOrg && targetStreamer
+    ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration`)
+    : "";
+  const kofiEndpoint = targetOrg && targetStreamer
+    ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/kofi`)
+    : "";
 
   useEffect(() => {
-    if (isFetched.current || !userInfo) return;
+    if (isFetched.current || !userInfo || !connectionsEndpoint) return;
     isFetched.current = true;
     authFetch(connectionsEndpoint)
       .then((res) => {

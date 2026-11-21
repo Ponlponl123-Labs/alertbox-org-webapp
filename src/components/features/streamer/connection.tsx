@@ -41,6 +41,7 @@ export interface ConnectionProps {
   privacy?: string;
   payout?: string;
   isConnected: boolean;
+  isUseOauth?: boolean;
   secret: unknown;
   skey: string;
   soon?: boolean;
@@ -58,6 +59,7 @@ export default function Connection({
   privacy,
   payout,
   isConnected,
+  isUseOauth,
   secret,
   skey,
   soon,
@@ -315,7 +317,7 @@ export default function Connection({
                         <span className="text-[11px] font-semibold text-foreground/80">
                           {lang.data.app.connections.privacy}
                         </span>
-                        <p className="text-[11px] leading-relaxed text-muted-foreground">
+                        <p className="text-[11px] leading-relaxed text-muted-foreground font-sans">
                           {privacy}
                         </p>
                       </div>
@@ -331,7 +333,7 @@ export default function Connection({
                         <span className="text-[11px] font-semibold text-foreground/80">
                           {lang.data.app.connections.payout}
                         </span>
-                        <p className="text-[11px] leading-relaxed text-muted-foreground">
+                        <p className="text-[11px] leading-relaxed text-muted-foreground font-sans">
                           {payout}
                         </p>
                       </div>
@@ -397,7 +399,7 @@ export default function Connection({
                 </Button>
               </Link>
             )
-          ) : typeof secret === "boolean" ? (
+          ) : (isUseOauth || typeof secret === "boolean") ? (
             <Button
               size="sm"
               className="h-max w-full p-3 rounded-lg text-xs font-medium border-0"
@@ -429,7 +431,7 @@ export default function Connection({
             <AnimatePresence>
               {isShowSecret ? (
                 <div className="flex w-full min-w-0 flex-col gap-2">
-                  <div className="flex w-full min-w-0 items-center gap-2">
+                  <div className="flex flex-1 w-full min-w-0 items-center gap-1">
                     <Input
                       type="text"
                       placeholder={lang.data.app.connections.placeholder}
@@ -438,6 +440,7 @@ export default function Connection({
                       maxLength={255}
                       onChange={(e) => setCurrentSecret(e.target.value)}
                       className="flex-1 font-mono text-xs text-foreground/70"
+                      classNames={{ base: "h-10 rounded-lg" }}
                       fontStyle={{
                         fontFamily: "var(--font-sans)",
                         fontWeight: "400",
@@ -448,7 +451,7 @@ export default function Connection({
                       <Button
                         variant="secondary"
                         size="sm"
-                        className="h-8.5 rounded-2xl text-xs opacity-70"
+                        className="h-max w-full p-3 rounded-lg text-xs opacity-70"
                         disabled
                       >
                         Read-only
@@ -457,7 +460,7 @@ export default function Connection({
                       <Button
                         variant="default"
                         size="sm"
-                        className="h-8.5 rounded-2xl text-xs"
+                        className="h-max w-full p-3 rounded-lg text-xs"
                         disabled={isLoading}
                         onClick={() => update(api_endpoint, skey)}
                       >
@@ -471,7 +474,7 @@ export default function Connection({
                       <Button
                         variant="secondary"
                         size="sm"
-                        className="h-8.5 rounded-2xl text-xs"
+                        className="h-max p-3 rounded-lg text-xs"
                         disabled={isLoading}
                         onClick={() => setIsShowSecret(false)}
                       >
@@ -481,11 +484,11 @@ export default function Connection({
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <Button
                     variant="default"
                     size="sm"
-                    className="h-8.5 flex-1 gap-1.5 rounded-2xl text-xs font-medium"
+                    className="h-max w-full p-3 rounded-lg flex-1 gap-1.5 text-xs font-medium"
                     onClick={() => setIsShowSecret(true)}
                     disabled={readOnly}
                   >
@@ -498,7 +501,7 @@ export default function Connection({
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="h-8.5 w-full rounded-2xl text-xs"
+                      className="h-max w-full p-3 rounded-lg text-xs"
                     >
                       {lang.data.app.connections.howto}
                     </Button>

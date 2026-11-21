@@ -74,9 +74,17 @@ function StreamlabsPage() {
   const routeParams = useParams();
   const routeOrg = routeParams?.org as string | undefined;
   const routeStreamer = routeParams?.streamer as string | undefined;
-  const orgKey = activeOrg?.slug || activeOrg?.id || routeOrg;
-  const streamerKey = activeStreamer?.name || activeStreamer?.id || routeStreamer;
+  const targetOrg = activeOrg?.id || activeOrg?.slug || routeOrg;
+  const targetStreamer = activeStreamer?.id || activeStreamer?.name || routeStreamer;
+  const orgKey = targetOrg;
+  const streamerKey = targetStreamer;
   const backHref = orgKey && streamerKey ? `/app/${orgKey}/${streamerKey}/connections?t=trigger` : "/app/connections?t=trigger";
+  const streamlabsEndpoint = targetOrg && targetStreamer
+    ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/streamlabs`)
+    : "";
+  const streamlabsLogsEndpoint = targetOrg && targetStreamer
+    ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/streamlabs/logs`)
+    : "";
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -105,9 +113,7 @@ function StreamlabsPage() {
     setIsLoading(true);
 
     try {
-      const settingsRes = await authFetch(
-        getApiUrl("/api/v1/me/connection/integration/streamlabs"),
-      );
+      const settingsRes = await authFetch(streamlabsEndpoint);
       if (settingsRes.status === 401) {
         logout();
         return;
@@ -144,9 +150,7 @@ function StreamlabsPage() {
         }
       }
 
-      const logsRes = await authFetch(
-        getApiUrl("/api/v1/me/connection/integration/streamlabs/logs"),
-      );
+      const logsRes = await authFetch(streamlabsLogsEndpoint);
       if (logsRes.ok) {
         const logsData = await logsRes.json();
         setLogs(logsData);
@@ -156,7 +160,7 @@ function StreamlabsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [authFetch, logout, setupLang.error_load]);
+  }, [authFetch, logout, setupLang.error_load, streamlabsEndpoint, streamlabsLogsEndpoint]);
 
   // Handle OAuth code exchange flow if code & state exist in URL
   useEffect(() => {
@@ -166,8 +170,15 @@ function StreamlabsPage() {
       const streamerId = parts.length >= 2 ? parts[0] : activeStreamer?.id;
       const targetEndpoint =
         orgId && streamerId
-          ? `/api/v1/org/${orgId}/streamers/${streamerId}/connections/streamlabs`
-          : "/api/v1/me/connection/integration/streamlabs";
+          ? `/api/v1/org/${orgId}/streamers/${streamerId}/integration/streamlabs`
+          : targetOrg && targetStreamer
+          ? `/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/streamlabs`
+          : "";
+
+      if (!targetEndpoint) {
+        setOauthStatus("failed");
+        return;
+      }
 
       authFetch(getApiUrl(targetEndpoint), {
         method: "POST",
@@ -229,7 +240,11 @@ function StreamlabsPage() {
           // ignore
         }
 
-        const wsUrl = `${wsProtocol}//${wsHost}/v1/me/connection/integration/streamlabs/ws?token=${encodeURIComponent(decodedToken)}`;
+        const wsPath = targetOrg && targetStreamer
+          ? `/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/streamlabs/ws`
+          : "";
+        if (!wsPath) return;
+        const wsUrl = `${wsProtocol}//${wsHost}${wsPath}?token=${encodeURIComponent(decodedToken)}`;
 
         ws = new WebSocket(wsUrl);
 
@@ -286,7 +301,7 @@ function StreamlabsPage() {
 
     try {
       const res = await authFetch(
-        getApiUrl("/api/v1/me/connection/integration/streamlabs"),
+        streamlabsEndpoint,
         {
           method: "PATCH",
           headers: {
@@ -313,7 +328,7 @@ function StreamlabsPage() {
 
     try {
       const res = await authFetch(
-        getApiUrl("/api/v1/me/connection/integration/streamlabs"),
+        streamlabsEndpoint,
         {
           method: "DELETE",
         },
@@ -332,19 +347,11 @@ function StreamlabsPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full flex items-center justify-center min-h-100">
-        <Spinner className="size-8 text-foreground/40" />
-      </div>
-    );
-  }
-
   // Render OAuth callback loader screen
   if (code && state) {
     return (
       <div className="w-full flex flex-col min-h-0 mt-6 flex-1 gap-1.5 font-sans">
-        <div className="w-full flex flex-col items-center justify-center min-h-0 bg-foreground/5 rounded-4xl py-6 flex-1 border-2 border-dashed border-foreground/10">
+        <div className="w-full flex flex-col items-center justify-center min-h-0 py-6 flex-1">
           <div className="flex items-center justify-center gap-4">
             <Image
               src={"/favicon.ico"}
@@ -354,7 +361,7 @@ function StreamlabsPage() {
               className="-ml-4.25"
             />
             {oauthStatus === "connecting" ? (
-              <Spinner className="size-4 text-foreground/40 animate-pulse" />
+              <Spinner className="size-4 text-foreground/40" />
             ) : oauthStatus === "success" ? (
               <div className="text-emerald-500 animate-scale-in">
                 <CheckIcon weight="bold" size={16} />
@@ -381,6 +388,14 @@ function StreamlabsPage() {
                 : t.oauth.failed_description}
           </p>
         </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="w-full flex items-center justify-center min-h-100">
+        <Spinner className="size-8 text-foreground/40" />
       </div>
     );
   }
@@ -545,10 +560,10 @@ function StreamlabsPage() {
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span
                           className={`w-1.5 h-1.5 rounded-full shrink-0 ${log.status === "COMPLETED"
-                              ? "bg-emerald-500"
-                              : log.status === "FAILED"
-                                ? "bg-rose-500"
-                                : "bg-amber-500"
+                            ? "bg-emerald-500"
+                            : log.status === "FAILED"
+                              ? "bg-rose-500"
+                              : "bg-amber-500"
                             }`}
                         />
                         <span className="font-semibold text-foreground/80 truncate">

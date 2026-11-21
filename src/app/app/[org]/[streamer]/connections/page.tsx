@@ -49,6 +49,7 @@ interface ProviderItem {
   privacy?: string;
   payout?: string;
   isConnected: boolean;
+  isUseOauth?: boolean;
   key: string;
   soon: boolean;
 }
@@ -138,10 +139,7 @@ function Page() {
       ffp: "feelfreepay",
     };
     const provider = providerMap[key] || key;
-    if (activeOrg && activeStreamer) {
-      return `/api/v1/org/${activeOrg.id}/streamers/${activeStreamer.id}/connections/${provider}`;
-    }
-    return `/api/v1/me/connection/${provider}`;
+    return `/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/${provider}`;
   };
 
   useEffect(() => {
@@ -151,7 +149,7 @@ function Page() {
     lastFetchedKey.current = fetchKey;
 
     const endpoint = getApiUrl(
-      `/api/v1/org/${targetOrg}/streamers/${targetStreamer}/connections`
+      `/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration`
     );
 
     authFetch(endpoint)
@@ -180,7 +178,19 @@ function Page() {
       privacy: lang.data.app.connections.providers.stripe.privacy,
       payout: lang.data.app.connections.providers.stripe.payout,
       isConnected: connections?.stripe ? true : false,
+      isUseOauth: true,
       key: "stripe",
+      soon: false,
+    },
+    {
+      api_endpoint: getProviderEndpoint("stripe-connect"),
+      icon: <Stripe className="size-7" />,
+      name: "Stripe Connect",
+      description: lang.data.app.connections.providers.stripe.description,
+      privacy: lang.data.app.connections.providers.stripe.privacy,
+      payout: lang.data.app.connections.providers.stripe.payout,
+      isConnected: connections?.stripe ? true : false,
+      key: "stripe-connect",
       soon: true,
     },
     {
@@ -347,6 +357,7 @@ function Page() {
       payout={c.payout}
       isConnected={c.isConnected}
       secret={connections?.[c.key as keyof Connections] ?? null}
+      isUseOauth={c.isUseOauth}
       connections={connections}
       setConnections={setConnections}
       skey={c.key}
