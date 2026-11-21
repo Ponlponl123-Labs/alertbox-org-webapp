@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
+import { formatI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 
 export default function RouteError({
@@ -10,6 +13,8 @@ export default function RouteError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const lang = useStore(coreStore, (state) => state.lang);
+
   useEffect(() => {
     console.error("[RouteError]", error.digest ?? error.message);
   }, [error]);
@@ -17,23 +22,25 @@ export default function RouteError({
   return (
     <div className="min-h-[60dvh] w-full flex items-center justify-center p-6 font-sans">
       <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 text-center space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Unable to render this page</h2>
+        <h2 className="text-lg font-semibold text-foreground">{lang.data.errors.page_title}</h2>
         <p className="text-sm text-muted-foreground">
-          A runtime error occurred while loading this view.
+          {lang.data.errors.page_desc}
         </p>
         {error.digest && (
-          <p className="text-xs font-mono text-muted-foreground/70">Ref: {error.digest}</p>
+          <p className="text-xs font-mono text-muted-foreground/70">
+            {formatI18n(lang.data.errors.ref_code, { digest: error.digest })}
+          </p>
         )}
         <div className="flex items-center justify-center gap-2 pt-2">
           <Button variant="default" className="rounded-xl" onClick={reset}>
-            Retry
+            {lang.data.common.retry}
           </Button>
           <Button
             variant="secondary"
             className="rounded-xl"
             onClick={() => window.location.reload()}
           >
-            Reload
+            {lang.data.common.reload}
           </Button>
         </div>
       </div>

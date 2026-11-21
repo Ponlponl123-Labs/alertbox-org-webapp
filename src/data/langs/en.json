@@ -10,12 +10,111 @@
     "customize": "Customize",
     "go_live": "Go Live",
     "overlay_url": "Get Overlay URL",
-    "comming_soon": "Coming soon",
+    "coming_soon": "Coming soon",
     "backend_offline": "API backend is currently offline. Trying to reconnect...",
     "backend_degraded": "System performance is currently degraded.",
     "backend_maintenance": "System is currently undergoing scheduled maintenance.",
     "status_page": "Status Page",
-    "read_more": "Read more"
+    "read_more": "Read more",
+    "save": "Save",
+    "save_changes": "Save Changes",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "deleted": "Deleted",
+    "remove": "Remove",
+    "close": "Close",
+    "back": "Back",
+    "previous": "Previous",
+    "next": "Next",
+    "continue": "Continue",
+    "done": "Done",
+    "retry": "Retry",
+    "reload": "Reload",
+    "refresh": "Refresh",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copied_bang": "Copied!",
+    "copy_failed": "Failed to copy",
+    "edit": "Edit",
+    "clear": "Clear",
+    "reset": "Reset",
+    "reset_filters": "Reset filters",
+    "show_less": "Show less",
+    "configure": "Configure",
+    "select_all": "Select All",
+    "hold_to_delete": "Hold to delete",
+    "hold_to_leave": "Hold to leave",
+    "hold_to_transfer": "Hold to transfer",
+    "left": "Left",
+    "transferred": "Transferred",
+    "loading": "Loading",
+    "loading_ellipsis": "Loading...",
+    "active": "Active",
+    "inactive": "Inactive",
+    "away": "Away",
+    "paused": "Paused",
+    "read_only": "Read-only",
+    "read_only_no_permission": "Read-only (No Permission)",
+    "disabled_read_only": "Disabled (Read-only)",
+    "not_connected_read_only": "Not Connected (Read-only)",
+    "locked": "Locked",
+    "verified": "Verified",
+    "you": "You",
+    "all": "All",
+    "not_set": "Not set",
+    "unknown": "Unknown",
+    "public": "Public",
+    "of": "of",
+    "page": "Page",
+    "previous_page": "Previous page",
+    "next_page": "Next page",
+    "more_pages": "More pages",
+    "records": "records",
+    "events": "events",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "amount": "Amount",
+    "currency": "Currency",
+    "email": "Email",
+    "user": "User",
+    "member": "Member",
+    "user_id_fallback": "User #{id}",
+    "member_id_fallback": "Member #{id}",
+    "channel": "Channel",
+    "channels": "Channels",
+    "channel_count_one": "{count} Channel",
+    "channel_count_other": "{count} Channels",
+    "organization": "Organization",
+    "workspace": "Workspace",
+    "banner": "Banner",
+    "avatar": "Avatar",
+    "logo": "Logo",
+    "or": "or",
+    "network_error": "Network error occurred",
+    "action_irreversible": "This action cannot be undone.",
+    "image_type_error": "Only PNG, JPEG, and WebP images are supported",
+    "image_size_error": "Image must be 5 MB or smaller",
+    "inappropriate_content": "Image contains inappropriate content",
+    "aria": {
+      "close": "Close",
+      "close_toast": "Close toast",
+      "loading": "Loading",
+      "pagination": "pagination",
+      "prev_page": "Go to previous page",
+      "next_page": "Go to next page",
+      "more_pages": "More pages",
+      "toggle_theme": "Toggle theme",
+      "toggle_sidebar": "Toggle sidebar",
+      "close_sidebar": "Close sidebar",
+      "toggle_nav": "Toggle navigation menu",
+      "back_to_home": "Back to home",
+      "clear_search": "Clear search",
+      "logo_alt": "AlertBox Logo",
+      "banner_alt": "Banner",
+      "toggle_provider": "Toggle {name}"
+    }
   },
   "header": {
     "developers": "Developers",
@@ -189,7 +288,12 @@
             "live_overlay": "Live Overlay",
             "viewers_count": "{count} Viewers",
             "live_gameplay_stream": "Live Gameplay Stream",
-            "powered_by": "Powered by Alertbox.org"
+            "powered_by": "Powered by Alertbox.org",
+            "yourname": "yourname",
+            "your_stream_name": "Your Stream Name",
+            "rose": "Rose",
+            "tipped_banner": "{name} tipped {amount}",
+            "streamer_label": "Streamer"
           }
         },
         "for_thai_people": {
@@ -254,7 +358,8 @@
         },
         "social_proof": {
           "badge": "Trusted by Creators Worldwide",
-          "description": "Powering donation alerts for streamers across the globe"
+          "description": "Powering donation alerts for streamers across the globe",
+          "aria_label": "Technology partners"
         },
         "privacy_guard": {
           "title": "Zero-Trust Privacy Guard",
@@ -474,6 +579,25 @@
           "cta": "Create Your Alert Box",
           "secondary": "View on GitHub",
           "footnote": "Free forever • No credit card • Open source"
+        },
+        "cinematic_insights": {
+          "ledger_meta": [
+            {
+              "badge": "Anonymity",
+              "label": "Zero Intermediary",
+              "desc": "Billing statement settles directly between donor and your gateway."
+            },
+            {
+              "badge": "Chargeback Risk",
+              "label": "Native Radar Rules",
+              "desc": "Stripe Radar blocks high-risk cards; alert buffer intercepts trolls."
+            },
+            {
+              "badge": "Sovereignty",
+              "label": "Client-Side Code",
+              "desc": "Deploy anywhere. Zero telemetry, zero tracking, zero vendor lock-in."
+            }
+          ]
         }
       }
     }
@@ -496,7 +620,22 @@
           "appearance": "Appearance",
           "alerts": "Alerts",
           "danger": "Danger Zone"
-        }
+        },
+        "explore": "Explore",
+        "account_section": "Account",
+        "organization_section": "Organization",
+        "finance_section": "Finance",
+        "overview": "Overview",
+        "members_staff": "Members & Staff",
+        "channels": "Channels",
+        "audit_logs": "Audit Logs",
+        "org_settings": "Settings",
+        "billing_plans": "Billing & Plans",
+        "home": "Home",
+        "my_supporters": "My Supporters",
+        "leaderboard": "Leaderboard",
+        "analytics": "Analytics",
+        "transactions": "Transactions"
       },
       "collapse": "Collapse"
     },
@@ -547,7 +686,9 @@
       "zoom": "Zoom",
       "edit_display_name": "Edit Display Name",
       "display_name_dialog_title": "Change Display Name",
-      "display_name_dialog_description": "This is how your name will appear to others on the platform."
+      "display_name_dialog_description": "This is how your name will appear to others on the platform.",
+      "eyebrow": "My Account",
+      "subtitle": "Manage your user account profile and settings"
     },
     "profile": {
       "title": "My Profile",
@@ -600,6 +741,46 @@
         "tip_success_title": "Tip Sent Successfully!",
         "tip_success_desc": "Thank you for supporting {name}! Your tip of {amount} has been processed securely and will show up on stream.",
         "send_another_tip": "SEND ANOTHER TIP"
+      },
+      "my_profile": "My Profile",
+      "no_public_handle": "No public handle",
+      "read_only_notice": "You have read-only access to this channel profile. Profile modifications require editor permissions.",
+      "color_hex": "Color Hex:",
+      "danger": {
+        "title": "Channel Danger Zone",
+        "description": "Permanently delete this channel and disable donation pages.",
+        "button": "Delete Channel",
+        "dialog_title": "Delete Channel Permanently?",
+        "dialog_desc": "Are you sure you want to delete @{name}? Public donation links for this channel will cease to accept payments.",
+        "confirm_label": "Type channel handle {name} to confirm:",
+        "confirm_placeholder": "handle"
+      },
+      "toasts": {
+        "published": "Channel published successfully",
+        "publish_failed": "Failed to publish channel",
+        "unpublished": "Channel unpublished",
+        "unpublish_failed": "Failed to unpublish channel",
+        "deleted": "Channel \"{name}\" deleted",
+        "delete_failed": "Failed to delete channel",
+        "delete_network": "Network error deleting channel"
+      },
+      "public_page": {
+        "not_ready_title": "Streamer not ready",
+        "not_ready_desc": "This streamer hasn't quite set up their page yet.",
+        "display_name_placeholder": "Display Name",
+        "bio_placeholder": "Tell them about yourself...",
+        "change_banner": "Change Banner",
+        "upload_banner": "Upload Banner",
+        "remove_banner": "Remove banner",
+        "change_avatar": "Change Avatar",
+        "continue_with": "Continue with",
+        "select_other_method": "Select other tipping method",
+        "terms_prefix": "By processing to donation means you're agreeing to both our ",
+        "terms_link": "terms of service",
+        "terms_suffix": " and the payment provider's terms",
+        "removed": "Channel {type} removed",
+        "remove_failed": "Failed to remove {type}",
+        "remove_network": "Network error removing {type}"
       }
     },
     "alertbox": {
@@ -662,6 +843,13 @@
           "disabled": "This session has been disabled"
         },
         "unknown_location": "Unknown Location"
+      },
+      "eyebrow": "My Account",
+      "map_title": "Session Approximate Location Map",
+      "toasts": {
+        "revoke_failed": "Failed to revoke device session",
+        "revoke_network": "Network error revoking device session",
+        "load_failed": "Failed to load active sessions"
       }
     },
     "connections": {
@@ -809,7 +997,11 @@
         "error_save": "Failed to save settings",
         "error_disconnect": "Failed to disconnect",
         "error_network": "Network error occurred",
-        "copied": "Webhook URL copied!"
+        "copied": "Webhook URL copied!",
+        "step0_title": "First, finish your Ko-fi account.",
+        "step0_desc": "Make sure your Ko-fi creator page and payout account are fully configured before enabling webhook alerts.",
+        "open_integrations_page": "Go to Ko-fi Integrations Page",
+        "invalid_username": "Invalid Ko-fi username format"
       },
       "bmac_setup": {
         "back": "Back to Integrations",
@@ -843,7 +1035,8 @@
         "error_save": "Failed to save settings",
         "error_disconnect": "Failed to disconnect",
         "error_network": "Network error occurred",
-        "copied": "Webhook URL copied!"
+        "copied": "Webhook URL copied!",
+        "open_webhooks_page": "Go to Buy Me a Coffee Webhooks Page"
       },
       "streamlabs_setup": {
         "back": "Back",
@@ -872,7 +1065,72 @@
         "success_disconnect": "Disconnected successfully",
         "error_disconnect": "Failed to disconnect",
         "error_load": "Error loading integration settings",
-        "error_network": "Network error"
+        "error_network": "Network error",
+        "enable_all": "Enable all",
+        "pause_all": "Pause all",
+        "saving": "Saving...",
+        "saved": "Saved",
+        "connect_cta": "Connect with Streamlabs",
+        "disconnected_title": "Streamlabs is not connected",
+        "disconnected_desc": "Connect your Streamlabs account to automatically forward donation, membership, and purchase webhooks from your connected payment gateways to your Streamlabs overlays.",
+        "setup_gateway": "Set up",
+        "active_rules_count": "{active} of {total} active",
+        "stat_total": "Total",
+        "stat_delivered": "Delivered",
+        "stat_failed": "Failed",
+        "filter_all": "All",
+        "filter_completed": "Delivered",
+        "filter_failed": "Failed",
+        "filter_pending": "Pending",
+        "no_filtered_logs": "No events match this filter",
+        "no_filtered_logs_desc": "Try selecting another status filter to inspect other relay events.",
+        "status_completed": "Delivered",
+        "status_failed": "Failed",
+        "status_pending": "Pending",
+        "danger_zone_title": "Disconnect Streamlabs",
+        "danger_zone_desc": "Stop relaying alerts to Streamlabs and revoke the stored OAuth connection."
+      },
+      "load_error": "Failed to load integrations.",
+      "stripe_connect_name": "Stripe Connect",
+      "setup_common": {
+        "how_to_setup": "How to setup",
+        "mark_done": "Mark as done",
+        "copy_endpoint": "Copy your endpoint",
+        "secret_warning": "Please ensure the secret is correct, because even when the preview widget works it does not mean the secret is valid. An incorrect secret will prevent alert recognition.",
+        "live_preview": "Live Preview",
+        "invalid_username": "Invalid username format",
+        "loading_preview": "Loading preview...",
+        "enter_username_preview": "Enter username to preview",
+        "username_placeholder": "username",
+        "via": "via ",
+        "error_prefix": "Error: "
+      },
+      "stripe_setup": {
+        "connecting_title": "Connecting with Stripe",
+        "connected_title": "Successfully connected with Stripe",
+        "failed_title": "Failed to connect with Stripe",
+        "connecting_desc": "We're now connecting your Stripe account to Alertbox.org. Please wait...",
+        "connected_desc": "You can now accept direct Stripe card donations and trigger live alerts",
+        "failed_desc": "Please try again later",
+        "gateway_desc": "Enterprise-grade payment gateway for accepting credit/debit cards, Apple Pay, and Google Pay globally."
+      },
+      "redirect": {
+        "redirecting_streamer": "Redirecting to streamer settings..."
+      },
+      "toasts": {
+        "save_failed": "Failed to save integration settings",
+        "save_network": "Network error saving integration settings",
+        "disconnect_failed": "Failed to disconnect integration",
+        "disconnect_network": "Network error disconnecting integration",
+        "oauth_init_failed": "Failed to initialize OAuth connection",
+        "oauth_untrusted_url": "Blocked untrusted OAuth redirect URL",
+        "oauth_network": "Network error starting OAuth flow"
+      },
+      "disconnect_dialog": {
+        "title": "Confirm Disconnection",
+        "title_provider": "Disconnect {name}?",
+        "desc_webhook": "Disconnecting removes your webhook secret and creator handle, and stops incoming payment notifications from triggering alerts for this channel.",
+        "desc_confirm_provider": "Are you sure you want to disconnect {name}? All secret credentials will be permanently removed, and Alertbox will stop receiving donation webhook triggers from this platform."
       }
     },
     "danger": {
@@ -883,6 +1141,11 @@
         "description": "This action is irreversible and will remove all data associated with your account from our system, including your streamer profile and all settings. Please consider carefully before proceeding.",
         "cancel": "Cancel",
         "delete": "Delete My Account"
+      },
+      "eyebrow": "My Account",
+      "toasts": {
+        "delete_failed": "Failed to delete account",
+        "delete_network": "Network error while deleting account"
       }
     },
     "success": {
@@ -905,6 +1168,408 @@
       "manually": {
         "placeholder": "Redirect not working?",
         "link": "Click here to proceed manually"
+      }
+    },
+    "feedback_button": "Tell us",
+    "onboarding": {
+      "welcome": {
+        "title": "The best workspace for you",
+        "subtitle": "was Here!"
+      },
+      "create_org": {
+        "intro": "Show the world\nwhat you can do",
+        "wait_title": "Give me a couple minute...",
+        "ready_title": "Perfect! Your team is ready",
+        "name_title": "First, name your team",
+        "creating_desc": "We're building your organization...",
+        "later_hint": "You can change this later",
+        "go_to": "Go to {name}",
+        "toast_failed": "Failed to create organization",
+        "toast_created": "Organization \"{name}\" created!",
+        "toast_network": "Network error while creating organization"
+      },
+      "join_org": {
+        "intro_1": "We're moved\nto new home",
+        "intro_2": "Work together\nAlways better",
+        "enter_code": "Enter the invitation code",
+        "otp_placeholder": "xxxxxxxx",
+        "no_code_hint": "No invite code? You should ask your organization admin to create one for you or create your own workspace!",
+        "expired": "Expired",
+        "time_remaining": "{mins}m {secs}s",
+        "verifying_code": "Verifying code...",
+        "joining_workspace": "Joining workspace...",
+        "tear_ticket_hint": "Tear the ticket to join",
+        "create_own_workspace": "Create my own workspace",
+        "reject": "Reject",
+        "ticket": {
+          "admit": "Admit",
+          "code_prefix": "No. ",
+          "motto": "Bring a small idea. Leave with a little momentum.",
+          "invited_by": "You got invited by ",
+          "inviter_fallback": "an Admin"
+        },
+        "toasts": {
+          "invalid_code": "Invalid or expired invitation code",
+          "verify_network": "Network error verifying invitation code",
+          "code_expired": "This invitation code has expired",
+          "accept_failed": "Failed to accept invitation",
+          "joined": "Joined {orgName} successfully!",
+          "join_network": "Network error joining organization"
+        }
+      },
+      "create_channel": {
+        "step0_title": "The new journey is coming..",
+        "step1_title": "Everyone should call you...",
+        "step1_hint_prefix": "You can change this later ",
+        "step1_hint_suffix": "but username cannot.",
+        "name_placeholder": "your name",
+        "hello_name": "Hello {name}!",
+        "glad_title": "Glad to see you here",
+        "almost_done": "Almost done...",
+        "lets_go": "Let's go",
+        "still_working": "We're still working on",
+        "bring_to_stage": "Now let's bring you to the stage...",
+        "toast_created": "Channel \"{name}\" created!",
+        "toast_failed": "Failed to create channel",
+        "toast_network": "Network error while creating channel",
+        "mock_profiles": {
+          "kai_role": "YouTube Streamer",
+          "kai_bio": "Chill gaming & late night streams",
+          "torn_role": "Content Creator",
+          "torn_bio": "Legend of Youtuber (torn niee..)",
+          "cactuzz_role": "Studio Lead",
+          "cactuzz_bio": "I love Cactus & creative art",
+          "ponlponl_role": "Developer",
+          "ponlponl_bio": "Building AlertBox.org for everyone"
+        }
+      }
+    },
+    "org": {
+      "overview": {
+        "eyebrow": "Organization Management",
+        "example_placeholder": "e.g. Acme Studio, Team Vitality",
+        "manage_all": "Manage All",
+        "skyline_unit": "transaction"
+      },
+      "members": {
+        "eyebrow": "Team & Delegated Access",
+        "title": "Members & Staff",
+        "subtitle": "Manage teammates, granular bitmask permissions, and channel assignments for {org}.",
+        "invite_button": "Invite Member",
+        "search_placeholder": "Search by name, email, or role...",
+        "total_staff": "Total Staff:",
+        "channels_count": "Channels:",
+        "table": {
+          "user": "User",
+          "role_perms": "Role & Permissions",
+          "status": "Status",
+          "joined_date": "Joined Date",
+          "assigned_channels": "Assigned Channels",
+          "actions": "Actions",
+          "loading": "Loading team members...",
+          "empty_search": "No members match your search query.",
+          "empty_default": "No members found.",
+          "all_channels": "All channels (Full Access)",
+          "no_channels": "No channels assigned",
+          "actions_title": "Member actions"
+        },
+        "popover": {
+          "perms_and_channels": "Permissions & Channels",
+          "higher_privileges": "Higher Privileges",
+          "your_account": "Your Account",
+          "org_owner": "Organization Owner",
+          "copy_email": "Copy Email",
+          "remove_member": "Remove Member"
+        },
+        "perms_dialog": {
+          "staff_fallback": "Staff Member",
+          "tab_org_role": "Org Role & Permissions",
+          "tab_channels": "Channel Assignments",
+          "preset_heading": "Organization Role Preset",
+          "preset_desc": "Select a standard preset to automatically populate the 64-bit permission bitmask.",
+          "preset_role_sub": "Role",
+          "unrestricted_title": "Unrestricted Channel Privileges",
+          "unrestricted_desc": "Organization {role}s automatically have full access and management permissions across all channels.",
+          "delegation_heading": "Streamer Channel Assignments & Unique Access",
+          "delegation_desc_prefix": "Staff members have ",
+          "delegation_desc_highlight": "no channels assigned by default",
+          "delegation_desc_suffix": ". Assign streaming channels below and select which unique operations this member may execute per channel.",
+          "assign_all": "Assign All",
+          "unassign_all": "Unassign All",
+          "no_channels_org": "No streaming channels found in this organization. Create a channel first under Organization Channels.",
+          "assigned": "Assigned",
+          "unassigned": "Unassigned",
+          "delegated_channel_perms": "Delegated Channel Permissions",
+          "unassigned_notice": "This channel is currently not assigned. Toggle the switch above to grant access.",
+          "configuring_for": "Configuring privileges for "
+        },
+        "invite_dialog": {
+          "step1_title": "Work together always better!",
+          "step1_desc": "Enter the email address of a registered Alertbox user to invite them to this organization.",
+          "email_label": "Email Address",
+          "email_placeholder": "colleague@example.com",
+          "registered_hint": "Must be registered in Alertbox. We will verify their identity before proceeding.",
+          "back_to_email": "Back to email",
+          "step2_badge": "Step 2 of 2",
+          "step2_title": "Verify Member Identity",
+          "step2_desc": "Confirm member identity and configure their assigned role and permissions.",
+          "alertbox_user_fallback": "Alertbox User",
+          "role_label": "Role & Access Level",
+          "generate_code": "Generate Invite Code",
+          "created_title": "Invitation Code Created",
+          "created_desc": "Share this 8-digit OTP code with {email}.",
+          "join_code_label": "8-Digit Join Code",
+          "copy_code": "Copy Code",
+          "target_email": "Target Email:",
+          "assigned_role": "Assigned Role:",
+          "validity": "Validity:",
+          "validity_value": "5 Minutes (Single-Use)"
+        },
+        "remove_dialog": {
+          "title": "Remove Member",
+          "desc": "Are you sure you want to remove {name} from {org}? They will lose access to all channels immediately."
+        },
+        "toasts": {
+          "load_failed": "Failed to load organization members",
+          "cannot_manage_self": "You cannot manage your own role or permissions.",
+          "cannot_modify_owner": "Organization Owner cannot be modified here. Ownership must be transferred from Organization Settings.",
+          "cannot_manage_higher": "You cannot manage this member because their permissions exceed your own.",
+          "cannot_select_higher_preset": "Cannot select {role} preset because it contains permissions above your own.",
+          "cannot_toggle_higher_perm": "You cannot toggle a permission higher than your own.",
+          "cannot_modify_self": "You cannot modify your own role or permissions.",
+          "cannot_modify_equal_or_higher": "Cannot modify a member with equal or higher privileges.",
+          "cannot_save_exceeding": "Cannot save permissions that exceed your own.",
+          "saved": "Permissions & channel assignments saved successfully",
+          "update_failed": "Failed to update permissions",
+          "update_network": "Network error updating permissions",
+          "user_not_found": "No active registered user found with this email",
+          "verify_network": "Network error verifying email",
+          "cannot_invite_higher": "You cannot invite a member with a role exceeding your permissions.",
+          "invite_created": "Invite code generated!",
+          "invite_failed": "Failed to send invitation",
+          "invite_network": "Network error sending invitation",
+          "cannot_remove_self": "You cannot remove yourself here. Use organization settings to leave.",
+          "cannot_remove_higher": "You cannot remove a member whose permissions exceed your own.",
+          "removed": "Member removed",
+          "remove_failed": "Failed to remove member",
+          "remove_network": "Network error removing member",
+          "email_copied": "Email copied to clipboard",
+          "code_copied": "Code copied to clipboard!",
+          "code_copy_failed": "Failed to copy code"
+        }
+      },
+      "streamers": {
+        "eyebrow": "Organization Channels",
+        "title": "Streamer Channels",
+        "subtitle": "Manage all streaming profiles and public channels belonging to {org}.",
+        "create_channel": "Create Channel",
+        "community_limit_notice": "This is a Community organization which is limited to 1 streamer channel. Enterprise organizations or Self-hosted have unlimited channels.",
+        "active_widgets_one": "{count} Active Alertbox Widget",
+        "active_widgets_other": "{count} Active Alertbox Widgets"
+      },
+      "audit": {
+        "eyebrow": "Audit & Compliance",
+        "title": "Audit Activity Log",
+        "subtitle": "Transparent security audit trail of staff delegations, roles, channels, and organization settings.",
+        "search_placeholder": "Search by name, email, or role...",
+        "actor": "Actor",
+        "event": "Event",
+        "summary": "Summary",
+        "timestamp": "Timestamp",
+        "origin_ip": "Origin IP",
+        "ip_copied": "IP copied",
+        "ip_copy_failed": "Failed to copy IP",
+        "copy_ip_title": "Click to copy IP",
+        "load_failed": "Failed to load audit logs",
+        "empty_title": "No activity records found",
+        "empty_filtered": "No audit events match your active filters or search query.",
+        "empty_default": "There are no security or audit events recorded for this organization yet."
+      },
+      "settings": {
+        "eyebrow": "Organization Administration",
+        "title": "Organization Settings",
+        "subtitle": "Manage organization branding, banner, logo, and administrative parameters.",
+        "read_only_notice": "You are viewing organization settings in read-only mode. Organization management permissions are required to edit branding or settings.",
+        "org_banner_alt": "Organization Banner",
+        "no_banner": "No banner uploaded",
+        "change_banner": "Change Banner",
+        "upload_banner": "Upload Banner",
+        "remove_banner_title": "Remove banner",
+        "org_initial_fallback": "Org",
+        "change_logo_title": "Change Logo",
+        "members_count_one": "{count} member",
+        "members_count_other": "{count} members",
+        "upload_logo": "Upload Logo",
+        "remove_logo_title": "Remove logo",
+        "name_label": "Organization Name",
+        "name_placeholder": "e.g. Pixel Studio",
+        "handle_label": "Organization Handle",
+        "slug_locked_hint": "Slug handle is permanently locked: /app/{slug}",
+        "transfer_heading": "Designate a new organization owner",
+        "transfer_desc": "Each organization can have only a single owner. You will become an Admin with full administrative privileges once transferred.",
+        "transfer_btn": "Transfer Ownership",
+        "leave_heading": "Leave this organization",
+        "leave_desc": "Revoke your membership and leave this organization. You will immediately lose access to all channels, widgets, and settings. You can only rejoin if an administrator re-invites you.",
+        "leave_btn": "Leave Organization",
+        "delete_heading": "Destroy this organization",
+        "delete_desc": "Permanently delete this organization, all attached streamer channels, widgets, and team memberships. As the owner, you cannot leave without deleting or transferring ownership first.",
+        "delete_btn": "Delete Organization",
+        "delete_dialog": {
+          "title": "Delete Organization Permanently?",
+          "desc": "This action CANNOT be undone. All streamer channels, alert widgets, team members, and presets under {org} will be immediately deleted.",
+          "confirm_label": "Type {expected} to confirm:",
+          "slug_placeholder": "org-slug"
+        },
+        "leave_dialog": {
+          "title": "Leave Organization?",
+          "desc": "Are you sure you want to leave {org}? You will immediately lose access to this organization, its channels, widgets, and administrative tools. An administrator will need to invite you again to rejoin."
+        },
+        "transfer_dialog": {
+          "title": "Transfer Organization Ownership",
+          "desc": "Transfer ownership of {org}. Each organization can only have one single owner.",
+          "loading_members": "Loading organization members...",
+          "no_eligible_title": "No eligible members found",
+          "no_eligible_desc": "There are no other members in this organization to transfer ownership to. Invite members in Members & Staff first.",
+          "select_owner_label": "Select New Owner",
+          "active_members": "Active Members",
+          "select_placeholder": "Select an active team member...",
+          "search_placeholder": "Search by name, email, or role...",
+          "empty_search": "No members match \"{query}\"",
+          "confirm_ack": "I understand that transferring ownership will demote my account to Admin and grant full control of the organization to the selected member.",
+          "final_warning_title": "Final Confirmation Required",
+          "final_warning_desc": "Once confirmed, only the new owner can transfer ownership back to you. There can only be one owner at a time.",
+          "phrase_prompt": "Type {phrase} to execute:"
+        },
+        "toasts": {
+          "media_updated": "Organization {type} updated successfully",
+          "media_update_failed": "Failed to update {type}",
+          "media_update_network": "Network error uploading {type}",
+          "media_removed": "Organization {type} removed",
+          "media_remove_failed": "Failed to remove {type}",
+          "media_remove_network": "Network error removing {type}",
+          "name_updated": "Organization name updated successfully",
+          "update_failed": "Failed to update settings",
+          "update_network": "Network error updating settings",
+          "deleted": "Organization deleted successfully",
+          "delete_failed": "Failed to delete organization",
+          "delete_network": "Network error deleting organization",
+          "left_org": "You have left {org}",
+          "leave_failed": "Failed to leave organization",
+          "leave_network": "Network error while leaving organization",
+          "members_load_failed": "Failed to load organization members",
+          "transfer_failed": "Failed to transfer ownership",
+          "transferred": "Organization ownership transferred successfully!",
+          "transfer_network": "Network error while transferring ownership"
+        }
+      },
+      "billing": {
+        "eyebrow": "Finance & Subscriptions",
+        "title": "Billing & Plans",
+        "subtitle": "Manage subscriptions, invoices, and billing tier for {org}.",
+        "active_tier_enterprise": "Active Tier: Enterprise",
+        "plan_title": "Unlimited Multi-Streamer Plan",
+        "plan_desc": "Unlimited channels, 0% platform transaction fees, and team permissions included.",
+        "manage_portal": "Manage Billing Portal",
+        "manage_portal_readonly": "Manage Billing Portal (Read-only)"
+      }
+    },
+    "streamer": {
+      "dashboard": {
+        "no_channel_title": "No Channel Assigned",
+        "no_channel_desc": "You do not have access to this streaming channel in {org}. Contact an administrator to assign channel permissions to your account.",
+        "this_organization": "this organization",
+        "channel_fallback": "Channel",
+        "channel_dashboard": "Channel Dashboard",
+        "managed_under": "Managed under organization {name}"
+      },
+      "transactions": {
+        "title": "Transactions",
+        "subtitle": "Here's where you manage everything related to your transactions.",
+        "ws": {
+          "connected": "Connected (Live Feed)",
+          "connecting": "Connecting...",
+          "lost": "Connection lost"
+        },
+        "tabs": {
+          "all": "All Status",
+          "completed": "Completed",
+          "pending": "Pending",
+          "failed": "Failed",
+          "refunded": "Refunded"
+        },
+        "status_badges": {
+          "succeeded": "Succeeded",
+          "pending": "Pending",
+          "failed": "Failed",
+          "refunded": "Refunded",
+          "test_suffix": "(Test)",
+          "deleted_suffix": "(Deleted)"
+        },
+        "simulate_tip": "Simulate Tip",
+        "search_placeholder": "Search supporter or message...",
+        "all_gateways": "All Gateways",
+        "promptpay_ffp": "PromptPay (FFP)",
+        "sort_date": "Date",
+        "sort_amount": "Amount",
+        "sort_desc": "Desc",
+        "sort_asc": "Asc",
+        "table": {
+          "status_type": "Status & Type",
+          "supporter": "Supporter",
+          "amount": "Amount",
+          "gateway": "Gateway",
+          "date": "Date",
+          "actions": "Actions",
+          "actions_aria": "Transaction Actions",
+          "resend_alert": "Resend Alert",
+          "copy_id": "Copy ID",
+          "restore_row": "Restore Row",
+          "soft_delete": "Soft Delete"
+        },
+        "empty": {
+          "title": "No transactions recorded yet",
+          "desc": "Incoming tips and donations from connected gateways will appear here in real-time."
+        },
+        "toasts": {
+          "load_failed": "Failed to load transactions",
+          "live_tip": "⚡ Live: {sender} tipped {amount}",
+          "test_amount_range": "Test amount must be between 1 and 1,000,000",
+          "test_dispatched": "Test {provider} alert dispatched successfully!",
+          "test_failed": "Failed to trigger test transaction",
+          "hidden": "Transaction hidden (dashed)",
+          "restored": "Transaction restored",
+          "status_update_failed": "Failed to update transaction status",
+          "replayed": "Replayed alert for {sender} ({amount})",
+          "resend_failed": "Failed to resend alert",
+          "id_copied": "Transaction ID copied",
+          "id_copy_failed": "Failed to copy ID"
+        },
+        "simulate_dialog": {
+          "title": "Simulate Donation Transaction",
+          "desc": "Dispatch a mock donation alert through any configured payment gateway to test on-screen OBS alertbox widgets.",
+          "provider_label": "Payment Gateway Provider",
+          "provider_bmac": "Buy Me a Coffee (BMAC)",
+          "provider_stripe": "Stripe Payments",
+          "provider_promptpay": "PromptPay / FastPay",
+          "providers_hint": "Only integrations currently active or available for @{streamer} are listed.",
+          "amount_label": "Amount",
+          "currency_label": "Currency",
+          "donor_name_label": "Donor Name",
+          "donor_name_placeholder": "Donor nickname",
+          "donor_default_name": "Generous Supporter",
+          "message_label": "Donation Message",
+          "message_placeholder": "Alert message...",
+          "message_default": "Keep up the great stream! 🔥",
+          "dispatch_btn": "Dispatch Alert"
+        }
+      },
+      "audit": {
+        "title": "Channel Audit Logs",
+        "subtitle": "Review configuration changes, gateway updates, and security events for this channel.",
+        "search_placeholder": "Search action, email, or IP...",
+        "load_failed": "Failed to load channel audit logs",
+        "empty_title": "No activity recorded yet",
+        "empty_desc": "Channel settings, OBS token rotations, and payment gateway updates will appear here in real-time."
       }
     }
   },
@@ -1185,10 +1850,22 @@
     "button_github": "Sponsor on GitHub",
     "footnote": "Zero obligations • All features free forever • 100% open source",
     "tiers": [
-      { "amount": 1, "label": "Coffee! ☕" },
-      { "amount": 5, "label": "Shortcake! 🍰" },
-      { "amount": 10, "label": "Add some rice! 🍚" },
-      { "amount": null, "label": "Buffet! 🍱" }
+      {
+        "amount": 1,
+        "label": "Coffee! ☕"
+      },
+      {
+        "amount": 5,
+        "label": "Shortcake! 🍰"
+      },
+      {
+        "amount": 10,
+        "label": "Add some rice! 🍚"
+      },
+      {
+        "amount": null,
+        "label": "Buffet! 🍱"
+      }
     ]
   },
   "footer": {
@@ -1209,6 +1886,559 @@
         "status": "Status",
         "donate": "Help us"
       }
+    },
+    "made_with_love": "Made with ❤︎ by Ponlponl123 Labs",
+    "motto_tags": "Innovative / Human / Open / Earth"
+  },
+  "errors": {
+    "page_title": "Unable to render this page",
+    "page_desc": "A runtime error occurred while loading this view.",
+    "global_title": "Something went wrong",
+    "global_desc": "An unexpected application error occurred. Please retry or reload the page.",
+    "ref_code": "Ref: {digest}",
+    "try_again": "Try again",
+    "backend_offline_title": "API Backend Offline",
+    "status_levels": {
+      "down": "Offline",
+      "degraded": "Degraded",
+      "maintenance": "Maintenance"
+    }
+  },
+  "badges": {
+    "verified": "Verified",
+    "staff": "Staff",
+    "early_user": "Early User",
+    "partner": "Partner"
+  },
+  "roles": {
+    "owner": {
+      "label": "Owner",
+      "summary": "Root Admin · All Channels",
+      "invite_desc": "Organization owner"
+    },
+    "admin": {
+      "label": "Admin",
+      "summary": "Members, Channels & Finance",
+      "invite_desc": "Full administrative access except owner"
+    },
+    "manager": {
+      "label": "Manager",
+      "summary": "Channels, Widgets & Stats",
+      "invite_desc": "Manage staff, channels & statistics"
+    },
+    "editor": {
+      "label": "Editor",
+      "summary": "Profiles & AlertBox",
+      "invite_desc": "Manage channels, alerts & widgets"
+    },
+    "viewer": {
+      "label": "Viewer",
+      "summary": "Read-only View",
+      "invite_desc": "Read-only view across organization"
+    },
+    "member": {
+      "label": "Member",
+      "summary": "Standard Access",
+      "invite_desc": "Standard staff access"
+    }
+  },
+  "permissions": {
+    "org_categories": {
+      "admin": "Organization Administration",
+      "channels": "Streamer Channels",
+      "widgets": "Widgets & Overlays",
+      "integrations": "Integrations & Gateways",
+      "analytics": "Analytics & Finance"
+    },
+    "org": {
+      "ORG_VIEW": {
+        "name": "View Organization",
+        "desc": "View organization dashboard, overview & public profile"
+      },
+      "ORG_MANAGE": {
+        "name": "Manage Settings",
+        "desc": "Update organization branding, banner, and parameters"
+      },
+      "ORG_MEMBER_ADD": {
+        "name": "Invite Members",
+        "desc": "Send invites and generate OTP join codes"
+      },
+      "ORG_MEMBER_MODIFY": {
+        "name": "Modify Members",
+        "desc": "Update member roles, permissions, and delegations"
+      },
+      "ORG_MEMBER_REMOVE": {
+        "name": "Remove Members",
+        "desc": "Kick members and revoke pending invitations"
+      },
+      "ORG_ROLES_MANAGE": {
+        "name": "Manage Roles & Perms",
+        "desc": "Delegate permissions, roles, and channel assignments"
+      },
+      "STREAMER_VIEW": {
+        "name": "View Streamers",
+        "desc": "Access the channels list and channel dashboards"
+      },
+      "STREAMER_CREATE": {
+        "name": "Create Streamers",
+        "desc": "Provision new streaming channels under the organization"
+      },
+      "STREAMER_MANAGE": {
+        "name": "Edit Channel Profiles",
+        "desc": "Modify handles, display names, bios, and visuals"
+      },
+      "STREAMER_DELETE": {
+        "name": "Delete Channels",
+        "desc": "Permanently delete streaming channels"
+      },
+      "WIDGET_VIEW": {
+        "name": "View Overlays",
+        "desc": "Access alert overlay previews and OBS browser sources"
+      },
+      "WIDGET_MANAGE": {
+        "name": "Manage AlertBox",
+        "desc": "Customize alert events, animations, sounds, and TTS"
+      },
+      "WIDGET_TOKEN_ROTATE": {
+        "name": "Rotate Widget Tokens",
+        "desc": "Invalidate and regenerate OBS browser source tokens"
+      },
+      "INTEGRATION_VIEW": {
+        "name": "View Integrations",
+        "desc": "Inspect connected payment gateways and relay status"
+      },
+      "INTEGRATION_MANAGE": {
+        "name": "Manage Gateways",
+        "desc": "Connect/disconnect Stripe, Ko-fi, BMAC, and Streamlabs"
+      },
+      "ANALYTICS_VIEW": {
+        "name": "View Analytics",
+        "desc": "Access viewer engagement charts and stream metrics"
+      },
+      "TRANSACTION_VIEW": {
+        "name": "View Transactions",
+        "desc": "Access financial donation history and supporter receipts"
+      },
+      "REPORT_EXPORT": {
+        "name": "Export Reports",
+        "desc": "Download CSV audit logs and accounting reports"
+      }
+    },
+    "streamer": {
+      "STREAMER_VIEW": {
+        "name": "View Channel & OBS",
+        "short": "View Channel & OBS",
+        "desc": "View channel dashboard and browser source overlay URLs"
+      },
+      "STREAMER_MANAGE": {
+        "name": "Edit Channel Profile",
+        "short": "Edit Profile",
+        "desc": "Edit display name, bio, appearance, banner, and socials"
+      },
+      "STREAMER_WIDGET_MANAGE": {
+        "name": "Manage AlertBox",
+        "short": "Manage AlertBox",
+        "desc": "Edit alert layouts, events, audio volumes, and TTS"
+      },
+      "STREAMER_INTEGRATION_MANAGE": {
+        "name": "Manage Gateways",
+        "short": "Manage Gateways",
+        "desc": "Configure Ko-fi, BMAC, Stripe, and Streamlabs relays"
+      },
+      "STREAMER_ANALYTICS_VIEW": {
+        "name": "View Analytics",
+        "short": "View Analytics",
+        "desc": "View stream performance charts and viewer statistics"
+      },
+      "STREAMER_TRANSACTION_VIEW": {
+        "name": "View Transactions",
+        "short": "View Transactions",
+        "desc": "Inspect donation histories, tips, and supporter records"
+      }
+    }
+  },
+  "audit": {
+    "categories": {
+      "all": "All Activities",
+      "members": "Members & Roles",
+      "channels": "Channels",
+      "settings": "Settings",
+      "security": "Security & Ownership",
+      "ownership": "Ownership",
+      "integrations": "Integrations",
+      "organization": "Organization",
+      "overlays_profile": "Overlays & Profile",
+      "gateways": "Gateways",
+      "transactions": "Transactions",
+      "other": "Other"
+    },
+    "fields": {
+      "name": "Handle / Name",
+      "displayName": "Display Name",
+      "bio": "Bio Description",
+      "avatar": "Avatar Image",
+      "banner": "Header Banner",
+      "accentColor": "Brand Accent Color",
+      "slug": "URL Slug",
+      "uri": "Custom URI",
+      "type": "Organization Type",
+      "twitch": "Twitch",
+      "youtube": "YouTube",
+      "twitter": "X / Twitter",
+      "facebook": "Facebook",
+      "reddit": "Reddit",
+      "discord": "Discord"
+    },
+    "relative_time": {
+      "just_now": "Just now",
+      "minutes_ago": "{count}m ago",
+      "hours_ago": "{count}h ago",
+      "yesterday_at": "Yesterday at {time}",
+      "days_ago": "{count}d ago"
+    },
+    "actions": {
+      "fallback_desc": "Administrative event recorded in organization security audit trail.",
+      "transferred_ownership": {
+        "title": "Transferred Ownership",
+        "desc": "Organization ownership was safely transferred to a new team member."
+      },
+      "org_deleted": {
+        "title": "Organization Deleted",
+        "desc": "Organization was marked for permanent deletion."
+      },
+      "member_left": {
+        "title": "Member Left",
+        "desc": "Member voluntarily left the organization."
+      },
+      "org_settings_updated": {
+        "title": "Updated Org Settings",
+        "desc_renamed": "Updated organization configuration (Renamed to \"{name}\").",
+        "desc_default": "Updated organization profile details, branding, or configuration."
+      },
+      "member_invited": {
+        "title": "Invited Member",
+        "desc_with_email": "Sent invite to {email} with {role} role.",
+        "desc_default": "Invited a new member to join the organization."
+      },
+      "member_invite_revoked": {
+        "title": "Revoked Invite",
+        "desc_with_email": "Cancelled pending invitation for {email}.",
+        "desc_default": "Revoked a pending organization invite."
+      },
+      "member_role_updated": {
+        "title": "Role Changed",
+        "desc_with_role": "Assigned {role} role{channelsSuffix}.",
+        "with_channels": " with {count} channel(s)",
+        "desc_default": "Modified team member role and granular channel permissions."
+      },
+      "member_removed": {
+        "title": "Member Removed",
+        "desc_with_email": "Removed {email} from the organization.",
+        "desc_default": "Revoked organization membership from staff member."
+      },
+      "member_joined": {
+        "title": "Member Joined",
+        "desc": "Accepted team invitation and activated organization access."
+      },
+      "streamer_created": {
+        "title": "Channel Created",
+        "desc_with_name": "Provisioned channel @{name}{displayNameSuffix}.",
+        "desc_default": "Provisioned a new streaming channel."
+      },
+      "streamer_updated": {
+        "title": "Channel Updated",
+        "desc_with_name": "Updated channel profile and metadata for @{name}.",
+        "desc_default": "Updated channel profile, appearance, or social connections."
+      },
+      "streamer_deleted": {
+        "title": "Channel Deleted",
+        "desc_with_name": "Permanently removed channel @{name}.",
+        "desc_default": "Permanently deleted a streaming channel."
+      },
+      "token_rotated": {
+        "title": "Token Rotated",
+        "desc": "Invalidated and regenerated OBS browser source security token."
+      },
+      "integration_connected": {
+        "title": "Connected Gateway",
+        "desc_with_platform": "Linked {platform} integration to channel.",
+        "desc_default": "Connected new payment gateway."
+      },
+      "integration_disconnected": {
+        "title": "Disconnected Gateway",
+        "desc_with_platform": "Removed {platform} payment gateway.",
+        "desc_default": "Disconnected payment integration."
+      },
+      "integration_updated": {
+        "title": "Updated Gateway",
+        "desc_with_platform": "Updated {platform} payment gateway configuration.",
+        "desc_default": "Updated payment gateway settings."
+      },
+      "transaction_deleted": {
+        "title": "Deleted Transaction",
+        "desc_with_sender": "Soft-deleted transaction from {sender}{amountSuffix}.",
+        "desc_default": "Soft-deleted a transaction record."
+      },
+      "transaction_restored": {
+        "title": "Restored Transaction",
+        "desc_with_sender": "Restored transaction from {sender}{amountSuffix}.",
+        "desc_default": "Restored a deleted transaction record."
+      },
+      "transaction_resent": {
+        "title": "Resent Alert",
+        "desc_with_sender": "Re-triggered donation alert for {sender}{amountSuffix}.",
+        "desc_default": "Re-triggered donation alert overlay."
+      },
+      "widget_updated": {
+        "title": "Widget Updated",
+        "desc": "Modified AlertBox overlay configuration, sound, or visual triggers."
+      }
+    },
+    "summary_labels": {
+      "target_email": "Target Email",
+      "assigned_role": "Assigned Role",
+      "channel_delegations": "Channel Delegations",
+      "channels_assigned": "{count} channel(s) assigned",
+      "channel_handle": "Channel Handle",
+      "display_name": "Display Name",
+      "gateway_provider": "Gateway Provider",
+      "target_user_id": "Target User ID",
+      "donor_name": "Donor Name",
+      "donation_amount": "Donation Amount",
+      "transaction_id": "Transaction ID",
+      "transfer_flow": "Transfer Flow",
+      "transfer_flow_value": "Member #{prev} -> Member #{next}"
+    },
+    "narrative": {
+      "user_fallback_id": "User #{id}",
+      "member_fallback": "member",
+      "a_member_fallback": "a member",
+      "channel_fallback": "channel",
+      "payment_fallback": "PAYMENT",
+      "channel_count_one": "{count} channel",
+      "channel_count_other": "{count} channels",
+      "assigned_verb": "assigned",
+      "role_noun": "role",
+      "with_word": "with",
+      "to_word": "to",
+      "invited_verb": "invited",
+      "revoked_invite": "revoked invitation for",
+      "removed_verb": "removed",
+      "from_org": "from the organization",
+      "joined_org": "accepted invitation and joined the organization",
+      "left_org": "voluntarily left the organization",
+      "transferred_ownership": "transferred organization ownership to",
+      "scheduled_deletion": "scheduled organization for deletion",
+      "updated_org_settings": "updated organization settings",
+      "renamed_org_to": "and renamed organization to",
+      "created_channel": "created channel",
+      "updated_channel": "updated channel",
+      "deleted_channel": "deleted channel",
+      "rotated_token": "rotated OBS browser source stream security token",
+      "connected_verb": "connected",
+      "updated_verb": "updated",
+      "disconnected_verb": "disconnected",
+      "gateway_noun": "gateway",
+      "gateway_settings_noun": "gateway settings",
+      "on_channel": "on channel",
+      "from_channel": "from channel",
+      "deleted_tx": "soft-deleted transaction",
+      "restored_tx": "restored transaction",
+      "replayed_tx": "replayed transaction alert",
+      "from_sender": "from {sender}",
+      "for_sender": "for {sender}",
+      "updated_widget": "updated AlertBox overlay configuration",
+      "performed_action": "performed {action}",
+      "on_channel_word": "on channel",
+      "on_member_word": "on member",
+      "on_organization": "on organization",
+      "on_target": "on {target}"
+    },
+    "breakdown": {
+      "role_and_perms": "Role & Permissions",
+      "role_transition": "Role Transition:",
+      "granted": "Granted:",
+      "revoked": "Revoked:",
+      "active_perms": "Active Permissions:",
+      "more_count": "+{count} more",
+      "assigned_channels": "Assigned Channels & Permissions ({count})",
+      "standard_view": "Standard View",
+      "updated_properties": "Updated Properties",
+      "property": "Property",
+      "previous": "Previous",
+      "updated": "Updated",
+      "ownership_transfer": "Ownership Transfer:",
+      "transaction": "Transaction:",
+      "payload": "payload"
+    }
+  },
+  "components": {
+    "image_cropper": {
+      "title": "Crop Image",
+      "apply": "Apply Crop",
+      "cancel": "Cancel",
+      "zoom": "Zoom",
+      "straighten": "Straighten",
+      "backdrop_alt": "Backdrop",
+      "crop_org_logo": "Crop Organization Logo",
+      "crop_org_banner": "Crop Organization Banner",
+      "crop_avatar": "Crop Avatar",
+      "crop_banner": "Crop Banner"
+    },
+    "org_switcher": {
+      "organizations": "Organizations",
+      "no_org": "No Organization",
+      "workspace": "Workspace",
+      "personal_org": "{name}'s Org",
+      "types": {
+        "enterprise": "Enterprise",
+        "community": "Community"
+      },
+      "create_org": "Create organization",
+      "join_org": "Join organization"
+    },
+    "streamer_selector": {
+      "channel_workspace": "Channel / Workspace",
+      "org_overview": "Organization Overview",
+      "org_overview_short": "Org Overview",
+      "org_overview_desc": "Staff, Roles & Finance",
+      "select_channel": "Select Channel",
+      "no_channel": "No Channel",
+      "add_channel": "Add channel"
+    },
+    "org_analytics": {
+      "series_transactions": "Transactions",
+      "series_revenue": "Revenue",
+      "series_other": "Other",
+      "sample_active": "Sample Active",
+      "preview_sample": "Preview Sample",
+      "mode_revenue": "Revenue",
+      "mode_volume": "Volume",
+      "timeframes": {
+        "d7": "7d",
+        "d30": "30d",
+        "d90": "90d",
+        "y1": "1y"
+      },
+      "total_revenue": "Total Organization Revenue",
+      "across_currencies": "across {count} currencies",
+      "tx_badge": "TX",
+      "tx_processed": "Transactions Processed",
+      "real_count": "{count} real",
+      "test_count": "{count} test",
+      "active_gateways": "Active Payment Gateways",
+      "gateway_lead": "({pct}% lead)",
+      "no_gateway": "No gateway connected",
+      "tooltip_txns": "{count} TXns ",
+      "chart_title_revenue": "Revenue History Timeline",
+      "chart_title_volume": "Transaction Volume History",
+      "chart_desc_revenue": "Detailed transaction revenue trend in the past {timeframe}.",
+      "chart_desc_volume": "Daily processed transaction volume in the past {timeframe}.",
+      "gateways_title": "Payment Gateways",
+      "gateways_desc": "Volume & share distribution across providers",
+      "gateway_tx_count": " ({count} transactions)",
+      "no_gateway_tx": "No gateway transactions recorded yet",
+      "globe_title": "Global Currency Breakdown",
+      "globe_desc": "Interactive 3D representation of donation sources",
+      "regions": {
+        "thailand": "Thailand",
+        "united_states": "United States",
+        "europe": "Europe",
+        "international": "International"
+      }
+    },
+    "contribution_skyline": {
+      "calculating": "Calculating...",
+      "loading_activity": "Loading activity...",
+      "unit_one": "transaction",
+      "unit_other": "transactions",
+      "no_unit_label": "No {unitPlural}",
+      "on_word": "on",
+      "year_total": "1 year total",
+      "real_test_split": "{real} real · {test} test",
+      "busiest_day": "Busiest day",
+      "longest_streak": "Longest streak",
+      "current_streak": "Current streak",
+      "day_one": "day",
+      "day_other": "days",
+      "levels": {
+        "light": "Light",
+        "moderate": "Moderate",
+        "heavy": "Heavy",
+        "heaviest": "Heaviest"
+      },
+      "hint_2d": "Hover a day for details · arrow keys to explore",
+      "hint_3d": "Drag to orbit · double-click to reset",
+      "total_last_year": "{total} {noun} in the last year",
+      "chart_view": "Chart view",
+      "flat_heatmap": "Flat heat map",
+      "skyline_3d": "3D skyline",
+      "canvas_aria": "{total} {noun} between {range}, shown as a {view}. Use the arrow keys to read individual days.",
+      "real_test_parens": " ({real} real, {test} test)",
+      "less": "Less",
+      "more": "More",
+      "highlight_level": "Highlight {level} days",
+      "test_badge": "Test"
+    },
+    "helpful_rating": {
+      "default_question": "Was this page helpful?",
+      "sentiments": {
+        "awful": "Awful",
+        "meh": "Meh",
+        "okay": "Okay",
+        "good": "Good",
+        "love_it": "Love it"
+      },
+      "negative_reasons": {
+        "hard_to_follow": "Hard to follow",
+        "missing_example": "Missing an example",
+        "out_of_date": "Out of date",
+        "code_failed": "Code didn't work"
+      },
+      "positive_reasons": {
+        "clear_steps": "Clear steps",
+        "good_examples": "Good examples",
+        "found_fast": "Found it fast"
+      },
+      "thanks_title": "Thanks, that helps",
+      "thanks_desc": "We read every note.",
+      "prompt_negative": "What went wrong?",
+      "prompt_positive": "What helped most?",
+      "note_aria": "Anything else?",
+      "note_placeholder": "Anything else? (optional)",
+      "send_feedback": "Send feedback",
+      "change_answer": "Change my answer"
+    },
+    "photo_straighten": {
+      "default_alt": "A lake below mountains",
+      "level": "Level",
+      "crooked": "Crooked",
+      "auto": "Auto",
+      "reset": "Reset",
+      "straighten": "Straighten"
+    },
+    "pull_cord": {
+      "default_label": "Desk lamp theme toggle"
+    },
+    "hold_button": {
+      "hold_to_delete": "Hold to delete",
+      "deleted": "Deleted",
+      "sr_hint": "Press and hold for {seconds} seconds to confirm"
+    },
+    "tear_ticket": {
+      "default_aria": "Tear off the stub",
+      "used": "Used"
+    },
+    "language_switcher": {
+      "title": "Language"
+    },
+    "nav_user": {
+      "account_settings": "Account settings",
+      "security": "Security",
+      "theme": "Theme",
+      "dark": "Dark",
+      "light": "Light",
+      "logout": "Log out"
     }
   }
 }

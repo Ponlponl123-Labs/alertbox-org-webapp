@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "motion/react";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import { formatI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BarMarker } from "@/components/ui/cobe-globe-bars";
@@ -103,18 +104,18 @@ const CURRENCY_DEFAULT_COORDS: Record<string, [number, number]> = {
   AUD: [-33.87, 151.21],
 };
 
-export const formatCurrency = (amount: number, currency = "THB"): string => {
+export const formatCurrency = (amount: number, currency = "THB", locale?: string): string => {
   const code = currency.toUpperCase();
   const minFrac = amount % 1 !== 0 ? 2 : 0;
   try {
-    return getCachedNumberFormat(undefined, {
+    return getCachedNumberFormat(locale, {
       style: "currency",
       currency: code,
       minimumFractionDigits: minFrac,
       maximumFractionDigits: 2,
     }).format(amount);
   } catch {
-    return `${code} ${getCachedNumberFormat(undefined, {
+    return `${code} ${getCachedNumberFormat(locale, {
       minimumFractionDigits: minFrac,
       maximumFractionDigits: 2,
     }).format(amount)}`;
@@ -177,22 +178,6 @@ const generateMockAnalytics = (timeframe: Timeframe): OrgAnalyticsData => {
     ],
     timeline,
   };
-};
-
-const gatewayChartConfig: ChartConfig = {
-  count: { label: "Transactions" },
-  PROMPTPAY: { label: "PromptPay", color: "#0284C7" },
-  STRIPE: { label: "Stripe", color: "#635BFF" },
-  KOFI: { label: "Ko-fi", color: "#FF5E5B" },
-  BMAC: { label: "Buy Me a Coffee", color: "#F59E0B" },
-  BUYMEACOFFEE: { label: "Buy Me a Coffee", color: "#F59E0B" },
-  STREAMLABS: { label: "Streamlabs", color: "#10B981" },
-  OTHER: { label: "Other", color: "#8B5CF6" },
-};
-
-const timelineChartConfig: ChartConfig = {
-  amount: { label: "Revenue", color: "var(--primary)" },
-  count: { label: "Transactions", color: "var(--primary)" },
 };
 
 function OrgAnalyticsSkeleton() {
@@ -264,8 +249,39 @@ function OrgAnalyticsSkeleton() {
 
 const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: string }) {
   const { authFetch } = useUserContext();
+  const lang = useStore(coreStore, (s) => s.lang);
+  const oa = lang.data.components.org_analytics;
   const isDark = useStore(coreStore, (s) => s.isDark);
   const gradientId = React.useId().replace(/:/g, "");
+
+  const gatewayChartConfig = React.useMemo<ChartConfig>(
+    () => ({
+      count: { label: oa.series_transactions },
+      PROMPTPAY: { label: "PromptPay", color: "#0284C7" },
+      STRIPE: { label: "Stripe", color: "#635BFF" },
+      KOFI: { label: "Ko-fi", color: "#FF5E5B" },
+      BMAC: { label: "Buy Me a Coffee", color: "#F59E0B" },
+      BUYMEACOFFEE: { label: "Buy Me a Coffee", color: "#F59E0B" },
+      STREAMLABS: { label: "Streamlabs", color: "#10B981" },
+      OTHER: { label: oa.series_other, color: "#8B5CF6" },
+    }),
+    [oa.series_other, oa.series_transactions],
+  );
+
+  const timelineChartConfig = React.useMemo<ChartConfig>(
+    () => ({
+      amount: { label: oa.series_revenue, color: "var(--primary)" },
+      count: { label: oa.series_transactions, color: "var(--primary)" },
+    }),
+    [oa.series_revenue, oa.series_transactions],
+  );
+
+  const timeframeLabels: Record<Timeframe, string> = {
+    "7d": oa.timeframes.d7,
+    "30d": oa.timeframes.d30,
+    "90d": oa.timeframes.d90,
+    "1y": oa.timeframes.y1,
+  };
 
   const [timeframe, setTimeframe] = React.useState<Timeframe>("30d");
   const [metric, setMetric] = React.useState<"revenue" | "volume">("revenue");
@@ -378,7 +394,7 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
               )}
             >
               <SparkleIcon weight={showSample ? "fill" : "regular"} className="size-3 text-amber-400" />
-              <span>{showSample ? "Sample Active" : "Preview Sample"}</span>
+              <span>{showSample ? oa.sample_active : oa.preview_sample}</span>
             </button>
           )}
 
@@ -390,7 +406,7 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                   key={m}
                   type="button"
                   onClick={() => setMetric(m)}
-                  className={`relative z-10 px-2.5 py-1 h-7 text-xs font-medium capitalize rounded-md transition-colors cursor-pointer ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  className={`relative z-10 px-2.5 py-1 h-7 text-xs font-medium rounded-md transition-colors cursor-pointer ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                     }`}
                 >
                   {active && (
@@ -400,7 +416,9 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
-                  <span className="relative z-10">{m}</span>
+                  <span className="relative z-10">
+                    {m === "revenue" ? oa.mode_revenue : oa.mode_volume}
+                  </span>
                 </button>
               );
             })}
@@ -417,7 +435,7 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                     if (tf === timeframe) return;
                     setTimeframe(tf);
                   }}
-                  className={`relative z-10 px-2.5 h-7 py-1 text-xs font-medium uppercase rounded-md transition-colors cursor-pointer ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  className={`relative z-10 px-2.5 h-7 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                     }`}
                 >
                   {active && (
@@ -427,7 +445,7 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
-                  <span className="relative z-10">{tf}</span>
+                  <span className="relative z-10">{timeframeLabels[tf]}</span>
                 </button>
               );
             })}
@@ -474,16 +492,18 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
 
                 <div className="relative flex flex-col min-h-0 grow justify-between z-10">
                   <div className="text-4xl font-medium font-heading tracking-tight text-foreground tabular-nums">
-                    {formatCurrency(totals.revenue, totals.currency)}
+                    {formatCurrency(totals.revenue, totals.currency, lang.key)}
                   </div>
                   <div className="flex flex-col mt-auto">
-                    <span className="text-xs font-medium">Total Organization Revenue</span>
+                    <span className="text-xs font-medium">{oa.total_revenue}</span>
                     <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
                       <span className="inline-flex items-center gap-0.5 text-emerald-500 font-medium">
                         <TrendUpIcon size={12} weight="bold" />
-                        <span>Active</span>
+                        <span>{lang.data.common.active}</span>
                       </span>
-                      <span>across {currencies.length || 1} currencies</span>
+                      <span>
+                        {formatI18n(oa.across_currencies, { count: currencies.length || 1 })}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -506,14 +526,22 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
 
                 <div className="relative flex flex-col min-h-0 grow justify-between z-10">
                   <div className="text-4xl font-medium font-heading tracking-tight text-foreground tabular-nums">
-                    {totals.transactions.toLocaleString()} TX
+                    {totals.transactions.toLocaleString(lang.key)} {oa.tx_badge}
                   </div>
                   <div className="flex flex-col mt-auto">
-                    <span className="text-xs font-medium">Transactions Processed</span>
+                    <span className="text-xs font-medium">{oa.tx_processed}</span>
                     <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
-                      <span className="text-foreground font-medium">{totals.realTransactions.toLocaleString()} real</span>
+                      <span className="text-foreground font-medium">
+                        {formatI18n(oa.real_count, {
+                          count: totals.realTransactions.toLocaleString(lang.key),
+                        })}
+                      </span>
                       <span>·</span>
-                      <span>{totals.testTransactions.toLocaleString()} test</span>
+                      <span>
+                        {formatI18n(oa.test_count, {
+                          count: totals.testTransactions.toLocaleString(lang.key),
+                        })}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -539,17 +567,19 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                     {gateways.length}
                   </div>
                   <div className="flex flex-col mt-auto">
-                    <span className="text-xs font-medium">Active Payment Gateways</span>
+                    <span className="text-xs font-medium">{oa.active_gateways}</span>
                     <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
                       {gateways[0] ? (
                         <>
                           <span className="text-foreground font-medium">
                             {PROVIDER_NAMES[gateways[0].provider] || gateways[0].provider}
                           </span>
-                          <span>({gateways[0].percentage}% lead)</span>
+                          <span>
+                            {formatI18n(oa.gateway_lead, { pct: gateways[0].percentage })}
+                          </span>
                         </>
                       ) : (
-                        <span>No gateway connected</span>
+                        <span>{oa.no_gateway}</span>
                       )}
                     </div>
                   </div>
@@ -596,9 +626,11 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                         <ChartTooltipContent
                           formatter={(val) => [
                             metric === "revenue"
-                              ? formatCurrency(Number(val), totals.currency) + " "
-                              : `${Number(val).toLocaleString()} TXns `,
-                            metric === "revenue" ? "Revenue" : "",
+                              ? formatCurrency(Number(val), totals.currency, lang.key) + " "
+                              : formatI18n(oa.tooltip_txns, {
+                                  count: Number(val).toLocaleString(lang.key),
+                                }),
+                            metric === "revenue" ? oa.mode_revenue : "",
                           ]}
                         />
                       }
@@ -616,15 +648,20 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
               <div className="flex items-center justify-between flex-wrap gap-2 absolute bottom-0 w-full left-0 p-6">
                 <div>
                   <h3 className="text-2xl font-medium text-foreground mb-2">
-                    {metric === "revenue" ? "Revenue History Timeline" : "Transaction Volume History"}
+                    {metric === "revenue" ? oa.chart_title_revenue : oa.chart_title_volume}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    {metric === "revenue" ? "Detailed transaction revenue trend" : "Daily processed transaction volume"} in the past {timeframe}.
+                    {formatI18n(
+                      metric === "revenue" ? oa.chart_desc_revenue : oa.chart_desc_volume,
+                      { timeframe: timeframeLabels[timeframe] },
+                    )}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <span className="size-2 rounded-full bg-primary" />
-                  <span className="text-muted-foreground capitalize">{metric}</span>
+                  <span className="text-muted-foreground">
+                    {metric === "revenue" ? oa.mode_revenue : oa.mode_volume}
+                  </span>
                 </div>
               </div>
             </div>
@@ -635,8 +672,10 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                   <div>
                     <div className="flex items-center justify-between absolute z-10">
                       <div>
-                        <h3 className="text-2xl font-medium mb-2 text-foreground">Payment Gateways</h3>
-                        <p className="text-xs text-muted-foreground">Volume & share distribution across providers</p>
+                        <h3 className="text-2xl font-medium mb-2 text-foreground">
+                          {oa.gateways_title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">{oa.gateways_desc}</p>
                       </div>
                     </div>
 
@@ -653,7 +692,9 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                                 hideLabel
                                 formatter={(val, name) => [
                                   PROVIDER_NAMES[String(name)] || String(name),
-                                  ` (${Number(val).toLocaleString()} transactions)`,
+                                  formatI18n(oa.gateway_tx_count, {
+                                    count: Number(val).toLocaleString(lang.key),
+                                  }),
                                 ]}
                               />
                             }
@@ -678,7 +719,7 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                       </ChartContainer>
                     ) : (
                       <div className="py-12 text-center text-xs text-muted-foreground">
-                        No gateway transactions recorded yet
+                        {oa.no_gateway_tx}
                       </div>
                     )}
                   </div>
@@ -688,8 +729,10 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                   <div>
                     <div className="flex items-center justify-between absolute z-10">
                       <div>
-                        <h3 className="text-2xl font-medium mb-2 text-foreground">Global Currency Breakdown</h3>
-                        <p className="text-xs text-muted-foreground">Interactive 3D representation of donation sources</p>
+                        <h3 className="text-2xl font-medium mb-2 text-foreground">
+                          {oa.globe_title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">{oa.globe_desc}</p>
                       </div>
                     </div>
 
@@ -731,18 +774,18 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                               <span className="font-semibold text-foreground">{c.currency}</span>
                               <span className="text-muted-foreground text-[11px]">
                                 {c.currency === "THB"
-                                  ? "Thailand"
+                                  ? oa.regions.thailand
                                   : c.currency === "USD"
-                                    ? "United States"
+                                    ? oa.regions.united_states
                                     : c.currency === "EUR"
-                                      ? "Europe"
-                                      : "International"}
+                                      ? oa.regions.europe
+                                      : oa.regions.international}
                               </span>
                             </div>
                             <div className="flex items-center gap-3 tabular-nums text-xs">
                               <span className="text-muted-foreground">{c.percentage}%</span>
                               <span className="font-bold text-foreground">
-                                {formatCurrency(c.amount, c.currency)}
+                                {formatCurrency(c.amount, c.currency, lang.key)}
                               </span>
                             </div>
                           </div>

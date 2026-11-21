@@ -38,7 +38,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { hasPermission, isOrgOwner, isOrgOwnerOrAdmin } from "@/lib/rbac";
 import { OrgPerm } from "@/consts/permission";
 import type { CropType, TransferStep, OrgMemberOption } from "@/types";
-import { TRANSFER_CONFIRM_PHRASE } from "@/consts/org";
+import { TRANSFER_CONFIRM_PHRASE, getRoleLabel } from "@/consts/org";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
+import { formatCount, formatI18n } from "@/lib/i18n";
 import { AnimatePresence, motion } from "motion/react";
 import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
@@ -47,6 +50,8 @@ import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-heig
 import HoldButton from "@/components/HoldButton";
 
 export default function OrgSettingsPage() {
+  const lang = useStore(coreStore, (s) => s.lang);
+  const os = lang.data.app.org.settings;
   const routeParams = useParams();
   const router = useRouter();
   const { activeOrg, authFetch, patchOrg, removeOrganization, refreshUserInfo } = useUserContext();
@@ -123,7 +128,7 @@ export default function OrgSettingsPage() {
     e.currentTarget.value = "";
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be 5 MB or smaller");
+      toast.error(lang.data.common.image_size_error);
       return;
     }
     if (cropObjectUrlRef.current) {
@@ -139,6 +144,7 @@ export default function OrgSettingsPage() {
   const onCropComplete = async (croppedBlob: Blob) => {
     if (!canManageSettings || !encodedOrgTarget || isMediaBusy) return;
     setIsMediaBusy(true);
+    const mediaLabel = cropType === "avatar" ? lang.data.common.logo : lang.data.common.banner;
     try {
       const formData = new FormData();
       formData.append(cropType, croppedBlob, `${cropType}.webp`);
@@ -157,16 +163,16 @@ export default function OrgSettingsPage() {
           setBanner(updated.banner || "");
           patchOrg({ banner: updated.banner });
         }
-        toast.success(`Organization ${cropType} updated successfully`);
+        toast.success(formatI18n(os.toasts.media_updated, { type: mediaLabel }));
       } else if (res.status === 451) {
         const msg = await res.text();
-        toast.error(msg || "Image contains inappropriate content");
+        toast.error(msg || lang.data.common.inappropriate_content);
       } else {
         const msg = await res.text();
-        toast.error(msg || `Failed to update ${cropType}`);
+        toast.error(msg || formatI18n(os.toasts.media_update_failed, { type: mediaLabel }));
       }
     } catch {
-      toast.error(`Network error uploading ${cropType}`);
+      toast.error(formatI18n(os.toasts.media_update_network, { type: mediaLabel }));
     } finally {
       setIsMediaBusy(false);
     }
@@ -175,6 +181,7 @@ export default function OrgSettingsPage() {
   const handleRemoveMedia = async (type: "avatar" | "banner") => {
     if (!canManageSettings || !encodedOrgTarget || isMediaBusy) return;
     setIsMediaBusy(true);
+    const mediaLabel = type === "avatar" ? lang.data.common.logo : lang.data.common.banner;
     try {
       const res = await authFetch(getApiUrl(`/api/v1/org/${encodedOrgTarget}`), {
         method: "PATCH",
@@ -190,12 +197,12 @@ export default function OrgSettingsPage() {
           setBanner("");
           patchOrg({ banner: null });
         }
-        toast.success(`Organization ${type} removed`);
+        toast.success(formatI18n(os.toasts.media_removed, { type: mediaLabel }));
       } else {
-        toast.error(`Failed to remove ${type}`);
+        toast.error(formatI18n(os.toasts.media_remove_failed, { type: mediaLabel }));
       }
     } catch {
-      toast.error(`Network error removing ${type}`);
+      toast.error(formatI18n(os.toasts.media_remove_network, { type: mediaLabel }));
     } finally {
       setIsMediaBusy(false);
     }
@@ -218,13 +225,13 @@ export default function OrgSettingsPage() {
       if (res.ok) {
         const data = await res.json();
         patchOrg({ name: data.name });
-        toast.success("Organization name updated successfully");
+        toast.success(os.toasts.name_updated);
       } else {
         const msg = await res.text();
-        toast.error(msg || "Failed to update settings");
+        toast.error(msg || os.toasts.update_failed);
       }
     } catch {
-      toast.error("Network error updating settings");
+      toast.error(os.toasts.update_network);
     } finally {
       setIsSaving(false);
     }
@@ -241,15 +248,15 @@ export default function OrgSettingsPage() {
 
       if (res.ok) {
         if (activeOrg) removeOrganization(activeOrg.id);
-        toast.success("Organization deleted successfully");
+        toast.success(os.toasts.deleted);
         setIsDeleteOpen(false);
         router.push("/app");
       } else {
         const msg = await res.text();
-        toast.error(msg || "Failed to delete organization");
+        toast.error(msg || os.toasts.delete_failed);
       }
     } catch {
-      toast.error("Network error deleting organization");
+      toast.error(os.toasts.delete_network);
     } finally {
       setIsDeleting(false);
     }
@@ -265,16 +272,16 @@ export default function OrgSettingsPage() {
 
       if (res.ok) {
         if (activeOrg) removeOrganization(activeOrg.id);
-        toast.success(`You have left ${activeOrg?.name || "the organization"}`);
+        toast.success(formatI18n(os.toasts.left_org, { org: activeOrg?.name || lang.data.common.organization }));
         setIsLeaveOpen(false);
         await refreshUserInfo();
         router.push("/app");
       } else {
         const msg = await res.text();
-        toast.error(msg || "Failed to leave organization");
+        toast.error(msg || os.toasts.leave_failed);
       }
     } catch {
-      toast.error("Network error while leaving organization");
+      toast.error(os.toasts.leave_network);
     } finally {
       setIsLeaving(false);
     }
@@ -311,7 +318,7 @@ export default function OrgSettingsPage() {
       }
     } catch (err) {
       if ((err as Error)?.name === "AbortError") return;
-      toast.error("Failed to load organization members");
+      toast.error(os.toasts.members_load_failed);
     } finally {
       if (!controller.signal.aborted) setLoadingMembers(false);
     }
@@ -329,16 +336,16 @@ export default function OrgSettingsPage() {
 
       if (!res.ok) {
         const msg = await res.text();
-        toast.error(msg || "Failed to transfer ownership");
+        toast.error(msg || os.toasts.transfer_failed);
         return;
       }
 
-      toast.success("Organization ownership transferred successfully!");
+      toast.success(os.toasts.transferred);
       setIsTransferOpen(false);
       await refreshUserInfo();
       router.refresh();
     } catch {
-      toast.error("Network error while transferring ownership");
+      toast.error(os.toasts.transfer_network);
     } finally {
       setIsTransferring(false);
     }
@@ -369,13 +376,13 @@ export default function OrgSettingsPage() {
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
             <GearSixIcon size={16} weight="bold" />
-            <span>Organization Administration</span>
+            <span>{os.eyebrow}</span>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
-            Organization Settings
+            {os.title}
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage organization branding, banner, logo, and administrative parameters.
+            {os.subtitle}
           </p>
         </div>
       </div>
@@ -383,7 +390,7 @@ export default function OrgSettingsPage() {
       {!canManageSettings && (
         <div className="flex items-center gap-2.5 p-3.5 mb-5 rounded-2xl bg-muted text-xs text-muted-foreground">
           <LockSimpleIcon size={16} weight="bold" className="text-muted-foreground shrink-0" />
-          <span>You are viewing organization settings in read-only mode. Organization management permissions are required to edit branding or settings.</span>
+          <span>{os.read_only_notice}</span>
         </div>
       )}
 
@@ -403,7 +410,7 @@ export default function OrgSettingsPage() {
                     key={banner}>
                     <Image
                       src={banner}
-                      alt="Organization Banner"
+                      alt={os.org_banner_alt}
                       width={800}
                       height={208}
                       className="w-full rounded-3xl object-cover pointer-events-none select-none"
@@ -413,7 +420,7 @@ export default function OrgSettingsPage() {
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-muted-foreground/60 select-none">
                     <ImageIcon size={36} weight="duotone" />
-                    <span className="text-xs font-medium">No banner uploaded</span>
+                    <span className="text-xs font-medium">{os.no_banner}</span>
                   </div>
                 )}
               </AnimatePresence>
@@ -429,7 +436,7 @@ export default function OrgSettingsPage() {
                   className="p-3 h-max rounded-xl text-xs font-semibold gap-1.5"
                 >
                   <CameraIcon size={14} weight="bold" />
-                  <span>{banner ? "Change Banner" : "Upload Banner"}</span>
+                  <span>{banner ? os.change_banner : os.upload_banner}</span>
                 </Button>
                 {banner && (
                   <Button
@@ -438,7 +445,7 @@ export default function OrgSettingsPage() {
                     variant="destructive"
                     onClick={() => handleRemoveMedia("banner")}
                     className="p-3 h-max rounded-xl text-xs font-semibold"
-                    title="Remove banner"
+                    title={os.remove_banner_title}
                   >
                     <TrashIcon size={14} weight="bold" />
                   </Button>
@@ -453,7 +460,7 @@ export default function OrgSettingsPage() {
                     <AvatarImage src={avatar} alt={name} className="object-cover border-0 rounded-2xl" />
                   ) : (
                     <AvatarFallback className="font-bold text-xl bg-primary/10 text-primary rounded-2xl">
-                      {getFallbackInitial(name || activeOrg?.name || "Org")}
+                      {getFallbackInitial(name || activeOrg?.name || os.org_initial_fallback)}
                     </AvatarFallback>
                   )}
                 </Avatar>
@@ -463,10 +470,10 @@ export default function OrgSettingsPage() {
                     variant={"ghost"}
                     onClick={() => avatarInputRef.current?.click()}
                     className="absolute inset-0 size-20 sm:size-22 rounded-2xl bg-black/50 group-hover/avatar:backdrop-blur-[2px] opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center text-white"
-                    title="Change Logo"
+                    title={os.change_logo_title}
                   >
                     <CameraIcon size={18} weight="bold" />
-                    <span className="text-[10px] font-semibold mt-0.5">Edit</span>
+                    <span className="text-[10px] font-semibold mt-0.5">{lang.data.common.edit}</span>
                   </Button>
                 )}
               </div>
@@ -476,12 +483,12 @@ export default function OrgSettingsPage() {
           <div className="pt-10 pb-6 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-semibold text-foreground">
-                {activeOrg?.name || "Organization"}
+                {activeOrg?.name || lang.data.common.organization}
               </h2>
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                 <span className="font-rubik text-primary font-semibold">/app/{activeOrg?.slug}</span>
                 <span>•</span>
-                <span>{activeOrg?.memberCount ?? 1} members</span>
+                <span>{formatCount(os.members_count_one, os.members_count_other, activeOrg?.memberCount ?? 1)}</span>
               </div>
             </div>
 
@@ -495,7 +502,7 @@ export default function OrgSettingsPage() {
                   className="p-2.5 h-max text-xs font-semibold rounded-xl gap-1.5"
                 >
                   <CameraIcon size={14} weight="bold" />
-                  <span>Upload Logo</span>
+                  <span>{os.upload_logo}</span>
                 </Button>
                 {avatar && (
                   <Button
@@ -504,7 +511,7 @@ export default function OrgSettingsPage() {
                     size="sm"
                     onClick={() => handleRemoveMedia("avatar")}
                     className="p-2.5 h-max text-xs rounded-xl"
-                    title="Remove logo"
+                    title={os.remove_logo_title}
                   >
                     <TrashIcon size={14} weight="bold" />
                   </Button>
@@ -517,13 +524,13 @@ export default function OrgSettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field>
                 <FieldLabel className="text-xs font-semibold text-foreground">
-                  Organization Name <span className="text-destructive">*</span>
+                  {os.name_label} <span className="text-destructive">*</span>
                 </FieldLabel>
                 <Input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Pixel Studio"
+                  placeholder={os.name_placeholder}
                   required
                   disabled={!canManageSettings}
                   readOnly={!canManageSettings}
@@ -540,7 +547,7 @@ export default function OrgSettingsPage() {
               <Field>
                 <div className="flex items-center justify-between">
                   <FieldLabel className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                    <span>Organization Handle</span>
+                    <span>{os.handle_label}</span>
                     <LockSimpleIcon size={12} weight="bold" className="text-muted-foreground" />
                   </FieldLabel>
                 </div>
@@ -558,7 +565,7 @@ export default function OrgSettingsPage() {
                   classNames={{ base: "h-10" }}
                 />
                 <FieldDescription className="text-[11px] font-sans">
-                  Slug handle is permanently locked: /app/{activeOrg?.slug || "org"}
+                  {formatI18n(os.slug_locked_hint, { slug: activeOrg?.slug || "org" })}
                 </FieldDescription>
               </Field>
             </div>
@@ -571,7 +578,7 @@ export default function OrgSettingsPage() {
                   className="p-3 h-max gap-2 text-xs font-semibold rounded-xl cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   {isSaving ? <Spinner className="size-3.5" /> : <CheckIcon size={14} weight="bold" />}
-                  <span>Save Changes</span>
+                  <span>{lang.data.common.save_changes}</span>
                 </Button>
               </div>
             )}
@@ -582,9 +589,9 @@ export default function OrgSettingsPage() {
           <div className="py-6 border-t border-border flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
               <div className="max-w-md">
-                <p className="text-xl font-medium text-foreground font-sans">Designate a new organization owner</p>
+                <p className="text-xl font-medium text-foreground font-sans">{os.transfer_heading}</p>
                 <p className="text-sm text-muted-foreground mt-3 font-sans max-w-2xl leading-relaxed">
-                  Each organization can have only a single owner. You will become an Admin with full administrative privileges once transferred.
+                  {os.transfer_desc}
                 </p>
               </div>
               <Button
@@ -594,7 +601,7 @@ export default function OrgSettingsPage() {
                 className="gap-2 text-xs font-semibold rounded-xl p-3 h-max bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 shrink-0"
               >
                 <ArrowsLeftRightIcon size={15} weight="bold" />
-                <span>Transfer Ownership</span>
+                <span>{os.transfer_btn}</span>
               </Button>
             </div>
           </div>
@@ -604,9 +611,9 @@ export default function OrgSettingsPage() {
           {!isOwner ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 pt-2">
               <div>
-                <p className="text-xl font-medium text-foreground font-sans">Leave this organization</p>
+                <p className="text-xl font-medium text-foreground font-sans">{os.leave_heading}</p>
                 <p className="text-sm text-muted-foreground mt-3 font-sans max-w-2xl leading-relaxed">
-                  Revoke your membership and leave this organization. You will immediately lose access to all channels, widgets, and settings. You can only rejoin if an administrator re-invites you.
+                  {os.leave_desc}
                 </p>
               </div>
               <Button
@@ -616,15 +623,15 @@ export default function OrgSettingsPage() {
                 className="gap-2 text-xs font-semibold rounded-xl p-3 h-max shrink-0"
               >
                 <SignOutIcon size={15} weight="bold" />
-                <span>Leave Organization</span>
+                <span>{os.leave_btn}</span>
               </Button>
             </div>
           ) : (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 pt-2">
               <div>
-                <h3 className="text-xl font-medium text-foreground font-sans">Destroy this organization</h3>
+                <h3 className="text-xl font-medium text-foreground font-sans">{os.delete_heading}</h3>
                 <p className="text-sm text-muted-foreground mt-3 font-sans leading-relaxed max-w-2xl">
-                  Permanently delete this organization, all attached streamer channels, widgets, and team memberships. As the owner, you cannot leave without deleting or transferring ownership first.
+                  {os.delete_desc}
                 </p>
               </div>
               <Button
@@ -637,7 +644,7 @@ export default function OrgSettingsPage() {
                 className="gap-2 text-xs font-semibold rounded-xl p-3 h-max shrink-0"
               >
                 <TrashIcon size={15} weight="bold" />
-                <span>Delete Organization</span>
+                <span>{os.delete_btn}</span>
               </Button>
             </div>
           )}
@@ -650,7 +657,7 @@ export default function OrgSettingsPage() {
         image={imageToCrop}
         cropShape={cropType === "avatar" ? "round" : "rect"}
         aspect={cropType === "avatar" ? 1 : 3}
-        title={cropType === "avatar" ? "Crop Organization Logo" : "Crop Organization Banner"}
+        title={cropType === "avatar" ? lang.data.components.image_cropper.crop_org_logo : lang.data.components.image_cropper.crop_org_banner}
         className={cn(
           cropType === "avatar" ? "" : "max-w-2xl!"
         )}
@@ -664,22 +671,32 @@ export default function OrgSettingsPage() {
               <WarningOctagonIcon size={22} weight="bold" />
             </div>
             <DialogTitle className="text-xl font-semibold text-destructive">
-              Delete Organization Permanently?
+              {os.delete_dialog.title}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              This action <strong>CANNOT</strong> be undone. All streamer channels, alert widgets, team members, and presets under <strong>{activeOrg?.name}</strong> will be immediately deleted.
+              {os.delete_dialog.desc.split("{org}").map((part, idx, arr) => (
+                <React.Fragment key={idx}>
+                  {part}
+                  {idx < arr.length - 1 && <strong>{activeOrg?.name}</strong>}
+                </React.Fragment>
+              ))}
             </DialogDescription>
           </DialogHeader>
 
           <Field className="mt-2">
             <FieldLabel className="text-xs font-semibold text-foreground">
-              Type <code className="text-primary font-mono">{deleteConfirmExpected}</code> to confirm:
+              {os.delete_dialog.confirm_label.split("{expected}").map((part, idx, arr) => (
+                <React.Fragment key={idx}>
+                  {part}
+                  {idx < arr.length - 1 && <code className="text-primary font-mono">{deleteConfirmExpected}</code>}
+                </React.Fragment>
+              ))}
             </FieldLabel>
             <Input
               type="text"
               value={confirmSlug}
               onChange={(e) => setConfirmSlug(e.target.value)}
-              placeholder={deleteConfirmExpected || "org-slug"}
+              placeholder={deleteConfirmExpected || os.delete_dialog.slug_placeholder}
               fontStyle={{
                 fontFamily: "var(--font-sans)",
                 fontWeight: "500",
@@ -688,7 +705,7 @@ export default function OrgSettingsPage() {
               className="w-full"
               classNames={{ base: "h-10 rounded-xl" }}
             />
-            <span className="text-xs text-destructive select-none font-sans">This action cannot be undone.</span>
+            <span className="text-xs text-destructive select-none font-sans">{lang.data.common.action_irreversible}</span>
           </Field>
 
           <DialogFooter className="mt-5 gap-2">
@@ -699,10 +716,10 @@ export default function OrgSettingsPage() {
               disabled={isDeleting}
               className="text-xs rounded-xl p-3 h-max"
             >
-              Cancel
+              {lang.data.common.cancel}
             </Button>
             <HoldButton
-              doneLabel="Deleted"
+              doneLabel={lang.data.common.deleted}
               backgroundColor="var(--muted)"
               fillColor="#f43f5e"
               textColor="var(--muted-foreground)"
@@ -722,7 +739,7 @@ export default function OrgSettingsPage() {
               onHold={handleDeleteOrg}
             >
               {isDeleting && <Spinner className="size-3.5" />}
-              Hold to delete
+              {lang.data.common.hold_to_delete}
             </HoldButton>
           </DialogFooter>
         </DialogContent>
@@ -734,10 +751,15 @@ export default function OrgSettingsPage() {
               <SignOutIcon size={22} weight="bold" />
             </div>
             <DialogTitle className="text-xl font-semibold text-destructive">
-              Leave Organization?
+              {os.leave_dialog.title}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Are you sure you want to leave <strong>{activeOrg?.name}</strong>? You will immediately lose access to this organization, its channels, widgets, and administrative tools. An administrator will need to invite you again to rejoin.
+              {os.leave_dialog.desc.split("{org}").map((part, idx, arr) => (
+                <React.Fragment key={idx}>
+                  {part}
+                  {idx < arr.length - 1 && <strong>{activeOrg?.name}</strong>}
+                </React.Fragment>
+              ))}
             </DialogDescription>
           </DialogHeader>
 
@@ -749,10 +771,10 @@ export default function OrgSettingsPage() {
               disabled={isLeaving}
               className="text-xs rounded-xl p-3 h-max"
             >
-              Cancel
+              {lang.data.common.cancel}
             </Button>
             <HoldButton
-              doneLabel="Left"
+              doneLabel={lang.data.common.left}
               backgroundColor="var(--muted)"
               fillColor="#f43f5e"
               textColor="var(--muted-foreground)"
@@ -772,7 +794,7 @@ export default function OrgSettingsPage() {
               onHold={handleLeaveOrg}
             >
               {isLeaving && <Spinner className="size-3.5" />}
-              Hold to leave
+              {lang.data.common.hold_to_leave}
             </HoldButton>
           </DialogFooter>
         </DialogContent>
@@ -791,25 +813,30 @@ export default function OrgSettingsPage() {
               <ArrowsLeftRightIcon size={22} weight="bold" />
             </div>
             <DialogTitle className="text-xl font-semibold text-foreground">
-              Transfer Organization Ownership
+              {os.transfer_dialog.title}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Transfer ownership of <strong>{activeOrg?.name}</strong>. Each organization can only have one single owner.
+              {os.transfer_dialog.desc.split("{org}").map((part, idx, arr) => (
+                <React.Fragment key={idx}>
+                  {part}
+                  {idx < arr.length - 1 && <strong>{activeOrg?.name}</strong>}
+                </React.Fragment>
+              ))}
             </DialogDescription>
           </DialogHeader>
 
           {loadingMembers ? (
             <div className="py-8 flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
               <Spinner className="size-5" />
-              <span>Loading organization members...</span>
+              <span>{os.transfer_dialog.loading_members}</span>
             </div>
           ) : members.length === 0 ? (
             <div className="p-4 rounded-2xl bg-muted/50 text-xs text-muted-foreground flex flex-col gap-2 mt-2">
-              <p className="font-semibold text-foreground">No eligible members found</p>
-              <p>There are no other members in this organization to transfer ownership to. Invite members in Members & Staff first.</p>
+              <p className="font-semibold text-foreground">{os.transfer_dialog.no_eligible_title}</p>
+              <p>{os.transfer_dialog.no_eligible_desc}</p>
               <DialogFooter className="mt-4">
                 <Button variant="secondary" size="sm" onClick={() => setIsTransferOpen(false)} className="rounded-xl p-3 h-max w-full">
-                  Close
+                  {lang.data.common.close}
                 </Button>
               </DialogFooter>
             </div>
@@ -819,8 +846,8 @@ export default function OrgSettingsPage() {
                 <>
                   <Field>
                     <FieldLabel className="text-xs font-semibold text-foreground flex items-center justify-between w-full">
-                      <span>Select New Owner</span>
-                      <span className="text-[10px] text-muted-foreground font-normal">Active Members</span>
+                      <span>{os.transfer_dialog.select_owner_label}</span>
+                      <span className="text-[10px] text-muted-foreground font-normal">{os.transfer_dialog.active_members}</span>
                     </FieldLabel>
 
                     <Popover open={memberComboboxOpen} onOpenChange={setMemberComboboxOpen}>
@@ -833,7 +860,7 @@ export default function OrgSettingsPage() {
                         {(() => {
                           const selectedMember = members.find((m) => m.id === selectedMemberId);
                           if (!selectedMember) {
-                            return <span className="text-xs text-muted-foreground pl-1">Select an active team member...</span>;
+                            return <span className="text-xs text-muted-foreground pl-1">{os.transfer_dialog.select_placeholder}</span>;
                           }
                           return (
                             <div className="flex items-center gap-3 min-w-0">
@@ -846,10 +873,10 @@ export default function OrgSettingsPage() {
                               <div className="flex flex-col min-w-0 leading-tight">
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs font-semibold text-foreground truncate">
-                                    {selectedMember.name || "Member"}
+                                    {selectedMember.name || lang.data.common.member}
                                   </span>
-                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-secondary/80 text-foreground/80 leading-none capitalize">
-                                    {selectedMember.role.toLowerCase()}
+                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-secondary/80 text-foreground/80 leading-none">
+                                    {getRoleLabel(selectedMember.role, lang.data)}
                                   </span>
                                 </div>
                                 <span className="text-[11px] text-muted-foreground truncate">
@@ -871,7 +898,7 @@ export default function OrgSettingsPage() {
                           <MagnifyingGlassIcon size={14} weight="bold" className="text-muted-foreground shrink-0" />
                           <Input
                             type="text"
-                            placeholder="Search by name, email, or role..."
+                            placeholder={os.transfer_dialog.search_placeholder}
                             value={memberSearchQuery}
                             onChange={(e) => setMemberSearchQuery(e.target.value)}
                             fontStyle={{
@@ -893,14 +920,15 @@ export default function OrgSettingsPage() {
                               return (
                                 (m.name && m.name.toLowerCase().includes(query)) ||
                                 m.email.toLowerCase().includes(query) ||
-                                m.role.toLowerCase().includes(query)
+                                m.role.toLowerCase().includes(query) ||
+                                getRoleLabel(m.role, lang.data).toLowerCase().includes(query)
                               );
                             });
 
                             if (filtered.length === 0) {
                               return (
                                 <div className="py-6 text-center text-xs text-muted-foreground">
-                                  No members match &ldquo;{memberSearchQuery}&rdquo;
+                                  {formatI18n(os.transfer_dialog.empty_search, { query: memberSearchQuery })}
                                 </div>
                               );
                             }
@@ -941,8 +969,8 @@ export default function OrgSettingsPage() {
                                   </div>
 
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <span className="text-[10px] font-semibold px-2 py-1 rounded-md bg-secondary/80 text-foreground/70 capitalize">
-                                      {m.role.toLowerCase()}
+                                    <span className="text-[10px] font-semibold px-2 py-1 rounded-md bg-secondary/80 text-foreground/70">
+                                      {getRoleLabel(m.role, lang.data)}
                                     </span>
                                     {isSelected && (
                                       <CheckIcon size={14} weight="bold" className="text-primary" />
@@ -964,7 +992,7 @@ export default function OrgSettingsPage() {
                       className="mt-0.5"
                     />
                     <span className="text-[11px] text-amber-500/90 leading-snug font-normal">
-                      I understand that transferring ownership will demote my account to <strong>Admin</strong> and grant full control of the organization to the selected member.
+                      {os.transfer_dialog.confirm_ack}
                     </span>
                   </Label>
 
@@ -975,7 +1003,7 @@ export default function OrgSettingsPage() {
                       onClick={() => setIsTransferOpen(false)}
                       className="text-xs rounded-xl p-3 h-max"
                     >
-                      Cancel
+                      {lang.data.common.cancel}
                     </Button>
                     <Button
                       variant="default"
@@ -984,7 +1012,7 @@ export default function OrgSettingsPage() {
                       onClick={() => setTransferStep(2)}
                       className="gap-1.5 text-xs font-semibold rounded-xl p-3 h-max"
                     >
-                      <span>Continue</span>
+                      <span>{lang.data.common.continue}</span>
                       <ArrowRightIcon size={14} weight="bold" />
                     </Button>
                   </DialogFooter>
@@ -994,16 +1022,23 @@ export default function OrgSettingsPage() {
                   <div className="p-3.5 rounded-2xl bg-destructive/10 text-destructive text-xs flex flex-col gap-1.5 leading-relaxed">
                     <span className="font-semibold text-sm flex items-center gap-1.5">
                       <WarningOctagonIcon size={16} weight="bold" />
-                      Final Confirmation Required
+                      {os.transfer_dialog.final_warning_title}
                     </span>
                     <p className="text-[11px] text-destructive/90">
-                      Once confirmed, only the new owner can transfer ownership back to you. There can only be one owner at a time.
+                      {os.transfer_dialog.final_warning_desc}
                     </p>
                   </div>
 
                   <Field>
                     <FieldLabel className="text-xs font-semibold text-foreground">
-                      Type <code className="text-destructive font-mono font-bold bg-background p-1 rounded-md">{TRANSFER_CONFIRM_PHRASE}</code> to execute:
+                      {os.transfer_dialog.phrase_prompt.split("{phrase}").map((part, idx, arr) => (
+                        <React.Fragment key={idx}>
+                          {part}
+                          {idx < arr.length - 1 && (
+                            <code className="text-destructive font-mono font-bold bg-background p-1 rounded-md">{TRANSFER_CONFIRM_PHRASE}</code>
+                          )}
+                        </React.Fragment>
+                      ))}
                     </FieldLabel>
                     <Input
                       type="text"
@@ -1030,10 +1065,10 @@ export default function OrgSettingsPage() {
                       className="text-xs rounded-xl p-3 h-max gap-2"
                     >
                       <ArrowLeftIcon size={14} weight="bold" />
-                      <span>Back</span>
+                      <span>{lang.data.common.back}</span>
                     </Button>
                     <HoldButton
-                      doneLabel="Transferred"
+                      doneLabel={lang.data.common.transferred}
                       backgroundColor="var(--muted)"
                       fillColor="#f43f5e"
                       textColor="var(--muted-foreground)"
@@ -1053,7 +1088,7 @@ export default function OrgSettingsPage() {
                       onHold={handleTransferOwnership}
                     >
                       {isTransferring && <Spinner className="size-3.5" />}
-                      Hold to transfer
+                      {lang.data.common.hold_to_transfer}
                     </HoldButton>
                   </DialogFooter>
                 </>

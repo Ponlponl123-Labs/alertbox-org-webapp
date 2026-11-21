@@ -9,32 +9,19 @@ import {
   CodeBlockIcon,
 } from "@phosphor-icons/react";
 
-const LEDGER_META = [
-  {
-    kicker: "Anonymity",
-    principle: "Zero Intermediary",
-    detail: "Billing statement settles directly between donor and your gateway.",
-    icon: ShieldCheckIcon,
-  },
-  {
-    kicker: "Chargeback Risk",
-    principle: "Native Radar Rules",
-    detail: "Stripe Radar blocks high-risk cards; alert buffer intercepts trolls.",
-    icon: HandCoinsIcon,
-  },
-  {
-    kicker: "Sovereignty",
-    principle: "Client-Side Code",
-    detail: "Deploy anywhere. Zero telemetry, zero tracking, zero vendor lock-in.",
-    icon: CodeBlockIcon,
-  },
+const LEDGER_ICONS = [
+  ShieldCheckIcon,
+  HandCoinsIcon,
+  CodeBlockIcon,
 ];
 
 export default function CinematicInsights() {
-  const t = useStore(
+  const sections = useStore(
     coreStore,
-    (state) => state.lang.data.pages.index.sections.good_to_know,
+    (state) => state.lang.data.pages.index.sections,
   );
+  const t = sections.good_to_know;
+  const ledgerMeta = sections.cinematic_insights.ledger_meta;
 
   return (
     <section className="w-full font-sans py-24 md:py-36 relative border-t border-border/40 overflow-hidden">
@@ -58,8 +45,8 @@ export default function CinematicInsights() {
             (insight: { title: string; desc: string }, idx: number) => {
               const cleanTitle = insight.title.replace(/^\d+\.\s*/, "");
               const indexStr = `0${idx + 1}`;
-              const meta = LEDGER_META[idx] || LEDGER_META[0];
-              const Icon = meta.icon;
+              const meta = ledgerMeta[idx] || ledgerMeta[0];
+              const Icon = LEDGER_ICONS[idx] || LEDGER_ICONS[0];
 
               return (
                 <motion.div
@@ -81,11 +68,11 @@ export default function CinematicInsights() {
                           className="text-foreground/50 group-hover:text-background transition-colors"
                         />
                         <span className="font-mono text-[11px] font-semibold tracking-wider uppercase text-foreground/70 group-hover:text-background">
-                          {meta.kicker}
+                          {meta.badge}
                         </span>
                       </div>
                       <span className="text-xs font-mono text-muted-foreground/60 group-hover:text-background">
-                        {meta.principle}
+                        {meta.label}
                       </span>
                     </div>
                   </div>
@@ -102,7 +89,7 @@ export default function CinematicInsights() {
                     </p>
                     <div className="flex items-center gap-2 pt-3 border-t border-border/30 text-xs font-mono text-foreground/70 group-hover:text-background">
                       <span className="size-1.5 rounded-full bg-foreground/40 group-hover:bg-background shrink-0" />
-                      <span>{meta.detail}</span>
+                      <span>{meta.desc}</span>
                     </div>
                   </div>
                 </motion.div>

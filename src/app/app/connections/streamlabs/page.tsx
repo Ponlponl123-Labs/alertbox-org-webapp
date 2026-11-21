@@ -4,8 +4,11 @@ import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
 import { isSafePathSegment } from "@/lib/security";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
 
 function StreamlabsRedirectHandler() {
+  const lang = useStore(coreStore, (s) => s.lang);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -31,18 +34,19 @@ function StreamlabsRedirectHandler() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
       <Spinner className="size-6 text-muted-foreground" />
-      <p className="text-sm text-muted-foreground">Redirecting to streamer settings...</p>
+      <p className="text-sm text-muted-foreground">{lang.data.app.connections.redirect.redirecting_streamer}</p>
     </div>
   );
 }
 
 export default function StreamlabsRedirectPage() {
+  const lang = useStore(coreStore, (s) => s.lang);
   return (
     <Suspense
       fallback={
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
           <Spinner className="size-6 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-sm text-muted-foreground">{lang.data.common.loading_ellipsis}</p>
         </div>
       }
     >

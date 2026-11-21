@@ -54,12 +54,12 @@ const CurrentUserChip = memo(function CurrentUserChip() {
     userInfo.displayName?.trim() ||
     userInfo.name?.trim() ||
     userInfo.email?.split("@")[0] ||
-    "User";
+    lang.data.common.user;
 
   const username =
     userInfo.name?.trim() ||
     userInfo.email?.split("@")[0] ||
-    "user";
+    lang.data.common.user.toLowerCase();
 
   const avatarUrl = userInfo.avatar;
 
@@ -119,7 +119,7 @@ const CurrentUserChip = memo(function CurrentUserChip() {
             <>
               <Image
                 src={activeStreamer.banner}
-                alt="Banner"
+                alt={lang.data.common.aria.banner_alt}
                 className="w-full blur-lg aspect-video top-0 left-0 pointer-events-none object-cover absolute rounded-2xl z-0 opacity-30 select-none"
                 width={720}
                 height={288}
@@ -138,7 +138,7 @@ const CurrentUserChip = memo(function CurrentUserChip() {
                 <div className="size-full top-0 left-0 pointer-events-none absolute overflow-hidden rounded-xl">
                   <Image
                     src={avatarUrl! || activeStreamer!.banner!}
-                    alt="Banner"
+                    alt={lang.data.common.aria.banner_alt}
                     className="size-full top-0 left-0 pointer-events-none object-cover absolute z-0 mask-linear-160 mask-linear-from-10% mask-linear-to-92% blur-[2px] select-none"
                     width={720}
                     height={288}

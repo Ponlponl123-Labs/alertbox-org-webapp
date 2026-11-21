@@ -39,9 +39,9 @@ function Page() {
         logout();
         return;
       }
-      toast.error("Failed to delete account");
+      toast.error(lang.data.app.danger.toasts.delete_failed);
     } catch {
-      toast.error("Network error while deleting account");
+      toast.error(lang.data.app.danger.toasts.delete_network);
     } finally {
       setIsDeleting(false);
     }
@@ -56,7 +56,7 @@ function Page() {
       <div>
         <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
           <UserIcon size={16} weight="bold" />
-          <span>My Account</span>
+          <span>{lang.data.app.danger.eyebrow}</span>
         </div>
         <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
           {lang.data.app.danger.title}
@@ -94,7 +94,7 @@ function Page() {
                   {lang.data.app.danger.delete_account.description}
                 </AlertDialogDescription>
                 <span className="text-xs text-destructive select-none font-sans">
-                  This action cannot be undone.
+                  {lang.data.common.action_irreversible}
                 </span>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -110,7 +110,7 @@ function Page() {
                   className="rounded-xl"
                   render={
                     <HoldButton
-                      doneLabel="Deleted"
+                      doneLabel={lang.data.common.deleted}
                       backgroundColor="var(--muted)"
                       fillColor="#f43f5e"
                       textColor="var(--muted-foreground)"

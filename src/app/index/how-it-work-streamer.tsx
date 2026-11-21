@@ -68,7 +68,7 @@ function Step2Visual({ lang }: { lang: Language }) {
             {m.your_link}
           </label>
           <div className="h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2.5 mt-1 text-[9px] text-muted-foreground font-mono">
-            tip-to.me/@<span className="text-primary font-bold">yourname</span>
+            tip-to.me/@<span className="text-primary font-bold">{m.yourname}</span>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -77,7 +77,7 @@ function Step2Visual({ lang }: { lang: Language }) {
               {m.display_name}
             </label>
             <div className="h-8 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2.5 mt-1 text-[9px] text-foreground/80">
-              Your Stream Name
+              {m.your_stream_name}
             </div>
           </div>
           <div>
@@ -90,7 +90,7 @@ function Step2Visual({ lang }: { lang: Language }) {
                 <span className="size-3.5 rounded-full bg-pink-500" />
                 <span className="size-3.5 rounded-full bg-indigo-500" />
               </div>
-              <span className="text-[8px] text-muted-foreground">Rose</span>
+              <span className="text-[8px] text-muted-foreground">{m.rose}</span>
             </div>
           </div>
         </div>
@@ -144,7 +144,7 @@ function Step4Visual({ lang }: { lang: Language }) {
         <div>
           <span>{m.alert_template}</span>
           <div className="h-7 rounded-lg bg-foreground/2 border border-border/50 flex items-center px-2 mt-1 font-mono text-[8px] text-foreground/80">
-            {"{name} tipped {amount}"}
+            {m.tipped_banner}
           </div>
         </div>
         <div>
@@ -222,7 +222,7 @@ function Step5Visual({ lang }: { lang: Language }) {
               </span>
               <div className="absolute top-1.5 px-1.5 py-0.75 rounded bg-background border border-primary/35 scale-75 shadow z-10">
                 <span className="text-[5.5px] text-foreground whitespace-nowrap leading-none block font-semibold">
-                  Ponlponl123 donated 50.00 THB
+                  Ponlponl123 {lang.data.pages.index.sections.howitworks.donated} 50.00 THB
                 </span>
               </div>
             </div>

@@ -39,7 +39,7 @@ function Step1VisualViewer({ lang }: { lang: Language }) {
             S
           </div>
           <h4 className="text-[9px] font-bold text-foreground mt-1 flex items-center gap-0.5 truncate max-w-full">
-            Streamer
+            {m.streamer_label}
             <SealCheckIcon
               className="size-2.5 text-blue-500 shrink-0"
               weight="fill"

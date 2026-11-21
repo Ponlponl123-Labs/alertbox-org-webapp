@@ -3,6 +3,8 @@
 import { useRef, useEffect, useState } from "react";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import { formatI18n } from "@/lib/i18n";
+import { getRoleLabel } from "@/consts/org";
 import SplitText from "@/components/SplitText";
 import { gsap } from "gsap";
 import { cn } from "@/lib/utils";
@@ -50,6 +52,8 @@ interface CreateStepProps {
 export default function CreateStep({ onComplete }: CreateStepProps) {
   const router = useRouter();
   const { authFetch, patchUserInfo } = useUserContext();
+  const lang = useStore(coreStore, (s) => s.lang);
+  const jo = lang.data.app.onboarding.join_org;
   const isDark = useStore(coreStore, (s) => s.isDark);
   const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [isMorphed, setIsMorphed] = useState(false);
@@ -68,6 +72,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   const content4Ref = useRef<HTMLAnchorElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const isInteractiveRef = useRef(false);
+  const completedStepsRef = useRef<Set<number>>(new Set());
   const gsapCtxRef = useRef<gsap.Context | null>(null);
 
   useEffect(() => {
@@ -84,18 +89,23 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
     const calculateTime = () => {
       const diff = new Date(verifiedInfo.expiresAt).getTime() - Date.now();
       if (diff <= 0) {
-        setTimeLeft("Expired");
+        setTimeLeft(jo.expired);
         return;
       }
       const mins = Math.floor(diff / 60000);
       const secs = Math.floor((diff % 60000) / 1000);
-      setTimeLeft(`${mins}m ${secs.toString().padStart(2, "0")}s`);
+      setTimeLeft(
+        formatI18n(jo.time_remaining, {
+          mins,
+          secs: secs.toString().padStart(2, "0"),
+        }),
+      );
     };
 
     calculateTime();
     const interval = setInterval(calculateTime, 1000);
     return () => clearInterval(interval);
-  }, [verifiedInfo]);
+  }, [verifiedInfo, jo]);
 
   const handleVerify = async (code: string) => {
     if (code.length !== 8 || isVerifying) return;
@@ -109,7 +119,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
 
       if (!res.ok) {
         const msg = await res.text();
-        toast.error(msg || "Invalid or expired invitation code");
+        toast.error(msg || jo.toasts.invalid_code);
         setInvitationCode("");
         return;
       }
@@ -119,7 +129,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
       setIsMarkAsUsed(false);
       setStep(3);
     } catch {
-      toast.error("Network error verifying invitation code");
+      toast.error(jo.toasts.verify_network);
       setInvitationCode("");
     } finally {
       setIsVerifying(false);
@@ -129,7 +139,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   const handleJoin = async () => {
     if (!verifiedInfo || isJoining) return;
     if (new Date(verifiedInfo.expiresAt).getTime() <= Date.now()) {
-      toast.error("This invitation code has expired");
+      toast.error(jo.toasts.code_expired);
       setIsMarkAsUsed(false);
       setStep(2);
       setInvitationCode("");
@@ -146,14 +156,14 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
 
       if (!res.ok) {
         const msg = await res.text();
-        toast.error(msg || "Failed to accept invitation");
+        toast.error(msg || jo.toasts.accept_failed);
         setIsJoining(false);
         setIsMarkAsUsed(false);
         return;
       }
 
       const joinResult = await res.json();
-      toast.success(`Joined ${joinResult.orgName} successfully!`);
+      toast.success(formatI18n(jo.toasts.joined, { orgName: joinResult.orgName }));
 
       const meRes = await authFetch(getApiUrl("/api/v1/me"));
       if (meRes.ok) {
@@ -182,7 +192,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
         router.push(`/app/${targetSlug}`);
       }
     } catch {
-      toast.error("Network error joining organization");
+      toast.error(jo.toasts.join_network);
       setIsJoining(false);
       setIsMarkAsUsed(false);
     }
@@ -211,9 +221,11 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   }, []);
 
   const handleFirstComplete = () => {
+    if (completedStepsRef.current.has(0)) return;
+    completedStepsRef.current.add(0);
     gsapCtxRef.current?.add(() => {
       gsap.delayedCall(1.2, () => {
-        const chars = splitRef.current?.querySelectorAll(".split-char");
+        const chars = splitRef.current?.querySelectorAll(".split-char, .split-word");
         const targets = chars && chars.length > 0 ? chars : splitRef.current;
         if (!targets) return;
         gsap.to(targets, {
@@ -232,9 +244,11 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   };
 
   const handleSecondComplete = () => {
+    if (completedStepsRef.current.has(1)) return;
+    completedStepsRef.current.add(1);
     gsapCtxRef.current?.add(() => {
       gsap.delayedCall(1.2, () => {
-        const chars = split2Ref.current?.querySelectorAll(".split-char");
+        const chars = split2Ref.current?.querySelectorAll(".split-char, .split-word");
         const targets = chars && chars.length > 0 ? chars : split2Ref.current;
         if (!targets) return;
         gsap.to(targets, {
@@ -253,6 +267,8 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   };
 
   const handleThirdComplete = () => {
+    if (completedStepsRef.current.has(2)) return;
+    completedStepsRef.current.add(2);
     setIsMorphed(true);
 
     gsapCtxRef.current?.add(() => {
@@ -297,7 +313,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
             className="origin-center will-change-transform z-10 pointer-events-none absolute text-center"
           >
             <SplitText
-              text={"We're moved\nto new home"}
+              text={jo.intro_1}
               className="text-6xl font-medium text-center overflow-visible whitespace-pre-line"
               effect="blur"
               color={isDark ? "#ffffff" : "#000000"}
@@ -312,7 +328,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                 opacity: 1,
                 filter: "blur(0px)",
               }}
-              splitType="chars"
+              splitType={lang.key === "th-TH" ? "words" : "chars"}
               delay={45}
               duration={1.1}
               staggerFrom="start"
@@ -333,7 +349,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
             className="origin-center will-change-transform z-10 pointer-events-none absolute text-center"
           >
             <SplitText
-              text={"Work together\nAlways better"}
+              text={jo.intro_2}
               className="text-6xl font-medium text-center overflow-visible whitespace-pre-line"
               effect="blur"
               color={isDark ? "#ffffff" : "#000000"}
@@ -348,7 +364,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                 opacity: 1,
                 filter: "blur(0px)",
               }}
-              splitType="chars"
+              splitType={lang.key === "th-TH" ? "words" : "chars"}
               delay={45}
               duration={1.1}
               staggerFrom="start"
@@ -378,7 +394,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
             >
               <div className="overflow-visible">
                 <SplitText
-                  text="Enter the invitation code"
+                  text={jo.enter_code}
                   className="text-3xl tracking-wide font-medium overflow-visible"
                   effect="blur"
                   color={isDark ? "#ffffff" : "#000000"}
@@ -393,7 +409,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                     opacity: 1,
                     filter: "blur(0px)",
                   }}
-                  splitType="chars"
+                  splitType={lang.key === "th-TH" ? "words" : "chars"}
                   delay={45}
                   duration={1.1}
                   staggerFrom="start"
@@ -410,7 +426,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                 <InputOTP
                   maxLength={8}
                   pattern={REGEXP_ONLY_DIGITS}
-                  placeholder="xxxxxxxx"
+                  placeholder={jo.otp_placeholder}
                   value={invitationCode}
                   disabled={isVerifying}
                   onChange={(value) => setInvitationCode(value)}
@@ -435,7 +451,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                 {isVerifying && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
                     <Spinner className="size-3.5" />
-                    <span>Verifying code...</span>
+                    <span>{jo.verifying_code}</span>
                   </div>
                 )}
               </div>
@@ -443,14 +459,14 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                 ref={content3Ref}
                 className="text-sm text-muted-foreground tracking-wide opacity-0 mt-1 mb-4 max-w-md font-sans"
               >
-                No invite code? You should ask your organization admin to create one for you or create your own workspace!
+                {jo.no_code_hint}
               </p>
             </div>
             <Link href="/app/org/create" ref={content4Ref} className="opacity-0">
               <AnimateIcon animateOnHover>
                 <Button variant={"ghost"} className={"rounded-xl"}>
                   <WandSparkles className="mr-2 h-4 w-4" />
-                  Create my own workspace
+                  {jo.create_own_workspace}
                 </Button>
               </AnimateIcon>
             </Link>
@@ -467,7 +483,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                 className="absolute right-1/2 translate-x-1/2 top-6"
               >
                 <ShimmeringText
-                  text={isJoining ? "Joining workspace..." : "Tear the ticket to join"}
+                  text={isJoining ? jo.joining_workspace : jo.tear_ticket_hint}
                   color="var(--muted)"
                   shimmeringColor="var(--muted-foreground)"
                   className="text-sm font-medium pointer-events-none"
@@ -497,13 +513,15 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                   }
                   stub={
                     <div className="p-6 flex flex-col h-full">
-                      <h3 className="text-xl font-semibold font-sans">Admit</h3>
+                      <h3 className="text-xl font-semibold font-sans">{jo.ticket.admit}</h3>
                       <div className="flex justify-between mt-auto items-center">
-                        <p className="text-sm font-sans mt-auto text-muted-foreground capitalize">
-                          {verifiedInfo?.role?.toLowerCase() || "Member"} {timeLeft ? `· ${timeLeft}` : ""}
+                        <p className="text-sm font-sans mt-auto text-muted-foreground">
+                          {getRoleLabel(verifiedInfo?.role || "MEMBER", lang.data)}{" "}
+                          {timeLeft ? `· ${timeLeft}` : ""}
                         </p>
                         <span className="text-xs font-sans text-muted-foreground">
-                          No. {invitationCode.slice(0, 4)}-{invitationCode.slice(4, 8)}
+                          {jo.ticket.code_prefix}
+                          {invitationCode.slice(0, 4)}-{invitationCode.slice(4, 8)}
                         </span>
                       </div>
                     </div>
@@ -538,15 +556,15 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                 >
                   <div className="inset-0 p-6 pt-38 absolute flex flex-col">
                     <h1 className="text-xl font-semibold font-sans truncate">
-                      {verifiedInfo?.organization?.name || "Workspace"}
+                      {verifiedInfo?.organization?.name || lang.data.common.workspace}
                     </h1>
                     <p className="text-xs font-sans mt-2 text-muted-foreground">
-                      Bring a small idea. Leave with a little momentum.
+                      {jo.ticket.motto}
                     </p>
                     <span className="text-xs font-sans mt-auto text-muted-foreground">
-                      You got invited by{" "}
+                      {jo.ticket.invited_by}
                       <span className="text-white font-medium">
-                        {verifiedInfo?.inviter?.name || "an Admin"}
+                        {verifiedInfo?.inviter?.name || jo.ticket.inviter_fallback}
                       </span>
                     </span>
                   </div>
@@ -573,7 +591,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                           className="rounded-xl py-3 px-6 h-max font-medium gap-3"
                         >
                           <ThumbsDown />
-                          Reject
+                          {jo.reject}
                         </Button>
                       </AnimateIcon>
                     </Magnetic>

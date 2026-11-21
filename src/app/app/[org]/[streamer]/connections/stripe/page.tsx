@@ -39,8 +39,7 @@ function StripePageContent() {
     "connecting",
   );
   const [connections, setConnections] = useState<Connections | null>(null);
-  const t = lang.data.app.connections.kofi_setup;
-  const t2 = lang.data.app.connections.providers.streamlabs;
+  const stSetup = lang.data.app.connections.stripe_setup;
 
   const oauthExchangedRef = useRef(false);
   const routeOrg = routeParams?.org as string | undefined;
@@ -146,13 +145,13 @@ function StripePageContent() {
     try {
       const res = await authFetch(stripeEndpoint, { method: "DELETE" });
       if (res.ok) {
-        toast.success(t.success_disconnect);
+        toast.success(lang.data.app.connections.streamlabs_setup.success_disconnect);
         setConnections((prev) => (prev ? { ...prev, stripe: null } : null));
       } else {
-        toast.error(t.error_disconnect);
+        toast.error(lang.data.app.connections.toasts.disconnect_failed);
       }
     } catch {
-      toast.error(t.error_network);
+      toast.error(lang.data.app.connections.toasts.disconnect_network);
     } finally {
       setIsSaving(false);
     }
@@ -185,17 +184,17 @@ function StripePageContent() {
           </div>
           <h1 className="text-lg font-semibold mt-3">
             {oauthStatus === "connecting"
-              ? "Connecting with Stripe"
+              ? stSetup.connecting_title
               : oauthStatus === "success"
-                ? t2.oauth.connected
-                : t2.oauth.failed}
+                ? stSetup.connected_title
+                : stSetup.failed_title}
           </h1>
           <p className="text-xs text-foreground/40 mt-3 text-center font-sans leading-relaxed">
             {oauthStatus === "connecting"
-              ? "We're now connecting your Stripe account to Alertbox.org. Please wait..."
+              ? stSetup.connecting_desc
               : oauthStatus === "success"
-                ? t2.oauth.connected_description
-                : t2.oauth.failed_description}
+                ? stSetup.connected_desc
+                : stSetup.failed_desc}
           </p>
         </div>
       </div>
@@ -221,10 +220,10 @@ function StripePageContent() {
       <div className="flex items-center w-full justify-between gap-4 mb-8 font-sans">
         <div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-tight text-foreground my-3">
-            Stripe
+            {lang.data.app.connections.providers.stripe.name}
           </h1>
           <p className="text-sm font-sans text-muted-foreground mt-3">
-            Enterprise-grade payment gateway for accepting credit/debit cards, Apple Pay, and Google Pay globally.
+            {stSetup.gateway_desc}
           </p>
         </div>
         <div className="p-3">
@@ -241,7 +240,7 @@ function StripePageContent() {
             className="rounded-xl gap-2"
           >
             {isSaving ? <Spinner className="size-4" /> : <LinkBreakIcon size={16} />}
-            {t.btn_disconnect}
+            {lang.data.app.connections.kofi_setup.btn_disconnect}
           </Button>
         </div>
       )}

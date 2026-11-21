@@ -8,6 +8,7 @@ import { toast } from "@/components/custom-ui/toast";
 import { useRef, useEffect, useState } from "react";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import { formatI18n } from "@/lib/i18n";
 import SplitText from "@/components/SplitText";
 import { gsap } from "gsap";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,8 @@ interface CreateStepProps {
 export default function CreateStep({ onComplete }: CreateStepProps) {
   const router = useRouter();
   const { authFetch, patchUserInfo } = useUserContext();
+  const lang = useStore(coreStore, (s) => s.lang);
+  const co = lang.data.app.onboarding.create_org;
   const isDark = useStore(coreStore, (s) => s.isDark);
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [orgName, setOrgName] = useState("");
@@ -40,6 +43,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   const content2Ref = useRef<HTMLDivElement>(null);
   const gsapCtxRef = useRef<gsap.Context | null>(null);
   const isMountedRef = useRef(true);
+  const hasCompletedIntroRef = useRef(false);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -65,9 +69,11 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   }, [step]);
 
   const handleFirstComplete = () => {
+    if (hasCompletedIntroRef.current) return;
+    hasCompletedIntroRef.current = true;
     gsapCtxRef.current?.add(() => {
       gsap.delayedCall(1.2, () => {
-        const chars = splitRef.current?.querySelectorAll(".split-char");
+        const chars = splitRef.current?.querySelectorAll(".split-char, .split-word");
         const targets = chars && chars.length > 0 ? chars : splitRef.current;
         if (!targets) return;
         gsap.to(targets, {
@@ -114,7 +120,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
 
       if (!res.ok) {
         const msg = await res.text();
-        toast.error(msg || "Failed to create organization");
+        toast.error(msg || co.toast_failed);
         setIsBuildingOrg(false);
         setIsBuildingOrgState1(false);
         setIsBuildingOrgState2(false);
@@ -122,7 +128,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
       }
 
       const created = await res.json();
-      toast.success(`Organization "${created.name}" created!`);
+      toast.success(formatI18n(co.toast_created, { name: created.name }));
 
       const meRes = await authFetch(getApiUrl("/api/v1/me"));
       if (meRes.ok) {
@@ -154,12 +160,14 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
       }
     } catch {
       if (!isMountedRef.current) return;
-      toast.error("Network error while creating organization");
+      toast.error(co.toast_network);
       setIsBuildingOrg(false);
       setIsBuildingOrgState1(false);
       setIsBuildingOrgState2(false);
     }
   };
+
+  const [goBefore, goAfter] = co.go_to.split("{name}");
 
   return (
     <div
@@ -174,7 +182,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
             className="origin-center will-change-transform z-10 pointer-events-none absolute"
           >
             <SplitText
-              text={"Show the world\nwhat you can do"}
+              text={co.intro}
               className="text-6xl font-medium text-center overflow-visible whitespace-pre-line"
               effect="blur"
               color={isDark ? "#ffffff" : "#000000"}
@@ -189,7 +197,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                 opacity: 1,
                 filter: "blur(0px)",
               }}
-              splitType="chars"
+              splitType={lang.key === "th-TH" ? "words" : "chars"}
               delay={45}
               duration={1.1}
               staggerFrom="start"
@@ -216,7 +224,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                     transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
                     className="mt-20"
                   >
-                    <h1 className="text-5xl tracking-wide font-medium">Give me a couple minute...</h1>
+                    <h1 className="text-5xl tracking-wide font-medium">{co.wait_title}</h1>
                   </motion.div>
                 ) : (
                   <motion.div
@@ -227,7 +235,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                     transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
                     className="mt-20"
                   >
-                    <MorphingText className="text-5xl tracking-wide font-medium **:font-heading!" text={orgName.length >= 4 ? ["Perfect! Your team is ready"] : ["First, name your team"]} />
+                    <MorphingText className="text-5xl tracking-wide font-medium **:font-heading!" text={orgName.length >= 4 ? [co.ready_title] : [co.name_title]} />
                   </motion.div>
                 )
               }
@@ -247,7 +255,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                       color="var(--muted)"
                       shimmeringColor="var(--foreground)"
                       className="text-base font-sans tracking-wide my-6"
-                      text="We're building your organization..."
+                      text={co.creating_desc}
                     />
                   </motion.div>
                 ) : (
@@ -259,7 +267,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                     transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
                   >
                     <p className="text-base text-muted-foreground font-sans tracking-wide my-6">
-                      You can change this later
+                      {co.later_hint}
                     </p>
                   </motion.div>
                 )
@@ -284,7 +292,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                       <AnimateIcon animateOnHover>
                         <Shine asChild loop loopDelay={500}>
                           <Button onClick={() => buildOrgHandle()} className="rounded-xl py-3 px-6 h-max">
-                            Go to <strong>{orgName}</strong>
+                            {goBefore}<strong>{orgName}</strong>{goAfter}
                             <ArrowRight01 />
                           </Button>
                         </Shine>

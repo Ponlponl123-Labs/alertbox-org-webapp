@@ -53,7 +53,7 @@ function Page() {
         return;
       }
       if (!r.ok) {
-        toast.error("Failed to revoke device session");
+        toast.error(lang.data.app.security.toasts.revoke_failed);
         return;
       }
       const revokedDevice: Device = { ...device, isRevoked: true };
@@ -62,7 +62,7 @@ function Page() {
       );
       setSelectedDevice((prev) => (prev?.id === device.id ? revokedDevice : prev));
     } catch {
-      toast.error("Network error revoking device session");
+      toast.error(lang.data.app.security.toasts.revoke_network);
     } finally {
       setIsRevoking(false);
     }
@@ -89,7 +89,7 @@ function Page() {
         }
       } catch (err) {
         if ((err as Error)?.name !== "AbortError") {
-          toast.error("Failed to load active sessions");
+          toast.error(coreStore.getState().lang.data.app.security.toasts.load_failed);
         }
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
@@ -107,7 +107,7 @@ function Page() {
       <div>
         <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
           <UserIcon size={16} weight="bold" />
-          <span>My Account</span>
+          <span>{lang.data.app.security.eyebrow}</span>
         </div>
         <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
           {lang.data.app.security.title}
@@ -157,7 +157,7 @@ function Page() {
                   <strong>Discord</strong>
                 </>
               ) : (
-                userInfo?.createWith || "Not set"
+                userInfo?.createWith || lang.data.common.not_set
               ),
           },
           {
@@ -170,7 +170,7 @@ function Page() {
             ),
             title: lang.data.app.security.email.title,
             description: lang.data.app.security.email.description,
-            value: userInfo?.email || "Not set",
+            value: userInfo?.email || lang.data.common.not_set,
           },
         ].map((item, i) => (
           <div className="w-full bg-card p-4 rounded-2xl group" key={i}>
@@ -389,7 +389,7 @@ function Page() {
               >
                 {selectedDevice ? (
                   <iframe
-                    title="Session Approximate Location Map"
+                    title={lang.data.app.security.map_title}
                     sandbox="allow-scripts allow-same-origin"
                     referrerPolicy="no-referrer"
                     loading="lazy"

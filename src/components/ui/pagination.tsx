@@ -1,4 +1,8 @@
+"use client"
+
 import * as React from "react"
+import { useStore } from "zustand"
+import { coreStore } from "@/hooks/store/core"
 import { cn } from "cn"
 
 import { Button } from "@/components/ui/button"
@@ -9,10 +13,11 @@ function Pagination({
   className,
   ...props
 }: React.ComponentProps<typeof PaginationPrimitive.Root>) {
+  const lang = useStore(coreStore, (state) => state.lang)
   return (
     <PaginationPrimitive.Root
       role="navigation"
-      aria-label="pagination"
+      aria-label={lang.data.common.aria.pagination}
       data-slot="pagination"
       className={cn("mx-auto flex w-full justify-center", className)}
       {...props}
@@ -68,35 +73,39 @@ function PaginationLink({
 
 function PaginationPrevious({
   className,
-  text = "Previous",
+  text,
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  const lang = useStore(coreStore, (state) => state.lang)
+  const label = text ?? lang.data.common.previous
   return (
     <PaginationLink
-      aria-label="Go to previous page"
+      aria-label={lang.data.common.aria.prev_page}
       size="default"
       className={cn("pl-1.5!", className)}
       {...props}
     >
       <CaretLeftIcon data-icon="inline-start" />
-      <span className="hidden sm:block">{text}</span>
+      <span className="hidden sm:block">{label}</span>
     </PaginationLink>
   )
 }
 
 function PaginationNext({
   className,
-  text = "Next",
+  text,
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  const lang = useStore(coreStore, (state) => state.lang)
+  const label = text ?? lang.data.common.next
   return (
     <PaginationLink
-      aria-label="Go to next page"
+      aria-label={lang.data.common.aria.next_page}
       size="default"
       className={cn("pr-1.5!", className)}
       {...props}
     >
-      <span className="hidden sm:block">{text}</span>
+      <span className="hidden sm:block">{label}</span>
       <CaretRightIcon data-icon="inline-end" />
     </PaginationLink>
   )
@@ -106,6 +115,7 @@ function PaginationEllipsis({
   className,
   ...props
 }: React.ComponentProps<"span">) {
+  const lang = useStore(coreStore, (state) => state.lang)
   return (
     <span
       aria-hidden
@@ -118,7 +128,7 @@ function PaginationEllipsis({
     >
       <DotsThreeIcon
       />
-      <span className="sr-only">More pages</span>
+      <span className="sr-only">{lang.data.common.aria.more_pages}</span>
     </span>
   )
 }

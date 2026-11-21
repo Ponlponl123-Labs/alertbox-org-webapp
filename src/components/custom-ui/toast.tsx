@@ -1,6 +1,8 @@
 "use client"
 
 import * as React from "react"
+import { useStore } from "zustand"
+import { coreStore } from "@/hooks/store/core"
 import { Toast as ToastPrimitive } from "@animate-ui/react/primitives/base-ui/toast"
 import { cn } from "cn"
 
@@ -211,10 +213,11 @@ function ToastClose({
     render = <Button variant="ghost" size="icon-sm" />,
     ...props
 }: ToastPrimitive.Close.Props) {
+    const lang = useStore(coreStore, (state) => state.lang)
     return (
         <ToastPrimitive.Close
             data-slot="toast-close"
-            aria-label="Close toast"
+            aria-label={lang.data.common.aria.close_toast}
             render={render}
             className={cn(
                 "relative shrink-0 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-foreground",

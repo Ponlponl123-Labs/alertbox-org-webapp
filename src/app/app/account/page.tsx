@@ -56,11 +56,11 @@ function Page() {
     e.currentTarget.value = "";
     if (!file) return;
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-      toast.error("Only PNG, JPEG, and WebP images are supported");
+      toast.error(lang.data.common.image_type_error);
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be 5 MB or smaller");
+      toast.error(lang.data.common.image_size_error);
       return;
     }
     revokeObjectUrl();
@@ -145,13 +145,13 @@ function Page() {
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
             <UserIcon size={16} weight="bold" />
-            <span>My Account</span>
+            <span>{lang.data.app.account.eyebrow}</span>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
             {lang.data.app.account.title}
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage your user account profile and settings
+            {lang.data.app.account.subtitle}
           </p>
         </div>
 
@@ -164,7 +164,7 @@ function Page() {
               {userInfo?.avatar && (
                 <AvatarImage
                   src={userInfo.avatar}
-                  alt={userInfo?.displayName || userInfo?.name || "User"}
+                  alt={userInfo?.displayName || userInfo?.name || lang.data.common.user}
                 />
               )}
               <AvatarFallback className="text-3xl font-bold">
@@ -191,7 +191,7 @@ function Page() {
           <div className="flex flex-col items-center sm:items-start gap-2 flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="font-bold text-2xl truncate">
-                {userInfo?.displayName || userInfo?.name || "User"}
+                {userInfo?.displayName || userInfo?.name || lang.data.common.user}
               </h2>
               <Button
                 size={"icon"}

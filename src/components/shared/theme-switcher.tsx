@@ -10,6 +10,7 @@ const emptySubscribe = () => () => {};
 
 export default function ThemeSwitcher() {
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const lang = useStore(coreStore, (state) => state.lang);
   const isDark = useStore(coreStore, (state) => state.isDark);
   const toggleTheme = coreStore.getState().toggleTheme;
 
@@ -32,7 +33,7 @@ export default function ThemeSwitcher() {
       size="icon"
       className="rounded-xl"
       onClick={toggleTheme}
-      aria-label="Toggle theme"
+      aria-label={lang.data.common.aria.toggle_theme}
     >
       {isDark ? (
         <SunIcon size={20} weight="fill" />

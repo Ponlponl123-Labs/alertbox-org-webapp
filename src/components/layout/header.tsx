@@ -284,7 +284,7 @@ function HeaderContent({ pathname }: { pathname: string }) {
                         variant="ghost"
                         size="icon"
                         className="rounded-xl text-foreground/40"
-                        aria-label="Back to home"
+                        aria-label={lang.data.common.aria.back_to_home}
                       >
                         <CaretLeftIcon
                           size={16}
@@ -297,7 +297,7 @@ function HeaderContent({ pathname }: { pathname: string }) {
                       variant="ghost"
                       size="icon"
                       className="rounded-xl md:hidden text-foreground/40"
-                      aria-label="Toggle sidebar"
+                      aria-label={lang.data.common.aria.toggle_sidebar}
                       onClick={() =>
                         setSidebarHiddenOnMobile(!isSidebarHiddenOnMobile)
                       }
@@ -315,7 +315,7 @@ function HeaderContent({ pathname }: { pathname: string }) {
                   {pathname.startsWith("/docs") ? (
                     <Image
                       src="/alertbox-colored.png"
-                      alt="AlertBox Logo"
+                      alt={lang.data.common.aria.logo_alt}
                       className="w-7 h-7 object-contain"
                       width={28}
                       height={28}
@@ -391,7 +391,7 @@ function HeaderContent({ pathname }: { pathname: string }) {
                   "rounded-xl md:hidden",
                   pathname.startsWith("/app") && "hidden",
                 )}
-                aria-label="Toggle navigation menu"
+                aria-label={lang.data.common.aria.toggle_nav}
                 aria-expanded={isNavActive}
                 onClick={toggleNav}
               >

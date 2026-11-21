@@ -3,6 +3,9 @@
 import * as React from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { LayoutGrid, Box } from "lucide-react"
+import { useStore } from "zustand"
+import { coreStore } from "@/hooks/store/core"
+import { formatCount, formatI18n } from "@/lib/i18n"
 import { useUserContext } from "@/contexts/user"
 import { useSkylineStore } from "@/hooks/store/skyline"
 import { getApiUrl } from "@/lib/api"
@@ -417,6 +420,7 @@ function Stat({
   align: "start" | "end" | "stack"
   loading?: boolean
 }) {
+  const lang = useStore(coreStore, (s) => s.lang)
   const animatedMetric = (
     <AnimatePresence mode="wait">
       <motion.div
@@ -440,7 +444,7 @@ function Stat({
           <span className="text-[14px] text-foreground">{unit}</span>
         </div>
         <div className="mt-0.5 truncate text-[12px] text-muted-foreground">
-          {loading ? "Calculating..." : sub}
+          {loading ? lang.data.components.contribution_skyline.calculating : sub}
         </div>
       </motion.div>
     </AnimatePresence>
@@ -486,7 +490,7 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
   onViewChange,
   palette = "github",
   title,
-  unit = "transaction",
+  unit: unitProp,
   unitPlural,
   heightScale = 1,
   duration = 1300,
@@ -496,11 +500,15 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
   showLegend = true,
   showToggle = true,
   footer,
-  locale = "en-US",
+  locale: localeProp,
   seed = 7,
   onCellClick,
   className = "",
 }: ContributionSkylineProps) {
+  const lang = useStore(coreStore, (s) => s.lang)
+  const cs = lang.data.components.contribution_skyline
+  const locale = localeProp ?? lang.key
+  const unit = unitProp ?? cs.unit_one
   const userCtx = useUserContext()
   const authFetch = userCtx.authFetch
 
@@ -589,17 +597,21 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
   const tipRef = React.useRef<HTMLDivElement>(null)
   const engine = React.useRef<{ kick: () => void; load: () => void; retheme: () => void; tipWidth: (w: number) => void } | null>(null)
 
-  const plural = unitPlural ?? unit + "s"
+  const plural = unitPlural ?? (unitProp ? unitProp + "s" : cs.unit_other)
+  const noUnitLabel = React.useMemo(
+    () => formatI18n(cs.no_unit_label, { unitPlural: plural }),
+    [cs.no_unit_label, plural],
+  )
   const nf = React.useMemo(() => new Intl.NumberFormat(locale), [locale])
   const df = React.useMemo(() => new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", timeZone: "UTC" }), [locale])
   const dfy = React.useMemo(() => new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }), [locale])
   const dfl = React.useMemo(() => new Intl.DateTimeFormat(locale, { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }), [locale])
-  const noun = React.useCallback((n: number) => (n === 1 ? unit : plural), [unit, plural])
+  const noun = React.useCallback((n: number) => formatCount(unit, plural, n), [unit, plural])
   const describe = React.useCallback((i: number) => {
     const c = model.cells[i]
     if (!c) return ""
-    return (c.count ? nf.format(c.count) + " " + noun(c.count) : "No " + plural) + " on " + dfl.format(dayMs(c.date))
-  }, [model.cells, nf, noun, plural, dfl])
+    return (c.count ? nf.format(c.count) + " " + noun(c.count) : noUnitLabel) + " " + cs.on_word + " " + dfl.format(dayMs(c.date))
+  }, [model.cells, nf, noun, noUnitLabel, cs.on_word, dfl])
 
   const cfg = React.useRef({
     model,
@@ -1534,21 +1546,24 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
   const bigSize = Math.round(Math.max(30, Math.min(56, width * 0.058)))
   const statBlocks = [
     {
-      label: "1 year total",
+      label: cs.year_total,
       value: nf.format(stats.total),
       unit: noun(stats.total),
       sub: stats.totalTest > 0
-        ? `${stats.totalReal.toLocaleString()} real · ${stats.totalTest.toLocaleString()} test`
+        ? formatI18n(cs.real_test_split, {
+            real: stats.totalReal.toLocaleString(locale),
+            test: stats.totalTest.toLocaleString(locale),
+          })
         : range(stats.first, stats.last, true),
     },
-    { label: "Busiest day", value: nf.format(stats.busiest.count), unit: noun(stats.busiest.count), sub: stats.busiest.date ? df.format(dayMs(stats.busiest.date)) : "—" },
-    { label: "Longest streak", value: nf.format(stats.longest.days), unit: stats.longest.days === 1 ? "day" : "days", sub: range(stats.longest.start, stats.longest.end) },
-    { label: "Current streak", value: nf.format(stats.current.days), unit: stats.current.days === 1 ? "day" : "days", sub: range(stats.current.start, stats.current.end) },
+    { label: cs.busiest_day, value: nf.format(stats.busiest.count), unit: noun(stats.busiest.count), sub: stats.busiest.date ? df.format(dayMs(stats.busiest.date)) : "—" },
+    { label: cs.longest_streak, value: nf.format(stats.longest.days), unit: formatCount(cs.day_one, cs.day_other, stats.longest.days), sub: range(stats.longest.start, stats.longest.end) },
+    { label: cs.current_streak, value: nf.format(stats.current.days), unit: formatCount(cs.day_one, cs.day_other, stats.current.days), sub: range(stats.current.start, stats.current.end) },
   ]
   const showRow = showStats && !(is3d && corners)
-  const levelNames = ["No " + plural, "Light", "Moderate", "Heavy", "Heaviest"]
+  const levelNames = [noUnitLabel, cs.levels.light, cs.levels.moderate, cs.levels.heavy, cs.levels.heaviest]
 
-  const hints = ["Hover a day for details · arrow keys to explore", "Drag to orbit · double-click to reset"]
+  const hints = [cs.hint_2d, cs.hint_3d]
   const hint = hints[is3d && orbit ? 1 : 0]
 
   return (
@@ -1569,11 +1584,11 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
                 className="inline-flex items-center gap-1.5"
               >
                 {isLoading ? (
-                  <span className="text-muted-foreground text-xs font-normal">Loading activity...</span>
+                  <span className="text-muted-foreground text-xs font-normal">{cs.loading_activity}</span>
                 ) : (
                   <>
                     <span className="font-semibold tabular-nums">{nf.format(stats.total)}</span>{" "}
-                    {noun(stats.total)} in the last year
+                    {formatI18n(cs.total_last_year, { total: "", noun: noun(stats.total) }).trim()}
                   </>
                 )}
               </motion.div>
@@ -1583,7 +1598,7 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
         {showToggle && (
           <div
             role="group"
-            aria-label="Chart view"
+            aria-label={cs.chart_view}
             className="relative inline-flex items-center rounded-lg border border-border bg-muted/60 p-0.5"
           >
             {(["2d", "3d"] as const).map((v) => {
@@ -1593,8 +1608,8 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
                   key={v}
                   type="button"
                   aria-pressed={isCurrent}
-                  aria-label={v === "2d" ? "Flat heat map" : "3D skyline"}
-                  title={v === "2d" ? "Flat heat map" : "3D skyline"}
+                  aria-label={v === "2d" ? cs.flat_heatmap : cs.skyline_3d}
+                  title={v === "2d" ? cs.flat_heatmap : cs.skyline_3d}
                   onClick={() => setView(v)}
                   className={cn(
                     "relative z-10 flex h-7 w-8 items-center justify-center rounded-md border-0 bg-transparent p-0 transition-colors focus-visible:outline-2 focus-visible:outline-ring",
@@ -1628,10 +1643,12 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
               ref={canvasRef}
               tabIndex={0}
               role="img"
-              aria-label={
-                nf.format(stats.total) + " " + noun(stats.total) + " between " + range(stats.first, stats.last, true) +
-                ", shown as a " + (is3d ? "3D skyline" : "heat map") + ". Use the arrow keys to read individual days."
-              }
+              aria-label={formatI18n(cs.canvas_aria, {
+                total: nf.format(stats.total),
+                noun: noun(stats.total),
+                range: range(stats.first, stats.last, true),
+                view: is3d ? cs.skyline_3d : cs.flat_heatmap,
+              })}
               className="absolute top-0 left-0 block outline-none"
               style={{ maxWidth: "none", touchAction: is3d && orbit ? "pan-y" : "auto" }}
             />
@@ -1693,14 +1710,17 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
                 className="pointer-events-none absolute top-3 left-3 z-20 -translate-y-full whitespace-nowrap rounded-md border border-border/80 bg-popover px-2.5 py-1.5 text-[12px] leading-none text-popover-foreground shadow-md sm:top-4 sm:left-4"
               >
                 <strong className="font-semibold text-foreground">
-                  {model.cells[active].count ? nf.format(model.cells[active].count) + " " + noun(model.cells[active].count) : "No " + plural}
+                  {model.cells[active].count ? nf.format(model.cells[active].count) + " " + noun(model.cells[active].count) : noUnitLabel}
                 </strong>
                 {Boolean(model.cells[active].testCount && model.cells[active].testCount > 0) && (
                   <span className="text-sky-400 font-medium">
-                    {" "}({model.cells[active].realCount} real, {model.cells[active].testCount} test)
+                    {formatI18n(cs.real_test_parens, {
+                      real: model.cells[active].realCount ?? 0,
+                      test: model.cells[active].testCount ?? 0,
+                    })}
                   </span>
                 )}
-                <span className="text-muted-foreground"> on {dfy.format(dayMs(model.cells[active].date))}</span>
+                <span className="text-muted-foreground"> {cs.on_word} {dfy.format(dayMs(model.cells[active].date))}</span>
                 <motion.span
                   aria-hidden="true"
                   className="absolute top-full h-0 w-0 border-x-[5px] border-x-transparent border-t-[5px] border-t-popover"
@@ -1755,12 +1775,12 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
           {showLegend && (
             <div className="flex items-center gap-3" onMouseLeave={() => setLegendLevel(-1)}>
               <div className="flex items-center gap-1.5">
-                <span className="mr-0.5 text-muted-foreground">Less</span>
+                <span className="mr-0.5 text-muted-foreground">{cs.less}</span>
                 {theme.swatches.map((c, i) => (
                   <motion.button
                     key={i}
                     type="button"
-                    aria-label={"Highlight " + levelNames[i].toLowerCase() + " days"}
+                    aria-label={formatI18n(cs.highlight_level, { level: levelNames[i].toLowerCase() })}
                     aria-pressed={legendLevel === i}
                     title={levelNames[i]}
                     onMouseEnter={() => setLegendLevel(i)}
@@ -1776,7 +1796,7 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
                     }}
                   />
                 ))}
-                <span className="ml-0.5 text-muted-foreground">More</span>
+                <span className="ml-0.5 text-muted-foreground">{cs.more}</span>
               </div>
 
               <Badge
@@ -1784,7 +1804,7 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
                 className="gap-1.5 bg-sky-500/10 text-sky-400 font-medium px-2 py-0.5 text-[11px] rounded-full select-none"
               >
                 <span className="inline-block size-1.5 rounded-full bg-sky-400" />
-                Test
+                {cs.test_badge}
               </Badge>
             </div>
           )}

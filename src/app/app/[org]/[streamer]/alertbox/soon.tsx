@@ -19,7 +19,7 @@ export default function Soon() {
       <div className="flex flex-col gap-3 items-center justify-center max-w-xs text-center">
         <CraneTowerIcon weight="fill" className="size-12 text-foreground/20" />
         <h1 className="tracking-wider text-foreground/40 text-lg font-semibold">
-          {lang.data.common.comming_soon}
+          {lang.data.common.coming_soon}
         </h1>
         <p className="tracking-wider text-foreground/30 font-sans text-xs -mt-1.5">
           {lang.data.app.alertbox.donation.description}

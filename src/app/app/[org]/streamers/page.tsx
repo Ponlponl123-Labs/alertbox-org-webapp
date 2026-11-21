@@ -1,5 +1,8 @@
 "use client";
 import { useUserContext } from "@/contexts/user";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
+import { formatCount, formatI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { BroadcastIcon, PlusIcon, ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { cn, getFallbackInitial } from "@/lib/utils";
@@ -14,6 +17,8 @@ import { CreateChannelStep } from "../../(onboarding)";
 
 export default function OrgStreamersPage() {
   const { activeOrg, isSelfHosted } = useUserContext();
+  const lang = useStore(coreStore, (s) => s.lang);
+  const os = lang.data.app.org.streamers;
   const [isCreatingChannel, setIsCreatingChannel] = useState(false);
   const router = useRouter();
   const orgKey = activeOrg?.slug || activeOrg?.id || "org";
@@ -40,27 +45,27 @@ export default function OrgStreamersPage() {
             <div>
               <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
                 <BroadcastIcon size={16} weight="bold" />
-                <span>Organization Channels</span>
+                <span>{os.eyebrow}</span>
               </div>
               <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
-                Streamer Channels
+                {os.title}
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Manage all streaming profiles and public channels belonging to {activeOrg?.name}.
+                {formatI18n(os.subtitle, { org: activeOrg?.name || "" })}
               </p>
             </div>
 
             {canCreateStreamer && (
               <Button size="sm" className="gap-2 rounded-xl text-xs font-semibold p-3 h-max" onClick={() => setIsCreatingChannel(true)}>
                 <PlusIcon size={14} weight="bold" />
-                <span>Create Channel</span>
+                <span>{os.create_channel}</span>
               </Button>
             )}
           </div>
 
           {!isSelfHosted && !isEnterprise && streamers.length >= 1 && (
             <div className="p-3.5 rounded-xl bg-amber-500/10 text-amber-500 text-xs font-medium">
-              This is a Community organization which is limited to 1 streamer channel. Enterprise organizations or Self-hosted have unlimited channels.
+              {os.community_limit_notice}
             </div>
           )}
 
@@ -106,7 +111,14 @@ export default function OrgStreamersPage() {
 
                 <div className="flex items-center justify-between text-xs w-full">
                   <span className="text-muted-foreground text-[11px]">
-                    {s.widgets?.length || 1} Active Alertbox Widget
+                    {formatI18n(
+                      formatCount(
+                        os.active_widgets_one,
+                        os.active_widgets_other,
+                        s.widgets?.length || 1,
+                      ),
+                      { count: s.widgets?.length || 1 },
+                    )}
                   </span>
                   <div className="flex items-center gap-3">
                     {s.uri && (
@@ -118,7 +130,7 @@ export default function OrgStreamersPage() {
                         className="text-muted-foreground hover:text-foreground flex items-center gap-1"
                       >
                         <ArrowSquareOutIcon size={14} />
-                        <span>Public</span>
+                        <span>{lang.data.common.public}</span>
                       </Link>
                     )}
                   </div>

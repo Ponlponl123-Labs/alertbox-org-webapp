@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
 import { getApiUrl } from "@/lib/api";
@@ -61,6 +61,9 @@ import { AnimateIcon } from "@animate-ui/react/icons";
 import { RefreshCcw } from "@/components/animate-ui/icons/hugeicons/refresh-ccw";
 import { Sparkles } from "@/components/animate-ui/icons/hugeicons/sparkles";
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
+import { formatI18n } from "@/lib/i18n";
 
 const GATEWAY_NAMES: Record<string, string> = {
   STRIPE: "Stripe",
@@ -71,14 +74,6 @@ const GATEWAY_NAMES: Record<string, string> = {
   FFP: "PromptPay",
   XENDIT: "Xendit",
 };
-
-const TRANSACTION_STATUS_TABS = [
-  { value: "ALL", label: "All Status" },
-  { value: "COMPLETED", label: "Completed" },
-  { value: "PENDING", label: "Pending" },
-  { value: "FAILED", label: "Failed" },
-  { value: "REFUNDED", label: "Refunded" },
-];
 
 interface TransactionItem {
   id: string;
@@ -106,6 +101,37 @@ interface StreamerConnections {
 const PAGE_SIZE = DEFAULT_TRANSACTION_PAGE_SIZE;
 
 export default function StreamerTransactionsPage() {
+  const lang = useStore(coreStore, (s) => s.lang);
+  const st = lang.data.app.streamer.transactions;
+  const statusTabs = useMemo(
+    () => [
+      { value: "ALL", label: st.tabs.all },
+      { value: "COMPLETED", label: st.tabs.completed },
+      { value: "PENDING", label: st.tabs.pending },
+      { value: "FAILED", label: st.tabs.failed },
+      { value: "REFUNDED", label: st.tabs.refunded },
+    ],
+    [st.tabs],
+  );
+  const gatewayOptions = useMemo(
+    () => [
+      { label: st.all_gateways, value: "ALL" },
+      { label: lang.data.app.connections.providers.bmac.name, value: "BMAC" },
+      { label: lang.data.app.connections.providers.kofi.name, value: "KOFI" },
+      { label: lang.data.app.connections.providers.stripe.name, value: "STRIPE" },
+      { label: lang.data.app.connections.providers.xendit.name, value: "XENDIT" },
+      { label: st.promptpay_ffp, value: "FFP" },
+    ],
+    [st.all_gateways, st.promptpay_ffp, lang.data.app.connections.providers],
+  );
+  const sortOptions = useMemo(
+    () => [
+      { label: st.sort_date, value: "createdAt" },
+      { label: st.sort_amount, value: "amount" },
+    ],
+    [st.sort_date, st.sort_amount],
+  );
+
   const routeParams = useParams();
   const { activeOrg, activeStreamer, authFetch } = useUserContext();
   const rawOrg = String((routeParams?.org as string) || activeOrg?.id || activeOrg?.slug || "");
@@ -182,8 +208,29 @@ export default function StreamerTransactionsPage() {
   const [testProvider, setTestProvider] = useState("BMAC");
   const [testAmount, setTestAmount] = useState("100");
   const [testCurrency, setTestCurrency] = useState("THB");
-  const [testDonorName, setTestDonorName] = useState("Generous Supporter");
-  const [testMessage, setTestMessage] = useState("Keep up the great stream! 🔥");
+  const [testDonorName, setTestDonorName] = useState(
+    () => coreStore.getState().lang.data.app.streamer.transactions.simulate_dialog.donor_default_name,
+  );
+  const [testMessage, setTestMessage] = useState(
+    () => coreStore.getState().lang.data.app.streamer.transactions.simulate_dialog.message_default,
+  );
+  const lastDefaultDonorRef = useRef(
+    coreStore.getState().lang.data.app.streamer.transactions.simulate_dialog.donor_default_name,
+  );
+  const lastDefaultMsgRef = useRef(
+    coreStore.getState().lang.data.app.streamer.transactions.simulate_dialog.message_default,
+  );
+  const openTestDialog = () => {
+    if (!testDonorName || testDonorName === lastDefaultDonorRef.current) {
+      setTestDonorName(st.simulate_dialog.donor_default_name);
+    }
+    if (!testMessage || testMessage === lastDefaultMsgRef.current) {
+      setTestMessage(st.simulate_dialog.message_default);
+    }
+    lastDefaultDonorRef.current = st.simulate_dialog.donor_default_name;
+    lastDefaultMsgRef.current = st.simulate_dialog.message_default;
+    setIsTestDialogOpen(true);
+  };
   const [sendingTest, setSendingTest] = useState(false);
 
   const [availableProviders, setAvailableProviders] = useState<string[]>([]);
@@ -226,7 +273,7 @@ export default function StreamerTransactionsPage() {
       })
       .catch((err) => {
         if ((err as Error)?.name === "AbortError") return;
-        toast.error("Failed to load transactions");
+        toast.error(coreStore.getState().lang.data.app.streamer.transactions.toasts.load_failed);
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -308,8 +355,12 @@ export default function StreamerTransactionsPage() {
           3000,
         );
 
+        const currentLang = coreStore.getState().lang;
         toast.info(
-          `⚡ Live: ${incoming.senderName} tipped ${formatMoneyMinorUnits(incoming.amount, incoming.currency)}`,
+          formatI18n(currentLang.data.app.streamer.transactions.toasts.live_tip, {
+            sender: incoming.senderName,
+            amount: formatMoneyMinorUnits(incoming.amount, incoming.currency, currentLang.key),
+          }),
           { description: incoming.message || undefined },
         );
       } else {
@@ -377,7 +428,7 @@ export default function StreamerTransactionsPage() {
     if (!orgTarget || !streamerTarget || sendingTest || !canManageWidgets) return;
     const parsedAmount = Number(testAmount);
     if (!Number.isFinite(parsedAmount) || parsedAmount < 1 || parsedAmount > 1_000_000) {
-      toast.error("Test amount must be between 1 and 1,000,000");
+      toast.error(st.toasts.test_amount_range);
       return;
     }
     setSendingTest(true);
@@ -394,7 +445,7 @@ export default function StreamerTransactionsPage() {
             provider: testProvider,
             amount: parsedAmount,
             currency: testCurrency,
-            senderName: testDonorName.trim().slice(0, 64) || "Generous Supporter",
+            senderName: testDonorName.trim().slice(0, 64) || st.simulate_dialog.donor_default_name,
             message: testMessage.trim().slice(0, 280),
           }),
         },
@@ -402,10 +453,10 @@ export default function StreamerTransactionsPage() {
 
       if (!res.ok) throw new Error("Failed to send test alert");
 
-      toast.success(`Test ${testProvider} alert dispatched successfully!`);
+      toast.success(formatI18n(st.toasts.test_dispatched, { provider: testProvider }));
       setIsTestDialogOpen(false);
     } catch {
-      toast.error("Failed to trigger test transaction");
+      toast.error(st.toasts.test_failed);
     } finally {
       setSendingTest(false);
     }
@@ -431,10 +482,10 @@ export default function StreamerTransactionsPage() {
       );
 
       toast.success(
-        data.isDeleted ? "Transaction hidden (dashed)" : "Transaction restored",
+        data.isDeleted ? st.toasts.hidden : st.toasts.restored,
       );
     } catch {
-      toast.error("Failed to update transaction status");
+      toast.error(st.toasts.status_update_failed);
     } finally {
       setBusyTxIds((prev) => {
         const next = { ...prev };
@@ -459,10 +510,13 @@ export default function StreamerTransactionsPage() {
       if (!res.ok) throw new Error("Replay failed");
 
       toast.success(
-        `Replayed alert for ${tx.senderName} (${formatMoneyMinorUnits(tx.amount, tx.currency)})`,
+        formatI18n(st.toasts.replayed, {
+          sender: tx.senderName,
+          amount: formatMoneyMinorUnits(tx.amount, tx.currency, lang.key),
+        }),
       );
     } catch {
-      toast.error("Failed to resend alert");
+      toast.error(st.toasts.resend_failed);
     } finally {
       setBusyTxIds((prev) => {
         const next = { ...prev };
@@ -476,7 +530,7 @@ export default function StreamerTransactionsPage() {
   const totalPages = Math.ceil(effectiveTotal / PAGE_SIZE) || 1;
   const startIndex = effectiveTotal === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const endIndex = Math.min(currentPage * PAGE_SIZE, effectiveTotal);
-  const timeFormatter = getCachedDateFormat("en-US", { hour: "2-digit", minute: "2-digit" });
+  const timeFormatter = getCachedDateFormat(lang.key, { hour: "2-digit", minute: "2-digit" });
 
   return (
     <motion.div
@@ -488,7 +542,7 @@ export default function StreamerTransactionsPage() {
         <div className="w-full">
           <div className="flex gap-4 items-center my-3">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-tight text-foreground">
-              Transactions
+              {st.title}
             </h1>
             <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl select-none text-xs font-medium bg-muted/80 opacity-60">
               <span
@@ -507,17 +561,17 @@ export default function StreamerTransactionsPage() {
               </span>
               <span className="text-xs text-muted-foreground font-medium font-sans">
                 {wsStatus === "connected"
-                  ? "Connected (Live Feed)"
+                  ? st.ws.connected
                   : wsStatus === "connecting"
-                    ? "Connecting..."
-                    : "Connection lost"}
+                    ? st.ws.connecting
+                    : st.ws.lost}
               </span>
             </div>
           </div>
           <div className="flex justify-between w-full items-center">
             <div className="flex flex-col">
               <span className="tracking-wider text-sm text-foreground/40">
-                Here&apos;s where you manage everything related to your transactions.
+                {st.subtitle}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -533,7 +587,7 @@ export default function StreamerTransactionsPage() {
                     size={14}
                     className={cn(loading && "animate-spin")}
                   />
-                  <span className="hidden sm:inline">Refresh</span>
+                  <span className="hidden sm:inline">{lang.data.common.refresh}</span>
                 </Button>
               </AnimateIcon>
 
@@ -541,11 +595,11 @@ export default function StreamerTransactionsPage() {
                 <AnimateIcon animateOnHover>
                   <Button
                     size="sm"
-                    onClick={() => setIsTestDialogOpen(true)}
+                    onClick={openTestDialog}
                     className="gap-2 rounded-xl p-3 h-max text-xs"
                   >
                     <Sparkles size={15} />
-                    <span>Simulate Tip</span>
+                    <span>{st.simulate_tip}</span>
                   </Button>
                 </AnimateIcon>
               )}
@@ -557,7 +611,7 @@ export default function StreamerTransactionsPage() {
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           <JellyRadio
-            items={TRANSACTION_STATUS_TABS}
+            items={statusTabs}
             value={selectedStatus}
             disabled={false}
             onChange={(value) => {
@@ -572,7 +626,7 @@ export default function StreamerTransactionsPage() {
           <div className="relative w-full sm:w-72">
             <Input
               type="text"
-              placeholder="Search supporter or message..."
+              placeholder={st.search_placeholder}
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -588,7 +642,7 @@ export default function StreamerTransactionsPage() {
                       setCurrentPage(1);
                     }}
                     className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors cursor-pointer"
-                    aria-label="Clear search"
+                    aria-label={lang.data.common.aria.clear_search}
                   >
                     <XIcon size={14} />
                   </button>
@@ -606,14 +660,7 @@ export default function StreamerTransactionsPage() {
 
           <div className="flex items-center gap-2">
             <Select
-              items={[
-                { label: 'All Gateways', value: 'ALL' },
-                { label: 'Buy Me a Coffee', value: 'BMAC' },
-                { label: 'Ko-fi', value: 'KOFI' },
-                { label: 'Stripe', value: 'STRIPE' },
-                { label: 'Xendit', value: 'XENDIT' },
-                { label: 'PromptPay (FFP)', value: 'FFP' },
-              ]}
+              items={gatewayOptions}
               defaultValue="ALL"
               onValueChange={(e) => {
                 setSelectedProvider(e as string);
@@ -627,14 +674,7 @@ export default function StreamerTransactionsPage() {
               </AnimateIcon>
               <SelectContent className="-translate-x-4 -translate-y-1">
                 <SelectGroup>
-                  {[
-                    { label: 'All Gateways', value: 'ALL' },
-                    { label: 'Buy Me a Coffee', value: 'BMAC' },
-                    { label: 'Ko-fi', value: 'KOFI' },
-                    { label: 'Stripe', value: 'STRIPE' },
-                    { label: 'Xendit', value: 'XENDIT' },
-                    { label: 'PromptPay (FFP)', value: 'FFP' },
-                  ].map((item) => (
+                  {gatewayOptions.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -644,10 +684,7 @@ export default function StreamerTransactionsPage() {
             </Select>
 
             <Select
-              items={[
-                { label: 'Date', value: 'createdAt' },
-                { label: 'Amount', value: 'amount' },
-              ]}
+              items={sortOptions}
               defaultValue="createdAt"
               onValueChange={(e) => {
                 setSortBy(e as "createdAt" | "amount");
@@ -661,10 +698,7 @@ export default function StreamerTransactionsPage() {
               </AnimateIcon>
               <SelectContent className="-translate-x-5 -translate-y-1">
                 <SelectGroup>
-                  {[
-                    { label: 'Date', value: 'createdAt' },
-                    { label: 'Amount', value: 'amount' },
-                  ].map((item) => (
+                  {sortOptions.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
                     </SelectItem>
@@ -694,7 +728,7 @@ export default function StreamerTransactionsPage() {
                     }}
                     className="hidden xl:inline"
                   >
-                    {sortOrder === "desc" ? "Desc" : "Asc"}
+                    {sortOrder === "desc" ? st.sort_desc : st.sort_asc}
                   </motion.span>
                 </AnimatePresence>
               </Button>
@@ -721,12 +755,12 @@ export default function StreamerTransactionsPage() {
           >
             <TableHeader>
               <TableRow className="border-b border-border/60 bg-muted/20 text-muted-foreground text-[10px] tracking-wider uppercase font-semibold hover:bg-muted/20">
-                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Status & Type</TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Supporter</TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Amount</TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Gateway</TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Date</TableHead>
-                <TableHead className="py-3.5 px-4 text-right font-semibold text-muted-foreground/70 h-auto">Actions</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">{st.table.status_type}</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">{st.table.supporter}</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">{st.table.amount}</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">{st.table.gateway}</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">{st.table.date}</TableHead>
+                <TableHead className="py-3.5 px-4 text-right font-semibold text-muted-foreground/70 h-auto">{st.table.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <AnimatePresence
@@ -798,9 +832,9 @@ export default function StreamerTransactionsPage() {
                     <TableCell colSpan={6} className="py-16 text-center text-muted-foreground">
                       <div className="flex flex-col items-center gap-2.5">
                         <MoneyIcon size={36} weight="duotone" className="text-foreground/60" />
-                        <span className="font-medium text-foreground text-sm">No transactions recorded yet</span>
+                        <span className="font-medium text-foreground text-sm">{st.empty.title}</span>
                         <span className="text-xs text-muted-foreground max-w-sm">
-                          Incoming tips and donations from connected gateways will appear here in real-time.
+                          {st.empty.desc}
                         </span>
                         {(searchQuery || selectedStatus !== "ALL" || selectedProvider !== "ALL") && (
                           <Button
@@ -814,7 +848,7 @@ export default function StreamerTransactionsPage() {
                             }}
                             className="mt-2 text-xs rounded-xl p-3 h-max"
                           >
-                            Reset filters
+                            {lang.data.common.reset_filters}
                           </Button>
                         )}
                       </div>
@@ -869,21 +903,21 @@ export default function StreamerTransactionsPage() {
                               />
                               <span className="font-medium text-foreground text-xs">
                                 {isCompleted
-                                  ? "Succeeded"
+                                  ? st.status_badges.succeeded
                                   : isPending
-                                    ? "Pending"
+                                    ? st.status_badges.pending
                                     : isFailed
-                                      ? "Failed"
-                                      : "Refunded"}
+                                      ? st.status_badges.failed
+                                      : st.status_badges.refunded}
                               </span>
                               {tx.isTest && (
                                 <span className="text-[10px] text-amber-500/90 font-medium">
-                                  (Test)
+                                  {st.status_badges.test_suffix}
                                 </span>
                               )}
                               {tx.isDeleted && (
                                 <span className="text-[10px] text-rose-500/90 font-medium">
-                                  (Deleted)
+                                  {st.status_badges.deleted_suffix}
                                 </span>
                               )}
                             </div>
@@ -919,21 +953,23 @@ export default function StreamerTransactionsPage() {
                         <TableCell className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-baseline gap-1 font-sans font-medium tabular-nums text-xs text-foreground">
                             <span>
-                              {formatMoneyMinorUnits(tx.amount, tx.currency)}
+                              {formatMoneyMinorUnits(tx.amount, tx.currency, lang.key)}
                             </span>
                           </div>
                         </TableCell>
 
                         <TableCell className="py-3 px-4 whitespace-nowrap">
                           <span className="text-xs text-muted-foreground/80 font-medium">
-                            {GATEWAY_NAMES[tx.provider.toUpperCase()] || tx.provider}
+                            {tx.provider.toUpperCase() === "FFP"
+                              ? st.promptpay_ffp
+                              : (GATEWAY_NAMES[tx.provider.toUpperCase()] || tx.provider)}
                           </span>
                         </TableCell>
 
                         <TableCell className="py-3 px-4 whitespace-nowrap text-xs">
                           <div className="flex flex-col leading-tight">
                             <span className="text-foreground/90 font-sans">
-                              {formatTableDate(tx.createdAt)}
+                              {formatTableDate(tx.createdAt, lang.key)}
                             </span>
                             <span className="text-[10px] text-muted-foreground/60 font-sans">
                               {timeFormatter.format(new Date(tx.createdAt))}
@@ -946,7 +982,7 @@ export default function StreamerTransactionsPage() {
                             <PopoverTrigger
                               render={
                                 <button
-                                  aria-label="Transaction Actions"
+                                  aria-label={st.table.actions_aria}
                                   className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                   <DotsThreeVerticalIcon size={16} weight="bold" />
@@ -964,7 +1000,7 @@ export default function StreamerTransactionsPage() {
                                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left font-medium disabled:opacity-50"
                                 >
                                   <PaperPlaneTiltIcon size={14} weight="bold" className="text-primary" />
-                                  <span>Resend Alert</span>
+                                  <span>{st.table.resend_alert}</span>
                                 </button>
                               )}
 
@@ -973,11 +1009,11 @@ export default function StreamerTransactionsPage() {
                                   try {
                                     await navigator.clipboard.writeText(tx.id);
                                     setCopiedId(tx.id);
-                                    toast.success("Transaction ID copied");
+                                    toast.success(st.toasts.id_copied);
                                     if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
                                     copiedTimerRef.current = setTimeout(() => setCopiedId(null), 2000);
                                   } catch {
-                                    toast.error("Failed to copy ID");
+                                    toast.error(st.toasts.id_copy_failed);
                                   }
                                 }}
                                 className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left"
@@ -987,7 +1023,7 @@ export default function StreamerTransactionsPage() {
                                 ) : (
                                   <CopyIcon size={14} weight="bold" />
                                 )}
-                                <span>Copy ID</span>
+                                <span>{st.table.copy_id}</span>
                               </button>
 
                               {canManageTransactions && (
@@ -1007,12 +1043,12 @@ export default function StreamerTransactionsPage() {
                                     {tx.isDeleted ? (
                                       <>
                                         <ArrowCounterClockwiseIcon size={14} weight="bold" />
-                                        <span>Restore Row</span>
+                                        <span>{st.table.restore_row}</span>
                                       </>
                                     ) : (
                                       <>
                                         <TrashIcon size={14} weight="bold" />
-                                        <span>Soft Delete</span>
+                                        <span>{st.table.soft_delete}</span>
                                       </>
                                     )}
                                   </button>
@@ -1046,7 +1082,7 @@ export default function StreamerTransactionsPage() {
                 </motion.span>
               </AnimatePresence>
             </span>
-            <span>of</span>
+            <span>{lang.data.common.of}</span>
             <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.span
@@ -1061,12 +1097,12 @@ export default function StreamerTransactionsPage() {
                 </motion.span>
               </AnimatePresence>
             </span>
-            <span>events</span>
+            <span>{lang.data.common.events}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 text-[11px] text-muted-foreground/80 font-sans">
-              <span>Page</span>
+              <span>{lang.data.common.page}</span>
               <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.span
@@ -1081,7 +1117,7 @@ export default function StreamerTransactionsPage() {
                   </motion.span>
                 </AnimatePresence>
               </span>
-              <span>of</span>
+              <span>{lang.data.common.of}</span>
               <span className="relative inline-flex items-center overflow-hidden h-4 font-medium text-foreground/80">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.span
@@ -1142,17 +1178,17 @@ export default function StreamerTransactionsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
               <SparkleIcon size={24} weight="fill" className="text-primary" />
-              <span>Simulate Donation Transaction</span>
+              <span>{st.simulate_dialog.title}</span>
             </DialogTitle>
             <DialogDescription className="text-xs font-sans text-muted-foreground">
-              Dispatch a mock donation alert through any configured payment gateway to test on-screen OBS alertbox widgets.
+              {st.simulate_dialog.desc}
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-col gap-4 py-2">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-medium text-foreground">
-                Payment Gateway Provider
+                {st.simulate_dialog.provider_label}
               </label>
               <select
                 value={testProvider}
@@ -1162,27 +1198,27 @@ export default function StreamerTransactionsPage() {
                 {availableProviders.map((p) => (
                   <option key={p} value={p}>
                     {p === "BMAC"
-                      ? "Buy Me a Coffee (BMAC)"
+                      ? st.simulate_dialog.provider_bmac
                       : p === "KOFI"
-                        ? "Ko-fi"
+                        ? lang.data.app.connections.providers.kofi.name
                         : p === "STRIPE"
-                          ? "Stripe Payments"
+                          ? st.simulate_dialog.provider_stripe
                           : p === "XENDIT"
-                            ? "Xendit"
+                            ? lang.data.app.connections.providers.xendit.name
                             : p === "FFP"
-                              ? "PromptPay / FastPay"
+                              ? st.simulate_dialog.provider_promptpay
                               : p}
                   </option>
                 ))}
               </select>
               <span className="text-[10px] text-muted-foreground">
-                Only integrations currently active or available for @{streamerTarget} are listed.
+                {formatI18n(st.simulate_dialog.providers_hint, { streamer: streamerTarget })}
               </span>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-2 flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Amount</label>
+                <label className="text-xs font-medium text-foreground">{st.simulate_dialog.amount_label}</label>
                 <input
                   type="number"
                   min="1"
@@ -1195,7 +1231,7 @@ export default function StreamerTransactionsPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">Currency</label>
+                <label className="text-xs font-medium text-foreground">{st.simulate_dialog.currency_label}</label>
                 <select
                   value={testCurrency}
                   onChange={(e) => setTestCurrency(e.target.value)}
@@ -1211,25 +1247,25 @@ export default function StreamerTransactionsPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">Donor Name</label>
+              <label className="text-xs font-medium text-foreground">{st.simulate_dialog.donor_name_label}</label>
               <input
                 type="text"
                 maxLength={64}
                 value={testDonorName}
                 onChange={(e) => setTestDonorName(e.target.value)}
-                placeholder="Donor nickname"
+                placeholder={st.simulate_dialog.donor_name_placeholder}
                 className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">Donation Message</label>
+              <label className="text-xs font-medium text-foreground">{st.simulate_dialog.message_label}</label>
               <textarea
                 rows={2}
                 maxLength={280}
                 value={testMessage}
                 onChange={(e) => setTestMessage(e.target.value)}
-                placeholder="Alert message..."
+                placeholder={st.simulate_dialog.message_placeholder}
                 className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary resize-none"
               />
             </div>
@@ -1239,7 +1275,7 @@ export default function StreamerTransactionsPage() {
             <DialogClose
               render={
                 <Button size="sm" variant="ghost" className="h-max p-3 rounded-xl" disabled={sendingTest}>
-                  Cancel
+                  {lang.data.common.cancel}
                 </Button>
               }
             />
@@ -1254,7 +1290,7 @@ export default function StreamerTransactionsPage() {
               ) : (
                 <PaperPlaneTiltIcon size={14} weight="bold" />
               )}
-              <span>Dispatch Alert</span>
+              <span>{st.simulate_dialog.dispatch_btn}</span>
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -66,6 +66,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     setHasScrollarea(Boolean(node));
   }, []);
   const { userInfo } = useUserContext();
+  const lang = useStore(coreStore, (state) => state.lang);
   const pathname = usePathname();
   const scroll = useScroll({
     container: hasScrollarea ? scrollareaRef : undefined,
@@ -84,7 +85,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="fixed bottom-2 right-2 z-50">
         <Dialog>
           <DialogTrigger render={<Button variant="outline" className="rounded-xs" />}>
-            Tell us
+            {lang.data.app.feedback_button}
           </DialogTrigger>
           <DialogContent className="sm:max-w-sm">
             <HelpfulRating className="bg-transparent! border-0 **:font-sans **:overflow-visible" />

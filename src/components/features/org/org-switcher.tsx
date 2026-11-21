@@ -3,6 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
+import { formatI18n } from "@/lib/i18n";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { isOrgOwnerOrAdmin } from "@/lib/rbac";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,6 +18,8 @@ import { AnimatePresence, motion } from "motion/react";
 export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
   const router = useRouter();
   const { userInfo, organizations, activeOrg, setActiveOrgId, setActiveStreamerId } = useUserContext();
+  const lang = useStore(coreStore, (s) => s.lang);
+  const os = lang.data.components.org_switcher;
   const [open, setOpen] = useState(false);
 
   const stateRef = useRef({ organizations, activeOrg });
@@ -26,18 +31,18 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
   const displayName =
     activeOrg?.name ||
     (organizations.length === 0
-      ? "Workspace"
+      ? os.workspace
       : userFallbackName
-        ? `${userFallbackName}'s Org`
-        : "Workspace");
+        ? formatI18n(os.personal_org, { name: userFallbackName })
+        : os.workspace);
   const displayType =
     activeOrg?.type === "ENTERPRISE"
-      ? "Enterprise"
+      ? os.types.enterprise
       : activeOrg
-        ? "Community"
+        ? os.types.community
         : organizations.length === 0
-          ? "No Organization"
-          : "Community";
+          ? os.no_org
+          : os.types.community;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -141,7 +146,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
         >
           <div className="flex flex-col gap-0.5">
             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-              Organizations
+              {os.organizations}
             </div>
             <div className="flex flex-col gap-0.5 max-h-52 overflow-y-auto">
               {organizations.length > 0 ? (
@@ -189,8 +194,10 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                       </div>
                       <div className="grid flex-1 min-w-0 leading-tight">
                         <span className="truncate font-medium">{org.name}</span>
-                        <span className="truncate text-[10px] text-muted-foreground capitalize">
-                          {typeof org.type === "string" ? org.type.toLowerCase() : "community"}
+                        <span className="truncate text-[10px] text-muted-foreground">
+                          {typeof org.type === "string" && org.type.toUpperCase() === "ENTERPRISE"
+                            ? os.types.enterprise
+                            : os.types.community}
                         </span>
                       </div>
                       <KbdGroup>
@@ -206,8 +213,8 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                     <GalleryVerticalEnd className="size-3" />
                   </div>
                   <div className="grid flex-1 min-w-0 leading-tight">
-                    <span className="truncate font-medium">No Organization</span>
-                    <span className="truncate text-[10px] text-muted-foreground">Workspace</span>
+                    <span className="truncate font-medium">{os.no_org}</span>
+                    <span className="truncate text-[10px] text-muted-foreground">{os.workspace}</span>
                   </div>
                 </div>
               )}
@@ -223,7 +230,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
               <div className="flex size-7 items-center justify-center rounded-lg border border-dashed border-border shrink-0">
                 <Plus className="size-3.5" />
               </div>
-              <span>Create organization</span>
+              <span>{os.create_org}</span>
             </button>
             <button
               type="button"
@@ -236,7 +243,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
               <div className="flex size-7 items-center justify-center rounded-lg border border-dashed border-border shrink-0">
                 <KeyRound className="size-3.5" />
               </div>
-              <span>Join organization</span>
+              <span>{os.join_org}</span>
             </button>
           </div>
         </PopoverContent>

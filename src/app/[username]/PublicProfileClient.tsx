@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { getApiUrl } from "@/lib/api";
+import { formatI18n } from "@/lib/i18n";
 import { isSafeIframeHandle, safeDecodeURIComponent } from "@/lib/security";
 import { getActiveBadges } from "@/lib/badges";
 import { cn, getFallbackInitial } from "@/lib/utils";
@@ -125,6 +126,7 @@ export default function PublicProfileClient({
 }) {
   const routeParams = useParams();
   const lang = useStore(coreStore, (state) => state.lang);
+  const pp = lang.data.app.profile.public_page;
   const decodedUsername = safeDecodeURIComponent(username) ?? "";
   const { patchStreamer, authFetch, activeOrg, activeStreamer } = useUserContext();
 
@@ -264,10 +266,10 @@ export default function PublicProfileClient({
           <GhostIcon size={64} weight="fill" />
           <div className="text-center">
             <h2 className="text-3xl font-semibold font-rubik text-foreground mb-1">
-              Streamer not ready
+              {pp.not_ready_title}
             </h2>
             <p className="text-sm text-muted-foreground font-sans">
-              This streamer hasn&apos;t quite set up their page yet.
+              {pp.not_ready_desc}
             </p>
           </div>
         </div>
@@ -275,7 +277,7 @@ export default function PublicProfileClient({
     );
   }
 
-  const allBadges = getActiveBadges(profileData.badges);
+  const allBadges = getActiveBadges(profileData.badges, lang.data);
   const isVerified = allBadges.some((b) => b.name === "verified");
   const badges = allBadges.filter((b) => b.name !== "verified");
   const accentHex = profileData.accentColor
@@ -323,7 +325,7 @@ export default function PublicProfileClient({
     e.currentTarget.value = "";
     if (!file) return;
     if (file.size > MAX_UPLOAD_BYTES) {
-      toast.error("Image must be 5 MB or smaller");
+      toast.error(lang.data.common.image_size_error);
       return;
     }
     if (cropObjectUrlRef.current) {
@@ -338,6 +340,7 @@ export default function PublicProfileClient({
 
   const handleRemoveMedia = async (type: "avatar" | "banner") => {
     if (!canEditProfile || !streamerPatchEndpoint || !activeStreamer) return;
+    const mediaLabel = type === "avatar" ? lang.data.common.avatar : lang.data.common.banner;
     try {
       const res = await authFetch(streamerPatchEndpoint, {
         method: "PATCH",
@@ -347,12 +350,12 @@ export default function PublicProfileClient({
 
       if (res.ok) {
         patchStreamer(activeStreamer.id, { [type]: null });
-        toast.success(`Channel ${type} removed`);
+        toast.success(formatI18n(pp.removed, { type: mediaLabel }));
       } else {
-        toast.error(`Failed to remove ${type}`);
+        toast.error(formatI18n(pp.remove_failed, { type: mediaLabel }));
       }
     } catch {
-      toast.error(`Network error removing ${type}`);
+      toast.error(formatI18n(pp.remove_network, { type: mediaLabel }));
     }
   };
 
@@ -475,7 +478,7 @@ export default function PublicProfileClient({
             {bannerUrl && (
               <Image
                 src={bannerUrl}
-                alt="Banner"
+                alt={lang.data.common.banner}
                 className="w-full min-h-96 object-cover select-none"
                 width={720}
                 height={288}
@@ -495,7 +498,7 @@ export default function PublicProfileClient({
                   onClick={() => bannerInputRef.current?.click()}
                   className="inset-0 w-full h-full scale-110! opacity-0 hover:opacity-40 text-xs font-semibold gap-1.5"
                 >
-                  <span>{profileData.banner ? "Change Banner" : "Upload Banner"}</span>
+                  <span>{profileData.banner ? pp.change_banner : pp.upload_banner}</span>
                 </Button>
               </div>
               {profileData.banner && (
@@ -507,7 +510,7 @@ export default function PublicProfileClient({
                   className="p-2 h-max rounded-xl absolute left-1/2 -translate-x-1/2 text-xs font-semibold z-10 backdrop-blur-lg"
                 >
                   <TrashIcon size={14} weight="bold" />
-                  Remove banner
+                  {pp.remove_banner}
                 </Button>
               )}
             </div>
@@ -539,10 +542,10 @@ export default function PublicProfileClient({
                   variant={"ghost"}
                   onClick={() => avatarInputRef.current?.click()}
                   className="absolute inset-0 size-32 md:size-42 rounded-full bg-black/50 group-hover/avatar:backdrop-blur-[2px] opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center text-white"
-                  title="Change Avatar"
+                  title={pp.change_avatar}
                 >
                   <CameraIcon size={18} weight="bold" />
-                  <span className="text-[10px] font-semibold mt-0.5">Edit</span>
+                  <span className="text-[10px] font-semibold mt-0.5">{lang.data.common.edit}</span>
                 </Button>
               )}
             </motion.div>
@@ -553,7 +556,7 @@ export default function PublicProfileClient({
                   <ShadcnInput
                     type="text"
                     autoFocus
-                    placeholder={profileData.displayName || "Display Name"}
+                    placeholder={profileData.displayName || pp.display_name_placeholder}
                     value={displayName}
                     onChange={(e) => {
                       setDisplayName(e.target.value);
@@ -599,7 +602,7 @@ export default function PublicProfileClient({
                       }
                     }}
                   >
-                    <span>{profileData.displayName || "Display Name"}</span>
+                    <span>{profileData.displayName || pp.display_name_placeholder}</span>
                     {isVerified && (
                       <Tooltip>
                         <TooltipTrigger>
@@ -653,7 +656,7 @@ export default function PublicProfileClient({
               isEditingBio ?
                 <Textarea
                   autoFocus
-                  placeholder={profileData.bio || "Tell them about yourself..."}
+                  placeholder={profileData.bio || pp.bio_placeholder}
                   value={bio}
                   onChange={(e) => {
                     setBio(e.target.value);
@@ -734,14 +737,14 @@ export default function PublicProfileClient({
                         })}
                       >
                         <ArrowLeft01 />
-                        Select other tipping method
+                        {pp.select_other_method}
                       </Button>
                     </AnimateIcon>
                   }
                   {
                     selectedMethod === null ? (<>
                       <h2 className="w-full text-3xl font-medium text-foreground">
-                        Continue with
+                        {pp.continue_with}
                       </h2>
                       <div className="w-full flex flex-col gap-1">
                         {
@@ -802,7 +805,7 @@ export default function PublicProfileClient({
                   }
                 </PageTransition>
               </AutoHeight>
-              <span className="text-xs text-muted-foreground text-center mt-4 block">By processing to donation means you&apos;re agreeing to both our <Link className="text-blue-500" href="https://law.ponlponl123.com/tos" target="_blank" rel="noopener noreferrer">terms of service</Link> and the payment provider&apos;s terms</span>
+              <span className="text-xs text-muted-foreground text-center mt-4 block">{pp.terms_prefix}<Link className="text-blue-500" href="https://law.ponlponl123.com/tos" target="_blank" rel="noopener noreferrer">{pp.terms_link}</Link>{pp.terms_suffix}</span>
             </>
           )}
         </motion.div>
@@ -841,7 +844,7 @@ export default function PublicProfileClient({
               }}
               disabled={isSaving}
             >
-              Cancel
+              {lang.data.common.cancel}
             </Button>
             <Button
               className={"rounded-2xl rounded-l-sm h-max p-3"}
@@ -860,7 +863,7 @@ export default function PublicProfileClient({
           image={imageToCrop}
           cropShape={cropType === "avatar" ? "round" : "rect"}
           aspect={cropType === "avatar" ? 1 : 3}
-          title={cropType === "avatar" ? "Crop Avatar" : "Crop Banner"}
+          title={cropType === "avatar" ? lang.data.components.image_cropper.crop_avatar : lang.data.components.image_cropper.crop_banner}
           className={cn(
             cropType === "avatar" ? "" : "max-w-2xl!"
           )}

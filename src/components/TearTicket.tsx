@@ -12,6 +12,8 @@ import React, {
   type ReactNode
 } from 'react';
 import { motion, useMotionTemplate, useReducedMotion, useSpring, useTransform } from 'motion/react';
+import { useStore } from 'zustand';
+import { coreStore } from '@/hooks/store/core';
 
 export type TearTicketOrientation = 'horizontal' | 'vertical';
 
@@ -239,9 +241,11 @@ const TearTicket: React.FC<TearTicketProps> = ({
   stubBackground = '',
   recenter = true,
   disabled = false,
-  ariaLabel = 'Tear off the stub',
+  ariaLabel,
   className = ''
 }) => {
+  const lang = useStore(coreStore, (s) => s.lang);
+  ariaLabel = ariaLabel ?? lang.data.components.tear_ticket.default_aria;
   const reduce = useReducedMotion();
   const controlled = torn !== undefined;
   const [inner, setInner] = useState(defaultTorn);
@@ -766,7 +770,7 @@ const TearTicket: React.FC<TearTicketProps> = ({
         </motion.div>
       </div>
       <span className="absolute h-px w-px overflow-hidden whitespace-nowrap [clip-path:inset(50%)]" role="status">
-        {used ? 'Used' : ''}
+        {used ? lang.data.components.tear_ticket.used : ''}
       </span>
     </div>
   );

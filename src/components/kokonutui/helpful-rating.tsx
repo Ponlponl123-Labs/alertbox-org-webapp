@@ -12,7 +12,9 @@
 
 import { Check } from "lucide-react";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
-import { type KeyboardEvent, useId, useRef, useState } from "react";
+import { type KeyboardEvent, useId, useMemo, useRef, useState } from "react";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
 import { cn } from "@/lib/utils";
 
 export interface HelpfulRatingProps {
@@ -36,21 +38,21 @@ interface Level {
   eye: number;
 }
 
-const LEVELS: Level[] = [
-  { label: "Awful", color: "#f43f5e", mouth: -13, brow: 6, eye: 6 },
-  { label: "Meh", color: "#f97316", mouth: -6, brow: 3, eye: 6 },
-  { label: "Okay", color: "#a1a1aa", mouth: 0, brow: 0, eye: 6 },
-  { label: "Good", color: "#0ea5e9", mouth: 9, brow: 0, eye: 5.5 },
-  { label: "Love it", color: "#10b981", mouth: 17, brow: 0, eye: 3 },
+const LEVEL_DEFS = [
+  { key: "awful" as const, color: "#f43f5e", mouth: -13, brow: 6, eye: 6 },
+  { key: "meh" as const, color: "#f97316", mouth: -6, brow: 3, eye: 6 },
+  { key: "okay" as const, color: "#a1a1aa", mouth: 0, brow: 0, eye: 6 },
+  { key: "good" as const, color: "#0ea5e9", mouth: 9, brow: 0, eye: 5.5 },
+  { key: "love_it" as const, color: "#10b981", mouth: 17, brow: 0, eye: 3 },
 ];
 
-const LOW_REASONS = [
-  "Hard to follow",
-  "Missing an example",
-  "Out of date",
-  "Code didn't work",
-];
-const HIGH_REASONS = ["Clear steps", "Good examples", "Found it fast"];
+const LOW_REASON_KEYS = [
+  "hard_to_follow",
+  "missing_example",
+  "out_of_date",
+  "code_failed",
+] as const;
+const HIGH_REASON_KEYS = ["clear_steps", "good_examples", "found_fast"] as const;
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 const FACE = { type: "spring", stiffness: 400, damping: 30 } as const;
@@ -58,10 +60,17 @@ const SLIDE = { type: "spring", stiffness: 500, damping: 38 } as const;
 const MIDDLE = 2;
 
 export default function HelpfulRating({
-  question = "Was this page helpful?",
+  question,
   onSubmit,
   className,
 }: HelpfulRatingProps) {
+  const lang = useStore(coreStore, (s) => s.lang);
+  const hr = lang.data.components.helpful_rating;
+  const LEVELS: Level[] = useMemo(
+    () => LEVEL_DEFS.map((d) => ({ ...d, label: hr.sentiments[d.key] })),
+    [hr.sentiments],
+  );
+  const resolvedQuestion = question ?? hr.default_question;
   const uid = useId();
   const [rating, setRating] = useState<number | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
@@ -76,7 +85,11 @@ export default function HelpfulRating({
     ? { ...LEVELS[4], color: LEVELS[shown].color }
     : LEVELS[shown];
   const low = rating !== null && rating < MIDDLE;
-  const choices = low ? LOW_REASONS : HIGH_REASONS;
+  const choices = low ? LOW_REASON_KEYS : HIGH_REASON_KEYS;
+  const reasonLabel = (key: string) =>
+    low
+      ? hr.negative_reasons[key as keyof typeof hr.negative_reasons] ?? key
+      : hr.positive_reasons[key as keyof typeof hr.positive_reasons] ?? key;
 
   const pick = (index: number) => {
     if (rating !== null && index < MIDDLE !== rating < MIDDLE) {
@@ -133,7 +146,7 @@ export default function HelpfulRating({
                 key={sent ? "sent" : "ask"}
                 transition={{ duration: 0.22, ease: EASE_OUT }}
               >
-                {sent ? "Thanks, that helps" : question}
+                {sent ? hr.thanks_title : resolvedQuestion}
               </motion.p>
             </AnimatePresence>
           </div>
@@ -146,7 +159,7 @@ export default function HelpfulRating({
                 key={sent ? "sent" : level.label}
                 transition={{ duration: 0.15, ease: EASE_OUT }}
               >
-                {sent ? "We read every note." : level.label}
+                {sent ? hr.thanks_desc : level.label}
               </motion.p>
             </AnimatePresence>
           </div>
@@ -245,7 +258,7 @@ export default function HelpfulRating({
                           key={low ? "low" : "high"}
                           transition={{ duration: 0.18, ease: EASE_OUT }}
                         >
-                          {low ? "What went wrong?" : "What helped most?"}
+                          {low ? hr.prompt_negative : hr.prompt_positive}
                         </motion.p>
                       </AnimatePresence>
                     </div>
@@ -261,15 +274,15 @@ export default function HelpfulRating({
                           key={reason}
                           on={reasons.includes(reason)}
                           onClick={() => toggle(reason)}
-                          reason={reason}
+                          reason={reasonLabel(reason)}
                         />
                       ))}
                     </motion.div>
                     <textarea
-                      aria-label="Anything else?"
+                      aria-label={hr.note_aria}
                       className="mt-1 block h-20 w-full resize-none rounded-xl bg-zinc-100 px-3 py-2 text-[16px] outline-hidden placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50 sm:text-[14px] dark:bg-zinc-900 dark:placeholder:text-zinc-500"
                       onChange={(event) => setNote(event.target.value)}
-                      placeholder="Anything else? (optional)"
+                      placeholder={hr.note_placeholder}
                       value={note}
                     />
                     <button
@@ -281,7 +294,7 @@ export default function HelpfulRating({
                       }}
                       type="button"
                     >
-                      Send feedback
+                      {hr.send_feedback}
                     </button>
                   </motion.div>
                 )}
@@ -301,7 +314,7 @@ export default function HelpfulRating({
               transition={{ duration: 0.2, delay: 0.3 }}
               type="button"
             >
-              Change my answer
+              {hr.change_answer}
             </motion.button>
           )}
         </AnimatePresence>

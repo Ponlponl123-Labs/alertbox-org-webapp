@@ -143,7 +143,7 @@ const AppSidebar = React.memo(function AppSidebar() {
           items: [
             {
               id: "explore",
-              text: "Explore",
+              text: lang.data.app.sidebar.links.explore,
               icon: <Compass size={16} />,
               href: "/app",
             },
@@ -151,7 +151,7 @@ const AppSidebar = React.memo(function AppSidebar() {
         },
         {
           id: "account",
-          title: "Account",
+          title: lang.data.app.sidebar.links.account_section,
           items: [
             {
               id: "settings",
@@ -205,7 +205,7 @@ const AppSidebar = React.memo(function AppSidebar() {
       if (canViewOrg) {
         orgItems.push({
           id: "org-overview",
-          text: "Overview",
+          text: lang.data.app.sidebar.links.overview,
           icon: <ChartLine size={16} />,
           href: `/app/${orgKey}`,
         });
@@ -213,7 +213,7 @@ const AppSidebar = React.memo(function AppSidebar() {
       if (canManageMembers || canManageRoles) {
         orgItems.push({
           id: "org-members",
-          text: "Members & Staff",
+          text: lang.data.app.sidebar.links.members_staff,
           icon: <UsersRound size={16} />,
           href: `/app/${orgKey}/members`,
         });
@@ -221,7 +221,7 @@ const AppSidebar = React.memo(function AppSidebar() {
       if (canViewStreamers) {
         orgItems.push({
           id: "org-streamers",
-          text: "Channels",
+          text: lang.data.app.sidebar.links.channels,
           icon: <Clapperboard size={16} />,
           href: `/app/${orgKey}/streamers`,
         });
@@ -229,14 +229,14 @@ const AppSidebar = React.memo(function AppSidebar() {
       if (canViewAudit) {
         orgItems.push({
           id: "org-audit",
-          text: "Audit Logs",
+          text: lang.data.app.sidebar.links.audit_logs,
           icon: <Clock02 size={16} />,
           href: `/app/${orgKey}/audit`,
         });
       }
       orgItems.push({
         id: "org-settings",
-        text: "Settings",
+        text: lang.data.app.sidebar.links.org_settings,
         icon: <Settings02 size={16} />,
         href: `/app/${orgKey}/settings`,
       });
@@ -245,7 +245,7 @@ const AppSidebar = React.memo(function AppSidebar() {
       if (canViewBilling) {
         financeItems.push({
           id: "org-billing",
-          text: "Billing & Plans",
+          text: lang.data.app.sidebar.links.billing_plans,
           icon: <CreditCard size={16} />,
           href: `/app/${orgKey}/billing`,
         });
@@ -255,21 +255,21 @@ const AppSidebar = React.memo(function AppSidebar() {
       if (orgItems.length > 0) {
         sections.push({
           id: "organization",
-          title: "Organization",
+          title: lang.data.app.sidebar.links.organization_section,
           items: orgItems,
         });
       }
       if (financeItems.length > 0) {
         sections.push({
           id: "finance",
-          title: "Finance",
+          title: lang.data.app.sidebar.links.finance_section,
           items: financeItems,
         });
       }
       sections.push(
         {
           id: "account",
-          title: "Account",
+          title: lang.data.app.sidebar.links.account_section,
           items: [
             {
               id: "settings",
@@ -319,7 +319,7 @@ const AppSidebar = React.memo(function AppSidebar() {
     if (canViewStreamerBasic) {
       streamerItems.push({
         id: "dashboard",
-        text: "Home",
+        text: lang.data.app.sidebar.links.home,
         icon: <Home03 size={16} />,
         href: `/app/${orgKey}/${streamerKey}`,
       });
@@ -371,11 +371,11 @@ const AppSidebar = React.memo(function AppSidebar() {
     if (canViewAnalytics) {
       streamerItems.push({
         id: "member",
-        text: "My Supporters",
+        text: lang.data.app.sidebar.links.my_supporters,
         icon: <Favourite className="rotate-0!" size={16} />,
         links: [
           {
-            text: "Leaderboard",
+            text: lang.data.app.sidebar.links.leaderboard,
             icon: <UsersRound size={16} />,
             href: `/app/${orgKey}/${streamerKey}/member/supporters`,
           },
@@ -386,7 +386,7 @@ const AppSidebar = React.memo(function AppSidebar() {
     if (canViewAnalytics) {
       streamerItems.push({
         id: "analytics",
-        text: "Analytics",
+        text: lang.data.app.sidebar.links.analytics,
         icon: <ChartLine size={16} />,
         href: `/app/${orgKey}/${streamerKey}/analytics`,
       });
@@ -395,7 +395,7 @@ const AppSidebar = React.memo(function AppSidebar() {
     if (canViewAnalytics) {
       streamerItems.push({
         id: "streamer-transactions",
-        text: "Transactions",
+        text: lang.data.app.sidebar.links.transactions,
         icon: <Activity01 size={16} />,
         href: `/app/${orgKey}/${streamerKey}/transactions`,
       });
@@ -407,7 +407,7 @@ const AppSidebar = React.memo(function AppSidebar() {
     if (canViewStreamerAudit) {
       streamerItems.push({
         id: "streamer-audit",
-        text: "Audit Logs",
+        text: lang.data.app.sidebar.links.audit_logs,
         icon: <Clock02 size={16} />,
         href: `/app/${orgKey}/${streamerKey}/audit`,
       });
@@ -422,7 +422,7 @@ const AppSidebar = React.memo(function AppSidebar() {
       },
       {
         id: "account",
-        title: "Account",
+        title: lang.data.app.sidebar.links.account_section,
         items: [
           {
             id: "settings",
@@ -495,7 +495,7 @@ const AppSidebar = React.memo(function AppSidebar() {
             size="icon"
             className="md:hidden size-8 rounded-lg text-foreground/50 hover:text-foreground"
             onClick={() => setSidebarHiddenOnMobile(true)}
-            aria-label="Close sidebar"
+            aria-label={lang.data.common.aria.close_sidebar}
           >
             <XIcon size={18} weight="bold" />
           </Button>

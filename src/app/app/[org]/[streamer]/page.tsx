@@ -10,10 +10,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
+import { formatI18n } from "@/lib/i18n";
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? React.useLayoutEffect : useEffect;
 
 export default function StreamerDashboardPage() {
+  const lang = useStore(coreStore, (s) => s.lang);
+  const sd = lang.data.app.streamer.dashboard;
   const { activeOrg, activeStreamer } = useUserContext();
   const bannerUrl = activeStreamer?.banner;
   const [loadedBannerUrl, setLoadedBannerUrl] = React.useState<string | null>(null);
@@ -47,9 +52,9 @@ export default function StreamerDashboardPage() {
         transition={{ duration: 0.5, ease: "easeInOut" }}
         className="flex flex-col items-center justify-center p-6 gap-4 text-center max-w-lg m-auto">
         <BroadcastIcon size={48} className="text-muted-foreground/60" />
-        <h2 className="text-2xl font-medium font-sans text-foreground">No Channel Assigned</h2>
+        <h2 className="text-2xl font-medium font-sans text-foreground">{sd.no_channel_title}</h2>
         <p className="text-sm text-muted-foreground font-sans">
-          You do not have access to this streaming channel in {activeOrg?.name || "this organization"}. Contact an administrator to assign channel permissions to your account.
+          {formatI18n(sd.no_channel_desc, { org: activeOrg?.name || sd.this_organization })}
         </p>
       </motion.div>
     );
@@ -76,7 +81,7 @@ export default function StreamerDashboardPage() {
             {bannerUrl && (
               <Image
                 src={bannerUrl}
-                alt="Banner"
+                alt={lang.data.common.banner}
                 className="w-full min-h-80 object-cover select-none"
                 width={720}
                 height={288}
@@ -117,7 +122,7 @@ export default function StreamerDashboardPage() {
                     unoptimized
                   />
                 ) : (
-                  getFallbackInitial(activeStreamer?.displayName || activeStreamer?.name || "Channel")
+                  getFallbackInitial(activeStreamer?.displayName || activeStreamer?.name || sd.channel_fallback)
                 )}
               </motion.div>
               <div>
@@ -127,7 +132,7 @@ export default function StreamerDashboardPage() {
                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                     transition={{ delay: 0.2, duration: 0.4 }}
                     className="text-2xl lg:text-3xl xl:text-4xl font-semibold font-sans tracking-tight text-foreground">
-                    {activeStreamer?.displayName || activeStreamer?.name || "Channel Dashboard"}
+                    {activeStreamer?.displayName || activeStreamer?.name || sd.channel_dashboard}
                   </motion.h1>
                   {activeStreamer?.uri && (
                     <motion.div
@@ -152,7 +157,14 @@ export default function StreamerDashboardPage() {
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                   transition={{ delay: 0.3, duration: 0.4 }}
                   className="text-xs text-muted-foreground font-sans mt-0.5">
-                  Managed under organization <span className="font-semibold text-foreground">{activeOrg?.name}</span>
+                  {sd.managed_under.split("{name}").map((part, idx, arr) => (
+                    <React.Fragment key={idx}>
+                      {part}
+                      {idx < arr.length - 1 && (
+                        <span className="font-semibold text-foreground">{activeOrg?.name}</span>
+                      )}
+                    </React.Fragment>
+                  ))}
                 </motion.p>
               </div>
             </div>

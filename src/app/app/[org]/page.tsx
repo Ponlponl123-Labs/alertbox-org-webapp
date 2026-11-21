@@ -1,5 +1,8 @@
 "use client";
 import { useUserContext } from "@/contexts/user";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
+import { formatCount, formatI18n } from "@/lib/i18n";
 import {
   BuildingsIcon,
   SmileyIcon,
@@ -20,6 +23,7 @@ const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffec
 export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, setName?: (name: string) => void }) {
   const params = useParams();
   const orgParam = params?.org as string | undefined;
+  const lang = useStore(coreStore, (s) => s.lang);
   const { organizations, activeOrg: storeActiveOrg } = useUserContext();
   const activeOrg = demo
     ? null
@@ -75,7 +79,7 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
             >
               <Image
                 src={bannerUrl}
-                alt="Banner"
+                alt={lang.data.common.aria.banner_alt}
                 className="w-full min-h-80 object-cover select-none"
                 width={720}
                 height={288}
@@ -101,13 +105,13 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
             <div className="w-full">
               <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
                 <BuildingsIcon size={16} weight="bold" />
-                <span>Organization Management</span>
+                <span>{lang.data.app.org.overview.eyebrow}</span>
               </div>
               {
                 demo ? (
                   <Input
                     type="text"
-                    placeholder="e.g. Acme Studio, Team Vitality"
+                    placeholder={lang.data.app.org.overview.example_placeholder}
                     onChange={(e) => setName?.(e.target.value)}
                     fontStyle={{
                       fontFamily: "var(--font-heading)",
@@ -145,7 +149,6 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
 
           <ContributionSkyline
             orgId={demo ? "" : activeOrg?.id || activeOrg?.slug}
-            unit="transaction"
           />
 
           <OrgAnalytics orgId={demo ? "" : activeOrg?.id || activeOrg?.slug} />
@@ -154,12 +157,21 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
         <div className="flex flex-col gap-3 w-full mx-auto max-w-384 px-12 pb-12 mt-6">
           <div className="flex items-center justify-between bg-card rounded-xl p-5">
             <div className="flex flex-col gap-1">
-              <h2 className="text-xl font-medium">Channels</h2>
+              <h2 className="text-xl font-medium">{lang.data.common.channels}</h2>
               <div className="flex font-medium items-center gap-2">
-                <p className="text-sm text-muted-foreground font-baijamjuree">{activeOrg?.name || "Organization"}</p>
+                <p className="text-sm text-muted-foreground font-baijamjuree">
+                  {activeOrg?.name || lang.data.common.organization}
+                </p>
                 <p className="text-sm text-muted-foreground font-baijamjuree">•</p>
                 <p className="text-sm text-muted-foreground font-baijamjuree">
-                  {streamers.length} {streamers.length === 1 ? "Channel" : "Channels"}
+                  {formatI18n(
+                    formatCount(
+                      lang.data.common.channel_count_one,
+                      lang.data.common.channel_count_other,
+                      streamers.length,
+                    ),
+                    { count: streamers.length },
+                  )}
                 </p>
               </div>
             </div>
@@ -168,7 +180,7 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
             >
               <Button className={"rounded-lg p-3 h-max"}>
                 <SmileyIcon weight="bold" />
-                <span>Manage All</span>
+                <span>{lang.data.app.org.overview.manage_all}</span>
               </Button>
             </Link>
           </div>

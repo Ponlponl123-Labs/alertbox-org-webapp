@@ -21,6 +21,7 @@ const emptySubscribe = () => () => { };
 export const NavUser = memo(function NavUser({ isCollapsed }: { isCollapsed?: boolean }) {
   const { userInfo, logout } = useUserContext();
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const lang = useStore(coreStore, (state) => state.lang);
   const isDark = useStore(coreStore, (state) => state.isDark);
 
   if (!userInfo) return null;
@@ -29,7 +30,7 @@ export const NavUser = memo(function NavUser({ isCollapsed }: { isCollapsed?: bo
     userInfo.displayName?.trim() ||
     userInfo.name?.trim() ||
     userInfo.email?.split("@")[0] ||
-    "User";
+    lang.data.common.user;
   const displayEmail =
     userInfo.email?.trim() ||
     (userInfo.name ? `@${userInfo.name.trim()}` : "");
@@ -102,7 +103,7 @@ export const NavUser = memo(function NavUser({ isCollapsed }: { isCollapsed?: bo
                     className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
                   >
                     <Settings02 className="size-3.5 text-muted-foreground" />
-                    <span>Account settings</span>
+                    <span>{lang.data.components.nav_user.account_settings}</span>
                   </Link>
                 </AnimateIcon>
                 <AnimateIcon animateOnHover asChild>
@@ -111,7 +112,7 @@ export const NavUser = memo(function NavUser({ isCollapsed }: { isCollapsed?: bo
                     className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs hover:bg-accent hover:text-accent-foreground"
                   >
                     <ShieldCheck className="size-3.5 text-muted-foreground" />
-                    <span>Security</span>
+                    <span>{lang.data.components.nav_user.security}</span>
                   </Link>
                 </AnimateIcon>
                 <AnimateIcon animateOnHover asChild>
@@ -126,10 +127,14 @@ export const NavUser = memo(function NavUser({ isCollapsed }: { isCollapsed?: bo
                       ) : (
                         <Sun03 className="size-3.5 text-amber-500" />
                       )}
-                      <span>Theme</span>
+                      <span>{lang.data.components.nav_user.theme}</span>
                     </div>
                     <span className="text-[10px] font-semibold text-muted-foreground bg-secondary/80 px-1.5 py-0.5 rounded-lg">
-                      {mounted ? (isDark ? "Dark" : "Light") : "Theme"}
+                      {mounted
+                        ? isDark
+                          ? lang.data.components.nav_user.dark
+                          : lang.data.components.nav_user.light
+                        : lang.data.components.nav_user.theme}
                     </span>
                   </button>
                 </AnimateIcon>
@@ -140,7 +145,7 @@ export const NavUser = memo(function NavUser({ isCollapsed }: { isCollapsed?: bo
                     className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-destructive hover:bg-destructive/10 w-full text-left cursor-pointer"
                   >
                     <Logout01 className="size-3.5" />
-                    <span>Log out</span>
+                    <span>{lang.data.components.nav_user.logout}</span>
                   </button>
                 </AnimateIcon>
               </div>

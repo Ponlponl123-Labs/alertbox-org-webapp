@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { orgStore } from "@/hooks/store/org";
+import { formatI18n } from "@/lib/i18n";
 import type { Streamer } from "@/types/user.types";
 import SplitText from "@/components/SplitText";
 import { gsap } from "gsap";
@@ -37,41 +38,37 @@ interface CreateStepProps {
 
 const MOCK_PROFILES = [
   {
+    key: "kai" as const,
     name: "Dear-zero-one",
     handle: "@dearzenone",
-    role: "YouTube Streamer",
     avatar: "/promoted/avatar/dearzenone.png",
-    bio: "Chill gaming & late night streams",
     accent: "#f43f5e",
     cls: "-translate-x-64 sm:-translate-x-88 lg:-translate-x-[28rem] xl:-translate-x-[34rem] -translate-y-40 sm:-translate-y-44 lg:-translate-y-56 xl:-translate-y-64",
     rotZ: -3,
   },
   {
+    key: "torn" as const,
     name: "Petekung",
     handle: "@petekung",
-    role: "Content Creator",
     avatar: "/promoted/avatar/petekung.png",
-    bio: "Legend of Youtuber (torn niee..)",
     accent: "#6366f1",
     cls: "translate-x-64 sm:translate-x-88 lg:translate-x-[28rem] xl:translate-x-[34rem] -translate-y-36 sm:-translate-y-40 lg:-translate-y-52 xl:-translate-y-60",
     rotZ: 3,
   },
   {
+    key: "cactuzz" as const,
     name: "P'Pong",
     handle: "@banpong",
-    role: "Studio Lead",
     avatar: "/promoted/avatar/banpong.png",
-    bio: "I love Cactus & creative art",
     accent: "#10b981",
     cls: "-translate-x-60 sm:-translate-x-80 lg:-translate-x-[26rem] xl:-translate-x-[32rem] translate-y-40 sm:translate-y-44 lg:translate-y-56 xl:translate-y-64",
     rotZ: 2,
   },
   {
+    key: "ponlponl" as const,
     name: "Ponlponl123",
     handle: "@ponlponl123",
-    role: "Developer",
     avatar: "/promoted/avatar/ponlponl123-osu-avatar.png",
-    bio: "Building AlertBox.org for everyone",
     accent: "#3b82f6",
     cls: "translate-x-60 sm:translate-x-80 lg:translate-x-[26rem] xl:translate-x-[32rem] translate-y-36 sm:translate-y-40 lg:translate-y-52 xl:translate-y-60",
     rotZ: -2,
@@ -93,6 +90,8 @@ const to = {
 export default function CreateStep({ onComplete }: CreateStepProps) {
   const router = useRouter();
   const { authFetch, activeOrg, userInfo, addStreamer } = useUserContext();
+  const lang = useStore(coreStore, (s) => s.lang);
+  const cc = lang.data.app.onboarding.create_channel;
   const isDark = useStore(coreStore, (s) => s.isDark);
   const [step, setStep] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -150,6 +149,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const isInteractiveRef = useRef(false);
   const step1TimerRef = useRef<number | null>(null);
+  const completedStepsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     return () => {
@@ -195,6 +195,8 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   }, []);
 
   const handleSplitComplete = () => {
+    if (completedStepsRef.current.has(0)) return;
+    completedStepsRef.current.add(0);
     if (splitRef.current) {
       gsap.to(splitRef.current, {
         scale: 0.94,
@@ -255,8 +257,10 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
     });
   };
   const handleSplitComplete1 = () => {
+    if (completedStepsRef.current.has(1)) return;
+    completedStepsRef.current.add(1);
     gsap.delayedCall(1.2, () => {
-      const chars = split1Ref.current?.querySelectorAll(".split-char");
+      const chars = split1Ref.current?.querySelectorAll(".split-char, .split-word");
       const targets = chars && chars.length > 0 ? chars : split1Ref.current;
       if (!targets) return;
       gsap.to(targets, {
@@ -273,8 +277,10 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
     });
   };
   const handleSplitComplete2 = () => {
+    if (completedStepsRef.current.has(2)) return;
+    completedStepsRef.current.add(2);
     gsap.delayedCall(1.2, () => {
-      const chars = split2Ref.current?.querySelectorAll(".split-char");
+      const chars = split2Ref.current?.querySelectorAll(".split-char, .split-word");
       const targets = chars && chars.length > 0 ? chars : split2Ref.current;
       if (!targets) return;
       gsap.to(targets, {
@@ -291,6 +297,8 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
     });
   };
   const handleSplitComplete3 = () => {
+    if (completedStepsRef.current.has(3)) return;
+    completedStepsRef.current.add(3);
     gsap.delayedCall(1.2, () => {
       setStep(4);
     });
@@ -301,7 +309,12 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
 
     const redirectTimer = window.setTimeout(() => {
       setStep(5);
-      toast.success(`Channel "${serverResChannel.displayName}" created!`);
+      toast.success(
+        formatI18n(
+          coreStore.getState().lang.data.app.onboarding.create_channel.toast_created,
+          { name: serverResChannel.displayName },
+        ),
+      );
       orgStore.getState().setActiveOrgId(String(activeOrg.id));
       orgStore.getState().setActiveStreamerId(String(serverResChannel.id));
       orgStore.getState().setOrgMode(false);
@@ -355,7 +368,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
 
       if (!res.ok) {
         const msg = await res.text();
-        toast.error(msg || "Failed to create channel");
+        toast.error(msg || cc.toast_failed);
         if (step1TimerRef.current !== null) {
           window.clearTimeout(step1TimerRef.current);
           step1TimerRef.current = null;
@@ -372,7 +385,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
 
       onComplete?.();
     } catch {
-      toast.error("Network error while creating channel");
+      toast.error(cc.toast_network);
       if (step1TimerRef.current !== null) {
         window.clearTimeout(step1TimerRef.current);
         step1TimerRef.current = null;
@@ -396,7 +409,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
               className="origin-center will-change-transform z-10 pointer-events-none absolute"
             >
               <SplitText
-                text="The new journey is coming.."
+                text={cc.step0_title}
                 className="text-5xl font-medium text-center overflow-visible"
                 effect="blur"
                 trigger="load"
@@ -412,7 +425,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                   opacity: 1,
                   filter: "blur(0px)",
                 }}
-                splitType="chars"
+                splitType={lang.key === "th-TH" ? "words" : "chars"}
                 delay={45}
                 duration={1.1}
                 staggerFrom="start"
@@ -433,15 +446,15 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                 ref={content2H1Ref}
                 className="text-4xl tracking-wide font-medium opacity-0"
               >
-                Everyone should call you...
+                {cc.step1_title}
               </h1>
               <p ref={content2PRef} className="text-sm text-foreground/40 tracking-wide font-sans opacity-0 mt-1 mb-4">
-                You can change this later <strong className="text-foreground/60 font-sans">but username cannot.</strong>
+                {cc.step1_hint_prefix}<strong className="text-foreground/60 font-sans">{cc.step1_hint_suffix}</strong>
               </p>
               <div ref={content3Ref} className="opacity-0">
                 <Input
                   type="text"
-                  placeholder={userInfo?.displayName || userInfo?.name || "your name"}
+                  placeholder={userInfo?.displayName || userInfo?.name || cc.name_placeholder}
                   fontStyle={{
                     fontFamily: "var(--font-sans)",
                     fontWeight: "500",
@@ -544,7 +557,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                         onClick={() => createChannelHandle()}
                         disabled={handleStatus !== "available" || isSubmitting}
                         className="rounded-xl py-3 px-6 h-max [--liquid-button-background-color:var(--muted)] [--liquid-button-color:var(--primary)] hover:text-primary-foreground">
-                        Let&apos;s go
+                        {cc.lets_go}
                       </LiquidButton>
                     </motion.div>
                   }
@@ -564,7 +577,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                       ref={split1Ref}
                     >
                       <SplitText
-                        text={"Hello " + channelDisplayName + "!"}
+                        text={formatI18n(cc.hello_name, { name: channelDisplayName })}
                         className="text-5xl font-medium text-center overflow-visible"
                         effect="blur"
                         trigger="load"
@@ -580,7 +593,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                           opacity: 1,
                           filter: "blur(0px)",
                         }}
-                        splitType="chars"
+                        splitType={lang.key === "th-TH" ? "words" : "chars"}
                         delay={45}
                         duration={1.1}
                         staggerFrom="start"
@@ -602,7 +615,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                       ref={split2Ref}
                     >
                       <SplitText
-                        text={"Glad to see you here"}
+                        text={cc.glad_title}
                         className="text-5xl font-medium text-center overflow-visible"
                         effect="blur"
                         trigger="load"
@@ -618,7 +631,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                           opacity: 1,
                           filter: "blur(0px)",
                         }}
-                        splitType="chars"
+                        splitType={lang.key === "th-TH" ? "words" : "chars"}
                         delay={45}
                         duration={1.1}
                         staggerFrom="start"
@@ -640,7 +653,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                       ref={split3Ref}
                     >
                       <SplitText
-                        text={"Almost done..."}
+                        text={cc.almost_done}
                         className="text-5xl font-medium text-center overflow-visible"
                         effect="blur"
                         trigger="load"
@@ -656,7 +669,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                           opacity: 1,
                           filter: "blur(0px)",
                         }}
-                        splitType="chars"
+                        splitType={lang.key === "th-TH" ? "words" : "chars"}
                         delay={45}
                         duration={1.1}
                         staggerFrom="start"
@@ -688,7 +701,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                           color="var(--muted)"
                           shimmeringColor="var(--foreground)"
                           className="text-base font-sans tracking-wide"
-                          text="We're still working on"
+                          text={cc.still_working}
                         />
                       </motion.div>
                     )
@@ -707,7 +720,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                           color="var(--muted)"
                           shimmeringColor="var(--foreground)"
                           className="text-base font-sans tracking-wide"
-                          text="Now let's bring you to the stage..."
+                          text={cc.bring_to_stage}
                         />
                       </motion.div>
                     )
@@ -781,7 +794,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
                     {p.handle}
                   </span>
                   <p className="text-[10px] text-muted-foreground/80 line-clamp-1 leading-snug mt-1">
-                    {p.bio}
+                    {cc.mock_profiles[`${p.key}_bio`]}
                   </p>
                 </div>
               </div>

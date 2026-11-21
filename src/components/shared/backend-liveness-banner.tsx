@@ -112,7 +112,7 @@ export default function BackendLivenessBanner() {
     banners.push({
       id: "backend-offline",
       level: "down",
-      title: "API Backend Offline",
+      title: lang.data.errors.backend_offline_title,
       message: lang.data.common.backend_offline,
     });
   }
@@ -222,7 +222,7 @@ export default function BackendLivenessBanner() {
                       className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${conf.badgeBg} ${conf.badgeText} border ${conf.badgeBorder} shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] shrink-0`}
                     >
                       <Icon className="size-3 shrink-0 animate-pulse" weight="fill" />
-                      <span>{banner.level}</span>
+                      <span>{lang.data.errors.status_levels[banner.level]}</span>
                     </span>
 
                     <span
@@ -287,7 +287,7 @@ export default function BackendLivenessBanner() {
                 className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${selectedConf?.badgeBg || ""
                   } ${selectedConf?.badgeText || ""}`}
               >
-                {selectedBanner?.level}
+                {selectedBanner ? lang.data.errors.status_levels[selectedBanner.level] : ""}
               </span>
             </div>
             <DialogTitle className="text-base font-bold text-foreground leading-snug">
@@ -296,9 +296,9 @@ export default function BackendLivenessBanner() {
             {(selectedBanner?.startsAt || selectedBanner?.endsAt) && (
               <p className="text-xs text-muted-foreground font-mono">
                 {selectedBanner.startsAt &&
-                  new Date(selectedBanner.startsAt).toLocaleString()}
+                  new Date(selectedBanner.startsAt).toLocaleString(lang.key)}
                 {selectedBanner.endsAt &&
-                  ` — ${new Date(selectedBanner.endsAt).toLocaleString()}`}
+                  ` — ${new Date(selectedBanner.endsAt).toLocaleString(lang.key)}`}
               </p>
             )}
           </DialogHeader>
@@ -331,7 +331,7 @@ export default function BackendLivenessBanner() {
               onClick={() => setSelectedBanner(null)}
               className="rounded-lg"
             >
-              Close
+              {lang.data.common.close}
             </Button>
           </DialogFooter>
         </DialogContent>

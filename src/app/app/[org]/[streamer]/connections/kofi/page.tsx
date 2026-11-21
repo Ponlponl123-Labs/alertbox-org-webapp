@@ -77,6 +77,8 @@ function KofiPage() {
   const webhookUrl = getApiUrl("/v1/webhook/kofi");
 
   const t = lang.data.app.connections.kofi_setup;
+  const commonSetup = lang.data.app.connections.setup_common;
+  const disconnectDialog = lang.data.app.connections.disconnect_dialog;
 
   const connectionsEndpoint =
     targetOrg && targetStreamer
@@ -142,7 +144,7 @@ function KofiPage() {
       return;
     }
     if (!isSafeIframeHandle(cleanUser)) {
-      toast.error("Invalid Ko-fi username format");
+      toast.error(t.invalid_username);
       return;
     }
 
@@ -235,7 +237,7 @@ function KofiPage() {
         <AnimateIcon animateOnHover="default-loop">
           <Collapsible.Trigger className="w-full p-3 rounded-xl not-data-panel-open:bg-muted/40 data-panel-open:bg-muted font-semibold text-xs flex gap-3 items-center justify-start text-start group/accordion-trigger">
             <ArrowDown01 animateOnHover className="size-4 group-aria-expanded/accordion-trigger:rotate-180 transition-all" />
-            How to setup
+            {commonSetup.how_to_setup}
           </Collapsible.Trigger>
         </AnimateIcon>
         <Collapsible.Panel>
@@ -244,17 +246,17 @@ function KofiPage() {
             <Accordion.Root value={focusOnStep} onValueChange={setFocusOnStep}>
               {[
                 {
-                  title: "First, finish your Ko-fi account.",
+                  title: t.step0_title,
                   children: <>
                     <div className="flex flex-col">
                       <span className="text-xs text-muted-foreground">
-                        Make sure your Ko-fi creator page and payout account are fully configured before enabling webhook alerts.
+                        {t.step0_desc}
                       </span>
                       <div className="flex items-center mt-3 gap-1">
                         <AnimateIcon animateOnHover>
                           <Button onClick={() => { setStep(1); setFocusOnStep(["item-1"]) }} variant="default" className="rounded-xl h-max p-3 font-semibold">
                             <Check />
-                            Mark as done
+                            {commonSetup.mark_done}
                           </Button>
                         </AnimateIcon>
                       </div>
@@ -282,14 +284,14 @@ function KofiPage() {
                           <AnimateIcon animateOnHover>
                             <Button variant="default" className="rounded-xl h-max p-3 font-semibold">
                               <SquareArrowOutUpRight />
-                              Go to Ko-fi Integrations Page
+                              {t.open_integrations_page}
                             </Button>
                           </AnimateIcon>
                         </Link>
                         <AnimateIcon animateOnHover>
                           <Button onClick={() => { setStep(2); setFocusOnStep(["item-2"]) }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
                             <Check />
-                            Mark as done
+                            {commonSetup.mark_done}
                           </Button>
                         </AnimateIcon>
                       </div>
@@ -307,18 +309,18 @@ function KofiPage() {
                         {webhookUrl}
                       </span>
                       <div className="flex items-center mt-3 gap-1">
-                        <CopyButton asChild content={webhookUrl} aria-label="Copy">
+                        <CopyButton asChild content={webhookUrl} aria-label={lang.data.common.copy}>
                           <AnimateIcon animateOnHover>
                             <Button variant="default" className="rounded-xl h-max p-3 font-semibold">
                               <CopyButtonIcon icon={<Clipboard />} copiedIcon={<ClipboardCheck />} />
-                              Copy your endpoint
+                              {commonSetup.copy_endpoint}
                             </Button>
                           </AnimateIcon>
                         </CopyButton>
                         <AnimateIcon animateOnHover>
                           <Button onClick={() => { setStep(3); setFocusOnStep(["item-3"]) }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
                             <Check />
-                            Mark as done
+                            {commonSetup.mark_done}
                           </Button>
                         </AnimateIcon>
                       </div>
@@ -336,7 +338,7 @@ function KofiPage() {
                         <AnimateIcon animateOnHover>
                           <Button onClick={() => { setStep(4); setFocusOnStep(["item-4"]) }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
                             <Check />
-                            Mark as done
+                            {commonSetup.mark_done}
                           </Button>
                         </AnimateIcon>
                       </div>
@@ -354,7 +356,7 @@ function KofiPage() {
                         <AnimateIcon animateOnHover>
                           <Button onClick={() => { setStep(5); setFocusOnStep(["item-5"]) }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
                             <Check />
-                            Mark as done
+                            {commonSetup.mark_done}
                           </Button>
                         </AnimateIcon>
                       </div>
@@ -414,7 +416,7 @@ function KofiPage() {
                   <Input
                     type="text"
                     required
-                    placeholder="username"
+                    placeholder={commonSetup.username_placeholder}
                     value={username}
                     readOnly={isSaving || !canManageIntegrations}
                     maxLength={64}
@@ -464,7 +466,7 @@ function KofiPage() {
                   }}
                 />
                 <p className="text-[10px] text-foreground/40 font-sans">
-                  Please ensure the secret is correct, because when the widget is works didn&apos;t mean the secret is correct. its will cause to cannot regonize any alerts if its wrong.
+                  {commonSetup.secret_warning}
                 </p>
               </div>
 
@@ -503,7 +505,7 @@ function KofiPage() {
                     disabled
                     className="h-max p-4 rounded-xl text-xs tracking-wider opacity-60 cursor-not-allowed"
                   >
-                    Read-only (No Permission)
+                    {lang.data.common.read_only_no_permission}
                   </Button>
                 )}
               </div>
@@ -511,7 +513,7 @@ function KofiPage() {
           </div>
         </div>
         <div className="rounded-2xl flex flex-col bg-muted">
-          <span className="px-3 py-1 font-semibold text-muted-foreground select-none text-sm">Live Preview</span>
+          <span className="px-3 py-1 font-semibold text-muted-foreground select-none text-sm">{commonSetup.live_preview}</span>
           <div className="flex items-center justify-center border-2 border-muted rounded-2xl bg-card overflow-hidden">
             {
               debouncedUsername.length >= 3 && isSafeIframeHandle(debouncedUsername) ? (
@@ -521,13 +523,13 @@ function KofiPage() {
                   sandbox="allow-scripts allow-same-origin"
                   referrerPolicy="no-referrer"
                   src={`https://ko-fi.com/${encodeURIComponent(debouncedUsername)}/?hidefeed=true&widget=true&embed=true&preview=true`}
-                  title="Ko-Fi"
+                  title={lang.data.app.connections.providers.kofi.name}
                   style={{ colorScheme: "light", scrollbarWidth: "thin" }}
                   loading="lazy"
                 />
               ) : (
                 <div className="w-96 h-172 bg-foreground/10 rounded-sm scale-75 flex items-center justify-center text-xs text-muted-foreground select-none">
-                  {username.trim().length > 0 ? "Loading preview..." : "Enter username to preview"}
+                  {username.trim().length > 0 ? commonSetup.loading_preview : commonSetup.enter_username_preview}
                 </div>
               )
             }
@@ -542,9 +544,7 @@ function KofiPage() {
               <LinkBreakIcon weight="regular" size={12} />
             </AlertDialogMedia>
             <AlertDialogTitle className="text-lg">
-              {lang.key === "th-TH"
-                ? "ยืนยันการตัดการเชื่อมต่อ"
-                : "Confirm Disconnection"}
+              {disconnectDialog.title}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t.confirm_disconnect}
@@ -556,7 +556,7 @@ function KofiPage() {
               className="rounded-xl cursor-pointer"
               disabled={isSaving}
             >
-              {lang.key === "th-TH" ? "ยกเลิก" : "Cancel"}
+              {lang.data.common.cancel}
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
@@ -567,13 +567,7 @@ function KofiPage() {
                 setIsConfirmOpen(false);
               }}
             >
-              {isSaving ? (
-                <Spinner className="size-4" />
-              ) : lang.key === "th-TH" ? (
-                "ยืนยัน"
-              ) : (
-                "Confirm"
-              )}
+              {isSaving ? <Spinner className="size-4" /> : lang.data.common.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

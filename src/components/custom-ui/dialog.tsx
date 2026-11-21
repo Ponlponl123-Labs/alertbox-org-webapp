@@ -1,5 +1,7 @@
 "use client"
 import * as React from "react"
+import { useStore } from "zustand"
+import { coreStore } from "@/hooks/store/core"
 import { Dialog as DialogPrimitive } from "@animate-ui/react/primitives/base-ui/dialog"
 import { cn } from "cn"
 import { Button } from "@/components/ui/button"
@@ -37,6 +39,7 @@ function DialogContent({
 }: DialogPrimitive.Popup.Props & {
     showCloseButton?: boolean
 }) {
+    const lang = useStore(coreStore, (state) => state.lang)
     return (
         <DialogPortal>
             <DialogOverlay />
@@ -62,7 +65,7 @@ function DialogContent({
                     >
                         <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2}
                         />
-                        <span className="sr-only">Close</span>
+                        <span className="sr-only">{lang.data.common.aria.close}</span>
                     </DialogPrimitive.Close>
                 )}
             </DialogPrimitive.Popup>
@@ -86,6 +89,7 @@ function DialogFooter({
 }: React.ComponentProps<"div"> & {
     showCloseButton?: boolean
 }) {
+    const lang = useStore(coreStore, (state) => state.lang)
     return (
         <div
             data-slot="dialog-footer"
@@ -98,7 +102,7 @@ function DialogFooter({
             {children}
             {showCloseButton && (
                 <DialogPrimitive.Close render={<Button variant="outline" />}>
-                    Close
+                    {lang.data.common.close}
                 </DialogPrimitive.Close>
             )}
         </div>

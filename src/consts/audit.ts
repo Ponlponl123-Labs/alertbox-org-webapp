@@ -1,3 +1,6 @@
+import lang from "@/lib/i18n";
+import type { LanguageData } from "@/types";
+
 export type AuditCategory = "ALL" | "MEMBERS" | "CHANNELS" | "SETTINGS" | "SECURITY";
 
 export interface AuditCategoryTab {
@@ -5,13 +8,19 @@ export interface AuditCategoryTab {
   label: string;
 }
 
-export const AUDIT_CATEGORY_TABS: AuditCategoryTab[] = [
-  { id: "ALL", label: "All Activities" },
-  { id: "MEMBERS", label: "Members & Roles" },
-  { id: "CHANNELS", label: "Channels" },
-  { id: "SETTINGS", label: "Settings" },
-  { id: "SECURITY", label: "Security & Ownership" },
-];
+export function getAuditCategoryTabs(
+  langData: LanguageData = lang("en-US").data,
+): AuditCategoryTab[] {
+  return [
+    { id: "ALL", label: langData.audit.categories.all },
+    { id: "MEMBERS", label: langData.audit.categories.members },
+    { id: "CHANNELS", label: langData.audit.categories.channels },
+    { id: "SETTINGS", label: langData.audit.categories.settings },
+    { id: "SECURITY", label: langData.audit.categories.security },
+  ];
+}
+
+export const AUDIT_CATEGORY_TABS: AuditCategoryTab[] = getAuditCategoryTabs();
 
 export const DEFAULT_AUDIT_PAGE_SIZE = 10;
 
@@ -42,38 +51,43 @@ export const AUDIT_ACTION_CATEGORY_MAP: Record<string, readonly AuditCategory[]>
   TRANSACTION_RESENT: ["CHANNELS"],
 };
 
-export const FIELD_FRIENDLY_NAMES: Record<string, string> = {
-  name: "Handle / Name",
-  displayName: "Display Name",
-  bio: "Bio Description",
-  avatar: "Avatar Image",
-  banner: "Header Banner",
-  accentColor: "Brand Accent Color",
-  slug: "URL Slug",
-  uri: "Custom URI",
-  type: "Organization Type",
-  twitch: "Twitch",
-  youtube: "YouTube",
-  twitter: "X / Twitter",
-  facebook: "Facebook",
-  reddit: "Reddit",
-  discord: "Discord",
-};
+export function getFieldFriendlyNames(
+  langData: LanguageData = lang("en-US").data,
+): Record<string, string> {
+  return { ...langData.audit.fields };
+}
 
-export const STREAMER_PERM_LABELS: Record<string, string> = {
-  STREAMER_VIEW: "View Channel & OBS",
-  STREAMER_MANAGE: "Edit Profile",
-  STREAMER_WIDGET_MANAGE: "Manage AlertBox",
-  STREAMER_INTEGRATION_MANAGE: "Manage Gateways",
-  STREAMER_ANALYTICS_VIEW: "View Analytics",
-  STREAMER_TRANSACTION_VIEW: "View Transactions",
-};
+export const FIELD_FRIENDLY_NAMES: Record<string, string> = getFieldFriendlyNames();
 
-export const STREAMER_PERM_BITS: Array<{ bit: number; key: string; label: string }> = [
-  { bit: 1 << 0, key: "STREAMER_VIEW", label: "View Channel & OBS" },
-  { bit: 1 << 1, key: "STREAMER_MANAGE", label: "Edit Profile" },
-  { bit: 1 << 2, key: "STREAMER_WIDGET_MANAGE", label: "Manage AlertBox" },
-  { bit: 1 << 3, key: "STREAMER_INTEGRATION_MANAGE", label: "Manage Gateways" },
-  { bit: 1 << 4, key: "STREAMER_ANALYTICS_VIEW", label: "View Analytics" },
-  { bit: 1 << 5, key: "STREAMER_TRANSACTION_VIEW", label: "View Transactions" },
-];
+export function getStreamerPermLabels(
+  langData: LanguageData = lang("en-US").data,
+): Record<string, string> {
+  const s = langData.permissions.streamer;
+  return {
+    STREAMER_VIEW: s.STREAMER_VIEW.short,
+    STREAMER_MANAGE: s.STREAMER_MANAGE.short,
+    STREAMER_WIDGET_MANAGE: s.STREAMER_WIDGET_MANAGE.short,
+    STREAMER_INTEGRATION_MANAGE: s.STREAMER_INTEGRATION_MANAGE.short,
+    STREAMER_ANALYTICS_VIEW: s.STREAMER_ANALYTICS_VIEW.short,
+    STREAMER_TRANSACTION_VIEW: s.STREAMER_TRANSACTION_VIEW.short,
+  };
+}
+
+export const STREAMER_PERM_LABELS: Record<string, string> = getStreamerPermLabels();
+
+export function getStreamerPermBits(
+  langData: LanguageData = lang("en-US").data,
+): Array<{ bit: number; key: string; label: string }> {
+  const labels = getStreamerPermLabels(langData);
+  return [
+    { bit: 1 << 0, key: "STREAMER_VIEW", label: labels.STREAMER_VIEW },
+    { bit: 1 << 1, key: "STREAMER_MANAGE", label: labels.STREAMER_MANAGE },
+    { bit: 1 << 2, key: "STREAMER_WIDGET_MANAGE", label: labels.STREAMER_WIDGET_MANAGE },
+    { bit: 1 << 3, key: "STREAMER_INTEGRATION_MANAGE", label: labels.STREAMER_INTEGRATION_MANAGE },
+    { bit: 1 << 4, key: "STREAMER_ANALYTICS_VIEW", label: labels.STREAMER_ANALYTICS_VIEW },
+    { bit: 1 << 5, key: "STREAMER_TRANSACTION_VIEW", label: labels.STREAMER_TRANSACTION_VIEW },
+  ];
+}
+
+export const STREAMER_PERM_BITS: Array<{ bit: number; key: string; label: string }> =
+  getStreamerPermBits();

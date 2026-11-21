@@ -76,6 +76,8 @@ function BmacPage() {
   const webhookUrl = getApiUrl("/v1/webhook/buymeacoffee");
 
   const t = lang.data.app.connections.bmac_setup;
+  const commonSetup = lang.data.app.connections.setup_common;
+  const disconnectDialog = lang.data.app.connections.disconnect_dialog;
 
   const encodedOrg = targetOrg ? encodeURIComponent(targetOrg) : "";
   const encodedStreamer = targetStreamer ? encodeURIComponent(targetStreamer) : "";
@@ -235,7 +237,7 @@ function BmacPage() {
         <AnimateIcon animateOnHover="default-loop">
           <Collapsible.Trigger className="w-full p-3 rounded-xl not-data-panel-open:bg-muted/40 data-panel-open:bg-muted font-semibold text-xs flex gap-3 items-center justify-start text-start group/accordion-trigger">
             <ArrowDown01 animateOnHover className="size-4 group-aria-expanded/accordion-trigger:rotate-180 transition-all" />
-            How to setup
+            {commonSetup.how_to_setup}
           </Collapsible.Trigger>
         </AnimateIcon>
         <Collapsible.Panel>
@@ -263,14 +265,14 @@ function BmacPage() {
                           <AnimateIcon animateOnHover>
                             <Button variant="default" className="rounded-xl h-max p-3 font-semibold">
                               <SquareArrowOutUpRight />
-                              Go to Buy Me a Coffee Webhooks Page
+                              {t.open_webhooks_page}
                             </Button>
                           </AnimateIcon>
                         </Link>
                         <AnimateIcon animateOnHover>
                           <Button onClick={() => { setStep(1); setFocusOnStep(["item-1"]); }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
                             <Check />
-                            Mark as done
+                            {commonSetup.mark_done}
                           </Button>
                         </AnimateIcon>
                       </div>
@@ -288,18 +290,18 @@ function BmacPage() {
                         {webhookUrl}
                       </span>
                       <div className="flex items-center mt-3 gap-1">
-                        <CopyButton asChild content={webhookUrl} aria-label="Copy">
+                        <CopyButton asChild content={webhookUrl} aria-label={lang.data.common.copy}>
                           <AnimateIcon animateOnHover>
                             <Button variant="default" className="rounded-xl h-max p-3 font-semibold">
                               <CopyButtonIcon icon={<Clipboard />} copiedIcon={<ClipboardCheck />} />
-                              Copy your endpoint
+                              {commonSetup.copy_endpoint}
                             </Button>
                           </AnimateIcon>
                         </CopyButton>
                         <AnimateIcon animateOnHover>
                           <Button onClick={() => { setStep(2); setFocusOnStep(["item-2"]); }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
                             <Check />
-                            Mark as done
+                            {commonSetup.mark_done}
                           </Button>
                         </AnimateIcon>
                       </div>
@@ -331,7 +333,7 @@ function BmacPage() {
                         <AnimateIcon animateOnHover>
                           <Button onClick={() => { setStep(3); setFocusOnStep(["item-3"]); }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
                             <Check />
-                            Mark as done
+                            {commonSetup.mark_done}
                           </Button>
                         </AnimateIcon>
                       </div>
@@ -349,7 +351,7 @@ function BmacPage() {
                         <AnimateIcon animateOnHover>
                           <Button onClick={() => { setStep(4); setFocusOnStep(["item-4"]); }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
                             <Check />
-                            Mark as done
+                            {commonSetup.mark_done}
                           </Button>
                         </AnimateIcon>
                       </div>
@@ -367,7 +369,7 @@ function BmacPage() {
                         <AnimateIcon animateOnHover>
                           <Button onClick={() => { setStep(5); setFocusOnStep(["item-5"]); }} variant="secondary" className="rounded-xl h-max p-3 font-semibold">
                             <Check />
-                            Mark as done
+                            {commonSetup.mark_done}
                           </Button>
                         </AnimateIcon>
                       </div>
@@ -427,7 +429,7 @@ function BmacPage() {
                   <Input
                     type="text"
                     required
-                    placeholder="username"
+                    placeholder={commonSetup.username_placeholder}
                     value={username}
                     readOnly={isSaving || !canManageIntegrations}
                     maxLength={64}
@@ -477,7 +479,7 @@ function BmacPage() {
                   }}
                 />
                 <p className="text-[10px] text-foreground/40 font-sans">
-                  Please ensure the secret is correct, because when the widget is works didn&apos;t mean the secret is correct. its will cause to cannot regonize any alerts if its wrong.
+                  {commonSetup.secret_warning}
                 </p>
               </div>
 
@@ -516,7 +518,7 @@ function BmacPage() {
                     disabled
                     className="h-max p-4 rounded-xl text-xs tracking-wider opacity-60 cursor-not-allowed"
                   >
-                    Read-only (No Permission)
+                    {lang.data.common.read_only_no_permission}
                   </Button>
                 )}
               </div>
@@ -524,7 +526,7 @@ function BmacPage() {
           </div>
         </div>
         <div className="rounded-2xl flex flex-col bg-muted">
-          <span className="px-3 py-1 font-semibold text-muted-foreground select-none text-sm">Live Preview</span>
+          <span className="px-3 py-1 font-semibold text-muted-foreground select-none text-sm">{commonSetup.live_preview}</span>
           <div className="flex items-center justify-center border-2 border-muted rounded-2xl bg-card overflow-hidden">
             {
               debouncedUsername.length >= 3 && isSafeIframeHandle(debouncedUsername) ? (
@@ -532,7 +534,7 @@ function BmacPage() {
                   className="w-96 h-172 border-0 rounded-sm bg-white scale-75 pointer-events-none"
                   tabIndex={-1}
                   src={`https://buymeacoffee.com/widget/page/${encodeURIComponent(debouncedUsername)}`}
-                  title="Buy Me a Coffee"
+                  title={lang.data.app.connections.providers.bmac.name}
                   sandbox="allow-scripts allow-forms allow-same-origin"
                   referrerPolicy="strict-origin-when-cross-origin"
                   style={{ colorScheme: "light", scrollbarWidth: "thin" }}
@@ -541,10 +543,10 @@ function BmacPage() {
               ) : (
                 <div className="w-96 h-172 bg-foreground/10 rounded-sm scale-75 flex items-center justify-center text-xs text-muted-foreground select-none">
                   {username.trim().length > 0 && !isSafeIframeHandle(username.trim())
-                    ? "Invalid username format"
+                    ? commonSetup.invalid_username
                     : username.trim().length > 0
-                      ? "Loading preview..."
-                      : "Enter username to preview"}
+                      ? commonSetup.loading_preview
+                      : commonSetup.enter_username_preview}
                 </div>
               )
             }
@@ -559,9 +561,7 @@ function BmacPage() {
               <LinkBreakIcon weight="regular" size={12} />
             </AlertDialogMedia>
             <AlertDialogTitle className="text-lg">
-              {lang.key === "th-TH"
-                ? "ยืนยันการตัดการเชื่อมต่อ"
-                : "Confirm Disconnection"}
+              {disconnectDialog.title}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t.confirm_disconnect}
@@ -573,7 +573,7 @@ function BmacPage() {
               className="rounded-xl cursor-pointer"
               disabled={isSaving}
             >
-              {lang.key === "th-TH" ? "ยกเลิก" : "Cancel"}
+              {lang.data.common.cancel}
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
@@ -584,13 +584,7 @@ function BmacPage() {
                 setIsConfirmOpen(false);
               }}
             >
-              {isSaving ? (
-                <Spinner className="size-4" />
-              ) : lang.key === "th-TH" ? (
-                "ยืนยัน"
-              ) : (
-                "Confirm"
-              )}
+              {isSaving ? <Spinner className="size-4" /> : lang.data.common.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

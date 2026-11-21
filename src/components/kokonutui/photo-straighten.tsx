@@ -11,6 +11,8 @@
  */
 
 import { RotateCcw, Wand2 } from "lucide-react";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
 import {
   type AnimationPlaybackControls,
   animate,
@@ -74,13 +76,15 @@ const formatAngle = (a: number) => {
 
 export default function PhotoStraighten({
   src = PHOTO,
-  alt = "A lake below mountains",
+  alt,
   aspectRatio = 4 / 3,
   tilt = 4.2,
   defaultAngle = 0,
   onAngleChange,
   className,
 }: PhotoStraightenProps) {
+  const lang = useStore(coreStore, (s) => s.lang);
+  const resolvedAlt = alt ?? lang.data.components.photo_straighten.default_alt;
   const reduce = useReducedMotion();
   const angle = useMotionValue(defaultAngle);
   const settle = useRef<AnimationPlaybackControls | null>(null);
@@ -211,7 +215,7 @@ export default function PhotoStraighten({
       >
         <motion.div className="absolute inset-0" style={{ transform }}>
           <Image
-            alt={alt}
+            alt={resolvedAlt}
             className="pointer-events-none object-cover"
             draggable={false}
             fill
@@ -257,7 +261,9 @@ export default function PhotoStraighten({
             level ? "bg-emerald-600/90" : "bg-black/55"
           )}
         >
-          {level ? "Level" : "Crooked"}
+          {level
+            ? lang.data.components.photo_straighten.level
+            : lang.data.components.photo_straighten.crooked}
         </span>
       </div>
 
@@ -268,7 +274,7 @@ export default function PhotoStraighten({
           type="button"
         >
           <Wand2 aria-hidden className="size-3.5" />
-          Auto
+          {lang.data.components.photo_straighten.auto}
         </button>
         <span
           className={cn(
@@ -285,13 +291,13 @@ export default function PhotoStraighten({
           type="button"
         >
           <RotateCcw aria-hidden className="size-3.5" />
-          Reset
+          {lang.data.components.photo_straighten.reset}
         </button>
       </div>
 
       {/* The ruler slides under a fixed centre mark. */}
       <div
-        aria-label="Straighten"
+        aria-label={lang.data.components.photo_straighten.straighten}
         aria-valuemax={45}
         aria-valuemin={-45}
         aria-valuenow={value}
@@ -426,10 +432,12 @@ export function PhotoStraightenSlider({
   min = -MAX,
   max = MAX,
   step: customStep,
-  label = "Straighten",
+  label,
   showReset = true,
   formatValue,
 }: PhotoStraightenSliderProps) {
+  const lang = useStore(coreStore, (s) => s.lang);
+  label = label ?? lang.data.components.photo_straighten.straighten;
   const { ticks, step, pxPerUnit } = getTicksConfig(min, max, customStep);
   const resetTarget = defaultValue !== undefined ? defaultValue : (min <= 0 && max >= 0 ? 0 : (min <= 1 && max >= 1 ? 1 : min));
   const initialVal = controlledValue ?? defaultValue ?? resetTarget;
@@ -587,7 +595,7 @@ export function PhotoStraightenSlider({
               className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
             >
               <RotateCcw className="size-3" />
-              Reset
+              {lang.data.components.photo_straighten.reset}
             </button>
           )}
         </div>

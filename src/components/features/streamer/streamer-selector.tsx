@@ -12,6 +12,8 @@ import {
   PlusIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
 import { hasPermission } from "@/lib/rbac";
 import { OrgPerm } from "@/consts/permission";
 import { AnimateIcon } from "@animate-ui/react/icons";
@@ -27,6 +29,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
     isOrgMode,
     setActiveStreamerId,
   } = useUserContext();
+  const lang = useStore(coreStore, (s) => s.lang);
   const [open, setOpen] = useState(false);
 
   const orgKey = activeOrg?.slug || activeOrg?.id || "org";
@@ -60,8 +63,10 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
             )}
             title={
               effectiveOrgMode
-                ? "Organization Overview"
-                : activeStreamer?.displayName || activeStreamer?.name || "Select Channel"
+                ? lang.data.components.streamer_selector.org_overview
+                : activeStreamer?.displayName ||
+                  activeStreamer?.name ||
+                  lang.data.components.streamer_selector.select_channel
             }
           >
             <AnimatePresence mode="popLayout">
@@ -101,8 +106,10 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
                   <div className="flex flex-1 items-center justify-between min-w-0">
                     <span className="truncate font-medium text-foreground/80 text-xs tracking-wide">
                       {effectiveOrgMode
-                        ? "Org Overview"
-                        : activeStreamer?.displayName || activeStreamer?.name || "No Channel"}
+                        ? lang.data.components.streamer_selector.org_overview_short
+                        : activeStreamer?.displayName ||
+                          activeStreamer?.name ||
+                          lang.data.components.streamer_selector.no_channel}
                     </span>
                     <ChevronUpDown className="ml-auto size-3 text-muted-foreground/70 shrink-0" />
                   </div>
@@ -119,7 +126,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
         >
           <div className="flex flex-col gap-0.5">
             <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">
-              Channel / Workspace
+              {lang.data.components.streamer_selector.channel_workspace}
             </div>
 
             {canViewOrg && (
@@ -141,9 +148,11 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
                   <BuildingsIcon size={14} weight="bold" />
                 </div>
                 <div className="grid flex-1 min-w-0 leading-tight">
-                  <span className="truncate font-medium">Organization Overview</span>
+                  <span className="truncate font-medium">
+                    {lang.data.components.streamer_selector.org_overview}
+                  </span>
                   <span className="truncate text-[10px] text-muted-foreground">
-                    Staff, Roles & Finance
+                    {lang.data.components.streamer_selector.org_overview_desc}
                   </span>
                 </div>
                 {effectiveOrgMode && <CheckIcon size={13} weight="bold" className="text-primary shrink-0" />}
@@ -211,7 +220,7 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
                   <div className="flex size-6 items-center justify-center rounded-lg border border-dashed border-border shrink-0">
                     <PlusIcon className="size-3.5" weight="bold" />
                   </div>
-                  <span>Add channel</span>
+                  <span>{lang.data.components.streamer_selector.add_channel}</span>
                 </Link>
               </>
             )}

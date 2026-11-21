@@ -217,7 +217,7 @@ function ConnectionsContent() {
     {
       api_endpoint: getProviderEndpoint("stripe-connect"),
       icon: <Stripe className="size-7" />,
-      name: "Stripe Connect",
+      name: lang.data.app.connections.stripe_connect_name,
       description: lang.data.app.connections.providers.stripe.description,
       privacy: lang.data.app.connections.providers.stripe.privacy,
       payout: lang.data.app.connections.providers.stripe.payout,
@@ -434,9 +434,9 @@ function ConnectionsContent() {
 
         {!connections && fetchError && (
           <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 rounded-4xl border-2 border-dashed border-foreground/10 bg-foreground/5 py-12 text-center">
-            <p className="text-xs text-muted-foreground font-sans">Failed to load integrations.</p>
+            <p className="text-xs text-muted-foreground font-sans">{lang.data.app.connections.load_error}</p>
             <Button variant="secondary" size="sm" onClick={() => setRetryTick((n) => n + 1)}>
-              Retry
+              {lang.data.common.retry}
             </Button>
           </div>
         )}

@@ -64,16 +64,27 @@ import type {
   CreatedInviteCode,
 } from "@/types";
 import {
-  ORG_PERM_DEFINITIONS,
-  STREAMER_PERM_DEFINITIONS,
-  INVITE_ROLES,
-  ROLE_SUMMARIES,
+  getOrgPermDefinitions,
+  getStreamerPermDefinitions,
+  getInviteRoles,
+  getRoleSummaries,
+  getRoleLabel,
 } from "@/consts/org";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
+import { formatI18n } from "@/lib/i18n";
 import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function OrgMembersPage() {
+  const lang = useStore(coreStore, (s) => s.lang);
+  const om = lang.data.app.org.members;
+  const orgPermDefinitions = useMemo(() => getOrgPermDefinitions(lang.data), [lang.data]);
+  const streamerPermDefinitions = useMemo(() => getStreamerPermDefinitions(lang.data), [lang.data]);
+  const inviteRoles = useMemo(() => getInviteRoles(lang.data), [lang.data]);
+  const roleSummaries = useMemo(() => getRoleSummaries(lang.data), [lang.data]);
+
   const routeParams = useParams();
   const { activeOrg, authFetch, userInfo } = useUserContext();
   const [members, setMembers] = useState<OrgMemberData[]>([]);
@@ -100,7 +111,7 @@ export default function OrgMembersPage() {
   const [createdInviteCode, setCreatedInviteCode] = useState<CreatedInviteCode | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
-  const selectedInviteRoleObj = INVITE_ROLES.find((r) => r.value === inviteRole) || INVITE_ROLES[0];
+  const selectedInviteRoleObj = inviteRoles.find((r) => r.value === inviteRole) || inviteRoles[0];
 
   // Full-screen Permissions & Streamer Assignment Dialog states
   const [managingMember, setManagingMember] = useState<OrgMemberData | null>(null);
@@ -136,7 +147,7 @@ export default function OrgMembersPage() {
       })
       .catch((err) => {
         if ((err as Error)?.name === "AbortError") return;
-        toast.error("Failed to load organization members");
+        toast.error(coreStore.getState().lang.data.app.org.members.toasts.load_failed);
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -156,15 +167,15 @@ export default function OrgMembersPage() {
       (userInfo?.email && m.email.toLowerCase() === userInfo.email.toLowerCase())
     );
     if (isSelf) {
-      toast.error("You cannot manage your own role or permissions.");
+      toast.error(om.toasts.cannot_manage_self);
       return;
     }
     if (m.role === "OWNER") {
-      toast.error("Organization Owner cannot be modified here. Ownership must be transferred from Organization Settings.");
+      toast.error(om.toasts.cannot_modify_owner);
       return;
     }
     if (!canManageTargetMember(activeOrg, m)) {
-      toast.error("You cannot manage this member because their permissions exceed your own.");
+      toast.error(om.toasts.cannot_manage_higher);
       return;
     }
     setManagingMember(m);
@@ -175,7 +186,7 @@ export default function OrgMembersPage() {
       setDialogAssignments(
         streamers.map((s) => ({
           streamerId: s.id,
-          permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key),
+          permissions: streamerPermDefinitions.map((p) => p.key),
         })),
       );
     } else {
@@ -187,7 +198,7 @@ export default function OrgMembersPage() {
     if (role === "OWNER") return;
     const presetPerms = RolePresets[role] ?? BigInt(0);
     if (!isOwner && (presetPerms & ~callerPerms) !== BigInt(0)) {
-      toast.error(`Cannot select ${role} preset because it contains permissions above your own.`);
+      toast.error(formatI18n(om.toasts.cannot_select_higher_preset, { role: getRoleLabel(role, lang.data) }));
       return;
     }
     setDialogRole(role);
@@ -198,7 +209,7 @@ export default function OrgMembersPage() {
       setDialogAssignments(
         streamers.map((s) => ({
           streamerId: s.id,
-          permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key),
+          permissions: streamerPermDefinitions.map((p) => p.key),
         })),
       );
     }
@@ -206,7 +217,7 @@ export default function OrgMembersPage() {
 
   const toggleOrgPermBit = (bit: bigint) => {
     if (!isOwner && (callerPerms & bit) !== bit) {
-      toast.error("You cannot toggle a permission higher than your own.");
+      toast.error(om.toasts.cannot_toggle_higher_perm);
       return;
     }
     setDialogPerms((prev) => prev ^ bit);
@@ -256,7 +267,7 @@ export default function OrgMembersPage() {
     setDialogAssignments(
       streamers.map((s) => ({
         streamerId: s.id,
-        permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key),
+        permissions: streamerPermDefinitions.map((p) => p.key),
       })),
     );
   };
@@ -272,15 +283,15 @@ export default function OrgMembersPage() {
       (userInfo?.email && managingMember.email.toLowerCase() === userInfo.email.toLowerCase())
     );
     if (isSelf) {
-      toast.error("You cannot modify your own role or permissions.");
+      toast.error(om.toasts.cannot_modify_self);
       return;
     }
     if (!canManageTargetMember(activeOrg, managingMember)) {
-      toast.error("Cannot modify a member with equal or higher privileges.");
+      toast.error(om.toasts.cannot_modify_equal_or_higher);
       return;
     }
     if (!isOwner && (dialogPerms & ~callerPerms) !== BigInt(0)) {
-      toast.error("Cannot save permissions that exceed your own.");
+      toast.error(om.toasts.cannot_save_exceeding);
       return;
     }
     setIsSavingPermissions(true);
@@ -290,7 +301,7 @@ export default function OrgMembersPage() {
       const finalAssignments = isOwnerOrAdmin
         ? streamers.map((s) => ({
           streamerId: String(s.id),
-          permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key),
+          permissions: streamerPermDefinitions.map((p) => p.key),
         }))
         : dialogAssignments.map((a) => ({
           ...a,
@@ -331,14 +342,14 @@ export default function OrgMembersPage() {
               : m,
           ),
         );
-        toast.success("Permissions & channel assignments saved successfully");
+        toast.success(om.toasts.saved);
         setManagingMember(null);
       } else {
         const msg = await res.text();
-        toast.error(msg || "Failed to update permissions");
+        toast.error(msg || om.toasts.update_failed);
       }
     } catch {
-      toast.error("Network error updating permissions");
+      toast.error(om.toasts.update_network);
     } finally {
       setIsSavingPermissions(false);
     }
@@ -363,10 +374,10 @@ export default function OrgMembersPage() {
         setInviteStep(2);
       } else {
         const msg = await res.text();
-        toast.error(msg || "No active registered user found with this email");
+        toast.error(msg || om.toasts.user_not_found);
       }
     } catch {
-      toast.error("Network error verifying email");
+      toast.error(om.toasts.verify_network);
     } finally {
       setIsCheckingEmail(false);
     }
@@ -376,7 +387,7 @@ export default function OrgMembersPage() {
     if (e) e.preventDefault();
     if (!inviteEmail.trim() || !orgTarget || isInviting || !canAddMembers) return;
     if (!canDelegateRolePreset(activeOrg, inviteRole)) {
-      toast.error("You cannot invite a member with a role exceeding your permissions.");
+      toast.error(om.toasts.cannot_invite_higher);
       return;
     }
     setIsInviting(true);
@@ -395,13 +406,13 @@ export default function OrgMembersPage() {
           role: data.role,
           expiresAt: data.expiresAt,
         });
-        toast.success("Invite code generated!");
+        toast.success(om.toasts.invite_created);
       } else {
         const msg = await res.text();
-        toast.error(msg || "Failed to send invitation");
+        toast.error(msg || om.toasts.invite_failed);
       }
     } catch {
-      toast.error("Network error sending invitation");
+      toast.error(om.toasts.invite_network);
     } finally {
       setIsInviting(false);
     }
@@ -427,11 +438,11 @@ export default function OrgMembersPage() {
       (userInfo?.email && deletingMember.email.toLowerCase() === userInfo.email.toLowerCase())
     );
     if (isSelf) {
-      toast.error("You cannot remove yourself here. Use organization settings to leave.");
+      toast.error(om.toasts.cannot_remove_self);
       return;
     }
     if (!canManageTargetMember(activeOrg, deletingMember)) {
-      toast.error("You cannot remove a member whose permissions exceed your own.");
+      toast.error(om.toasts.cannot_remove_higher);
       return;
     }
     setIsDeleting(true);
@@ -442,13 +453,13 @@ export default function OrgMembersPage() {
       );
       if (res.ok) {
         setMembers((prev) => prev.filter((m) => m.id !== deletingMember.id));
-        toast.success("Member removed");
+        toast.success(om.toasts.removed);
         setDeletingMember(null);
       } else {
-        toast.error("Failed to remove member");
+        toast.error(om.toasts.remove_failed);
       }
     } catch {
-      toast.error("Network error removing member");
+      toast.error(om.toasts.remove_network);
     } finally {
       setIsDeleting(false);
     }
@@ -461,9 +472,10 @@ export default function OrgMembersPage() {
       (m) =>
         (m.name && m.name.toLowerCase().includes(q)) ||
         (m.email && m.email.toLowerCase().includes(q)) ||
-        m.role.toLowerCase().includes(q),
+        m.role.toLowerCase().includes(q) ||
+        getRoleLabel(m.role, lang.data).toLowerCase().includes(q),
     );
-  }, [members, searchQuery]);
+  }, [members, searchQuery, lang.data]);
 
   const getRoleBadgeStyle = (role: string) => {
     switch (role) {
@@ -503,13 +515,13 @@ export default function OrgMembersPage() {
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
             <UsersIcon size={16} weight="bold" />
-            <span>Team & Delegated Access</span>
+            <span>{om.eyebrow}</span>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
-            Members & Staff
+            {om.title}
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage teammates, granular bitmask permissions, and channel assignments for {activeOrg?.name}.
+            {formatI18n(om.subtitle, { org: activeOrg?.name || "" })}
           </p>
         </div>
 
@@ -528,7 +540,7 @@ export default function OrgMembersPage() {
               className="gap-2 font-semibold text-xs rounded-xl p-3 h-max"
             >
               <UserPlusIcon size={16} weight="bold" />
-              <span>Invite Member</span>
+              <span>{om.invite_button}</span>
             </Button>
           </div>
         )}
@@ -538,7 +550,7 @@ export default function OrgMembersPage() {
         <div className="relative flex-1 max-w-sm">
           <Input
             type="text"
-            placeholder="Search by name, email, or role..."
+            placeholder={om.search_placeholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             startContent={<MagnifyingGlassIcon size={16} className="text-muted-foreground" />}
@@ -553,8 +565,8 @@ export default function OrgMembersPage() {
         </div>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Badge variant={"secondary"} className="p-2 h-max rounded-xl select-none"><ShieldCheckeredIcon weight="fill" size={16} /> Total Staff: <strong className="text-foreground">{members.length}</strong></Badge>
-          <Badge variant={"secondary"} className="p-2 h-max rounded-xl select-none"><PersonSimpleTaiChiIcon weight="fill" size={16} /> Channels: <strong className="text-foreground">{streamers.length}</strong></Badge>
+          <Badge variant={"secondary"} className="p-2 h-max rounded-xl select-none"><ShieldCheckeredIcon weight="fill" size={16} /> {om.total_staff} <strong className="text-foreground">{members.length}</strong></Badge>
+          <Badge variant={"secondary"} className="p-2 h-max rounded-xl select-none"><PersonSimpleTaiChiIcon weight="fill" size={16} /> {om.channels_count} <strong className="text-foreground">{streamers.length}</strong></Badge>
         </div>
       </div>
 
@@ -562,12 +574,12 @@ export default function OrgMembersPage() {
         <Table className="w-full text-left border-collapse">
           <TableHeader>
             <TableRow className="text-xs text-muted-foreground select-none border-b border-border/60 bg-muted/20">
-              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">User</TableHead>
-              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">Role & Permissions</TableHead>
-              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground hidden">Status</TableHead>
-              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">Joined Date</TableHead>
-              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">Assigned Channels</TableHead>
-              <TableHead className="py-3.5 px-6 font-semibold text-right h-auto text-muted-foreground">Actions</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">{om.table.user}</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">{om.table.role_perms}</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground hidden">{om.table.status}</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">{om.table.joined_date}</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold h-auto text-muted-foreground">{om.table.assigned_channels}</TableHead>
+              <TableHead className="py-3.5 px-6 font-semibold text-right h-auto text-muted-foreground">{om.table.actions}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-border/30 text-sm">
@@ -576,22 +588,27 @@ export default function OrgMembersPage() {
                 <TableCell colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
                   <div className="flex items-center justify-center gap-2">
                     <Spinner />
-                    <span>Loading team members...</span>
+                    <span>{om.table.loading}</span>
                   </div>
                 </TableCell>
               </TableRow>
             ) : filteredMembers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
-                  {searchQuery ? "No members match your search query." : "No members found."}
+                  {searchQuery ? om.table.empty_search : om.table.empty_default}
                 </TableCell>
               </TableRow>
             ) : (
               filteredMembers.map((m) => {
                 const isOwnerOrAdmin = m.role === "OWNER" || m.role === "ADMIN";
                 const memberStatus = m.status || "Active";
+                const memberStatusLabel = memberStatus === "Active"
+                  ? lang.data.common.active
+                  : memberStatus === "Away"
+                    ? lang.data.common.away
+                    : memberStatus;
                 const formattedDate = m.joinedAt
-                  ? new Date(m.joinedAt).toLocaleDateString("en-US", {
+                  ? new Date(m.joinedAt).toLocaleDateString(lang.key, {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
@@ -613,7 +630,7 @@ export default function OrgMembersPage() {
                     <TableCell className="py-4 px-6">
                       <div className="flex items-center gap-3.5">
                         <Avatar className="size-12 rounded-full border border-border/40 shrink-0">
-                          {m.avatar ? <AvatarImage src={m.avatar} alt={m.name || "Member"} /> : null}
+                          {m.avatar ? <AvatarImage src={m.avatar} alt={m.name || lang.data.common.member} /> : null}
                           <AvatarFallback className="bg-blue-600/90 text-white font-semibold text-xs">
                             {getFallbackInitial(m.name || m.email || "U")}
                           </AvatarFallback>
@@ -621,14 +638,14 @@ export default function OrgMembersPage() {
                         <div className="flex flex-col leading-tight min-w-0">
                           <div className="flex items-center gap-1.5 min-w-0">
                             <span className="font-semibold text-sm text-foreground truncate">
-                              {m.name || "Member"}
+                              {m.name || lang.data.common.member}
                             </span>
                             {isSelf && (
                               <Badge
                                 variant="default"
                                 className="text-[10px] p-2 h-4 font-medium rounded-xl select-none shrink-0"
                               >
-                                You
+                                {lang.data.common.you}
                               </Badge>
                             )}
                           </div>
@@ -647,10 +664,10 @@ export default function OrgMembersPage() {
                             getRoleBadgeStyle(m.role),
                           )}
                         >
-                          {m.role}
+                          {getRoleLabel(m.role, lang.data)}
                         </span>
                         <span className="text-[11px] text-muted-foreground/80 font-normal">
-                          {ROLE_SUMMARIES[m.role] || "Standard Access"}
+                          {roleSummaries[m.role] || lang.data.roles.member.summary}
                         </span>
                       </div>
                     </TableCell>
@@ -668,7 +685,7 @@ export default function OrgMembersPage() {
                             memberStatus === "Active" ? "bg-emerald-400" : "bg-zinc-400",
                           )}
                         />
-                        {memberStatus}
+                        {memberStatusLabel}
                       </span>
                     </TableCell>
 
@@ -679,7 +696,7 @@ export default function OrgMembersPage() {
                     <TableCell className="py-4 px-6 whitespace-nowrap">
                       {isOwnerOrAdmin ? (
                         <span className="text-xs text-muted-foreground/80 font-medium">
-                          All channels (Full Access)
+                          {om.table.all_channels}
                         </span>
                       ) : assignedList.length > 0 ? (
                         <div className="flex items-center -space-x-2 overflow-hidden">
@@ -709,7 +726,7 @@ export default function OrgMembersPage() {
                         </div>
                       ) : (
                         <span className="text-xs text-muted-foreground/50 italic">
-                          No channels assigned
+                          {om.table.no_channels}
                         </span>
                       )}
                     </TableCell>
@@ -721,7 +738,7 @@ export default function OrgMembersPage() {
                       >
                         <PopoverTrigger
                           className="inline-flex items-center justify-center size-8 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none"
-                          title="Member actions"
+                          title={om.table.actions_title}
                         >
                           <DotsThreeVerticalIcon size={16} weight="bold" />
                         </PopoverTrigger>
@@ -741,38 +758,38 @@ export default function OrgMembersPage() {
                                 className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-accent hover:text-accent-foreground text-foreground transition-colors text-left font-medium cursor-pointer"
                               >
                                 <ShieldCheckIcon size={14} weight="bold" className="text-primary" />
-                                <span>Permissions & Channels</span>
+                                <span>{om.popover.perms_and_channels}</span>
                               </button>
                             )}
                             {isTargetAboveCaller && !isSelf && m.role !== "OWNER" && (
                               <div className="px-2.5 py-1.5 text-[11px] text-muted-foreground/80 font-medium italic flex items-center gap-1.5">
                                 <ShieldCheckIcon size={14} weight="bold" className="text-muted-foreground/60" />
-                                <span>Higher Privileges</span>
+                                <span>{om.popover.higher_privileges}</span>
                               </div>
                             )}
                             {isSelf && (
                               <div className="px-2.5 py-1.5 text-[11px] text-muted-foreground/80 font-medium italic flex items-center gap-1.5">
                                 <ShieldCheckIcon size={14} weight="bold" className="text-primary/70" />
-                                <span>Your Account</span>
+                                <span>{om.popover.your_account}</span>
                               </div>
                             )}
                             {m.role === "OWNER" && !isSelf && (
                               <div className="px-2.5 py-1.5 text-[11px] text-muted-foreground/80 font-semibold italic flex items-center gap-1.5">
                                 <ShieldCheckIcon size={14} weight="bold" className="text-amber-500" />
-                                <span>Organization Owner</span>
+                                <span>{om.popover.org_owner}</span>
                               </div>
                             )}
                             <button
                               type="button"
                               onClick={() => {
                                 navigator.clipboard.writeText(m.email);
-                                toast.success("Email copied to clipboard");
+                                toast.success(om.toasts.email_copied);
                                 setActionMenuMemberId(null);
                               }}
                               className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-accent hover:text-accent-foreground text-foreground transition-colors text-left font-medium cursor-pointer"
                             >
                               <CopySimpleIcon size={14} weight="bold" className="text-muted-foreground" />
-                              <span>Copy Email</span>
+                              <span>{om.popover.copy_email}</span>
                             </button>
                             {canRemoveMembers && m.role !== "OWNER" && !isSelf && canManageTargetMember(activeOrg, m) && (
                               <>
@@ -786,7 +803,7 @@ export default function OrgMembersPage() {
                                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-destructive/10 text-destructive transition-colors text-left font-medium cursor-pointer"
                                 >
                                   <TrashIcon size={14} weight="bold" />
-                                  <span>Remove Member</span>
+                                  <span>{om.popover.remove_member}</span>
                                 </button>
                               </>
                             )}
@@ -815,7 +832,7 @@ export default function OrgMembersPage() {
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar className="size-12 rounded-full border border-border shrink-0">
                   {managingMember?.avatar ? (
-                    <AvatarImage src={managingMember.avatar} alt={managingMember.name || "Member"} />
+                    <AvatarImage src={managingMember.avatar} alt={managingMember.name || lang.data.common.member} />
                   ) : null}
                   <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
                     {getFallbackInitial(managingMember?.name || managingMember?.email || "U")}
@@ -824,10 +841,10 @@ export default function OrgMembersPage() {
                 <div className="flex flex-col min-w-0 leading-tight">
                   <div className="flex items-center gap-2 -mt-0.5">
                     <DialogTitle className="text-lg font-semibold text-foreground font-sans truncate">
-                      {managingMember?.name || "Staff Member"}
+                      {managingMember?.name || om.perms_dialog.staff_fallback}
                     </DialogTitle>
                     <span className={cn("px-2 py-1 rounded-md text-[10px] font-semibold", getRoleBadgeStyle(dialogRole))}>
-                      {dialogRole}
+                      {getRoleLabel(dialogRole, lang.data)}
                     </span>
                   </div>
                   <DialogDescription className="text-xs text-muted-foreground font-sans truncate">
@@ -848,7 +865,7 @@ export default function OrgMembersPage() {
                   )}
                 >
                   <ShieldCheckIcon size={14} weight="bold" />
-                  <span>Org Role & Permissions</span>
+                  <span>{om.perms_dialog.tab_org_role}</span>
                 </Button>
 
                 <Button
@@ -862,7 +879,7 @@ export default function OrgMembersPage() {
                   )}
                 >
                   <BroadcastIcon size={14} weight="bold" />
-                  <span>Channel Assignments</span>
+                  <span>{om.perms_dialog.tab_channels}</span>
                   <span className={cn(
                     "ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold",
                     dialogTab === "streamers"
@@ -883,8 +900,8 @@ export default function OrgMembersPage() {
                   <div className="py-5 px-3 flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-base font-semibold text-foreground">Organization Role Preset</h3>
-                        <p className="text-xs text-muted-foreground">Select a standard preset to automatically populate the 64-bit permission bitmask.</p>
+                        <h3 className="text-base font-semibold text-foreground">{om.perms_dialog.preset_heading}</h3>
+                        <p className="text-xs text-muted-foreground">{om.perms_dialog.preset_desc}</p>
                       </div>
                     </div>
 
@@ -903,9 +920,9 @@ export default function OrgMembersPage() {
                               "flex flex-col items-center justify-center p-3 rounded-xl h-max text-center transition-all"
                             )}
                           >
-                            <span className="text-xs font-semibold">{role}</span>
+                            <span className="text-xs font-semibold">{getRoleLabel(role, lang.data)}</span>
                             <span className="text-[10px] opacity-70 mt-0.5">
-                              {isLocked ? "Locked" : ROLE_SUMMARIES[role]?.split("·")[0] || "Role"}
+                              {isLocked ? lang.data.common.locked : roleSummaries[role]?.split("·")[0] || om.perms_dialog.preset_role_sub}
                             </span>
                           </Button>
                         );
@@ -914,7 +931,7 @@ export default function OrgMembersPage() {
                   </div>
 
                   <div className="flex flex-col gap-4">
-                    {ORG_PERM_DEFINITIONS.map((cat) => (
+                    {orgPermDefinitions.map((cat) => (
                       <div
                         key={cat.category}
                         className="p-3 rounded-2xl flex flex-col gap-3"
@@ -949,7 +966,7 @@ export default function OrgMembersPage() {
                                     <span className="text-xs font-semibold text-foreground">{p.name}</span>
                                     {isLocked && (
                                       <span className="text-[10px] text-amber-500 font-medium border border-amber-500/20 bg-amber-500/10 px-1 py-0.2 rounded">
-                                        Locked
+                                        {lang.data.common.locked}
                                       </span>
                                     )}
                                   </div>
@@ -977,10 +994,10 @@ export default function OrgMembersPage() {
                       <ShieldCheckIcon size={24} weight="bold" className="text-blue-400 shrink-0" />
                       <div>
                         <h3 className="text-sm font-semibold text-foreground">
-                          Unrestricted Channel Privileges
+                          {om.perms_dialog.unrestricted_title}
                         </h3>
                         <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                          Organization {dialogRole}s automatically have full access and management permissions across all channels.
+                          {formatI18n(om.perms_dialog.unrestricted_desc, { role: getRoleLabel(dialogRole, lang.data) })}
                         </p>
                       </div>
                     </div>
@@ -989,10 +1006,12 @@ export default function OrgMembersPage() {
                       <div className="space-y-0.5 max-w-lg">
                         <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
                           <BroadcastIcon size={16} weight="bold" className="text-primary" />
-                          <span>Streamer Channel Assignments & Unique Access</span>
+                          <span>{om.perms_dialog.delegation_heading}</span>
                         </h3>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Staff members have <strong>no channels assigned by default</strong>. Assign streaming channels below and select which unique operations this member may execute per channel.
+                          {om.perms_dialog.delegation_desc_prefix}
+                          <strong>{om.perms_dialog.delegation_desc_highlight}</strong>
+                          {om.perms_dialog.delegation_desc_suffix}
                         </p>
                       </div>
 
@@ -1004,7 +1023,7 @@ export default function OrgMembersPage() {
                           onClick={handleAssignAllStreamers}
                           className="rounded-xl text-xs p-3 h-max font-medium"
                         >
-                          Assign All
+                          {om.perms_dialog.assign_all}
                         </Button>
                         <Button
                           type="button"
@@ -1013,7 +1032,7 @@ export default function OrgMembersPage() {
                           onClick={handleUnassignAllStreamers}
                           className="rounded-xl text-xs p-3 h-max font-medium"
                         >
-                          Unassign All
+                          {om.perms_dialog.unassign_all}
                         </Button>
                       </div>
                     </div>
@@ -1021,7 +1040,7 @@ export default function OrgMembersPage() {
 
                   {streamers.length === 0 ? (
                     <div className="p-12 text-center text-xs text-muted-foreground border border-dashed rounded-2xl">
-                      No streaming channels found in this organization. Create a channel first under Organization Channels.
+                      {om.perms_dialog.no_channels_org}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-4">
@@ -1030,7 +1049,7 @@ export default function OrgMembersPage() {
                         const assigned = isStreamerAssigned(st.id);
                         const currentAssign = dialogAssignments.find((a) => a.streamerId === st.id);
                         const assignedPerms = isOwnerOrAdmin
-                          ? STREAMER_PERM_DEFINITIONS.map((p) => p.key)
+                          ? streamerPermDefinitions.map((p) => p.key)
                           : (currentAssign?.permissions || []);
 
                         return (
@@ -1069,7 +1088,7 @@ export default function OrgMembersPage() {
 
                               <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                                 <span className="text-xs font-semibold text-foreground/80">
-                                  {assigned ? "Assigned" : "Unassigned"}
+                                  {assigned ? om.perms_dialog.assigned : om.perms_dialog.unassigned}
                                 </span>
                                 <Switch
                                   checked={assigned}
@@ -1083,7 +1102,7 @@ export default function OrgMembersPage() {
                               <div className="p-4 flex flex-col gap-3">
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                    Delegated Channel Permissions
+                                    {om.perms_dialog.delegated_channel_perms}
                                   </span>
                                   <div className="flex items-center gap-2">
                                     <button
@@ -1092,14 +1111,14 @@ export default function OrgMembersPage() {
                                         setDialogAssignments((prev) =>
                                           prev.map((a) =>
                                             a.streamerId === st.id
-                                              ? { ...a, permissions: STREAMER_PERM_DEFINITIONS.map((p) => p.key) }
+                                              ? { ...a, permissions: streamerPermDefinitions.map((p) => p.key) }
                                               : a,
                                           ),
                                         );
                                       }}
                                       className="text-[11px] text-primary font-medium"
                                     >
-                                      Select All
+                                      {lang.data.common.select_all}
                                     </button>
                                     <span className="text-muted-foreground">•</span>
                                     <button
@@ -1113,13 +1132,13 @@ export default function OrgMembersPage() {
                                       }}
                                       className="text-[11px] text-muted-foreground hover:text-foreground font-medium"
                                     >
-                                      Clear
+                                      {lang.data.common.clear}
                                     </button>
                                   </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 pb-1">
-                                  {STREAMER_PERM_DEFINITIONS.map((sp) => {
+                                  {streamerPermDefinitions.map((sp) => {
                                     const isChecked = assignedPerms.includes(sp.key);
                                     return (
                                       <button
@@ -1156,7 +1175,7 @@ export default function OrgMembersPage() {
                               </div>
                             ) : (
                               <div className="p-4 text-xs text-muted-foreground/60 italic bg-secondary/10">
-                                This channel is currently not assigned. Toggle the switch above to grant access.
+                                {om.perms_dialog.unassigned_notice}
                               </div>
                             )}
                           </div>
@@ -1171,7 +1190,7 @@ export default function OrgMembersPage() {
 
           <DialogFooter className="px-6 py-3.5 mt-auto border-t border-border bg-secondary/20 flex flex-row items-center justify-between shrink-0 sm:justify-between">
             <span className="text-xs text-muted-foreground">
-              Configuring privileges for <strong className="text-foreground">{managingMember?.name || managingMember?.email}</strong>
+              {om.perms_dialog.configuring_for}<strong className="text-foreground">{managingMember?.name || managingMember?.email}</strong>
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -1182,7 +1201,7 @@ export default function OrgMembersPage() {
                 disabled={isSavingPermissions}
                 className="rounded-xl text-xs p-3 h-max"
               >
-                Cancel
+                {lang.data.common.cancel}
               </Button>
               {canManageRoles && (
                 <Button
@@ -1193,7 +1212,7 @@ export default function OrgMembersPage() {
                   className="gap-2 rounded-xl text-xs font-semibold p-3 h-max"
                 >
                   {isSavingPermissions ? <Spinner className="size-3.5" /> : <CheckIcon size={14} weight="bold" />}
-                  <span>Save Changes</span>
+                  <span>{lang.data.common.save_changes}</span>
                 </Button>
               )}
             </div>
@@ -1210,20 +1229,20 @@ export default function OrgMembersPage() {
                   <div className="bg-primary/10 p-2.5 size-12 rounded-2xl text-primary flex items-center justify-center mb-2">
                     <HandshakeIcon weight="bold" size={22} />
                   </div>
-                  <DialogTitle className="text-2xl font-semibold">Work together always better!</DialogTitle>
+                  <DialogTitle className="text-2xl font-semibold">{om.invite_dialog.step1_title}</DialogTitle>
                   <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
-                    Enter the email address of a registered Alertbox user to invite them to this organization.
+                    {om.invite_dialog.step1_desc}
                   </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleCheckEmail} className="flex flex-col gap-4 mt-2">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-foreground/80">
-                      Email Address <span className="text-destructive">*</span>
+                      {om.invite_dialog.email_label} <span className="text-destructive">*</span>
                     </label>
                     <Input
                       type="text"
-                      placeholder="colleague@example.com"
+                      placeholder={om.invite_dialog.email_placeholder}
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       required
@@ -1236,7 +1255,7 @@ export default function OrgMembersPage() {
                       classNames={{ base: "h-10 rounded-xl" }}
                     />
                     <span className="text-[11px] text-muted-foreground">
-                      Must be registered in Alertbox. We will verify their identity before proceeding.
+                      {om.invite_dialog.registered_hint}
                     </span>
                   </div>
 
@@ -1247,7 +1266,7 @@ export default function OrgMembersPage() {
                       onClick={handleCloseInvite}
                       className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
                     >
-                      Cancel
+                      {lang.data.common.cancel}
                     </Button>
                     <Button
                       type="submit"
@@ -1255,7 +1274,7 @@ export default function OrgMembersPage() {
                       className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
                     >
                       {isCheckingEmail ? <Spinner className="size-4" /> : <ArrowRightIcon size={16} weight="bold" />}
-                      <span>Continue</span>
+                      <span>{lang.data.common.continue}</span>
                     </Button>
                   </DialogFooter>
                 </form>
@@ -1268,15 +1287,15 @@ export default function OrgMembersPage() {
                       type="button"
                       onClick={() => setInviteStep(1)}
                       className="p-1 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-                      title="Back to email"
+                      title={om.invite_dialog.back_to_email}
                     >
                       <ArrowLeftIcon size={18} weight="bold" />
                     </button>
-                    <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Step 2 of 2</span>
+                    <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">{om.invite_dialog.step2_badge}</span>
                   </div>
-                  <DialogTitle className="text-2xl font-semibold">Verify Member Identity</DialogTitle>
+                  <DialogTitle className="text-2xl font-semibold">{om.invite_dialog.step2_title}</DialogTitle>
                   <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
-                    Confirm member identity and configure their assigned role and permissions.
+                    {om.invite_dialog.step2_desc}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -1291,11 +1310,11 @@ export default function OrgMembersPage() {
                     <div className="flex flex-col min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         <span className="font-semibold text-sm text-foreground truncate">
-                          {verifiedTargetUser?.name || "Alertbox User"}
+                          {verifiedTargetUser?.name || om.invite_dialog.alertbox_user_fallback}
                         </span>
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-500 shrink-0">
                           <CheckCircleIcon size={12} weight="bold" />
-                          Verified
+                          {lang.data.common.verified}
                         </span>
                       </div>
                       <span className="text-xs text-muted-foreground truncate font-mono">
@@ -1305,7 +1324,7 @@ export default function OrgMembersPage() {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-foreground/80">Role & Access Level</label>
+                    <label className="text-xs font-semibold text-foreground/80">{om.invite_dialog.role_label}</label>
                     <Popover open={isRolePopoverOpen} onOpenChange={setIsRolePopoverOpen}>
                       <PopoverTrigger
                         type="button"
@@ -1319,7 +1338,7 @@ export default function OrgMembersPage() {
                             <span className="text-xs font-bold text-foreground">
                               {selectedInviteRoleObj.label}
                             </span>
-                            <span className={cn("px-1.5 py-0.2 rounded text-[10px] font-medium border capitalize", selectedInviteRoleObj.badgeStyle)}>
+                            <span className={cn("px-1.5 py-0.2 rounded text-[10px] font-medium border", selectedInviteRoleObj.badgeStyle)}>
                               {selectedInviteRoleObj.label}
                             </span>
                           </div>
@@ -1332,7 +1351,7 @@ export default function OrgMembersPage() {
 
                       <PopoverContent align="start" className="w-(--radix-popover-trigger-width) max-w-sm p-1.5 rounded-2xl bg-card border border-border shadow-xl">
                         <div className="flex flex-col gap-1">
-                          {INVITE_ROLES.map((r) => {
+                          {inviteRoles.map((r) => {
                             const isSelected = r.value === inviteRole;
                             const isLocked = !canDelegateRolePreset(activeOrg, r.value);
                             return (
@@ -1359,8 +1378,8 @@ export default function OrgMembersPage() {
                                     <span className="text-xs font-semibold text-foreground">
                                       {r.label}
                                     </span>
-                                    <span className={cn("px-1.5 py-0.2 rounded text-[10px] font-medium border capitalize", r.badgeStyle)}>
-                                      {isLocked ? "Locked" : r.label}
+                                    <span className={cn("px-1.5 py-0.2 rounded text-[10px] font-medium border", r.badgeStyle)}>
+                                      {isLocked ? lang.data.common.locked : r.label}
                                     </span>
                                   </div>
                                   <span className="text-[11px] text-muted-foreground leading-tight mt-0.5">
@@ -1385,7 +1404,7 @@ export default function OrgMembersPage() {
                       onClick={() => setInviteStep(1)}
                       className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
                     >
-                      Back
+                      {lang.data.common.back}
                     </Button>
                     <Button
                       type="button"
@@ -1394,7 +1413,7 @@ export default function OrgMembersPage() {
                       className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
                     >
                       {isInviting ? <Spinner className="size-4" /> : <UserPlusIcon size={16} weight="bold" />}
-                      <span>Generate Invite Code</span>
+                      <span>{om.invite_dialog.generate_code}</span>
                     </Button>
                   </DialogFooter>
                 </div>
@@ -1407,16 +1426,23 @@ export default function OrgMembersPage() {
                   <CheckCircleIcon weight="bold" size={24} />
                 </div>
                 <DialogTitle className="text-2xl font-semibold text-foreground">
-                  Invitation Code Created
+                  {om.invite_dialog.created_title}
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
-                  Share this 8-digit OTP code with <strong className="p-1 bg-muted rounded-md">{createdInviteCode.email}</strong>.
+                  {om.invite_dialog.created_desc.split("{email}").map((part, idx, arr) => (
+                    <React.Fragment key={idx}>
+                      {part}
+                      {idx < arr.length - 1 && (
+                        <strong className="p-1 bg-muted rounded-md">{createdInviteCode.email}</strong>
+                      )}
+                    </React.Fragment>
+                  ))}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="p-4 rounded-2xl bg-primary/5 flex flex-col items-center gap-6">
                 <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  8-Digit Join Code
+                  {om.invite_dialog.join_code_label}
                 </span>
                 <div className="text-3xl font-mono font-extrabold tracking-widest text-primary flex items-center gap-2 select-all">
                   <span>{createdInviteCode.code.slice(0, 4)}</span>
@@ -1431,10 +1457,10 @@ export default function OrgMembersPage() {
                     try {
                       await navigator.clipboard.writeText(createdInviteCode.code);
                       setIsCopied(true);
-                      toast.success("Code copied to clipboard!");
+                      toast.success(om.toasts.code_copied);
                       setTimeout(() => setIsCopied(false), 2000);
                     } catch {
-                      toast.error("Failed to copy code");
+                      toast.error(om.toasts.code_copy_failed);
                     }
                   }}
                   className="rounded-xl p-2 h-max text-xs font-semibold gap-2"
@@ -1442,12 +1468,12 @@ export default function OrgMembersPage() {
                   {isCopied ? (
                     <>
                       <CheckIcon size={14} weight="bold" className="text-emerald-500" />
-                      <span>Copied!</span>
+                      <span>{lang.data.common.copied_bang}</span>
                     </>
                   ) : (
                     <>
                       <CopySimpleIcon size={14} weight="bold" />
-                      <span>Copy Code</span>
+                      <span>{om.invite_dialog.copy_code}</span>
                     </>
                   )}
                 </Button>
@@ -1455,18 +1481,18 @@ export default function OrgMembersPage() {
 
               <div className="flex flex-col gap-1.5 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Target Email:</span>
+                  <span className="text-muted-foreground">{om.invite_dialog.target_email}</span>
                   <span className="font-semibold text-foreground">{createdInviteCode.email}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Assigned Role:</span>
-                  <span className="font-semibold text-primary capitalize">{createdInviteCode.role.toLowerCase()}</span>
+                  <span className="text-muted-foreground">{om.invite_dialog.assigned_role}</span>
+                  <span className="font-semibold text-primary">{getRoleLabel(createdInviteCode.role, lang.data)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Validity:</span>
+                  <span className="text-muted-foreground">{om.invite_dialog.validity}</span>
                   <span className="font-semibold text-amber-500 flex items-center gap-1 font-mono">
                     <ClockCountdownIcon size={14} />
-                    <span>5 Minutes (Single-Use)</span>
+                    <span>{om.invite_dialog.validity_value}</span>
                   </span>
                 </div>
               </div>
@@ -1477,7 +1503,7 @@ export default function OrgMembersPage() {
                   onClick={handleCloseInvite}
                   className="rounded-xl p-2 w-full h-max text-xs font-semibold gap-2"
                 >
-                  Done
+                  {lang.data.common.done}
                 </Button>
               </DialogFooter>
             </div>
@@ -1491,9 +1517,16 @@ export default function OrgMembersPage() {
             <div className="bg-destructive/10 p-2.5 size-12 rounded-2xl text-destructive flex items-center justify-center mb-2">
               <HandWavingIcon weight="bold" size={22} />
             </div>
-            <DialogTitle className="text-2xl font-semibold">Remove Member</DialogTitle>
+            <DialogTitle className="text-2xl font-semibold">{om.remove_dialog.title}</DialogTitle>
             <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
-              Are you sure you want to remove <strong>{deletingMember?.name || deletingMember?.email}</strong> from {activeOrg?.name}? They will lose access to all channels immediately.
+              {om.remove_dialog.desc.split("{name}").map((part, idx, arr) => (
+                <React.Fragment key={idx}>
+                  {formatI18n(part, { org: activeOrg?.name || "" })}
+                  {idx < arr.length - 1 && (
+                    <strong>{deletingMember?.name || deletingMember?.email}</strong>
+                  )}
+                </React.Fragment>
+              ))}
             </DialogDescription>
           </DialogHeader>
 
@@ -1504,7 +1537,7 @@ export default function OrgMembersPage() {
               onClick={() => setDeletingMember(null)}
               className="rounded-xl p-3 h-max text-xs font-semibold gap-2"
             >
-              Cancel
+              {lang.data.common.cancel}
             </Button>
             <Button
               type="button"
@@ -1514,7 +1547,7 @@ export default function OrgMembersPage() {
               className="rounded-xl p-3 h-max text-xs font-semibold gap-2"
             >
               {isDeleting ? <Spinner /> : <TrashIcon size={16} weight="bold" />}
-              <span>Remove Member</span>
+              <span>{om.remove_dialog.title}</span>
             </Button>
           </DialogFooter>
         </DialogContent>

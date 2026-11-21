@@ -1,5 +1,8 @@
 "use client";
 import { useUserContext } from "@/contexts/user";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
+import { formatI18n } from "@/lib/i18n";
 import { HandCoinsIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { hasPermission } from "@/lib/rbac";
@@ -8,6 +11,8 @@ import { motion } from "motion/react";
 
 export default function OrgBillingPage() {
   const { activeOrg } = useUserContext();
+  const lang = useStore(coreStore, (s) => s.lang);
+  const ob = lang.data.app.org.billing;
 
   const role = (typeof activeOrg?.role === "string" ? activeOrg.role : "").toLowerCase();
   const isOwnerOrAdmin = role === "owner" || role === "admin";
@@ -22,33 +27,33 @@ export default function OrgBillingPage() {
       <div>
         <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
           <HandCoinsIcon size={16} weight="bold" />
-          <span>Finance & Subscriptions</span>
+          <span>{ob.eyebrow}</span>
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground mt-1">
-          Billing & Plans
+          {ob.title}
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Manage subscriptions, invoices, and billing tier for {activeOrg?.name}.
+          {formatI18n(ob.subtitle, { org: activeOrg?.name || "" })}
         </p>
       </div>
 
       <div className="p-6 rounded-2xl border border-border bg-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
-            Active Tier: Enterprise
+            {ob.active_tier_enterprise}
           </span>
-          <h2 className="text-lg font-bold text-foreground mt-2">Unlimited Multi-Streamer Plan</h2>
+          <h2 className="text-lg font-bold text-foreground mt-2">{ob.plan_title}</h2>
           <p className="text-xs text-muted-foreground mt-1">
-            Unlimited channels, 0% platform transaction fees, and team permissions included.
+            {ob.plan_desc}
           </p>
         </div>
         {canManageBilling ? (
           <Button variant="outline" size="sm">
-            Manage Billing Portal
+            {ob.manage_portal}
           </Button>
         ) : (
           <Button variant="outline" size="sm" disabled className="opacity-50 cursor-not-allowed">
-            Manage Billing Portal (Read-only)
+            {ob.manage_portal_readonly}
           </Button>
         )}
       </div>

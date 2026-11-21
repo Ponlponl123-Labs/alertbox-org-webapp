@@ -173,11 +173,13 @@ export default function PullCord({
   themeMode = "light-on",
   sound = true,
   scale = 1,
-  label = "Desk lamp theme toggle",
+  label,
   className,
 }: PullCordProps) {
   const glowId = `lamp-bulb-glow-${useId().replace(/:/g, "")}`;
   const mounted = useSyncExternalStore(emptySubscribe, getClientTrue, getServerFalse);
+  const lang = useStore(coreStore, (s) => s.lang);
+  label = label ?? lang.data.components.pull_cord.default_label;
   const isDark = useStore(coreStore, (s) => s.isDark);
   const themeChecked = themeMode === "dark-on" ? isDark : !isDark;
   const isControlled = checkedProp !== undefined;

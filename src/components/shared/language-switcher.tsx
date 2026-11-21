@@ -49,7 +49,7 @@ function LanguageSwitcher({ showLabel = false }: { showLabel?: boolean }) {
       <PopoverContent className={"w-32 rounded-2xl p-2.5"}>
         <PopoverHeader>
           <PopoverTitle className={"text-foreground/40 text-xs my-1"}>
-            Language
+            {lang.data.components.language_switcher.title}
           </PopoverTitle>
           {langs.map((l, i) => (
             <Button

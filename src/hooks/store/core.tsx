@@ -46,7 +46,16 @@ type CoreStoreActions = {
 
 type CoreStore = CoreStoreState & CoreStoreActions;
 
-const STORAGE_KEY = "alertbox-org-webapp-lang";
+export const LANG_STORAGE_KEY = "alertbox-org-webapp-lang";
+
+export function readStoredLanguageKey(): languageKeys {
+  if (typeof window === "undefined") return "en-US";
+  try {
+    const stored = localStorage.getItem(LANG_STORAGE_KEY);
+    if (stored && isValidLanguageKey(stored)) return stored;
+  } catch {}
+  return "en-US";
+}
 
 export const coreStore = createStore<CoreStore>()((set) => ({
   lang: lang("en-US"),
@@ -94,15 +103,17 @@ export const coreStore = createStore<CoreStore>()((set) => ({
   },
   setLang: (nextLang: languageKeys) => {
     if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, nextLang);
+      localStorage.setItem(LANG_STORAGE_KEY, nextLang);
+      document.documentElement.lang = nextLang;
     }
     set({ lang: lang(nextLang) });
   },
   hydrateLang: () => {
     if (typeof window === "undefined") return;
 
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(LANG_STORAGE_KEY);
     if (stored && isValidLanguageKey(stored)) {
+      document.documentElement.lang = stored;
       set({ lang: lang(stored) });
     }
   },

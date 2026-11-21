@@ -43,6 +43,8 @@ import { useTinyUser, useTinyStreamer } from "@/lib/tiny-user-cache";
 import { BoundedLruCache } from "@/lib/lru-cache";
 import { isSafePathSegment } from "@/lib/security";
 import type { AuditLogItem } from "@/types";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
 import { AnimateIcon } from "@animate-ui/react/icons";
 import { RefreshCcw } from "@/components/animate-ui/icons/hugeicons/refresh-ccw";
 
@@ -59,13 +61,6 @@ const STREAMER_CATEGORY_ACTIONS: Record<string, string[]> = {
   TRANSACTIONS: ["TRANSACTION_DELETED", "TRANSACTION_RESTORED", "TRANSACTION_RESENT"],
 };
 
-const STREAMER_AUDIT_TABS = [
-  { value: "ALL", label: "All Activities" },
-  { value: "CHANNELS", label: "Overlays & Profile" },
-  { value: "GATEWAYS", label: "Gateways" },
-  { value: "TRANSACTIONS", label: "Transactions" },
-];
-
 function StreamerAuditRow({
   log,
   index = 0,
@@ -79,9 +74,11 @@ function StreamerAuditRow({
   onToggle: () => void;
   orgTarget: string;
 }) {
+  const lang = useStore(coreStore, (s) => s.lang);
+  const oa = lang.data.app.org.audit;
   const { authFetch } = useUserContext();
-  const info = humanizeAuditAction(log.action, log.payload);
-  const userName = log.user?.name || (log.user?.email ? log.user.email.split("@")[0] : "User");
+  const info = humanizeAuditAction(log.action, log.payload, lang.data, lang.key);
+  const userName = log.user?.name || (log.user?.email ? log.user.email.split("@")[0] : lang.data.common.user);
   const p = (log.payload && typeof log.payload === "object" ? log.payload : {}) as Record<string, unknown>;
 
   const isUserTarget = log.targetType === "MEMBER" || log.targetType === "USER";
@@ -186,9 +183,9 @@ function StreamerAuditRow({
 
         <TableCell className="py-3 px-4 whitespace-nowrap text-xs">
           <div className="flex flex-col leading-tight">
-            <span className="text-foreground/90 font-sans">{formatTableDate(log.createdAt)}</span>
+            <span className="text-foreground/90 font-sans">{formatTableDate(log.createdAt, lang.key)}</span>
             <span className="text-[10px] text-muted-foreground/60 font-sans">
-              {new Date(log.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              {new Date(log.createdAt).toLocaleTimeString(lang.key, { hour: "2-digit", minute: "2-digit" })}
             </span>
           </div>
         </TableCell>
@@ -199,12 +196,12 @@ function StreamerAuditRow({
               e.stopPropagation();
               try {
                 await navigator.clipboard.writeText(log.ipAddress || "");
-                toast.success("IP copied");
+                toast.success(oa.ip_copied);
               } catch {
-                toast.error("Failed to copy IP");
+                toast.error(oa.ip_copy_failed);
               }
             }}
-            title="Click to copy IP"
+            title={oa.copy_ip_title}
             className="font-sans tabular-nums text-[11px] text-muted-foreground/70 hover:text-foreground cursor-pointer select-text transition-colors"
           >
             {log.ipAddress}
@@ -237,6 +234,19 @@ function StreamerAuditRow({
 }
 
 export default function StreamerAuditPage() {
+  const lang = useStore(coreStore, (s) => s.lang);
+  const sa = lang.data.app.streamer.audit;
+  const oa = lang.data.app.org.audit;
+  const auditTabs = useMemo(
+    () => [
+      { value: "ALL", label: lang.data.audit.categories.all },
+      { value: "CHANNELS", label: lang.data.audit.categories.overlays_profile },
+      { value: "GATEWAYS", label: lang.data.audit.categories.gateways },
+      { value: "TRANSACTIONS", label: lang.data.audit.categories.transactions },
+    ],
+    [lang.data.audit.categories],
+  );
+
   const routeParams = useParams();
   const { activeOrg, activeStreamer, authFetch, userInfo } = useUserContext();
   const rawOrg = String((routeParams?.org as string) || activeOrg?.id || activeOrg?.slug || "");
@@ -289,7 +299,7 @@ export default function StreamerAuditPage() {
         })
         .catch((err) => {
           if ((err as Error)?.name === "AbortError") return;
-          toast.error("Failed to load channel audit logs");
+          toast.error(coreStore.getState().lang.data.app.streamer.audit.load_failed);
         })
         .finally(() => {
           if (!controller.signal.aborted) setLoading(false);
@@ -320,7 +330,7 @@ export default function StreamerAuditPage() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter((log) => {
-        const info = humanizeAuditAction(log.action, log.payload);
+        const info = humanizeAuditAction(log.action, log.payload, lang.data, lang.key);
         return (
           info.title.toLowerCase().includes(q) ||
           info.description.toLowerCase().includes(q) ||
@@ -332,7 +342,7 @@ export default function StreamerAuditPage() {
       });
     }
     return result;
-  }, [logs, categoryFilter, searchQuery]);
+  }, [logs, categoryFilter, searchQuery, lang.data, lang.key]);
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
@@ -363,13 +373,13 @@ export default function StreamerAuditPage() {
         <div className="w-full">
           <div className="flex gap-4 items-center my-3">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-tight text-foreground">
-              Channel Audit Logs
+              {sa.title}
             </h1>
           </div>
           <div className="flex justify-between w-full items-center">
             <div className="flex flex-col">
               <span className="tracking-wider text-sm text-foreground/40">
-                Review configuration changes, gateway updates, and security events for this channel.
+                {sa.subtitle}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -389,7 +399,7 @@ export default function StreamerAuditPage() {
                     size={14}
                     className={cn(loading && "animate-spin")}
                   />
-                  <span className="hidden sm:inline">Refresh</span>
+                  <span className="hidden sm:inline">{lang.data.common.refresh}</span>
                 </Button>
               </AnimateIcon>
             </div>
@@ -400,7 +410,7 @@ export default function StreamerAuditPage() {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           <JellyRadio
-            items={STREAMER_AUDIT_TABS}
+            items={auditTabs}
             value={categoryFilter}
             disabled={false}
             onChange={(value) => {
@@ -414,7 +424,7 @@ export default function StreamerAuditPage() {
         <div className="relative w-full sm:w-96">
           <Input
             type="text"
-            placeholder="Search action, email, or IP..."
+            placeholder={sa.search_placeholder}
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             startContent={<MagnifyingGlassIcon size={16} className="text-muted-foreground" />}
@@ -424,7 +434,7 @@ export default function StreamerAuditPage() {
                   type="button"
                   onClick={() => handleSearchChange("")}
                   className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors cursor-pointer"
-                  aria-label="Clear search"
+                  aria-label={lang.data.common.aria.clear_search}
                 >
                   <XIcon size={14} />
                 </button>
@@ -454,16 +464,16 @@ export default function StreamerAuditPage() {
             <TableHeader>
               <TableRow className="border-b border-border/60 bg-muted/20 text-muted-foreground text-[10px] tracking-wider uppercase font-semibold hover:bg-muted/20">
                 <TableHead className="py-3.5 pl-4 pr-1 w-9 text-center h-auto"></TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Actor</TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Event</TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 hidden md:table-cell h-auto">Summary</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">{oa.actor}</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">{oa.event}</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 hidden md:table-cell h-auto">{oa.summary}</TableHead>
                 <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">
                   <span className="flex items-center gap-1">
-                    <span>Timestamp</span>
+                    <span>{oa.timestamp}</span>
                     <CaretDownIcon size={11} className="text-muted-foreground/60" />
                   </span>
                 </TableHead>
-                <TableHead className="py-3.5 pr-6 pl-4 text-right font-semibold text-muted-foreground/70 h-auto">Origin IP</TableHead>
+                <TableHead className="py-3.5 pr-6 pl-4 text-right font-semibold text-muted-foreground/70 h-auto">{oa.origin_ip}</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -535,9 +545,9 @@ export default function StreamerAuditPage() {
                     <TableCell colSpan={6} className="py-16 text-center text-muted-foreground">
                       <div className="flex flex-col items-center gap-2.5">
                         <BroadcastIcon size={36} weight="duotone" className="text-foreground/60" />
-                        <span className="font-medium text-foreground text-sm">No activity recorded yet</span>
+                        <span className="font-medium text-foreground text-sm">{sa.empty_title}</span>
                         <span className="text-xs text-muted-foreground max-w-sm">
-                          Channel settings, OBS token rotations, and payment gateway updates will appear here in real-time.
+                          {sa.empty_desc}
                         </span>
                         {(searchQuery || categoryFilter !== "ALL") && (
                           <Button
@@ -550,7 +560,7 @@ export default function StreamerAuditPage() {
                             }}
                             className="mt-2 text-xs rounded-xl p-3 h-max"
                           >
-                            Reset filters
+                            {lang.data.common.reset_filters}
                           </Button>
                         )}
                       </div>
@@ -600,7 +610,7 @@ export default function StreamerAuditPage() {
                 </motion.span>
               </AnimatePresence>
             </span>
-            <span>of</span>
+            <span>{lang.data.common.of}</span>
             <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.span
@@ -615,12 +625,12 @@ export default function StreamerAuditPage() {
                 </motion.span>
               </AnimatePresence>
             </span>
-            <span>events</span>
+            <span>{lang.data.common.events}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 text-[11px] text-muted-foreground/80 font-sans">
-              <span>Page</span>
+              <span>{lang.data.common.page}</span>
               <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.span
@@ -635,7 +645,7 @@ export default function StreamerAuditPage() {
                   </motion.span>
                 </AnimatePresence>
               </span>
-              <span>of</span>
+              <span>{lang.data.common.of}</span>
               <span className="relative inline-flex items-center overflow-hidden h-4 font-medium text-foreground/80">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.span

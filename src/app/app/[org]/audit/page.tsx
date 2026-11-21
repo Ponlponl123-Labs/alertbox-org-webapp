@@ -1,6 +1,8 @@
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
 import { useUserContext } from "@/contexts/user";
 import { getApiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -29,7 +31,11 @@ import {
   formatTableDate,
   AuditExpandedRowContent,
 } from "@/lib/audit-format";
-import { AUDIT_CATEGORY_TABS, DEFAULT_AUDIT_PAGE_SIZE, type AuditCategory } from "@/consts/audit";
+import {
+  getAuditCategoryTabs,
+  DEFAULT_AUDIT_PAGE_SIZE,
+  type AuditCategory,
+} from "@/consts/audit";
 import { motion, AnimatePresence } from "motion/react";
 import JellyRadio from "@/components/JellyRadio";
 import { Input } from "react-smooth-input";
@@ -39,7 +45,6 @@ import { BoundedLruCache } from "@/lib/lru-cache";
 import { isSafePathSegment } from "@/lib/security";
 import type { AuditLogItem } from "@/types";
 
-const CATEGORY_TABS = AUDIT_CATEGORY_TABS;
 const PAGE_SIZE = DEFAULT_AUDIT_PAGE_SIZE;
 const CLIENT_CACHE_TTL = 3 * 60 * 1000;
 const auditPageCache = new BoundedLruCache<{ logs: AuditLogItem[]; total: number }>({
@@ -61,8 +66,11 @@ function AuditRow({
   orgTarget: string;
 }) {
   const { authFetch } = useUserContext();
-  const info = humanizeAuditAction(log.action, log.payload);
-  const userName = log.user?.name || (log.user?.email ? log.user.email.split("@")[0] : "User");
+  const lang = useStore(coreStore, (s) => s.lang);
+  const oa = lang.data.app.org.audit;
+  const info = humanizeAuditAction(log.action, log.payload, lang.data, lang.key);
+  const userName =
+    log.user?.name || (log.user?.email ? log.user.email.split("@")[0] : lang.data.common.user);
   const p = (log.payload && typeof log.payload === "object" ? log.payload : {}) as Record<string, unknown>;
 
   const isUserTarget = log.targetType === "MEMBER" || log.targetType === "USER";
@@ -157,9 +165,11 @@ function AuditRow({
 
         <TableCell className="py-3 px-4 whitespace-nowrap text-xs">
           <div className="flex flex-col leading-tight">
-            <span className="text-foreground/90 font-sans">{formatTableDate(log.createdAt)}</span>
+            <span className="text-foreground/90 font-sans">
+              {formatTableDate(log.createdAt, lang.key)}
+            </span>
             <span className="text-[10px] text-muted-foreground/60 font-sans">
-              {new Date(log.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              {new Date(log.createdAt).toLocaleTimeString(lang.key, { hour: "2-digit", minute: "2-digit" })}
             </span>
           </div>
         </TableCell>
@@ -170,12 +180,12 @@ function AuditRow({
               e.stopPropagation();
               try {
                 await navigator.clipboard.writeText(log.ipAddress || "");
-                toast.success("IP copied");
+                toast.success(oa.ip_copied);
               } catch {
-                toast.error("Failed to copy IP");
+                toast.error(oa.ip_copy_failed);
               }
             }}
-            title="Click to copy IP"
+            title={oa.copy_ip_title}
             className="font-sans tabular-nums text-[11px] text-muted-foreground/70 hover:text-foreground cursor-pointer select-text transition-colors"
           >
             {log.ipAddress}
@@ -209,6 +219,8 @@ function AuditRow({
 
 export default function OrgAuditPage() {
   const routeParams = useParams();
+  const lang = useStore(coreStore, (s) => s.lang);
+  const oa = lang.data.app.org.audit;
   const { activeOrg, authFetch, userInfo } = useUserContext();
   const rawOrgTarget = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
   const orgTarget = isSafePathSegment(rawOrgTarget) ? rawOrgTarget : "";
@@ -286,7 +298,7 @@ export default function OrgAuditPage() {
         })
         .catch((err) => {
           if ((err as Error)?.name === "AbortError") return;
-          toast.error("Failed to load audit logs");
+          toast.error(coreStore.getState().lang.data.app.org.audit.load_failed);
         })
         .finally(() => {
           if (!controller.signal.aborted) setLoading(false);
@@ -348,13 +360,13 @@ export default function OrgAuditPage() {
         <div>
           <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
             <ShieldCheckIcon size={16} weight="bold" />
-            <span>Audit & Compliance</span>
+            <span>{oa.eyebrow}</span>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
-            Audit Activity Log
+            {oa.title}
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Transparent security audit trail of staff delegations, roles, channels, and organization settings.
+            {oa.subtitle}
           </p>
         </div>
 
@@ -376,7 +388,7 @@ export default function OrgAuditPage() {
             className="gap-1.5 text-xs rounded-xl p-3 h-max cursor-pointer"
           >
             <ArrowsClockwiseIcon size={14} className={loading ? "animate-spin" : ""} />
-            <span>Refresh</span>
+            <span>{lang.data.common.refresh}</span>
           </Button>
         </div>
       </div>
@@ -384,7 +396,7 @@ export default function OrgAuditPage() {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           <JellyRadio
-            items={CATEGORY_TABS.map((tab) => ({ value: tab.id, label: tab.label }))}
+            items={getAuditCategoryTabs(lang.data).map((tab) => ({ value: tab.id, label: tab.label }))}
             value={categoryFilter}
             disabled={false}
             onChange={(value) => handleCategoryChange(value as AuditCategory)}
@@ -395,7 +407,7 @@ export default function OrgAuditPage() {
         <div className="relative w-full sm:w-96">
           <Input
             type="text"
-            placeholder="Search by name, email, or role..."
+            placeholder={oa.search_placeholder}
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             startContent={<MagnifyingGlassIcon size={16} className="text-muted-foreground" />}
@@ -405,7 +417,7 @@ export default function OrgAuditPage() {
                   type="button"
                   onClick={() => handleSearchChange("")}
                   className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors cursor-pointer"
-                  aria-label="Clear search"
+                  aria-label={lang.data.common.aria.clear_search}
                 >
                   <XIcon size={14} />
                 </button>
@@ -435,16 +447,16 @@ export default function OrgAuditPage() {
             <TableHeader>
               <TableRow className="text-xs text-muted-foreground border-b border-border/60 bg-muted/20 select-none">
                 <TableHead className="py-3.5 pl-4 pr-1 w-9 text-center h-auto"></TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Actor</TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">Event</TableHead>
-                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 hidden md:table-cell h-auto">Summary</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">{oa.actor}</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">{oa.event}</TableHead>
+                <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 hidden md:table-cell h-auto">{oa.summary}</TableHead>
                 <TableHead className="py-3.5 px-4 font-semibold text-muted-foreground/70 h-auto">
                   <span className="flex items-center gap-1">
-                    <span>Timestamp</span>
+                    <span>{oa.timestamp}</span>
                     <CaretDownIcon size={11} className="text-muted-foreground/60" />
                   </span>
                 </TableHead>
-                <TableHead className="py-3.5 pr-6 pl-4 text-right font-semibold text-muted-foreground/70 h-auto">Origin IP</TableHead>
+                <TableHead className="py-3.5 pr-6 pl-4 text-right font-semibold text-muted-foreground/70 h-auto">{oa.origin_ip}</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -516,11 +528,11 @@ export default function OrgAuditPage() {
                     <TableCell colSpan={6} className="py-20 text-center">
                       <div className="flex flex-col items-center justify-center max-w-sm mx-auto text-center gap-2">
                         <MagnifyingGlassIcon className="size-8 text-foreground/60 mb-4" />
-                        <span className="font-semibold text-foreground text-sm">No activity records found</span>
+                        <span className="font-semibold text-foreground text-sm">{oa.empty_title}</span>
                         <p className="text-xs text-muted-foreground leading-relaxed">
                           {searchQuery || categoryFilter !== "ALL"
-                            ? "No audit events match your active filters or search query."
-                            : "There are no security or audit events recorded for this organization yet."}
+                            ? oa.empty_filtered
+                            : oa.empty_default}
                         </p>
                         {(searchQuery || categoryFilter !== "ALL") && (
                           <Button
@@ -529,7 +541,7 @@ export default function OrgAuditPage() {
                             onClick={handleResetFilters}
                             className="mt-2 text-xs rounded-lg p-3 h-max"
                           >
-                            Reset filters
+                            {lang.data.common.reset_filters}
                           </Button>
                         )}
                       </div>
@@ -579,7 +591,7 @@ export default function OrgAuditPage() {
                 </motion.span>
               </AnimatePresence>
             </span>
-            <span>of</span>
+            <span>{lang.data.common.of}</span>
             <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.span
@@ -594,12 +606,12 @@ export default function OrgAuditPage() {
                 </motion.span>
               </AnimatePresence>
             </span>
-            <span>records</span>
+            <span>{lang.data.common.records}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 text-[11px] text-muted-foreground/80 font-sans">
-              <span>Page</span>
+              <span>{lang.data.common.page}</span>
               <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.span
@@ -614,7 +626,7 @@ export default function OrgAuditPage() {
                   </motion.span>
                 </AnimatePresence>
               </span>
-              <span>of</span>
+              <span>{lang.data.common.of}</span>
               <span className="relative inline-flex items-center overflow-hidden h-4 font-medium text-foreground/80">
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.span
@@ -635,7 +647,7 @@ export default function OrgAuditPage() {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                 disabled={currentPage <= 1}
-                aria-label="Previous page"
+                aria-label={lang.data.common.previous_page}
                 className="size-7 flex items-center justify-center rounded-lg border border-border/60 bg-card hover:bg-secondary/80 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
               >
                 <CaretLeftIcon size={13} weight="bold" />
@@ -644,7 +656,7 @@ export default function OrgAuditPage() {
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                 disabled={currentPage >= totalPages}
-                aria-label="Next page"
+                aria-label={lang.data.common.next_page}
                 className="size-7 flex items-center justify-center rounded-lg border border-border/60 bg-card hover:bg-secondary/80 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs"
               >
                 <CaretRightIcon size={13} weight="bold" />

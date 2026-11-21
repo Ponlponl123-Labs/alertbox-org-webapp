@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useStore } from 'zustand';
+import { coreStore } from '@/hooks/store/core';
+import { formatI18n } from '@/lib/i18n';
 
 export type HoldButtonSize = 'sm' | 'md' | 'lg';
 export type HoldButtonDirection = 'right' | 'up';
@@ -84,8 +87,8 @@ const STYLE = `
 }`;
 
 const HoldButton: React.FC<HoldButtonProps> = ({
-  children = 'Hold to delete',
-  doneLabel = 'Deleted',
+  children,
+  doneLabel,
   icon = null,
   doneIcon = null,
   backgroundColor = '#27272a',
@@ -107,6 +110,9 @@ const HoldButton: React.FC<HoldButtonProps> = ({
   onTap,
   className = ''
 }) => {
+  const lang = useStore(coreStore, (s) => s.lang);
+  children = children ?? lang.data.components.hold_button.hold_to_delete;
+  doneLabel = doneLabel ?? lang.data.components.hold_button.deleted;
   const [phase, setPhase] = useState<Phase>('idle');
   const [input, setInput] = useState<Input>(null);
   const phaseRef = useRef<Phase>('idle');
@@ -358,7 +364,9 @@ const HoldButton: React.FC<HoldButtonProps> = ({
         </span>
       </span>
       <span id={hintId} className="absolute h-px w-px overflow-hidden whitespace-nowrap [clip-path:inset(50%)]">
-        Press and hold for {Math.round(holdTime / 100) / 10} seconds to confirm
+        {formatI18n(lang.data.components.hold_button.sr_hint, {
+          seconds: Math.round(holdTime / 100) / 10,
+        })}
       </span>
     </button>
   );

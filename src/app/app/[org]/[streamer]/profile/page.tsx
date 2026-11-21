@@ -21,6 +21,7 @@ import { getApiUrl } from "@/lib/api";
 import { allowed_chars } from "@/consts/regex";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
+import { formatI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import {
   ArrowUpRightIcon,
@@ -205,10 +206,10 @@ function Page() {
       const res = await authFetch(streamerPublishEndpoint, { method: "POST" });
       if (res.ok) {
         patchStreamer(currentStreamer.id, { publishedAt: new Date().toISOString() });
-        toast.success("Channel published successfully");
+        toast.success(lang.data.app.profile.toasts.published);
       }
     } catch {
-      toast.error("Failed to publish channel");
+      toast.error(lang.data.app.profile.toasts.publish_failed);
     } finally {
       setIsSubmitting(false);
     }
@@ -221,10 +222,10 @@ function Page() {
       const res = await authFetch(streamerPublishEndpoint, { method: "DELETE" });
       if (res.ok) {
         patchStreamer(currentStreamer.id, { publishedAt: null });
-        toast.success("Channel unpublished");
+        toast.success(lang.data.app.profile.toasts.unpublished);
       }
     } catch {
-      toast.error("Failed to unpublish channel");
+      toast.error(lang.data.app.profile.toasts.unpublish_failed);
     } finally {
       setIsSubmitting(false);
     }
@@ -240,15 +241,19 @@ function Page() {
       );
       if (res.ok) {
         removeStreamer(currentStreamer.id);
-        toast.success(`Channel "${currentStreamer.displayName || currentStreamer.name}" deleted`);
+        toast.success(
+          formatI18n(lang.data.app.profile.toasts.deleted, {
+            name: currentStreamer.displayName || currentStreamer.name,
+          }),
+        );
         setIsDeleteOpen(false);
         router.push(`/app/${targetOrg}/streamers`);
       } else {
         const msg = await res.text();
-        toast.error(msg || "Failed to delete channel");
+        toast.error(msg || lang.data.app.profile.toasts.delete_failed);
       }
     } catch {
-      toast.error("Network error deleting channel");
+      toast.error(lang.data.app.profile.toasts.delete_network);
     } finally {
       setIsDeleting(false);
     }
@@ -264,7 +269,7 @@ function Page() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="w-full">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium tracking-tight text-foreground my-3">
-              My Profile
+              {lang.data.app.profile.my_profile}
             </h1>
             <div className="flex justify-between w-full items-center">
               <div className="flex flex-col">
@@ -281,7 +286,7 @@ function Page() {
                       <ArrowUpRightIcon className="inline ml-px" weight="bold" size={12} />
                     </Link>
                   ) : (
-                    <span className="text-muted-foreground/60 italic">No public handle</span>
+                    <span className="text-muted-foreground/60 italic">{lang.data.app.profile.no_public_handle}</span>
                   )}
                 </span>
                 {isUriCooldown && currentStreamer?.uriCooldownEnd && (
@@ -352,7 +357,7 @@ function Page() {
         {!canEditProfile && (
           <div className="w-full flex items-center select-none gap-3 p-3 rounded-2xl bg-muted/40 text-sm font-medium text-muted-foreground z-10 relative">
             <EyeIcon size={20} weight="bold" className="shrink-0 text-foreground/40" />
-            <span>You have read-only access to this channel profile. Profile modifications require editor permissions.</span>
+            <span>{lang.data.app.profile.read_only_notice}</span>
           </div>
         )}
 
@@ -450,7 +455,7 @@ function Page() {
                       </p>
                       <div className="flex flex-col gap-3 items-center mt-2 w-full">
                         <div className="flex gap-2 items-center w-full bg-background/20 p-2 rounded-xl border border-foreground/5 justify-between">
-                          <span className="text-[10px] font-semibold opacity-60">Color Hex:</span>
+                          <span className="text-[10px] font-semibold opacity-60">{lang.data.app.profile.color_hex}</span>
                           <span className="text-xs font-mono uppercase font-bold tracking-wider">{accentColor}</span>
                         </div>
                         {canEditProfile ? (
@@ -528,10 +533,10 @@ function Page() {
               className="mb-2 text-destructive group-data-open:text-destructive"
             />
             <h1 className="font-semibold font-sans text-base text-destructive m-0">
-              Channel Danger Zone
+              {lang.data.app.profile.danger.title}
             </h1>
             <p className="text-xs text-muted-foreground font-sans">
-              Permanently delete this channel and disable donation pages.
+              {lang.data.app.profile.danger.description}
             </p>
             <Button
               variant="destructive"
@@ -543,7 +548,7 @@ function Page() {
               className="gap-1.5 text-xs rounded-xl h-max mt-3 p-2 font-semibold"
             >
               <TrashIcon size={13} weight="bold" />
-              <span>Delete Channel</span>
+              <span>{lang.data.app.profile.danger.button}</span>
             </Button>
           </div>
         )}
@@ -556,16 +561,26 @@ function Page() {
               <WarningOctagonIcon size={32} weight="bold" />
             </div>
             <DialogTitle className="text-xl font-semibold text-destructive">
-              Delete Channel Permanently?
+              {lang.data.app.profile.danger.dialog_title}
             </DialogTitle>
             <DialogDescription className="text-xs font-sans text-muted-foreground mt-1 leading-relaxed">
-              Are you sure you want to delete <strong>@{currentStreamer?.name}</strong>? Public donation links for this channel will cease to accept payments.
+              {lang.data.app.profile.danger.dialog_desc.split("@{name}").map((part, idx, arr) => (
+                <React.Fragment key={idx}>
+                  {part}
+                  {idx < arr.length - 1 && <strong>@{currentStreamer?.name}</strong>}
+                </React.Fragment>
+              ))}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2 mt-2">
             <label className="text-xs font-semibold font-sans text-foreground">
-              Type channel handle <code className="text-primary font-mono">{currentStreamer?.name}</code> to confirm:
+              {lang.data.app.profile.danger.confirm_label.split("{name}").map((part, idx, arr) => (
+                <React.Fragment key={idx}>
+                  {part}
+                  {idx < arr.length - 1 && <code className="text-primary font-mono">{currentStreamer?.name}</code>}
+                </React.Fragment>
+              ))}
             </label>
             <Input
               type="text"
@@ -576,11 +591,11 @@ function Page() {
               }}
               value={confirmHandle}
               onChange={(e) => setConfirmHandle(e.target.value)}
-              placeholder={currentStreamer?.name || "handle"}
+              placeholder={currentStreamer?.name || lang.data.app.profile.danger.confirm_placeholder}
               className="w-full"
               classNames={{ base: "h-10 rounded-xl mt-2" }}
             />
-            <span className="text-xs text-destructive select-none font-sans">This action cannot be undone.</span>
+            <span className="text-xs text-destructive select-none font-sans">{lang.data.common.action_irreversible}</span>
           </div>
 
           <DialogFooter className="mt-5 gap-2">
@@ -591,10 +606,10 @@ function Page() {
               disabled={isDeleting}
               className="text-xs rounded-xl h-max p-3 border-0"
             >
-              Cancel
+              {lang.data.common.cancel}
             </Button>
             <HoldButton
-              doneLabel="Deleted"
+              doneLabel={lang.data.common.deleted}
               backgroundColor="var(--muted)"
               fillColor="#f43f5e"
               textColor="var(--muted-foreground)"
@@ -614,7 +629,7 @@ function Page() {
               onHold={handleDeleteStreamer}
             >
               {isDeleting && <Spinner className="size-3.5" />}
-              Hold to delete
+              {lang.data.common.hold_to_delete}
             </HoldButton>
           </DialogFooter>
         </DialogContent>

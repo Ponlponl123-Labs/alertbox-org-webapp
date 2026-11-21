@@ -82,7 +82,7 @@ function Login() {
                 <Google className="size-4" />
                 {lang.data.app.login.methods.google}
                 <Badge variant={"secondary"} className="rounded-sm text-xs">
-                  {lang.data.common.comming_soon}
+                  {lang.data.common.coming_soon}
                 </Badge>
               </Button>
               <Button
@@ -93,7 +93,7 @@ function Login() {
                 <Streamlabs className="size-4" />
                 {lang.data.app.login.methods.streamlabs}
                 <Badge variant={"secondary"} className="rounded-sm text-xs">
-                  {lang.data.common.comming_soon}
+                  {lang.data.common.coming_soon}
                 </Badge>
               </Button>
             </div>

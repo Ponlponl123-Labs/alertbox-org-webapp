@@ -11,6 +11,21 @@ export const isValidLanguageKey = (key: string): key is LanguageKey => {
 
 export const langs: Language[] = LANGS;
 
+export function formatI18n(
+  template: string,
+  vars?: Record<string, string | number | null | undefined>,
+): string {
+  if (!vars) return template;
+  return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) => {
+    const val = vars[key];
+    return val === undefined || val === null ? match : String(val);
+  });
+}
+
+export function formatCount(one: string, other: string, count: number): string {
+  return count === 1 ? one : other;
+}
+
 export default function lang(languageKey: languageKeys): Language {
   const selected = LANG_MAP[languageKey] || enUS;
 

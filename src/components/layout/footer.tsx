@@ -156,10 +156,10 @@ function FooterContent({ pathname }: { pathname: string }) {
           </div>
           <div className="flex flex-col gap-2 text-end max-sm:text-center">
             <span className="text-foreground/10 font-mono text-[10px] mt-2 tracking-widest">
-              Made with ❤︎ by Ponlponl123 Labs
+              {lang.data.footer.made_with_love}
             </span>
             <span className="text-foreground/10 font-mono text-[11px] mb-2 tracking-widest">
-              Innovative / Human / Open / Earth
+              {lang.data.footer.motto_tags}
             </span>
           </div>
         </div>

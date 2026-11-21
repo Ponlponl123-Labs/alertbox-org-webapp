@@ -15,6 +15,8 @@ import {
 } from "@thesvg/react";
 import { FeelFreePay } from "@/components/icons";
 import clsx from "clsx";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
 
 const default_class =
   "not-hover:grayscale not-hover:opacity-30 text-foreground fill-foreground";
@@ -82,6 +84,10 @@ const staggerContainer = {
 };
 
 export default function SocialProof() {
+  const socialProof = useStore(
+    coreStore,
+    (state) => state.lang.data.pages.index.sections.social_proof,
+  );
   return (
     <section className="w-full relative overflow-hidden">
       <motion.div
@@ -104,7 +110,7 @@ export default function SocialProof() {
             scaleOnHover
             fadeOut
             fadeOutColor="transparent"
-            ariaLabel="Technology partners"
+            ariaLabel={socialProof.aria_label}
           />
         </motion.div>
       </motion.div>

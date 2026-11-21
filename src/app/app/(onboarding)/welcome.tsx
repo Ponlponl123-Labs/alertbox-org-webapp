@@ -12,10 +12,12 @@ interface WelcomeStepProps {
 
 export default function WelcomeStep({ onComplete }: WelcomeStepProps) {
   const isDark = useStore(coreStore, (s) => s.isDark);
+  const lang = useStore(coreStore, (s) => s.lang);
   const rootRef = useRef<HTMLDivElement>(null);
   const h1Ref = useRef<HTMLHeadingElement>(null);
   const splitRef = useRef<HTMLDivElement>(null);
   const gsapCtxRef = useRef<gsap.Context | null>(null);
+  const hasCompletedIntroRef = useRef(false);
 
   useEffect(() => {
     const ctx = gsap.context(() => {}, rootRef);
@@ -27,6 +29,8 @@ export default function WelcomeStep({ onComplete }: WelcomeStepProps) {
   }, []);
 
   const handleSplitComplete = () => {
+    if (hasCompletedIntroRef.current) return;
+    hasCompletedIntroRef.current = true;
     gsapCtxRef.current?.add(() => {
       if (splitRef.current) {
         gsap.to(splitRef.current, {
@@ -69,7 +73,7 @@ export default function WelcomeStep({ onComplete }: WelcomeStepProps) {
     <div ref={rootRef} className="absolute pointer-events-none">
       <div ref={splitRef} className="origin-center will-change-transform">
         <SplitText
-          text="The best workspace for you"
+          text={lang.data.app.onboarding.welcome.title}
           className="text-4xl font-medium text-center overflow-visible"
           effect="blur"
           color={isDark ? "#ffffff" : "#000000"}
@@ -84,7 +88,7 @@ export default function WelcomeStep({ onComplete }: WelcomeStepProps) {
             opacity: 1,
             filter: "blur(0px)",
           }}
-          splitType="chars"
+          splitType={lang.key === "th-TH" ? "words" : "chars"}
           delay={45}
           duration={1.1}
           staggerFrom="start"
@@ -98,7 +102,7 @@ export default function WelcomeStep({ onComplete }: WelcomeStepProps) {
         />
       </div>
       <h1 ref={h1Ref} className="text-5xl font-medium text-center opacity-0 -mt-2">
-        was Here!
+        {lang.data.app.onboarding.welcome.subtitle}
       </h1>
     </div>
   );

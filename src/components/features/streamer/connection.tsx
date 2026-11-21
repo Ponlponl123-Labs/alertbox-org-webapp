@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { coreStore } from "@/hooks/store/core";
+import { formatI18n } from "@/lib/i18n";
 import {
   BankIcon,
   CaretDownIcon,
@@ -185,10 +186,10 @@ export default function Connection({
           };
         });
       } else {
-        toast.error("Failed to save integration settings");
+        toast.error(lang.data.app.connections.toasts.save_failed);
       }
     } catch {
-      toast.error("Network error saving integration settings");
+      toast.error(lang.data.app.connections.toasts.save_network);
     } finally {
       setIsLoading(false);
     }
@@ -215,10 +216,10 @@ export default function Connection({
         setUsername("");
         setCurrentSecret("");
       } else {
-        toast.error("Failed to disconnect integration");
+        toast.error(lang.data.app.connections.toasts.disconnect_failed);
       }
     } catch {
-      toast.error("Network error disconnecting integration");
+      toast.error(lang.data.app.connections.toasts.disconnect_network);
     } finally {
       setIsLoading(false);
     }
@@ -263,15 +264,13 @@ export default function Connection({
                     />
                     {isEnabled
                       ? lang.data.app.connections.status.connected
-                      : lang.key === "th-TH"
-                        ? "หยุดชั่วคราว"
-                        : "Paused"}
+                      : lang.data.common.paused}
                   </Badge>
                   <Switch
                     checked={isEnabled}
                     disabled={isLoading || readOnly}
                     onCheckedChange={(checked) => toggleDisabled(!checked)}
-                    aria-label={`Toggle ${name}`}
+                    aria-label={formatI18n(lang.data.common.aria.toggle_provider, { name })}
                   />
                 </>
               ) : soon ? (
@@ -310,12 +309,8 @@ export default function Connection({
                 >
                   <span>
                     {isReadMoreOpen
-                      ? lang.key === "th-TH"
-                        ? "ย่อข้อมูล"
-                        : "Show less"
-                      : lang.key === "th-TH"
-                        ? "อ่านเพิ่มเติม"
-                        : lang.data.common.read_more || "Read more"}
+                      ? lang.data.common.show_less
+                      : lang.data.common.read_more}
                   </span>
                   <CaretDownIcon
                     className={cn(
@@ -393,7 +388,7 @@ export default function Connection({
                 className="h-max w-full p-3 rounded-lg text-xs font-medium hover:bg-accent border-0"
               >
                 <GearSixIcon className="size-3.5" />
-                {lang.key === "th-TH" ? "ตั้งค่าการใช้งาน" : "Configure"}
+                {lang.data.common.configure}
               </Button>
             </Link>
           ) : isUserSecretFlow ? (
@@ -404,7 +399,7 @@ export default function Connection({
                 className="h-max w-full p-3 cursor-not-allowed rounded-lg text-xs opacity-70 border-0"
                 disabled
               >
-                Not Connected (Read-only)
+                {lang.data.common.not_connected_read_only}
               </Button>
             ) : (
               <Link href={targetHref} className="block w-full">
@@ -429,20 +424,20 @@ export default function Connection({
                     method: "GET",
                   });
                   if (!r.ok) {
-                    toast.error("Failed to initialize OAuth connection");
+                    toast.error(lang.data.app.connections.toasts.oauth_init_failed);
                     setIsLoading(false);
                     return;
                   }
                   const oauth2Link = await r.text();
                   const safeUrl = validateOAuthRedirectUrl(oauth2Link);
                   if (!safeUrl) {
-                    toast.error("Blocked untrusted OAuth redirect URL");
+                    toast.error(lang.data.app.connections.toasts.oauth_untrusted_url);
                     setIsLoading(false);
                     return;
                   }
                   window.location.assign(safeUrl);
                 } catch {
-                  toast.error("Network error starting OAuth flow");
+                  toast.error(lang.data.app.connections.toasts.oauth_network);
                   setIsLoading(false);
                 }
               }}
@@ -451,7 +446,7 @@ export default function Connection({
               {isLoading ? (
                 <Spinner className="size-3.5" />
               ) : readOnly ? (
-                "Disabled (Read-only)"
+                lang.data.common.disabled_read_only
               ) : (
                 <>
                   <PlusIcon className="size-3.5" />
@@ -486,7 +481,7 @@ export default function Connection({
                         className="h-max w-full p-3 rounded-lg text-xs opacity-70"
                         disabled
                       >
-                        Read-only
+                        {lang.data.common.read_only}
                       </Button>
                     ) : canSave && hasChanges ? (
                       <Button
@@ -510,7 +505,7 @@ export default function Connection({
                         disabled={isLoading}
                         onClick={() => setIsShowSecret(false)}
                       >
-                        Cancel
+                        {lang.data.common.cancel}
                       </Button>
                     )}
                   </div>
@@ -526,7 +521,7 @@ export default function Connection({
                   >
                     <PlusIcon className="size-3.5" />
                     {readOnly
-                      ? "Disabled (Read-only)"
+                      ? lang.data.common.disabled_read_only
                       : lang.data.app.connections.status.connect}
                   </Button>
                   <Link href={targetHref} className="flex-1">
@@ -551,15 +546,17 @@ export default function Connection({
       >
         <AlertDialogContent className="rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Disconnect {name}?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {formatI18n(lang.data.app.connections.disconnect_dialog.title_provider, { name })}
+            </AlertDialogTitle>
             <AlertDialogDescription className="font-sans">
-              {lang.key === "th-TH"
-                ? `คุณแน่ใจหรือไม่ว่าต้องการตัดการเชื่อมต่อกับ ${name}? ข้อมูลการเข้าสู่ระบบและ Secret ทั้งหมดจะถูกลบออก และ Alertbox จะไม่ได้รับสัญญาณแจ้งเตือนการโดเนทจากแพลตฟอร์มนี้อีกต่อไป`
-                : `Are you sure you want to disconnect ${name}? All secret credentials will be permanently removed, and Alertbox will stop receiving donation webhook triggers from this platform.`}
+              {formatI18n(lang.data.app.connections.disconnect_dialog.desc_confirm_provider, { name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-0">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl border-0">
+              {lang.data.common.cancel}
+            </AlertDialogCancel>
             <AlertDialogAction
               className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={async () => {

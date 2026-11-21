@@ -1,5 +1,7 @@
 "use client";
 import { useState, useCallback } from "react";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
 import Cropper, { Area, Point } from "react-easy-crop";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -46,6 +48,7 @@ function ImageCropperBody({
   isSubmitting: boolean;
   setIsSubmitting: (submitting: boolean) => void;
 }) {
+  const lang = useStore(coreStore, (s) => s.lang);
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -120,7 +123,7 @@ function ImageCropperBody({
         />
 
         <PhotoStraightenSlider
-          label="Straighten"
+          label={lang.data.components.image_cropper.straighten}
           min={-45}
           max={45}
           step={1}
@@ -168,13 +171,19 @@ export function ImageCropperModal({
   onCropComplete,
   aspect = 1,
   cropShape = "rect",
-  title = "Crop Image",
-  applyLabel = "Apply Crop",
-  cancelLabel = "Cancel",
-  zoomLabel = "Zoom",
+  title,
+  applyLabel,
+  cancelLabel,
+  zoomLabel,
   className,
 }: ImageCropperModalProps) {
+  const lang = useStore(coreStore, (s) => s.lang);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const ic = lang.data.components.image_cropper;
+  const resolvedTitle = title ?? ic.title;
+  const resolvedApplyLabel = applyLabel ?? ic.apply;
+  const resolvedCancelLabel = cancelLabel ?? ic.cancel;
+  const resolvedZoomLabel = zoomLabel ?? ic.zoom;
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && !isSubmitting && onClose()}>
@@ -191,7 +200,7 @@ export function ImageCropperModal({
                 height={50}
                 unoptimized
                 className="w-full scale-200 blur-3xl opacity-40 dark:opacity-20 transform-gpu will-change-transform"
-                alt="Backdrop"
+                alt={ic.backdrop_alt}
               />
             </div>
           )}
@@ -216,10 +225,10 @@ export function ImageCropperModal({
             onCropComplete={onCropComplete}
             aspect={aspect}
             cropShape={cropShape}
-            title={title}
-            applyLabel={applyLabel}
-            cancelLabel={cancelLabel}
-            zoomLabel={zoomLabel}
+            title={resolvedTitle}
+            applyLabel={resolvedApplyLabel}
+            cancelLabel={resolvedCancelLabel}
+            zoomLabel={resolvedZoomLabel}
             isSubmitting={isSubmitting}
             setIsSubmitting={setIsSubmitting}
           />
