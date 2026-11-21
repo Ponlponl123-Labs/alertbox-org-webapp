@@ -13,7 +13,12 @@ import OrgSwitcher from '@/components/features/org/org-switcher';
 import StreamerSelector from '@/components/features/streamer/streamer-selector';
 import NavUser from './nav-user';
 import { useUserContext } from "@/contexts/user";
-import { hasPermission, hasAnyPermission, canAccessStreamer } from "@/lib/rbac";
+import {
+  hasPermission,
+  hasAnyPermission,
+  canAccessStreamer,
+  isOrgOwnerOrAdmin,
+} from "@/lib/rbac";
 import { OrgPerm, StreamerPerm } from "@/consts/permission";
 import { PanelLeftClose } from "../animate-ui/icons/hugeicons/panel-left-close";
 import { PanelLeftOpen } from "../animate-ui/icons/hugeicons/panel-left-open";
@@ -58,15 +63,24 @@ interface SidebarSection {
   items: SidebarItem[];
 }
 
+const MOBILE_MQL_QUERY = "(max-width: 767px)";
+
+function subscribeIsMobile(callback: () => void) {
+  const mql = window.matchMedia(MOBILE_MQL_QUERY);
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+
+const getIsMobile = () => window.matchMedia(MOBILE_MQL_QUERY).matches;
+const getServerFalse = () => false;
+const noopSubscribe = () => () => {};
+const getClientTrue = () => true;
+
 function useIsMobile() {
   return React.useSyncExternalStore(
-    (callback) => {
-      const mql = window.matchMedia("(max-width: 767px)");
-      mql.addEventListener("change", callback);
-      return () => mql.removeEventListener("change", callback);
-    },
-    () => window.matchMedia("(max-width: 767px)").matches,
-    () => false,
+    subscribeIsMobile,
+    getIsMobile,
+    getServerFalse,
   );
 }
 
@@ -94,9 +108,9 @@ const AppSidebar = React.memo(function AppSidebar() {
   const isCollapsed = isSidebarCollapsed && !isMobile;
 
   const sidebarHydrated = React.useSyncExternalStore(
-    () => () => { },
-    () => true,
-    () => false,
+    noopSubscribe,
+    getClientTrue,
+    getServerFalse,
   );
 
   useEffect(() => {
@@ -166,8 +180,7 @@ const AppSidebar = React.memo(function AppSidebar() {
       ];
     }
 
-    const isOwner = activeOrg?.role === "OWNER";
-    const isOwnerOrAdmin = isOwner || activeOrg?.role === "ADMIN";
+    const isOwnerOrAdmin = isOrgOwnerOrAdmin(activeOrg);
 
     const canViewOrg = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_VIEW);
     const canManageMembers = isOwnerOrAdmin || hasAnyPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBERS_MANAGE);
@@ -388,12 +401,17 @@ const AppSidebar = React.memo(function AppSidebar() {
       });
     }
 
-    streamerItems.push({
-      id: "streamer-audit",
-      text: "Audit Logs",
-      icon: <Clock02 size={16} />,
-      href: `/app/${orgKey}/${streamerKey}/audit`,
-    });
+    const canViewStreamerAudit =
+      canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_MANAGE, OrgPerm.ORG_MANAGE);
+
+    if (canViewStreamerAudit) {
+      streamerItems.push({
+        id: "streamer-audit",
+        text: "Audit Logs",
+        icon: <Clock02 size={16} />,
+        href: `/app/${orgKey}/${streamerKey}/audit`,
+      });
+    }
 
 
     return [
@@ -498,7 +516,7 @@ const AppSidebar = React.memo(function AppSidebar() {
                 stiffness: 160,
                 damping: 24,
               }}
-              key={activeOrg?.id + "-" + activeStreamer?.id || "null"}
+              key={`${activeOrg?.id ?? "none"}-${activeStreamer?.id ?? "none"}`}
               className="flex-1 flex flex-col gap-2 min-h-0 pt-0.5"
             >
               {sections.map((section) => (

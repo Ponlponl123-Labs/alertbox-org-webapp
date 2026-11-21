@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import SplitText from "@/components/SplitText";
@@ -12,48 +12,61 @@ interface WelcomeStepProps {
 
 export default function WelcomeStep({ onComplete }: WelcomeStepProps) {
   const isDark = useStore(coreStore, (s) => s.isDark);
+  const rootRef = useRef<HTMLDivElement>(null);
   const h1Ref = useRef<HTMLHeadingElement>(null);
   const splitRef = useRef<HTMLDivElement>(null);
+  const gsapCtxRef = useRef<gsap.Context | null>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {}, rootRef);
+    gsapCtxRef.current = ctx;
+    return () => {
+      ctx.revert();
+      gsapCtxRef.current = null;
+    };
+  }, []);
 
   const handleSplitComplete = () => {
-    if (splitRef.current) {
+    gsapCtxRef.current?.add(() => {
+      if (splitRef.current) {
+        gsap.to(splitRef.current, {
+          scale: 0.95,
+          opacity: 0.26,
+          filter: "blur(4px)",
+          duration: 0.8,
+          ease: "power2.out",
+        });
+      }
+      if (!h1Ref.current) return;
+      gsap.fromTo(
+        h1Ref.current,
+        { opacity: 0, y: 20, filter: "blur(6px)" },
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8, ease: "power2.out" }
+      );
       gsap.to(splitRef.current, {
-        scale: 0.95,
-        opacity: 0.26,
-        filter: "blur(4px)",
-        duration: 0.8,
-        ease: "power2.out",
+        opacity: 0,
+        y: -20,
+        filter: "blur(6px)",
+        duration: 1,
+        ease: "power3.out",
+        delay: 2,
       });
-    }
-    if (!h1Ref.current) return;
-    gsap.fromTo(
-      h1Ref.current,
-      { opacity: 0, y: 20, filter: "blur(6px)" },
-      { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8, ease: "power2.out" }
-    );
-    gsap.to(splitRef.current, {
-      opacity: 0,
-      y: -20,
-      filter: "blur(6px)",
-      duration: 1,
-      ease: "power3.out",
-      delay: 2,
-    });
-    gsap.to(h1Ref.current, {
-      opacity: 0,
-      y: -20,
-      filter: "blur(6px)",
-      duration: 1,
-      ease: "power3.out",
-      delay: 2.1,
-      onComplete: () => {
-        onComplete?.();
-      },
+      gsap.to(h1Ref.current, {
+        opacity: 0,
+        y: -20,
+        filter: "blur(6px)",
+        duration: 1,
+        ease: "power3.out",
+        delay: 2.1,
+        onComplete: () => {
+          onComplete?.();
+        },
+      });
     });
   };
 
   return (
-    <div className="absolute pointer-events-none">
+    <div ref={rootRef} className="absolute pointer-events-none">
       <div ref={splitRef} className="origin-center will-change-transform">
         <SplitText
           text="The best workspace for you"

@@ -1,6 +1,6 @@
 "use client";
 import { useUserContext } from "@/contexts/user";
-import React, { useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import Login from "./login";
 import { usePathname } from "next/navigation";
 import AppSidebar from "@/components/layout/app-sidebar";
@@ -33,22 +33,22 @@ export const AppFooter = React.memo(function AppFooter() {
         </span>
       </div>
       <div className="flex flex-1 gap-2 justify-end">
-        <Link href={"https://law.ponlponl123.com/tos"} target="_blank">
+        <Link href={"https://law.ponlponl123.com/tos"} target="_blank" rel="noopener noreferrer">
           <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
             {lang.data.footer.links.legal.tos}
           </Button>
         </Link>
-        <Link href={"https://law.ponlponl123.com/privacy"} target="_blank">
+        <Link href={"https://law.ponlponl123.com/privacy"} target="_blank" rel="noopener noreferrer">
           <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
             {lang.data.footer.links.legal.privacy}
           </Button>
         </Link>
-        <Link href={"https://law.ponlponl123.com/additional/alertbox.org"} target="_blank">
+        <Link href={"https://law.ponlponl123.com/additional/alertbox.org"} target="_blank" rel="noopener noreferrer">
           <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
             {lang.data.footer.links.legal.additional}
           </Button>
         </Link>
-        <Link href={"https://github.com/ponlponl123-labs/alertbox-org"} target="_blank">
+        <Link href={"https://github.com/ponlponl123-labs/alertbox-org"} target="_blank" rel="noopener noreferrer">
           <Button size="icon" variant="ghost" className={"rounded-lg"}>
             <GithubLogoIcon size={22} weight="fill" className="text-foreground" />
           </Button>
@@ -59,11 +59,16 @@ export const AppFooter = React.memo(function AppFooter() {
 });
 
 function AppLayout({ children }: { children: React.ReactNode }) {
-  const [scrollarea, setScrollarea] = useState<HTMLDivElement | null>(null);
+  const scrollareaRef = useRef<HTMLDivElement | null>(null);
+  const [hasScrollarea, setHasScrollarea] = useState(false);
+  const setScrollarea = useCallback((node: HTMLDivElement | null) => {
+    scrollareaRef.current = node;
+    setHasScrollarea(Boolean(node));
+  }, []);
   const { userInfo } = useUserContext();
   const pathname = usePathname();
   const scroll = useScroll({
-    container: scrollarea ? { current: scrollarea } : undefined,
+    container: hasScrollarea ? scrollareaRef : undefined,
   });
 
   const headerOpacity = useTransform(scroll.scrollY, (v) =>
@@ -92,7 +97,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ delay: 0.56 }}
+        transition={{ duration: 0.18 }}
       >
         {!userInfo && !pathname.startsWith("/app/login/") ? (
           <Login />

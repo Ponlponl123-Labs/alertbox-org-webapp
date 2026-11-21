@@ -29,6 +29,8 @@ import { Connections } from "@/types/user.types";
 import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
 import { getApiUrl } from "@/lib/api";
+import { validateOAuthRedirectUrl } from "@/lib/security";
+import { toast } from "@/components/custom-ui/toast";
 import { useUserContext } from "@/contexts/user";
 import { cn } from "@/lib/utils";
 import { Collapsible } from "@animate-ui/react/primitives/base-ui/collapsible";
@@ -150,60 +152,76 @@ export default function Connection({
   };
 
   const update = async (endpoint: string, key: string) => {
+    if (readOnly || isLoading) return;
     setIsLoading(true);
-    const headers: Record<string, string> = {};
-    let body: string;
-    if (isUserSecretFlow) {
-      headers["Content-Type"] = "application/json";
-      body = JSON.stringify({ username, secret: currentSecret });
-    } else {
-      body = currentSecret || "";
-    }
+    try {
+      const headers: Record<string, string> = {};
+      let body: string;
+      if (isUserSecretFlow) {
+        headers["Content-Type"] = "application/json";
+        body = JSON.stringify({ username, secret: currentSecret });
+      } else {
+        body = currentSecret || "";
+      }
 
-    const r = await authFetch(getApiUrl(endpoint), {
-      method: "POST",
-      headers,
-      body,
-    });
-    if (r.ok) {
-      setConnections((prev) => {
-        if (!prev) return prev;
-        const newSecretVal = isUserSecretFlow
-          ? { username, secret: currentSecret }
-          : currentSecret;
-        return {
-          ...prev,
-          [key]: newSecretVal,
-          disabled: {
-            ...prev.disabled,
-            [key]: false,
-          },
-        };
+      const r = await authFetch(getApiUrl(endpoint), {
+        method: "POST",
+        headers,
+        body,
       });
+      if (r.ok) {
+        setConnections((prev) => {
+          if (!prev) return prev;
+          const newSecretVal = isUserSecretFlow
+            ? { username, secret: currentSecret }
+            : currentSecret;
+          return {
+            ...prev,
+            [key]: newSecretVal,
+            disabled: {
+              ...prev.disabled,
+              [key]: false,
+            },
+          };
+        });
+      } else {
+        toast.error("Failed to save integration settings");
+      }
+    } catch {
+      toast.error("Network error saving integration settings");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const disconnect = async (endpoint: string, key: string) => {
+    if (readOnly || isLoading) return;
     setIsLoading(true);
-    const r = await authFetch(getApiUrl(endpoint), {
-      method: "DELETE",
-    });
-    if (r.ok) {
-      setConnections((prev) => {
-        if (!prev) return prev;
-        const updatedDisabled = { ...prev.disabled };
-        delete updatedDisabled[key];
-        return {
-          ...prev,
-          [key]: null,
-          disabled: updatedDisabled,
-        };
+    try {
+      const r = await authFetch(getApiUrl(endpoint), {
+        method: "DELETE",
       });
-      setUsername("");
-      setCurrentSecret("");
+      if (r.ok) {
+        setConnections((prev) => {
+          if (!prev) return prev;
+          const updatedDisabled = { ...prev.disabled };
+          delete updatedDisabled[key];
+          return {
+            ...prev,
+            [key]: null,
+            disabled: updatedDisabled,
+          };
+        });
+        setUsername("");
+        setCurrentSecret("");
+      } else {
+        toast.error("Failed to disconnect integration");
+      }
+    } catch {
+      toast.error("Network error disconnecting integration");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const canSave = isUserSecretFlow
@@ -404,14 +422,28 @@ export default function Connection({
               size="sm"
               className="h-max w-full p-3 rounded-lg text-xs font-medium border-0"
               onClick={async () => {
-                if (readOnly) return;
+                if (readOnly || isLoading) return;
                 setIsLoading(true);
-                const r = await authFetch(getApiUrl(api_endpoint + "/oauth2"), {
-                  method: "GET",
-                });
-                if (r.ok) {
-                  const oauth2_link = await r.text();
-                  window.location.href = oauth2_link;
+                try {
+                  const r = await authFetch(getApiUrl(api_endpoint + "/oauth2"), {
+                    method: "GET",
+                  });
+                  if (!r.ok) {
+                    toast.error("Failed to initialize OAuth connection");
+                    setIsLoading(false);
+                    return;
+                  }
+                  const oauth2Link = await r.text();
+                  const safeUrl = validateOAuthRedirectUrl(oauth2Link);
+                  if (!safeUrl) {
+                    toast.error("Blocked untrusted OAuth redirect URL");
+                    setIsLoading(false);
+                    return;
+                  }
+                  window.location.assign(safeUrl);
+                } catch {
+                  toast.error("Network error starting OAuth flow");
+                  setIsLoading(false);
                 }
               }}
               disabled={isLoading || readOnly}

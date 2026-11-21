@@ -314,12 +314,12 @@ const SplitText = ({
       };
 
       const onEnter = (e: PointerEvent) => {
-        locate(e);
         pointer.inside = true;
         if (!revealed) return;
         const live = liveRef.current;
         if (live.trigger === 'hover') cycle();
         if (live.hoverEffect === 'none') return;
+        locate(e);
         measure();
         if (live.hoverEffect === 'wave') {
           const now = performance.now();
@@ -333,9 +333,9 @@ const SplitText = ({
       };
 
       const onMove = (e: PointerEvent) => {
-        locate(e);
         pointer.inside = true;
         if (!revealed || liveRef.current.hoverEffect !== 'lift') return;
+        locate(e);
         if (!centers) measure();
         wake();
       };
@@ -390,9 +390,9 @@ const SplitText = ({
       setReady(true);
       if (revealed) queue();
 
-      el.addEventListener('pointerenter', onEnter);
-      el.addEventListener('pointermove', onMove);
-      el.addEventListener('pointerleave', onLeave);
+      el.addEventListener('pointerenter', onEnter, { passive: true });
+      el.addEventListener('pointermove', onMove, { passive: true });
+      el.addEventListener('pointerleave', onLeave, { passive: true });
       el.addEventListener('click', onClick);
 
       return () => {

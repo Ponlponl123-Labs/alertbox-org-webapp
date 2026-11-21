@@ -1,28 +1,33 @@
 import { allowedLocalhostWhen } from "@/consts/statement";
 
-/**
- * Helper to resolve absolute API URLs dynamically using NEXT_PUBLIC_API_ENDPOINT.
- * Automatically handles trailing/leading slashes and strips the `/api` prefix.
- *
- * @param path The relative URL path (e.g., "/api/v1/auth" or "/api/health")
- * @returns The resolved absolute API URL
- */
-export const getApiUrl = (path: string): string => {
-  let endpoint =
-    process.env.NEXT_PUBLIC_API_ENDPOINT ||
-    (allowedLocalhostWhen.includes(process.env.NODE_ENV || "")
-      ? "http://127.0.0.1:3001/"
-      : "https://api.alertbox.org/");
-
-  if (process.env.NODE_ENV === "production") {
-    endpoint = "https://api.alertbox.org/";
+export const resolveApiEndpoint = (): string => {
+  const configured = process.env.NEXT_PUBLIC_API_ENDPOINT?.trim();
+  if (configured) {
+    return configured.endsWith("/") ? configured : `${configured}/`;
   }
-  const cleanEndpoint = endpoint.endsWith("/") ? endpoint : `${endpoint}/`;
+  return allowedLocalhostWhen.includes(process.env.NODE_ENV || "")
+    ? "http://127.0.0.1:3001/"
+    : "https://api.alertbox.org/";
+};
 
+export const getApiOrigin = (): string => {
+  return new URL(resolveApiEndpoint()).origin;
+};
+
+export const getDiscordRedirectUri = (): string => {
+  const configured = process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI?.trim();
+  if (configured) return configured;
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/app/login/discord`;
+  }
+  return "https://alertbox.org/app/login/discord";
+};
+
+export const getApiUrl = (path: string): string => {
+  const cleanEndpoint = resolveApiEndpoint();
   let cleanPath = path.startsWith("/") ? path.slice(1) : path;
   if (cleanPath.startsWith("api/")) {
     cleanPath = cleanPath.slice(4);
   }
-
   return `${cleanEndpoint}${cleanPath}`;
 };

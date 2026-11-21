@@ -4,7 +4,11 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
 import { getApiUrl } from "@/lib/api";
-import { getCookie } from "cookies-next";
+import { formatMoneyMinorUnits, getCachedDateFormat } from "@/lib/formatters";
+import { canAccessStreamer } from "@/lib/rbac";
+import { isSafePathSegment } from "@/lib/security";
+import { OrgPerm, StreamerPerm } from "@/consts/permission";
+import { useAuthenticatedWebSocket } from "@/hooks/use-authenticated-ws";
 import { Button } from "@/components/ui/button";
 import {
   MagnifyingGlassIcon,
@@ -104,30 +108,62 @@ const PAGE_SIZE = DEFAULT_TRANSACTION_PAGE_SIZE;
 export default function StreamerTransactionsPage() {
   const routeParams = useParams();
   const { activeOrg, activeStreamer, authFetch } = useUserContext();
-  const orgTarget = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
-  const streamerTarget =
-    activeStreamer?.id || activeStreamer?.name || (routeParams?.streamer as string);
+  const rawOrg = String((routeParams?.org as string) || activeOrg?.id || activeOrg?.slug || "");
+  const rawStreamer = String((routeParams?.streamer as string) || activeStreamer?.id || activeStreamer?.name || "");
+  const orgTarget = isSafePathSegment(rawOrg) ? rawOrg : "";
+  const streamerTarget = isSafePathSegment(rawStreamer) ? rawStreamer : "";
+
+  const canManageTransactions = canAccessStreamer(
+    activeOrg,
+    activeStreamer,
+    StreamerPerm.STREAMER_MANAGE,
+    OrgPerm.STREAMER_MANAGE,
+  );
+  const canManageWidgets = canAccessStreamer(
+    activeOrg,
+    activeStreamer,
+    StreamerPerm.STREAMER_WIDGET_MANAGE,
+    OrgPerm.WIDGET_MANAGE,
+  );
 
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
-  const [, setTotalCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [wsStatus, setWsStatus] = useState<"connected" | "connecting" | "disconnected">("connecting");
   const [liveTxId, setLiveTxId] = useState<string | null>(null);
+  const [busyTxIds, setBusyTxIds] = useState<Record<string, boolean>>({});
 
-  // Filters & Sorting
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedProvider, setSelectedProvider] = useState("ALL");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
   const [sortBy, setSortBy] = useState<"createdAt" | "amount">("createdAt");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
-  // Keep references to active filters for client-side live WebSocket evaluation
+  const abortRef = useRef<AbortController | null>(null);
+  const liveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+      setCurrentPage(1);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    return () => {
+      if (liveTimerRef.current) clearTimeout(liveTimerRef.current);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
+
   const filtersRef = useRef({
     provider: selectedProvider,
     status: selectedStatus,
-    search: searchQuery,
+    search: debouncedSearch,
     sortBy,
     sortOrder,
   });
@@ -136,13 +172,12 @@ export default function StreamerTransactionsPage() {
     filtersRef.current = {
       provider: selectedProvider,
       status: selectedStatus,
-      search: searchQuery,
+      search: debouncedSearch,
       sortBy,
       sortOrder,
     };
-  }, [selectedProvider, selectedStatus, searchQuery, sortBy, sortOrder]);
+  }, [selectedProvider, selectedStatus, debouncedSearch, sortBy, sortOrder]);
 
-  // Test Transaction Dialog
   const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
   const [testProvider, setTestProvider] = useState("BMAC");
   const [testAmount, setTestAmount] = useState("100");
@@ -151,18 +186,18 @@ export default function StreamerTransactionsPage() {
   const [testMessage, setTestMessage] = useState("Keep up the great stream! 🔥");
   const [sendingTest, setSendingTest] = useState(false);
 
-  // Available connections for test dialog
   const [availableProviders, setAvailableProviders] = useState<string[]>([]);
 
-  // Action states
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const fetchTransactions = useCallback(() => {
     if (!orgTarget || !streamerTarget) return;
 
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
-    const startTime = Date.now();
-    const MIN_SKELETON_MS = 280;
 
     const queryParams = new URLSearchParams({
       limit: String(PAGE_SIZE),
@@ -173,30 +208,28 @@ export default function StreamerTransactionsPage() {
 
     if (selectedProvider !== "ALL") queryParams.set("provider", selectedProvider);
     if (selectedStatus !== "ALL") queryParams.set("status", selectedStatus);
-    if (searchQuery.trim()) queryParams.set("search", searchQuery.trim());
+    if (debouncedSearch) queryParams.set("search", debouncedSearch);
 
     authFetch(
       getApiUrl(
-        `/api/v1/org/${orgTarget}/streamers/${streamerTarget}/transactions?${queryParams.toString()}`,
+        `/api/v1/org/${encodeURIComponent(orgTarget)}/streamers/${encodeURIComponent(streamerTarget)}/transactions?${queryParams.toString()}`,
       ),
+      { signal: controller.signal },
     )
       .then((r) => (r.ok ? r.json() : null))
-      .then(async (data) => {
+      .then((data) => {
+        if (controller.signal.aborted) return;
         if (data && Array.isArray(data.transactions)) {
-          const elapsed = Date.now() - startTime;
-          if (elapsed < MIN_SKELETON_MS) {
-            await new Promise((resolve) => setTimeout(resolve, MIN_SKELETON_MS - elapsed));
-          }
           setTransactions(data.transactions);
-          setTotalCount(data.total || 0);
+          setTotalCount(typeof data.total === "number" ? data.total : data.transactions.length);
         }
       })
       .catch((err) => {
-        if (err?.name === "AbortError") return;
+        if ((err as Error)?.name === "AbortError") return;
         toast.error("Failed to load transactions");
       })
       .finally(() => {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       });
   }, [
     orgTarget,
@@ -206,7 +239,7 @@ export default function StreamerTransactionsPage() {
     sortOrder,
     selectedProvider,
     selectedStatus,
-    searchQuery,
+    debouncedSearch,
     authFetch,
   ]);
 
@@ -219,228 +252,150 @@ export default function StreamerTransactionsPage() {
     });
     return () => {
       ignore = true;
+      abortRef.current?.abort();
     };
   }, [fetchTransactions]);
 
-  // Enterprise Secure WebSocket: Real-time Live Updates with Client-Side Filtering
-  useEffect(() => {
-    if (!orgTarget || !streamerTarget) return;
+  const wsPath =
+    orgTarget && streamerTarget
+      ? `/v1/org/${encodeURIComponent(orgTarget)}/streamers/${encodeURIComponent(streamerTarget)}/transactions/live`
+      : null;
 
-    let ws: WebSocket | null = null;
-    let pingInterval: ReturnType<typeof setInterval> | null = null;
-    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
-    let isDisposed = false;
-    let reconnectAttempts = 0;
+  const handleWsMessage = useCallback((raw: unknown) => {
+    if (!raw || typeof raw !== "object") return;
+    const data = raw as {
+      type?: string;
+      transaction?: TransactionItem;
+      transactionId?: string;
+      isDeleted?: boolean;
+    };
 
-    const connectWebSocket = () => {
-      if (isDisposed) return;
-      setWsStatus("connecting");
+    if (data.type === "transaction:new" && data.transaction) {
+      const incoming = data.transaction;
+      const {
+        provider: curProvider,
+        status: curStatus,
+        search: curSearch,
+        sortBy: curSortBy,
+        sortOrder: curSortOrder,
+      } = filtersRef.current;
 
-      try {
-        const rawCookie = getCookie("USRSS");
-        let token = "";
-        if (rawCookie) {
-          try {
-            token = atob(String(rawCookie));
-          } catch {
-            token = String(rawCookie);
+      const matchProvider =
+        curProvider === "ALL" || incoming.provider.toUpperCase() === curProvider.toUpperCase();
+      const matchStatus =
+        curStatus === "ALL" || incoming.status.toUpperCase() === curStatus.toUpperCase();
+      const q = curSearch.trim().toLowerCase();
+      const matchSearch =
+        !q ||
+        incoming.senderName?.toLowerCase().includes(q) ||
+        incoming.message?.toLowerCase().includes(q) ||
+        incoming.id.toLowerCase().includes(q);
+
+      if (matchProvider && matchStatus && matchSearch) {
+        setTransactions((prev) => {
+          if (prev.some((t) => t.id === incoming.id)) return prev;
+          if (curSortBy === "createdAt" && curSortOrder === "desc") {
+            return [incoming, ...prev.slice(0, PAGE_SIZE - 1)];
           }
-        }
+          return [incoming, ...prev];
+        });
+        setTotalCount((c) => c + 1);
 
-        const apiEndpoint = getApiUrl("/");
-        let wsHost = window.location.host;
-        let wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        setLiveTxId(incoming.id);
+        if (liveTimerRef.current) clearTimeout(liveTimerRef.current);
+        liveTimerRef.current = setTimeout(
+          () => setLiveTxId((id) => (id === incoming.id ? null : id)),
+          3000,
+        );
 
-        try {
-          if (apiEndpoint.includes("://")) {
-            const url = new URL(apiEndpoint);
-            wsHost = url.host;
-            wsProtocol = url.protocol === "https:" ? "wss:" : "ws:";
-          } else if (
-            window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1"
-          ) {
-            wsHost = `${window.location.hostname}:3001`;
-          }
-        } catch {
-          // fallback to defaults
-        }
-
-        const wsUrl = `${wsProtocol}//${wsHost}/v1/org/${orgTarget}/streamers/${streamerTarget}/transactions/live?token=${encodeURIComponent(token)}`;
-        ws = new WebSocket(wsUrl);
-
-        ws.onopen = () => {
-          if (isDisposed) {
-            ws?.close();
-            return;
-          }
-          setWsStatus("connected");
-          reconnectAttempts = 0;
-
-          pingInterval = setInterval(() => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: "ping" }));
-            }
-          }, 25000);
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (!data || typeof data !== "object") return;
-
-            if (data.type === "transaction:new" && data.transaction) {
-              const incoming: TransactionItem = data.transaction;
-
-              const {
-                provider: curProvider,
-                status: curStatus,
-                search: curSearch,
-                sortBy: curSortBy,
-                sortOrder: curSortOrder,
-              } = filtersRef.current;
-
-              // Client-side predicate check to eliminate server load
-              const matchProvider =
-                curProvider === "ALL" ||
-                incoming.provider.toUpperCase() === curProvider.toUpperCase();
-
-              const matchStatus =
-                curStatus === "ALL" ||
-                incoming.status.toUpperCase() === curStatus.toUpperCase();
-
-              const q = curSearch.trim().toLowerCase();
-              const matchSearch =
-                !q ||
-                incoming.senderName?.toLowerCase().includes(q) ||
-                incoming.message?.toLowerCase().includes(q) ||
-                incoming.id.toLowerCase().includes(q);
-
-              const passesFilter = matchProvider && matchStatus && matchSearch;
-
-              if (passesFilter) {
-                setTransactions((prev) => {
-                  if (prev.some((t) => t.id === incoming.id)) return prev;
-                  if (curSortBy === "createdAt" && curSortOrder === "desc") {
-                    return [incoming, ...prev.slice(0, PAGE_SIZE - 1)];
-                  }
-                  return [incoming, ...prev];
-                });
-                setTotalCount((c) => c + 1);
-
-                setLiveTxId(incoming.id);
-                setTimeout(() => setLiveTxId((id) => (id === incoming.id ? null : id)), 3000);
-
-                toast.info(
-                  `⚡ Live: ${incoming.senderName} tipped ${(incoming.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${incoming.currency}`,
-                  {
-                    description: incoming.message || undefined,
-                  },
-                );
-              } else {
-                // Client-side filtered out; keep server load at 0
-                setTotalCount((c) => c + 1);
+        toast.info(
+          `⚡ Live: ${incoming.senderName} tipped ${formatMoneyMinorUnits(incoming.amount, incoming.currency)}`,
+          { description: incoming.message || undefined },
+        );
+      } else {
+        setTotalCount((c) => c + 1);
+      }
+    } else if (data.type === "transaction:updated" && data.transactionId) {
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.id === data.transactionId
+            ? {
+                ...t,
+                ...(typeof data.isDeleted === "boolean" ? { isDeleted: data.isDeleted } : {}),
               }
-            } else if (data.type === "transaction:updated" && data.transactionId) {
-              setTransactions((prev) =>
-                prev.map((t) =>
-                  t.id === data.transactionId
-                    ? {
-                      ...t,
-                      ...(typeof data.isDeleted === "boolean" ? { isDeleted: data.isDeleted } : {}),
-                    }
-                    : t,
-                ),
-              );
-            } else if (data.type === "transaction:resend" && data.transactionId) {
-              setLiveTxId(data.transactionId);
-              setTimeout(() => setLiveTxId((id) => (id === data.transactionId ? null : id)), 2500);
-            }
-          } catch {
-            // ignore non-json frames
-          }
-        };
+            : t,
+        ),
+      );
+    } else if (data.type === "transaction:resend" && data.transactionId) {
+      const txId = data.transactionId;
+      setLiveTxId(txId);
+      if (liveTimerRef.current) clearTimeout(liveTimerRef.current);
+      liveTimerRef.current = setTimeout(
+        () => setLiveTxId((id) => (id === txId ? null : id)),
+        2500,
+      );
+    }
+  }, []);
 
-        ws.onclose = () => {
-          if (pingInterval) clearInterval(pingInterval);
-          if (isDisposed) return;
-          setWsStatus("disconnected");
+  const wsStatus = useAuthenticatedWebSocket({
+    wsPath,
+    enabled: Boolean(wsPath),
+    onMessage: handleWsMessage,
+  });
 
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 15000);
-          reconnectAttempts++;
-          reconnectTimeout = setTimeout(connectWebSocket, delay);
-        };
-
-        ws.onerror = () => {
-          ws?.close();
-        };
-      } catch {
-        setWsStatus("disconnected");
-      }
-    };
-
-    connectWebSocket();
-
-    return () => {
-      isDisposed = true;
-      if (pingInterval) clearInterval(pingInterval);
-      if (reconnectTimeout) clearTimeout(reconnectTimeout);
-      if (ws) {
-        ws.onclose = null;
-        ws.close();
-      }
-    };
-  }, [orgTarget, streamerTarget]);
-
-  // Fetch connected providers to populate test options
   useEffect(() => {
-    let active = true;
-    if (!orgTarget || !streamerTarget) return;
+    if (!isTestDialogOpen || !orgTarget || !streamerTarget) return;
+    const controller = new AbortController();
 
     authFetch(
-      getApiUrl(`/api/v1/org/${orgTarget}/streamers/${streamerTarget}/integration`),
+      getApiUrl(
+        `/api/v1/org/${encodeURIComponent(orgTarget)}/streamers/${encodeURIComponent(streamerTarget)}/integration`,
+      ),
+      { signal: controller.signal },
     )
       .then((r) => (r.ok ? r.json() : null))
       .then((conns: StreamerConnections | null) => {
-        if (!active) return;
-        if (conns) {
-          const list: string[] = [];
-          if (conns.bmac) list.push("BMAC");
-          if (conns.kofi) list.push("KOFI");
-          if (conns.stripe) list.push("STRIPE");
-          if (conns.xendit) list.push("XENDIT");
-          if (conns.ffp) list.push("FFP");
-          if (list.length === 0) list.push("BMAC", "KOFI", "STRIPE");
-          setAvailableProviders(list);
-          setTestProvider((prev) => (list.includes(prev) ? prev : list[0]));
-        }
+        if (controller.signal.aborted) return;
+        const list: string[] = [];
+        if (conns?.bmac) list.push("BMAC");
+        if (conns?.kofi) list.push("KOFI");
+        if (conns?.stripe) list.push("STRIPE");
+        if (conns?.xendit) list.push("XENDIT");
+        if (conns?.ffp) list.push("FFP");
+        if (list.length === 0) list.push("BMAC", "KOFI", "STRIPE");
+        setAvailableProviders(list);
+        setTestProvider((prev) => (list.includes(prev) ? prev : list[0]));
       })
       .catch(() => {
-        if (active) setAvailableProviders(["BMAC", "KOFI", "STRIPE"]);
+        if (!controller.signal.aborted) setAvailableProviders(["BMAC", "KOFI", "STRIPE"]);
       });
 
-    return () => {
-      active = false;
-    };
-  }, [orgTarget, streamerTarget, authFetch]);
+    return () => controller.abort();
+  }, [isTestDialogOpen, orgTarget, streamerTarget, authFetch]);
 
-  // Handle Send Test Transaction
   const handleSendTest = async () => {
-    if (!orgTarget || !streamerTarget) return;
+    if (!orgTarget || !streamerTarget || sendingTest || !canManageWidgets) return;
+    const parsedAmount = Number(testAmount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount < 1 || parsedAmount > 1_000_000) {
+      toast.error("Test amount must be between 1 and 1,000,000");
+      return;
+    }
     setSendingTest(true);
 
     try {
       const res = await authFetch(
-        getApiUrl(`/api/v1/org/${orgTarget}/streamers/${streamerTarget}/transactions/test`),
+        getApiUrl(
+          `/api/v1/org/${encodeURIComponent(orgTarget)}/streamers/${encodeURIComponent(streamerTarget)}/transactions/test`,
+        ),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             provider: testProvider,
-            amount: Number(testAmount) || 50,
+            amount: parsedAmount,
             currency: testCurrency,
-            senderName: testDonorName,
-            message: testMessage,
+            senderName: testDonorName.trim().slice(0, 64) || "Generous Supporter",
+            message: testMessage.trim().slice(0, 280),
           }),
         },
       );
@@ -456,14 +411,14 @@ export default function StreamerTransactionsPage() {
     }
   };
 
-  // Handle Soft Delete Toggle
   const handleToggleSoftDelete = async (txId: string) => {
-    if (!orgTarget || !streamerTarget) return;
+    if (!orgTarget || !streamerTarget || !canManageTransactions || busyTxIds[txId]) return;
+    setBusyTxIds((prev) => ({ ...prev, [txId]: true }));
 
     try {
       const res = await authFetch(
         getApiUrl(
-          `/api/v1/org/${orgTarget}/streamers/${streamerTarget}/transactions/${txId}/soft-delete`,
+          `/api/v1/org/${encodeURIComponent(orgTarget)}/streamers/${encodeURIComponent(streamerTarget)}/transactions/${encodeURIComponent(txId)}/soft-delete`,
         ),
         { method: "PATCH" },
       );
@@ -480,17 +435,23 @@ export default function StreamerTransactionsPage() {
       );
     } catch {
       toast.error("Failed to update transaction status");
+    } finally {
+      setBusyTxIds((prev) => {
+        const next = { ...prev };
+        delete next[txId];
+        return next;
+      });
     }
   };
 
-  // Handle Resend Alert (Streamlabs replay style)
   const handleResendAlert = async (tx: TransactionItem) => {
-    if (!orgTarget || !streamerTarget) return;
+    if (!orgTarget || !streamerTarget || !canManageWidgets || busyTxIds[tx.id]) return;
+    setBusyTxIds((prev) => ({ ...prev, [tx.id]: true }));
 
     try {
       const res = await authFetch(
         getApiUrl(
-          `/api/v1/org/${orgTarget}/streamers/${streamerTarget}/transactions/${tx.id}/resend`,
+          `/api/v1/org/${encodeURIComponent(orgTarget)}/streamers/${encodeURIComponent(streamerTarget)}/transactions/${encodeURIComponent(tx.id)}/resend`,
         ),
         { method: "POST" },
       );
@@ -498,16 +459,24 @@ export default function StreamerTransactionsPage() {
       if (!res.ok) throw new Error("Replay failed");
 
       toast.success(
-        `Replayed alert for ${tx.senderName} (${(tx.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${tx.currency})`,
+        `Replayed alert for ${tx.senderName} (${formatMoneyMinorUnits(tx.amount, tx.currency)})`,
       );
     } catch {
       toast.error("Failed to resend alert");
+    } finally {
+      setBusyTxIds((prev) => {
+        const next = { ...prev };
+        delete next[tx.id];
+        return next;
+      });
     }
   };
 
-  const totalPages = Math.ceil(transactions.length / PAGE_SIZE) || 1;
-  const startIndex = transactions.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
-  const endIndex = Math.min(currentPage * PAGE_SIZE, transactions.length);
+  const effectiveTotal = Math.max(totalCount, transactions.length);
+  const totalPages = Math.ceil(effectiveTotal / PAGE_SIZE) || 1;
+  const startIndex = effectiveTotal === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const endIndex = Math.min(currentPage * PAGE_SIZE, effectiveTotal);
+  const timeFormatter = getCachedDateFormat("en-US", { hour: "2-digit", minute: "2-digit" });
 
   return (
     <motion.div
@@ -568,16 +537,18 @@ export default function StreamerTransactionsPage() {
                 </Button>
               </AnimateIcon>
 
-              <AnimateIcon animateOnHover>
-                <Button
-                  size="sm"
-                  onClick={() => setIsTestDialogOpen(true)}
-                  className="gap-2 rounded-xl p-3 h-max text-xs"
-                >
-                  <Sparkles size={15} />
-                  <span>Simulate Tip</span>
-                </Button>
-              </AnimateIcon>
+              {canManageWidgets && (
+                <AnimateIcon animateOnHover>
+                  <Button
+                    size="sm"
+                    onClick={() => setIsTestDialogOpen(true)}
+                    className="gap-2 rounded-xl p-3 h-max text-xs"
+                  >
+                    <Sparkles size={15} />
+                    <span>Simulate Tip</span>
+                  </Button>
+                </AnimateIcon>
+              )}
             </div>
           </div>
         </div>
@@ -948,20 +919,7 @@ export default function StreamerTransactionsPage() {
                         <TableCell className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-baseline gap-1 font-sans font-medium tabular-nums text-xs text-foreground">
                             <span>
-                              {tx.currency === "THB"
-                                ? "฿"
-                                : tx.currency === "USD"
-                                  ? "$"
-                                  : tx.currency === "EUR"
-                                    ? "€"
-                                    : ""}
-                              {(tx.amount / 100).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground/70 font-normal">
-                              {tx.currency}
+                              {formatMoneyMinorUnits(tx.amount, tx.currency)}
                             </span>
                           </div>
                         </TableCell>
@@ -978,10 +936,7 @@ export default function StreamerTransactionsPage() {
                               {formatTableDate(tx.createdAt)}
                             </span>
                             <span className="text-[10px] text-muted-foreground/60 font-sans">
-                              {new Date(tx.createdAt).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
+                              {timeFormatter.format(new Date(tx.createdAt))}
                             </span>
                           </div>
                         </TableCell>
@@ -1002,20 +957,28 @@ export default function StreamerTransactionsPage() {
                               align="end"
                               className="w-48 p-1.5 flex flex-col gap-1 rounded-xl bg-card border border-border shadow-xl text-xs"
                             >
-                              <button
-                                onClick={() => handleResendAlert(tx)}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left font-medium"
-                              >
-                                <PaperPlaneTiltIcon size={14} weight="bold" className="text-primary" />
-                                <span>Resend Alert</span>
-                              </button>
+                              {canManageWidgets && (
+                                <button
+                                  disabled={Boolean(busyTxIds[tx.id])}
+                                  onClick={() => handleResendAlert(tx)}
+                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left font-medium disabled:opacity-50"
+                                >
+                                  <PaperPlaneTiltIcon size={14} weight="bold" className="text-primary" />
+                                  <span>Resend Alert</span>
+                                </button>
+                              )}
 
                               <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(tx.id);
-                                  setCopiedId(tx.id);
-                                  toast.success("Transaction ID copied");
-                                  setTimeout(() => setCopiedId(null), 2000);
+                                onClick={async () => {
+                                  try {
+                                    await navigator.clipboard.writeText(tx.id);
+                                    setCopiedId(tx.id);
+                                    toast.success("Transaction ID copied");
+                                    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+                                    copiedTimerRef.current = setTimeout(() => setCopiedId(null), 2000);
+                                  } catch {
+                                    toast.error("Failed to copy ID");
+                                  }
                                 }}
                                 className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left"
                               >
@@ -1027,29 +990,34 @@ export default function StreamerTransactionsPage() {
                                 <span>Copy ID</span>
                               </button>
 
-                              <div className="h-px bg-border my-0.5" />
+                              {canManageTransactions && (
+                                <>
+                                  <div className="h-px bg-border my-0.5" />
 
-                              <button
-                                onClick={() => handleToggleSoftDelete(tx.id)}
-                                className={cn(
-                                  "w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors text-left font-medium",
-                                  tx.isDeleted
-                                    ? "hover:bg-emerald-500/10 text-emerald-500"
-                                    : "hover:bg-rose-500/10 text-rose-500",
-                                )}
-                              >
-                                {tx.isDeleted ? (
-                                  <>
-                                    <ArrowCounterClockwiseIcon size={14} weight="bold" />
-                                    <span>Restore Row</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <TrashIcon size={14} weight="bold" />
-                                    <span>Soft Delete</span>
-                                  </>
-                                )}
-                              </button>
+                                  <button
+                                    disabled={Boolean(busyTxIds[tx.id])}
+                                    onClick={() => handleToggleSoftDelete(tx.id)}
+                                    className={cn(
+                                      "w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors text-left font-medium disabled:opacity-50",
+                                      tx.isDeleted
+                                        ? "hover:bg-emerald-500/10 text-emerald-500"
+                                        : "hover:bg-rose-500/10 text-rose-500",
+                                    )}
+                                  >
+                                    {tx.isDeleted ? (
+                                      <>
+                                        <ArrowCounterClockwiseIcon size={14} weight="bold" />
+                                        <span>Restore Row</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <TrashIcon size={14} weight="bold" />
+                                        <span>Soft Delete</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </>
+                              )}
                             </PopoverContent>
                           </Popover>
                         </TableCell>
@@ -1074,7 +1042,7 @@ export default function StreamerTransactionsPage() {
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   className="tabular-nums font-sans"
                 >
-                  {transactions.length > 0 ? `${startIndex}–${endIndex}` : "0"}
+                  {effectiveTotal > 0 ? `${startIndex}–${endIndex}` : "0"}
                 </motion.span>
               </AnimatePresence>
             </span>
@@ -1082,14 +1050,14 @@ export default function StreamerTransactionsPage() {
             <span className="relative inline-flex items-center overflow-hidden h-4 font-semibold text-foreground">
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.span
-                  key={transactions.length}
+                  key={effectiveTotal}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   className="tabular-nums font-sans"
                 >
-                  {transactions.length}
+                  {effectiveTotal}
                 </motion.span>
               </AnimatePresence>
             </span>
@@ -1218,6 +1186,7 @@ export default function StreamerTransactionsPage() {
                 <input
                   type="number"
                   min="1"
+                  max="1000000"
                   value={testAmount}
                   onChange={(e) => setTestAmount(e.target.value)}
                   placeholder="100"
@@ -1245,6 +1214,7 @@ export default function StreamerTransactionsPage() {
               <label className="text-xs font-medium text-foreground">Donor Name</label>
               <input
                 type="text"
+                maxLength={64}
                 value={testDonorName}
                 onChange={(e) => setTestDonorName(e.target.value)}
                 placeholder="Donor nickname"
@@ -1256,6 +1226,7 @@ export default function StreamerTransactionsPage() {
               <label className="text-xs font-medium text-foreground">Donation Message</label>
               <textarea
                 rows={2}
+                maxLength={280}
                 value={testMessage}
                 onChange={(e) => setTestMessage(e.target.value)}
                 placeholder="Alert message..."

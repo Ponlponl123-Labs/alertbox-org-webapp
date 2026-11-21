@@ -12,13 +12,18 @@ export default function StreamerLayout({ children }: { children: React.ReactNode
 
   useEffect(() => {
     if (!streamerParam || !organizations.length) return;
-    const currentOrg = organizations.find((o) => o.id === orgParam || o.slug === orgParam);
+    const currentOrg = organizations.find((o) => String(o.id) === orgParam || o.slug === orgParam);
     const targetStreamer = currentOrg?.streamers?.find(
-      (s) => s.id === streamerParam || s.name === streamerParam || s.uri === streamerParam,
+      (s) => String(s.id) === streamerParam || s.name === streamerParam || s.uri === streamerParam,
     );
-    if (targetStreamer && targetStreamer.id !== orgStore.getState().activeStreamerId) {
-      orgStore.getState().setActiveStreamerId(targetStreamer.id);
-      orgStore.getState().setOrgMode(false);
+    if (targetStreamer) {
+      const state = orgStore.getState();
+      if (String(targetStreamer.id) !== String(state.activeStreamerId)) {
+        state.setActiveStreamerId(String(targetStreamer.id));
+      }
+      if (state.isOrgMode) {
+        state.setOrgMode(false);
+      }
     }
   }, [orgParam, streamerParam, organizations]);
 

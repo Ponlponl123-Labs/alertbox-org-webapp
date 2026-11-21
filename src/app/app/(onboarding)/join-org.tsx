@@ -68,6 +68,16 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   const content4Ref = useRef<HTMLAnchorElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const isInteractiveRef = useRef(false);
+  const gsapCtxRef = useRef<gsap.Context | null>(null);
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {}, containerRef);
+    gsapCtxRef.current = ctx;
+    return () => {
+      ctx.revert();
+      gsapCtxRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     if (!verifiedInfo) return;
@@ -118,6 +128,14 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
 
   const handleJoin = async () => {
     if (!verifiedInfo || isJoining) return;
+    if (new Date(verifiedInfo.expiresAt).getTime() <= Date.now()) {
+      toast.error("This invitation code has expired");
+      setIsMarkAsUsed(false);
+      setStep(2);
+      setInvitationCode("");
+      setVerifiedInfo(null);
+      return;
+    }
     setIsJoining(true);
     try {
       const res = await authFetch(getApiUrl("/api/v1/org/invites/accept"), {
@@ -188,42 +206,48 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
       }
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   const handleFirstComplete = () => {
-    gsap.delayedCall(1.2, () => {
-      const chars = splitRef.current?.querySelectorAll(".split-char");
-      const targets = chars && chars.length > 0 ? chars : splitRef.current;
-      gsap.to(targets, {
-        opacity: 0,
-        y: -24,
-        filter: "blur(8px)",
-        duration: 0.5,
-        stagger: { each: 0.02, from: "start" },
-        ease: "power2.in",
-        onComplete: () => {
-          setStep(1);
-        },
+    gsapCtxRef.current?.add(() => {
+      gsap.delayedCall(1.2, () => {
+        const chars = splitRef.current?.querySelectorAll(".split-char");
+        const targets = chars && chars.length > 0 ? chars : splitRef.current;
+        if (!targets) return;
+        gsap.to(targets, {
+          opacity: 0,
+          y: -24,
+          filter: "blur(8px)",
+          duration: 0.5,
+          stagger: { each: 0.02, from: "start" },
+          ease: "power2.in",
+          onComplete: () => {
+            setStep(1);
+          },
+        });
       });
     });
   };
 
   const handleSecondComplete = () => {
-    gsap.delayedCall(1.2, () => {
-      const chars = split2Ref.current?.querySelectorAll(".split-char");
-      const targets = chars && chars.length > 0 ? chars : split2Ref.current;
-      gsap.to(targets, {
-        opacity: 0,
-        y: -24,
-        filter: "blur(8px)",
-        duration: 0.5,
-        stagger: { each: 0.02, from: "start" },
-        ease: "power2.in",
-        onComplete: () => {
-          setStep(2);
-        },
+    gsapCtxRef.current?.add(() => {
+      gsap.delayedCall(1.2, () => {
+        const chars = split2Ref.current?.querySelectorAll(".split-char");
+        const targets = chars && chars.length > 0 ? chars : split2Ref.current;
+        if (!targets) return;
+        gsap.to(targets, {
+          opacity: 0,
+          y: -24,
+          filter: "blur(8px)",
+          duration: 0.5,
+          stagger: { each: 0.02, from: "start" },
+          ease: "power2.in",
+          onComplete: () => {
+            setStep(2);
+          },
+        });
       });
     });
   };
@@ -231,29 +255,31 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   const handleThirdComplete = () => {
     setIsMorphed(true);
 
-    const tl = gsap.timeline({
-      onComplete: () => {
-        isInteractiveRef.current = true;
-      },
-    });
+    gsapCtxRef.current?.add(() => {
+      const tl = gsap.timeline({
+        onComplete: () => {
+          isInteractiveRef.current = true;
+        },
+      });
 
-    tl.fromTo(
-      content2Ref.current,
-      { opacity: 0, y: 8, filter: "blur(4px)" },
-      { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power2.out" }
-    )
-      .fromTo(
-        content3Ref.current,
-        { opacity: 0, y: 10, filter: "blur(4px)" },
-        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power2.out" },
-        "-=0.2"
-      )
-      .fromTo(
-        content4Ref.current,
+      tl.fromTo(
+        content2Ref.current,
         { opacity: 0, y: 8, filter: "blur(4px)" },
-        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power2.out" },
-        "-=0.3"
-      );
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power2.out" }
+      )
+        .fromTo(
+          content3Ref.current,
+          { opacity: 0, y: 10, filter: "blur(4px)" },
+          { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power2.out" },
+          "-=0.2"
+        )
+        .fromTo(
+          content4Ref.current,
+          { opacity: 0, y: 8, filter: "blur(4px)" },
+          { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power2.out" },
+          "-=0.3"
+        );
+    });
   };
 
   return (

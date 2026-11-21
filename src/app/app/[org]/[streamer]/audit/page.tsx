@@ -40,13 +40,18 @@ import {
 } from "@/lib/audit-format";
 import { DEFAULT_AUDIT_PAGE_SIZE } from "@/consts/audit";
 import { useTinyUser, useTinyStreamer } from "@/lib/tiny-user-cache";
+import { BoundedLruCache } from "@/lib/lru-cache";
+import { isSafePathSegment } from "@/lib/security";
 import type { AuditLogItem } from "@/types";
 import { AnimateIcon } from "@animate-ui/react/icons";
 import { RefreshCcw } from "@/components/animate-ui/icons/hugeicons/refresh-ccw";
 
 const PAGE_SIZE = DEFAULT_AUDIT_PAGE_SIZE;
 const CLIENT_CACHE_TTL = 3 * 60 * 1000;
-const streamerAuditCache = new Map<string, { logs: AuditLogItem[]; timestamp: number }>();
+const streamerAuditCache = new BoundedLruCache<AuditLogItem[]>({
+  maxEntries: 60,
+  defaultTtlMs: CLIENT_CACHE_TTL,
+});
 
 const STREAMER_CATEGORY_ACTIONS: Record<string, string[]> = {
   CHANNELS: ["TOKEN_ROTATED", "WIDGET_UPDATED", "STREAMER_UPDATED", "STREAMER_CREATED"],
@@ -76,7 +81,7 @@ function StreamerAuditRow({
 }) {
   const { authFetch } = useUserContext();
   const info = humanizeAuditAction(log.action, log.payload);
-  const userName = log.user.name || log.user.email.split("@")[0];
+  const userName = log.user?.name || (log.user?.email ? log.user.email.split("@")[0] : "User");
   const p = (log.payload && typeof log.payload === "object" ? log.payload : {}) as Record<string, unknown>;
 
   const isUserTarget = log.targetType === "MEMBER" || log.targetType === "USER";
@@ -190,10 +195,14 @@ function StreamerAuditRow({
 
         <TableCell className="py-3 pr-6 pl-4 text-right whitespace-nowrap">
           <span
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
-              navigator.clipboard.writeText(log.ipAddress);
-              toast.success("IP copied");
+              try {
+                await navigator.clipboard.writeText(log.ipAddress || "");
+                toast.success("IP copied");
+              } catch {
+                toast.error("Failed to copy IP");
+              }
             }}
             title="Click to copy IP"
             className="font-sans tabular-nums text-[11px] text-muted-foreground/70 hover:text-foreground cursor-pointer select-text transition-colors"
@@ -229,9 +238,12 @@ function StreamerAuditRow({
 
 export default function StreamerAuditPage() {
   const routeParams = useParams();
-  const { activeOrg, activeStreamer, authFetch } = useUserContext();
-  const orgTarget = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
-  const streamerTarget = activeStreamer?.id || activeStreamer?.name || (routeParams?.streamer as string);
+  const { activeOrg, activeStreamer, authFetch, userInfo } = useUserContext();
+  const rawOrg = String((routeParams?.org as string) || activeOrg?.id || activeOrg?.slug || "");
+  const rawStreamer = String((routeParams?.streamer as string) || activeStreamer?.id || activeStreamer?.name || "");
+  const orgTarget = isSafePathSegment(rawOrg) ? rawOrg : "";
+  const streamerTarget = isSafePathSegment(rawStreamer) ? rawStreamer : "";
+  const abortRef = React.useRef<AbortController | null>(null);
 
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -245,39 +257,45 @@ export default function StreamerAuditPage() {
     (forceRefresh = false) => {
       if (!orgTarget || !streamerTarget) return;
 
-      const cacheKey = `${orgTarget}:${streamerTarget}`;
+      const cacheKey = `${userInfo?.id || "anon"}:${orgTarget}:${streamerTarget}`;
       if (!forceRefresh) {
         const cached = streamerAuditCache.get(cacheKey);
-        if (cached && Date.now() - cached.timestamp < CLIENT_CACHE_TTL) {
-          setLogs(cached.logs);
+        if (cached) {
+          setLogs(cached);
           setLoading(false);
           return;
         }
       }
 
-      setLoading(true);
-      const startTime = Date.now();
-      const MIN_SKELETON_MS = 280;
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-      authFetch(getApiUrl(`/api/v1/org/${orgTarget}/streamers/${streamerTarget}/audit`))
+      setLoading(true);
+
+      authFetch(
+        getApiUrl(
+          `/api/v1/org/${encodeURIComponent(orgTarget)}/streamers/${encodeURIComponent(streamerTarget)}/audit`,
+        ),
+        { signal: controller.signal },
+      )
         .then((r) => (r.ok ? r.json() : null))
-        .then(async (data) => {
+        .then((data) => {
+          if (controller.signal.aborted) return;
           if (data && Array.isArray(data.logs)) {
-            const elapsed = Date.now() - startTime;
-            if (elapsed < MIN_SKELETON_MS) {
-              await new Promise((resolve) => setTimeout(resolve, MIN_SKELETON_MS - elapsed));
-            }
             setLogs(data.logs);
-            streamerAuditCache.set(cacheKey, { logs: data.logs, timestamp: Date.now() });
+            streamerAuditCache.set(cacheKey, data.logs);
           }
         })
         .catch((err) => {
-          if (err?.name === "AbortError") return;
+          if ((err as Error)?.name === "AbortError") return;
           toast.error("Failed to load channel audit logs");
         })
-        .finally(() => setLoading(false));
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
     },
-    [orgTarget, streamerTarget, authFetch],
+    [orgTarget, streamerTarget, authFetch, userInfo?.id],
   );
 
   useEffect(() => {
@@ -287,6 +305,7 @@ export default function StreamerAuditPage() {
     });
     return () => {
       ignore = true;
+      abortRef.current?.abort();
     };
   }, [fetchLogs]);
 
@@ -306,9 +325,9 @@ export default function StreamerAuditPage() {
           info.title.toLowerCase().includes(q) ||
           info.description.toLowerCase().includes(q) ||
           log.action.toLowerCase().includes(q) ||
-          log.user.email.toLowerCase().includes(q) ||
-          (log.user.name && log.user.name.toLowerCase().includes(q)) ||
-          log.ipAddress.includes(q)
+          (log.user?.email || "").toLowerCase().includes(q) ||
+          Boolean(log.user?.name && log.user.name.toLowerCase().includes(q)) ||
+          (log.ipAddress || "").includes(q)
         );
       });
     }
@@ -350,7 +369,7 @@ export default function StreamerAuditPage() {
           <div className="flex justify-between w-full items-center">
             <div className="flex flex-col">
               <span className="tracking-wider text-sm text-foreground/40">
-                Here&apos;s where you manage everything related to your transactions.
+                Review configuration changes, gateway updates, and security events for this channel.
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -359,7 +378,7 @@ export default function StreamerAuditPage() {
                   size="sm"
                   variant="secondary"
                   onClick={() => {
-                    const cacheKey = `${orgTarget}:${streamerTarget}`;
+                    const cacheKey = `${userInfo?.id || "anon"}:${orgTarget}:${streamerTarget}`;
                     streamerAuditCache.delete(cacheKey);
                     fetchLogs(true);
                   }}

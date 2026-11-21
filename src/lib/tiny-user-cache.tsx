@@ -6,6 +6,8 @@ import { getFallbackInitial } from "./utils";
 import { BroadcastIcon } from "@phosphor-icons/react";
 import { getApiUrl } from "./api";
 import { useUserContext } from "@/contexts/user";
+import { BoundedLruCache } from "@/lib/lru-cache";
+import { isSafePathSegment } from "@/lib/security";
 
 export interface TinyUser {
   id: string;
@@ -14,84 +16,82 @@ export interface TinyUser {
   avatar: string | null;
 }
 
-const memoryCache = new Map<string, TinyUser | null>();
-const inflightRequests = new Map<string, Promise<TinyUser | null>>();
-
-const SESSION_STORAGE_KEY = "ab_tiny_users_cache_v2";
-
-function loadSessionStorageCache() {
-  if (typeof window === "undefined") return;
-  try {
-    const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Record<string, TinyUser | null>;
-      for (const [id, user] of Object.entries(parsed)) {
-        memoryCache.set(id, user);
-      }
-    }
-  } catch { }
+export interface TinyStreamer {
+  id: string;
+  name: string;
+  displayName: string | null;
+  avatar: string | null;
 }
 
-function saveSessionStorageCache() {
-  if (typeof window === "undefined") return;
-  try {
-    const obj: Record<string, TinyUser | null> = {};
-    for (const [id, user] of memoryCache.entries()) {
-      obj[id] = user;
-    }
-    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(obj));
-  } catch { }
+const POSITIVE_TTL_MS = 5 * 60 * 1000;
+const NEGATIVE_TTL_MS = 15 * 1000;
+
+const userCache = new BoundedLruCache<TinyUser | null>({
+  maxEntries: 200,
+  defaultTtlMs: POSITIVE_TTL_MS,
+  storageKey: "ab_tiny_users_cache_v3",
+});
+
+const streamerCache = new BoundedLruCache<TinyStreamer | null>({
+  maxEntries: 200,
+  defaultTtlMs: POSITIVE_TTL_MS,
+  storageKey: "ab_tiny_streamers_cache_v3",
+});
+
+const inflightUsers = new Map<string, Promise<TinyUser | null>>();
+const inflightStreamers = new Map<string, Promise<TinyStreamer | null>>();
+
+function makeScopedKey(orgTarget: string | undefined, id: string): string {
+  return `${orgTarget || "_"}:${id}`;
 }
 
-loadSessionStorageCache();
-
-export function hasCachedTinyUser(userId?: string | null): boolean {
+export function hasCachedTinyUser(userId?: string | null, orgTarget?: string): boolean {
   if (!userId) return false;
-  return memoryCache.has(String(userId));
+  return userCache.has(makeScopedKey(orgTarget, String(userId)));
 }
 
-export function getCachedTinyUser(userId?: string | null): TinyUser | null {
+export function getCachedTinyUser(userId?: string | null, orgTarget?: string): TinyUser | null {
   if (!userId) return null;
-  return memoryCache.get(String(userId)) ?? null;
+  return userCache.get(makeScopedKey(orgTarget, String(userId))) ?? null;
 }
 
 export async function fetchTinyUser(
   authFetch: (url: string, init?: RequestInit) => Promise<Response>,
-  apiUrl: string,
+  _apiUrl: string,
   orgTarget: string,
   userId: string,
 ): Promise<TinyUser | null> {
-  const key = String(userId);
-  if (memoryCache.has(key)) return memoryCache.get(key) ?? null;
+  if (!isSafePathSegment(orgTarget) || !isSafePathSegment(userId)) return null;
+  const key = makeScopedKey(orgTarget, userId);
+  if (userCache.has(key)) return userCache.get(key) ?? null;
 
-  if (inflightRequests.has(key)) {
-    return inflightRequests.get(key)!;
-  }
+  const existing = inflightUsers.get(key);
+  if (existing) return existing;
 
   const reqPromise = (async () => {
     try {
-      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}/users/${key}/tiny`));
+      const res = await authFetch(
+        getApiUrl(`/api/v1/org/${encodeURIComponent(orgTarget)}/users/${encodeURIComponent(userId)}/tiny`),
+      );
       if (res.ok) {
         const data = (await res.json()) as TinyUser;
         if (data?.id) {
-          memoryCache.set(key, data);
-          saveSessionStorageCache();
+          userCache.set(key, data, POSITIVE_TTL_MS);
           return data;
         }
       }
-      memoryCache.set(key, null);
-      saveSessionStorageCache();
+      if (res.status === 404) {
+        userCache.set(key, null, NEGATIVE_TTL_MS);
+      }
       return null;
     } catch {
-      memoryCache.set(key, null);
-      saveSessionStorageCache();
       return null;
     } finally {
-      inflightRequests.delete(key);
+      inflightUsers.delete(key);
     }
   })();
 
-  inflightRequests.set(key, reqPromise);
+  inflightUsers.set(key, reqPromise);
   return reqPromise;
 }
 
@@ -102,7 +102,7 @@ export function useTinyUser(
   userId: string | null | undefined,
   enabled: boolean = false,
 ) {
-  const cachedUser = userId ? getCachedTinyUser(userId) : null;
+  const cachedUser = userId ? getCachedTinyUser(userId, orgTarget) : null;
   const [fetchedUser, setFetchedUser] = useState<TinyUser | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -110,7 +110,7 @@ export function useTinyUser(
 
   useEffect(() => {
     if (!userId || !enabled || !authFetch || !orgTarget) return;
-    if (hasCachedTinyUser(userId)) return;
+    if (hasCachedTinyUser(userId, orgTarget)) return;
 
     let active = true;
     Promise.resolve().then(() => {
@@ -119,9 +119,7 @@ export function useTinyUser(
 
     fetchTinyUser(authFetch, apiUrl, orgTarget, userId)
       .then((res) => {
-        if (active && res) {
-          setFetchedUser(res);
-        }
+        if (active && res) setFetchedUser(res);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -148,7 +146,10 @@ export function UserMentionChip({
   fallbackText?: string;
   loading?: boolean;
 }) {
-  const displayName = user?.name || (user?.email ? user.email.split("@")[0] : null) || (email ? email.split("@")[0] : null);
+  const displayName =
+    user?.name ||
+    (user?.email ? user.email.split("@")[0] : null) ||
+    (email ? email.split("@")[0] : null);
   const avatar = user?.avatar;
   const initial = displayName ? getFallbackInitial(displayName) : "U";
 
@@ -187,90 +188,58 @@ export function UserMentionChip({
   );
 }
 
-export interface TinyStreamer {
-  id: string;
-  name: string;
-  displayName: string | null;
-  avatar: string | null;
-}
-
-const streamerMemoryCache = new Map<string, TinyStreamer | null>();
-const streamerInflightRequests = new Map<string, Promise<TinyStreamer | null>>();
-const STREAMER_SESSION_STORAGE_KEY = "ab_tiny_streamers_cache_v2";
-
-function loadStreamerSessionStorageCache() {
-  if (typeof window === "undefined") return;
-  try {
-    const raw = sessionStorage.getItem(STREAMER_SESSION_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Record<string, TinyStreamer | null>;
-      for (const [id, s] of Object.entries(parsed)) {
-        streamerMemoryCache.set(id, s);
-      }
-    }
-  } catch { }
-}
-
-function saveStreamerSessionStorageCache() {
-  if (typeof window === "undefined") return;
-  try {
-    const obj: Record<string, TinyStreamer | null> = {};
-    for (const [id, s] of streamerMemoryCache.entries()) {
-      obj[id] = s;
-    }
-    sessionStorage.setItem(STREAMER_SESSION_STORAGE_KEY, JSON.stringify(obj));
-  } catch { }
-}
-
-loadStreamerSessionStorageCache();
-
-export function hasCachedTinyStreamer(streamerId?: string | null): boolean {
+export function hasCachedTinyStreamer(streamerId?: string | null, orgTarget?: string): boolean {
   if (!streamerId) return false;
-  return streamerMemoryCache.has(String(streamerId));
+  return streamerCache.has(makeScopedKey(orgTarget, String(streamerId)));
 }
 
-export function getCachedTinyStreamer(streamerId?: string | null): TinyStreamer | null {
+export function getCachedTinyStreamer(
+  streamerId?: string | null,
+  orgTarget?: string,
+): TinyStreamer | null {
   if (!streamerId) return null;
-  return streamerMemoryCache.get(String(streamerId)) ?? null;
+  return streamerCache.get(makeScopedKey(orgTarget, String(streamerId))) ?? null;
 }
 
 export async function fetchTinyStreamer(
   authFetch: (url: string, init?: RequestInit) => Promise<Response>,
-  apiUrl: string,
+  _apiUrl: string,
   orgTarget: string,
   streamerId: string,
 ): Promise<TinyStreamer | null> {
-  const key = String(streamerId);
-  if (streamerMemoryCache.has(key)) return streamerMemoryCache.get(key) ?? null;
+  if (!isSafePathSegment(orgTarget) || !isSafePathSegment(streamerId)) return null;
+  const key = makeScopedKey(orgTarget, streamerId);
+  if (streamerCache.has(key)) return streamerCache.get(key) ?? null;
 
-  if (streamerInflightRequests.has(key)) {
-    return streamerInflightRequests.get(key)!;
-  }
+  const existing = inflightStreamers.get(key);
+  if (existing) return existing;
 
   const reqPromise = (async () => {
     try {
-      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}/streamers/${key}/tiny`));
+      const res = await authFetch(
+        getApiUrl(
+          `/api/v1/org/${encodeURIComponent(orgTarget)}/streamers/${encodeURIComponent(streamerId)}/tiny`,
+        ),
+      );
       if (res.ok) {
         const data = (await res.json()) as TinyStreamer;
         if (data?.id) {
-          streamerMemoryCache.set(key, data);
-          saveStreamerSessionStorageCache();
+          streamerCache.set(key, data, POSITIVE_TTL_MS);
           return data;
         }
       }
-      streamerMemoryCache.set(key, null);
-      saveStreamerSessionStorageCache();
+      if (res.status === 404) {
+        streamerCache.set(key, null, NEGATIVE_TTL_MS);
+      }
       return null;
     } catch {
-      streamerMemoryCache.set(key, null);
-      saveStreamerSessionStorageCache();
       return null;
     } finally {
-      streamerInflightRequests.delete(key);
+      inflightStreamers.delete(key);
     }
   })();
 
-  streamerInflightRequests.set(key, reqPromise);
+  inflightStreamers.set(key, reqPromise);
   return reqPromise;
 }
 
@@ -281,7 +250,7 @@ export function useTinyStreamer(
   streamerId: string | null | undefined,
   enabled: boolean = false,
 ) {
-  const cachedStreamer = streamerId ? getCachedTinyStreamer(streamerId) : null;
+  const cachedStreamer = streamerId ? getCachedTinyStreamer(streamerId, orgTarget) : null;
   const [fetchedStreamer, setFetchedStreamer] = useState<TinyStreamer | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -289,7 +258,7 @@ export function useTinyStreamer(
 
   useEffect(() => {
     if (!streamerId || !enabled || !authFetch || !orgTarget) return;
-    if (hasCachedTinyStreamer(streamerId)) return;
+    if (hasCachedTinyStreamer(streamerId, orgTarget)) return;
 
     let active = true;
     Promise.resolve().then(() => {
@@ -298,9 +267,7 @@ export function useTinyStreamer(
 
     fetchTinyStreamer(authFetch, apiUrl, orgTarget, streamerId)
       .then((res) => {
-        if (active && res) {
-          setFetchedStreamer(res);
-        }
+        if (active && res) setFetchedStreamer(res);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -368,9 +335,7 @@ export function ChannelMentionChip({
           <BroadcastIcon size={10} weight="bold" />
         )}
       </span>
-      <span className="truncate max-w-40 font-sans">
-        @{channelName || "channel"}
-      </span>
+      <span className="truncate max-w-40 font-sans">@{channelName || "channel"}</span>
     </span>
   );
 }
@@ -386,7 +351,7 @@ export function StreamerMentionChip({
 }) {
   const { authFetch, activeOrg } = useUserContext();
   const target = orgTarget || activeOrg?.id || activeOrg?.slug;
-  const { streamer, loading } = useTinyStreamer(authFetch, "", target, streamerId);
+  const { streamer, loading } = useTinyStreamer(authFetch, "", target, streamerId, true);
 
   return (
     <ChannelMentionChip
@@ -412,7 +377,7 @@ export function MemberMentionChip({
 }) {
   const { authFetch, activeOrg } = useUserContext();
   const target = orgTarget || activeOrg?.id || activeOrg?.slug;
-  const { user, loading } = useTinyUser(authFetch, "", target, userId);
+  const { user, loading } = useTinyUser(authFetch, "", target, userId, true);
 
   return (
     <UserMentionChip

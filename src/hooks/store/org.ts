@@ -57,33 +57,41 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
             ? ((roleObj as Record<string, unknown>).name as string)
             : "";
         const typeStr = typeof orgData?.type === "string" ? orgData.type : "COMMUNITY";
+        const orgIdStr = String(orgData.id);
+        const rawStreamers = Array.isArray(orgData.streamers) ? (orgData.streamers as Record<string, unknown>[]) : [];
+        const normalizedStreamers = rawStreamers.map((s) => ({
+          ...s,
+          id: String(s.id),
+          orgId: s.orgId !== undefined ? String(s.orgId) : orgIdStr,
+        })) as unknown as Streamer[];
         return {
           ...orgData,
-          id: String(orgData.id),
+          id: orgIdStr,
           type: typeStr as Organization["type"],
           role: roleStr as Organization["role"],
           permissions: m.permissions as string | undefined,
+          streamers: normalizedStreamers,
         } as Organization;
       })
       .filter((o): o is Organization => Boolean(o && !isInvalidOrgId(o.id)));
 
     const state = get();
-    let nextOrgId = state.activeOrgId;
-    if ((isInvalidOrgId(nextOrgId) || !orgs.some((o) => o.id === nextOrgId)) && orgs.length > 0) {
-      nextOrgId = orgs[0].id;
+    let nextOrgId = state.activeOrgId ? String(state.activeOrgId) : null;
+    if ((isInvalidOrgId(nextOrgId) || !orgs.some((o) => String(o.id) === String(nextOrgId))) && orgs.length > 0) {
+      nextOrgId = String(orgs[0].id);
     }
 
-    const currentOrg = orgs.find((o) => o.id === nextOrgId);
+    const currentOrg = orgs.find((o) => String(o.id) === String(nextOrgId));
     const isOwnerOrAdmin = currentOrg?.role === "OWNER" || currentOrg?.role === "ADMIN";
-    let nextStreamerId = state.activeStreamerId;
+    let nextStreamerId = state.activeStreamerId ? String(state.activeStreamerId) : null;
     let nextIsOrgMode = state.isOrgMode;
 
     if (isOwnerOrAdmin && (state.isOrgMode || !nextStreamerId)) {
       nextStreamerId = null;
       nextIsOrgMode = true;
     } else if (currentOrg?.streamers?.length) {
-      if (!currentOrg.streamers.some((s) => s.id === nextStreamerId)) {
-        nextStreamerId = isOwnerOrAdmin ? null : currentOrg.streamers[0].id;
+      if (!currentOrg.streamers.some((s) => String(s.id) === String(nextStreamerId))) {
+        nextStreamerId = isOwnerOrAdmin ? null : String(currentOrg.streamers[0].id);
         if (isOwnerOrAdmin) nextIsOrgMode = true;
       }
     } else {
@@ -115,16 +123,17 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
   },
 
   setActiveOrgId: (id: string) => {
-    if (isInvalidOrgId(id)) return;
+    const cleanId = String(id);
+    if (isInvalidOrgId(cleanId)) return;
     const orgs = get().organizations;
-    const org = orgs.find((o) => o.id === id);
+    const org = orgs.find((o) => String(o.id) === cleanId);
     const isOwnerOrAdmin = org?.role === "OWNER" || org?.role === "ADMIN";
     const shouldBeOrgMode = isOwnerOrAdmin || get().isOrgMode;
-    const nextStreamerId = shouldBeOrgMode ? null : (org?.streamers?.[0]?.id ?? null);
+    const nextStreamerId = shouldBeOrgMode ? null : (org?.streamers?.[0]?.id ? String(org.streamers[0].id) : null);
 
     if (typeof window !== "undefined") {
-      localStorage.setItem("ab_active_org_id", id);
-      setCookie("ab_org_id", id, { path: "/" });
+      localStorage.setItem("ab_active_org_id", cleanId);
+      setCookie("ab_org_id", cleanId, { path: "/" });
       localStorage.setItem("ab_view_mode", shouldBeOrgMode ? "org" : "streamer");
       if (nextStreamerId && !shouldBeOrgMode) {
         localStorage.setItem("ab_active_streamer_id", nextStreamerId);
@@ -136,7 +145,7 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
     }
 
     set({
-      activeOrgId: id,
+      activeOrgId: cleanId,
       activeStreamerId: nextStreamerId,
       isOrgMode: shouldBeOrgMode,
     });
@@ -151,12 +160,13 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
       }
       set({ isOrgMode: true, activeStreamerId: null });
     } else {
+      const cleanId = String(id);
       if (typeof window !== "undefined") {
         localStorage.setItem("ab_view_mode", "streamer");
-        localStorage.setItem("ab_active_streamer_id", id);
-        setCookie("ab_streamer_id", id, { path: "/" });
+        localStorage.setItem("ab_active_streamer_id", cleanId);
+        setCookie("ab_streamer_id", cleanId, { path: "/" });
       }
-      set({ isOrgMode: false, activeStreamerId: id });
+      set({ isOrgMode: false, activeStreamerId: cleanId });
     }
   },
 
@@ -304,7 +314,7 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
 
 export const selectActiveOrg = (state: OrgStore): Organization | null => {
   if (!state.organizations.length) return null;
-  return state.organizations.find((o) => o.id === state.activeOrgId) || state.organizations[0] || null;
+  return state.organizations.find((o) => String(o.id) === String(state.activeOrgId)) || state.organizations[0] || null;
 };
 
 export const selectActiveStreamer = (state: OrgStore): Streamer | null => {
@@ -312,5 +322,5 @@ export const selectActiveStreamer = (state: OrgStore): Streamer | null => {
   if (!activeOrg?.streamers?.length) return null;
   const isOwnerOrAdmin = activeOrg.role === "OWNER" || activeOrg.role === "ADMIN";
   if (isOwnerOrAdmin && (state.isOrgMode || !state.activeStreamerId)) return null;
-  return activeOrg.streamers.find((s) => s.id === state.activeStreamerId) || (isOwnerOrAdmin ? null : activeOrg.streamers[0]) || null;
+  return activeOrg.streamers.find((s) => String(s.id) === String(state.activeStreamerId)) || (isOwnerOrAdmin ? null : activeOrg.streamers[0]) || null;
 };

@@ -18,6 +18,7 @@ const ScrollArea = React.forwardRef<
 >(({ className, children, ...props }, forwardedRef) => {
   const viewportRef = React.useRef<HTMLDivElement | null>(null);
   const frameRef = React.useRef<number | null>(null);
+  const [mountCount, setMountCount] = React.useState(0);
   const [canScroll, setCanScroll] = React.useState({ x: false, y: false });
 
   const checkOverflow = React.useCallback(() => {
@@ -31,24 +32,10 @@ const ScrollArea = React.forwardRef<
     });
   }, []);
 
-  React.useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    checkOverflow();
-
-    const ro = new ResizeObserver(checkOverflow);
-    ro.observe(el);
-    if (el.firstElementChild) ro.observe(el.firstElementChild);
-
-    return () => {
-      ro.disconnect();
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [checkOverflow]);
-
   const setRefs = React.useCallback(
     (node: HTMLDivElement | null) => {
       viewportRef.current = node;
+      if (node) setMountCount((c) => c + 1);
       if (typeof forwardedRef === "function") {
         forwardedRef(node);
       } else if (forwardedRef) {
@@ -57,6 +44,45 @@ const ScrollArea = React.forwardRef<
     },
     [forwardedRef],
   );
+
+  React.useEffect(() => {
+    let ro: ResizeObserver | null = null;
+    let mo: MutationObserver | null = null;
+
+    const timer = window.setTimeout(() => {
+      const el = viewportRef.current;
+      if (!el) return;
+      checkOverflow();
+
+      const observeChildren = () => {
+        if (!ro) return;
+        ro.disconnect();
+        ro.observe(el);
+        for (let i = 0; i < el.children.length; i++) {
+          ro.observe(el.children[i]);
+        }
+      };
+
+      ro = new ResizeObserver(checkOverflow);
+      observeChildren();
+
+      mo = new MutationObserver(() => {
+        observeChildren();
+        checkOverflow();
+      });
+      mo.observe(el, { childList: true });
+    }, 50);
+
+    return () => {
+      window.clearTimeout(timer);
+      ro?.disconnect();
+      mo?.disconnect();
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+    };
+  }, [mountCount, checkOverflow]);
 
   const contextValue = React.useMemo(
     () => ({ canScrollX: canScroll.x, canScrollY: canScroll.y }),

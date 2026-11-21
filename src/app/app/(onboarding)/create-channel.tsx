@@ -95,6 +95,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   const { authFetch, activeOrg, userInfo, addStreamer } = useUserContext();
   const isDark = useStore(coreStore, (s) => s.isDark);
   const [step, setStep] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [channelDisplayName, setChannelDisplayName] = useState<string>("");
   const [isChannelCreated, setIsChannelCreated] = useState<boolean>(false);
   const [serverResChannel, setServerResChannel] = useState<Streamer | null>(null);
@@ -148,6 +149,16 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   const parallaxWrappersRef = useRef<(HTMLDivElement | null)[]>([]);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const isInteractiveRef = useRef(false);
+  const step1TimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (step1TimerRef.current !== null) {
+        window.clearTimeout(step1TimerRef.current);
+        step1TimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -189,13 +200,13 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
         scale: 0.94,
         opacity: 0,
         filter: "blur(3px)",
-        duration: 0.9,
+        duration: 0.65,
         ease: "expo.out",
       });
-      gsap.fromTo(content2H1Ref.current, { ...fromTo, delay: 4 }, to);
-      gsap.fromTo(content2PRef.current, { ...fromTo, delay: 4.2 }, to);
-      gsap.fromTo(content3Ref.current, { ...fromTo, delay: 4.4 }, to);
-      gsap.fromTo(content4Ref.current, { ...fromTo, delay: 4.6 }, to);
+      gsap.fromTo(content2H1Ref.current, fromTo, { ...to, delay: 0.55 });
+      gsap.fromTo(content2PRef.current, fromTo, { ...to, delay: 0.68 });
+      gsap.fromTo(content3Ref.current, fromTo, { ...to, delay: 0.8 });
+      gsap.fromTo(content4Ref.current, fromTo, { ...to, delay: 0.92 });
     }
 
     cardsRef.current.forEach((card, i) => {
@@ -247,6 +258,7 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
     gsap.delayedCall(1.2, () => {
       const chars = split1Ref.current?.querySelectorAll(".split-char");
       const targets = chars && chars.length > 0 ? chars : split1Ref.current;
+      if (!targets) return;
       gsap.to(targets, {
         opacity: 0,
         y: -24,
@@ -259,11 +271,12 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
         },
       });
     });
-  }
+  };
   const handleSplitComplete2 = () => {
     gsap.delayedCall(1.2, () => {
       const chars = split2Ref.current?.querySelectorAll(".split-char");
       const targets = chars && chars.length > 0 ? chars : split2Ref.current;
+      if (!targets) return;
       gsap.to(targets, {
         opacity: 0,
         y: -24,
@@ -276,45 +289,59 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
         },
       });
     });
-  }
+  };
   const handleSplitComplete3 = () => {
     gsap.delayedCall(1.2, () => {
       setStep(4);
-
-      setTimeout(() => {
-        if (isChannelCreated && serverResChannel && activeOrg) {
-          setStep(5);
-
-          toast.success(`Channel "${serverResChannel.displayName}" created!`);
-          orgStore.getState().setActiveOrgId(String(activeOrg.id));
-          orgStore.getState().setActiveStreamerId(String(serverResChannel.id));
-          orgStore.getState().setOrgMode(false);
-
-          const orgKey = activeOrg.slug || activeOrg.id;
-          const targetUrl = `/app/${orgKey}/${serverResChannel.name || serverResChannel.id}`;
-
-          setTimeout(() => {
-            gsap.to(containerRef.current, {
-              opacity: 0,
-              y: -64,
-              filter: "blur(12px)",
-              duration: 0.8,
-              ease: "power2.inOut",
-              onComplete: () => {
-                setTimeout(() => {
-                  router.push(targetUrl);
-                }, 500)
-              }
-            })
-          }, 1000)
-        }
-      }, 1000)
     });
-  }
+  };
+
+  useEffect(() => {
+    if (step !== 4 || !isChannelCreated || !serverResChannel || !activeOrg) return;
+
+    const redirectTimer = window.setTimeout(() => {
+      setStep(5);
+      toast.success(`Channel "${serverResChannel.displayName}" created!`);
+      orgStore.getState().setActiveOrgId(String(activeOrg.id));
+      orgStore.getState().setActiveStreamerId(String(serverResChannel.id));
+      orgStore.getState().setOrgMode(false);
+
+      const orgKey = activeOrg.slug || activeOrg.id;
+      const targetUrl = `/app/${orgKey}/${serverResChannel.name || serverResChannel.id}`;
+
+      const exitTimer = window.setTimeout(() => {
+        if (containerRef.current) {
+          gsap.to(containerRef.current, {
+            opacity: 0,
+            y: -64,
+            filter: "blur(12px)",
+            duration: 0.8,
+            ease: "power2.inOut",
+            onComplete: () => {
+              window.setTimeout(() => router.push(targetUrl), 500);
+            },
+          });
+        } else {
+          router.push(targetUrl);
+        }
+      }, 1400);
+
+      return () => window.clearTimeout(exitTimer);
+    }, 600);
+
+    return () => window.clearTimeout(redirectTimer);
+  }, [step, isChannelCreated, serverResChannel, activeOrg, router]);
 
   const createChannelHandle = async () => {
-    if (!authFetch || !activeOrg?.id || step !== 0 || handleStatus !== "available") return;
-    setStep(1);
+    if (!authFetch || !activeOrg?.id || isSubmitting || step !== 0 || handleStatus !== "available") return;
+    setIsSubmitting(true);
+    if (step1TimerRef.current !== null) {
+      window.clearTimeout(step1TimerRef.current);
+    }
+    step1TimerRef.current = window.setTimeout(() => {
+      step1TimerRef.current = null;
+      setStep(1);
+    }, 320);
 
     try {
       const res = await authFetch(getApiUrl(`/api/v1/org/${activeOrg.id}/streamers`), {
@@ -329,6 +356,11 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
       if (!res.ok) {
         const msg = await res.text();
         toast.error(msg || "Failed to create channel");
+        if (step1TimerRef.current !== null) {
+          window.clearTimeout(step1TimerRef.current);
+          step1TimerRef.current = null;
+        }
+        setIsSubmitting(false);
         setStep(0);
         return;
       }
@@ -341,6 +373,11 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
       onComplete?.();
     } catch {
       toast.error("Network error while creating channel");
+      if (step1TimerRef.current !== null) {
+        window.clearTimeout(step1TimerRef.current);
+        step1TimerRef.current = null;
+      }
+      setIsSubmitting(false);
       setStep(0);
     }
   };
@@ -352,325 +389,343 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
     >
       <div
         ref={contentRef} className="absolute inset-0 flex items-center justify-center">
-        <div
-          ref={splitRef}
-          className="origin-center will-change-transform z-10 pointer-events-none absolute"
-        >
-          <SplitText
-            text="The new journey is coming.."
-            className="text-5xl font-medium text-center overflow-visible"
-            effect="blur"
-            color={isDark ? "#ffffff" : "#000000"}
-            accentColor="#f43f5e"
-            from={{
-              y: 8,
-              opacity: 0,
-              filter: "blur(6px)",
-            }}
-            to={{
-              y: 0,
-              opacity: 1,
-              filter: "blur(0px)",
-            }}
-            splitType="chars"
-            delay={45}
-            duration={1.1}
-            staggerFrom="start"
-            loop={false}
-            loopDelay={1.5}
-            mask={false}
-            threshold={0.1}
-            rootMargin="-100px"
-            textAlign="center"
-            onLetterAnimationComplete={handleSplitComplete}
-          />
-        </div>
-        <AutoHeight id="content-step1" ref={content2Ref} className={cn(
-          "absolute w-full flex flex-col max-w-sm lg:max-w-lg xl:max-w-2xl transition-all duration-500",
-          step === 0 ? "opacity-100" : "opacity-0 blur-sm **:pointer-events-none"
-        )}>
-          <h1
-            ref={content2H1Ref}
-            className="text-4xl tracking-wide font-medium opacity-0"
-          >
-            Everyone should call you...
-          </h1>
-          <p ref={content2PRef} className="text-sm text-foreground/40 tracking-wide font-sans opacity-0 mt-1 mb-4">
-            You can change this later <strong className="text-foreground/60 font-sans">but username cannot.</strong>
-          </p>
-          <div ref={content3Ref} className="opacity-0">
-            <Input
-              type="text"
-              placeholder={userInfo?.displayName || userInfo?.name || "your name"}
-              fontStyle={{
-                fontFamily: "var(--font-sans)",
-                fontWeight: "500",
-                fontSize: "14px",
-              }}
-              disabled={step !== 0}
-              value={channelDisplayName}
-              onChange={(e) => setChannelDisplayName(e.target.value)}
-              endContent={
-                <div className="mr-3 flex items-center justify-center w-4.5 h-4.5">
-                  <AnimatePresence mode="popLayout">
-                    {handleStatus === "available" && (
-                      <motion.div
-                        key="available"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.15 }}
-                        className="text-emerald-500"
-                      >
-                        <CheckmarkCircle02 size={18} />
-                      </motion.div>
-                    )}
-                    {handleStatus === "checking" && (
-                      <motion.div
-                        key="checking"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.15 }}
-                        className="text-foreground"
-                      >
-                        <Loading03 size={18} animate="default" />
-                      </motion.div>
-                    )}
-                    {handleStatus === "taken" && (
-                      <motion.div
-                        key="taken"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.15 }}
-                        className="text-rose-500"
-                      >
-                        <CircleX size={18} />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              }
-              customMotion={{
-                char: {
-                  initial: {
-                    x: 3,
-                    opacity: 0,
-                    filter: "blur(6px)"
-                  },
-                  animate: {
-                    x: 0,
-                    opacity: 1,
-                    filter: "blur(0px)"
+        {step === 0 && (
+          <>
+            <div
+              ref={splitRef}
+              className="origin-center will-change-transform z-10 pointer-events-none absolute"
+            >
+              <SplitText
+                text="The new journey is coming.."
+                className="text-5xl font-medium text-center overflow-visible"
+                effect="blur"
+                trigger="load"
+                color={isDark ? "#ffffff" : "#000000"}
+                accentColor="#f43f5e"
+                from={{
+                  y: 8,
+                  opacity: 0,
+                  filter: "blur(6px)",
+                }}
+                to={{
+                  y: 0,
+                  opacity: 1,
+                  filter: "blur(0px)",
+                }}
+                splitType="chars"
+                delay={45}
+                duration={1.1}
+                staggerFrom="start"
+                loop={false}
+                loopDelay={1.5}
+                mask={false}
+                threshold={0.1}
+                rootMargin="-100px"
+                textAlign="center"
+                onLetterAnimationComplete={handleSplitComplete}
+              />
+            </div>
+            <AutoHeight id="content-step1" ref={content2Ref} className={cn(
+              "absolute w-full flex flex-col max-w-sm lg:max-w-lg xl:max-w-2xl transition-all duration-300",
+              !isSubmitting ? "opacity-100 blur-none" : "opacity-0 blur-sm **:pointer-events-none"
+            )}>
+              <h1
+                ref={content2H1Ref}
+                className="text-4xl tracking-wide font-medium opacity-0"
+              >
+                Everyone should call you...
+              </h1>
+              <p ref={content2PRef} className="text-sm text-foreground/40 tracking-wide font-sans opacity-0 mt-1 mb-4">
+                You can change this later <strong className="text-foreground/60 font-sans">but username cannot.</strong>
+              </p>
+              <div ref={content3Ref} className="opacity-0">
+                <Input
+                  type="text"
+                  placeholder={userInfo?.displayName || userInfo?.name || "your name"}
+                  fontStyle={{
+                    fontFamily: "var(--font-sans)",
+                    fontWeight: "500",
+                    fontSize: "14px",
+                  }}
+                  disabled={isSubmitting}
+                  value={channelDisplayName}
+                  onChange={(e) => setChannelDisplayName(e.target.value)}
+                  endContent={
+                    <div className="mr-3 flex items-center justify-center w-4.5 h-4.5">
+                      <AnimatePresence mode="popLayout">
+                        {handleStatus === "available" && (
+                          <motion.div
+                            key="available"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.15 }}
+                            className="text-emerald-500"
+                          >
+                            <CheckmarkCircle02 size={18} />
+                          </motion.div>
+                        )}
+                        {handleStatus === "checking" && (
+                          <motion.div
+                            key="checking"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.15 }}
+                            className="text-foreground"
+                          >
+                            <Loading03 size={18} animate="default" />
+                          </motion.div>
+                        )}
+                        {handleStatus === "taken" && (
+                          <motion.div
+                            key="taken"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{ duration: 0.15 }}
+                            className="text-rose-500"
+                          >
+                            <CircleX size={18} />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   }
-                }
-              }}
-              className="w-full"
-              classNames={{ base: "h-12 rounded-xl" }}
-            />
-          </div>
-          <div ref={content4Ref} className="opacity-0 mt-4 flex justify-between w-full">
-            <AnimatePresence mode="wait">
-              {
-                channelHandle &&
-                <motion.span
-                  initial={{
-                    y: -6,
-                    opacity: 0,
-                    filter: "blur(6px)"
+                  customMotion={{
+                    char: {
+                      initial: {
+                        x: 3,
+                        opacity: 0,
+                        filter: "blur(6px)"
+                      },
+                      animate: {
+                        x: 0,
+                        opacity: 1,
+                        filter: "blur(0px)"
+                      }
+                    }
                   }}
-                  animate={{
-                    y: 0,
-                    opacity: 1,
-                    filter: "blur(0px)"
-                  }}
-                  key={"channel-handle"}
-                  className="text-sm text-muted-foreground font-sans select-none">@{channelHandle}</motion.span>
-              }
-            </AnimatePresence>
-            <div />
-            <AnimatePresence mode="wait">
-              {
-                step == 0 &&
-                <motion.div
-                  key="lets-go-button"
-                  initial={{ opacity: 0, scale: 0.8, filter: "blur(3px)" }}
-                  animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, scale: 0.8, filter: "blur(3px)" }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <LiquidButton
-                    onClick={() => createChannelHandle()}
-                    disabled={handleStatus !== "available"}
-                    className="rounded-xl py-3 px-6 h-max [--liquid-button-background-color:var(--muted)] [--liquid-button-color:var(--primary)] hover:text-primary-foreground">
-                    Let&apos;s go
-                  </LiquidButton>
-                </motion.div>
-              }
-            </AnimatePresence>
-          </div>
-        </AutoHeight>
+                  className="w-full"
+                  classNames={{ base: "h-12 rounded-xl" }}
+                />
+              </div>
+              <div ref={content4Ref} className="opacity-0 mt-4 flex justify-between w-full">
+                <AnimatePresence mode="wait">
+                  {
+                    channelHandle &&
+                    <motion.span
+                      initial={{
+                        y: -6,
+                        opacity: 0,
+                        filter: "blur(6px)"
+                      }}
+                      animate={{
+                        y: 0,
+                        opacity: 1,
+                        filter: "blur(0px)"
+                      }}
+                      key={"channel-handle"}
+                      className="text-sm text-muted-foreground font-sans select-none">@{channelHandle}</motion.span>
+                  }
+                </AnimatePresence>
+                <div />
+                <AnimatePresence mode="wait">
+                  {
+                    !isSubmitting &&
+                    <motion.div
+                      key="lets-go-button"
+                      initial={{ opacity: 0, scale: 0.8, filter: "blur(3px)" }}
+                      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, scale: 0.8, filter: "blur(3px)" }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <LiquidButton
+                        onClick={() => createChannelHandle()}
+                        disabled={handleStatus !== "available" || isSubmitting}
+                        className="rounded-xl py-3 px-6 h-max [--liquid-button-background-color:var(--muted)] [--liquid-button-color:var(--primary)] hover:text-primary-foreground">
+                        Let&apos;s go
+                      </LiquidButton>
+                    </motion.div>
+                  }
+                </AnimatePresence>
+              </div>
+            </AutoHeight>
+          </>
+        )}
         {
-          step != 0 && <motion.div className="absolute inset-0 flex flex-col items-center justify-center">
-            <AutoHeight>
-              <div className="flex flex-col items-center justify-center pointer-events-none select-none">
+          step !== 0 && (
+            <motion.div className="absolute inset-0 flex flex-col items-center justify-center px-6">
+              <div className="min-h-16 flex items-center justify-center max-w-3xl px-6 pointer-events-none select-none">
                 {
-                  step == 1 && <div
-                    className="origin-center will-change-transform z-10 absolute pointer-events-none select-none"
-                    ref={split1Ref}
-                  >
-                    <SplitText
-                      text={"Hello " + channelDisplayName + "!"}
-                      className="text-5xl font-medium text-center overflow-visible"
-                      effect="blur"
-                      color={isDark ? "#ffffff" : "#000000"}
-                      accentColor="#f43f5e"
-                      from={{
-                        y: 8,
-                        opacity: 0,
-                        filter: "blur(6px)",
-                      }}
-                      to={{
-                        y: 0,
-                        opacity: 1,
-                        filter: "blur(0px)",
-                      }}
-                      splitType="chars"
-                      delay={45}
-                      duration={1.1}
-                      staggerFrom="start"
-                      loop={false}
-                      loopDelay={1.5}
-                      mask={false}
-                      threshold={0.1}
-                      rootMargin="-100px"
-                      textAlign="center"
-                      onLetterAnimationComplete={handleSplitComplete1}
-                    />
-                  </div>
+                  step === 1 && (
+                    <div
+                      className="origin-center will-change-transform z-10 pointer-events-none select-none"
+                      ref={split1Ref}
+                    >
+                      <SplitText
+                        text={"Hello " + channelDisplayName + "!"}
+                        className="text-5xl font-medium text-center overflow-visible"
+                        effect="blur"
+                        trigger="load"
+                        color={isDark ? "#ffffff" : "#000000"}
+                        accentColor="#f43f5e"
+                        from={{
+                          y: 8,
+                          opacity: 0,
+                          filter: "blur(6px)",
+                        }}
+                        to={{
+                          y: 0,
+                          opacity: 1,
+                          filter: "blur(0px)",
+                        }}
+                        splitType="chars"
+                        delay={45}
+                        duration={1.1}
+                        staggerFrom="start"
+                        loop={false}
+                        loopDelay={1.5}
+                        mask={false}
+                        threshold={0.1}
+                        rootMargin="-100px"
+                        textAlign="center"
+                        onLetterAnimationComplete={handleSplitComplete1}
+                      />
+                    </div>
+                  )
                 }
                 {
-                  step == 2 && <div
-                    className="origin-center will-change-transform z-10 absolute pointer-events-none select-none"
-                    ref={split2Ref}
-                  >
-                    <SplitText
-                      text={"Glad to see you here"}
-                      className="text-5xl font-medium text-center overflow-visible"
-                      effect="blur"
-                      color={isDark ? "#ffffff" : "#000000"}
-                      accentColor="#f43f5e"
-                      from={{
-                        y: 8,
-                        opacity: 0,
-                        filter: "blur(6px)",
-                      }}
-                      to={{
-                        y: 0,
-                        opacity: 1,
-                        filter: "blur(0px)",
-                      }}
-                      splitType="chars"
-                      delay={45}
-                      duration={1.1}
-                      staggerFrom="start"
-                      loop={false}
-                      loopDelay={1.5}
-                      mask={false}
-                      threshold={0.1}
-                      rootMargin="-100px"
-                      textAlign="center"
-                      onLetterAnimationComplete={handleSplitComplete2}
-                    />
-                  </div>
+                  step === 2 && (
+                    <div
+                      className="origin-center will-change-transform z-10 pointer-events-none select-none"
+                      ref={split2Ref}
+                    >
+                      <SplitText
+                        text={"Glad to see you here"}
+                        className="text-5xl font-medium text-center overflow-visible"
+                        effect="blur"
+                        trigger="load"
+                        color={isDark ? "#ffffff" : "#000000"}
+                        accentColor="#f43f5e"
+                        from={{
+                          y: 8,
+                          opacity: 0,
+                          filter: "blur(6px)",
+                        }}
+                        to={{
+                          y: 0,
+                          opacity: 1,
+                          filter: "blur(0px)",
+                        }}
+                        splitType="chars"
+                        delay={45}
+                        duration={1.1}
+                        staggerFrom="start"
+                        loop={false}
+                        loopDelay={1.5}
+                        mask={false}
+                        threshold={0.1}
+                        rootMargin="-100px"
+                        textAlign="center"
+                        onLetterAnimationComplete={handleSplitComplete2}
+                      />
+                    </div>
+                  )
                 }
                 {
-                  (step == 3 || step == 4 || step == 5) && <div
-                    className="origin-center will-change-transform z-10 absolute pointer-events-none select-none"
-                    ref={split3Ref}
-                  >
-                    <SplitText
-                      text={"Almost done..."}
-                      className="text-5xl font-medium text-center overflow-visible"
-                      effect="blur"
-                      color={isDark ? "#ffffff" : "#000000"}
-                      accentColor="#f43f5e"
-                      from={{
-                        y: 8,
-                        opacity: 0,
-                        filter: "blur(6px)",
-                      }}
-                      to={{
-                        y: 0,
-                        opacity: 1,
-                        filter: "blur(0px)",
-                      }}
-                      splitType="chars"
-                      delay={45}
-                      duration={1.1}
-                      staggerFrom="start"
-                      loop={false}
-                      loopDelay={1.5}
-                      mask={false}
-                      threshold={0.1}
-                      rootMargin="-100px"
-                      textAlign="center"
-                      onLetterAnimationComplete={handleSplitComplete3}
-                    />
-                  </div>
+                  (step === 3 || step === 4 || step === 5) && (
+                    <div
+                      className="origin-center will-change-transform z-10 pointer-events-none select-none"
+                      ref={split3Ref}
+                    >
+                      <SplitText
+                        text={"Almost done..."}
+                        className="text-5xl font-medium text-center overflow-visible"
+                        effect="blur"
+                        trigger="load"
+                        color={isDark ? "#ffffff" : "#000000"}
+                        accentColor="#f43f5e"
+                        from={{
+                          y: 8,
+                          opacity: 0,
+                          filter: "blur(6px)",
+                        }}
+                        to={{
+                          y: 0,
+                          opacity: 1,
+                          filter: "blur(0px)",
+                        }}
+                        splitType="chars"
+                        delay={45}
+                        duration={1.1}
+                        staggerFrom="start"
+                        loop={false}
+                        loopDelay={1.5}
+                        mask={false}
+                        threshold={0.1}
+                        rootMargin="-100px"
+                        textAlign="center"
+                        onLetterAnimationComplete={handleSplitComplete3}
+                      />
+                    </div>
+                  )
                 }
               </div>
-              <AnimatePresence mode="popLayout">
-                {
-                  step == 4 && (
-                    <motion.div
-                      key="state2-processing"
-                      initial={{ opacity: 0, filter: "blur(10px)", y: 16 }}
-                      animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
-                      exit={{ opacity: 0, filter: "blur(10px)", y: -16 }}
-                      transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
-                      className="mt-6"
-                    >
-                      <ShimmeringText
-                        wave={false}
-                        color="var(--muted)"
-                        shimmeringColor="var(--foreground)"
-                        className="text-base font-sans tracking-wide my-6"
-                        text="We're still working on"
-                      />
-                    </motion.div>
-                  )
-                }
-                {
-                  step === 5 && (
-                    <motion.div
-                      key="state2-redirect"
-                      initial={{ opacity: 0, filter: "blur(10px)", y: 16 }}
-                      animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
-                      exit={{ opacity: 0, filter: "blur(10px)", y: -16 }}
-                      transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
-                      className="mt-6"
-                    >
-                      <ShimmeringText
-                        wave={false}
-                        color="var(--muted)"
-                        shimmeringColor="var(--foreground)"
-                        className="text-base font-sans tracking-wide my-6"
-                        text="Now let's bring you to the stage..."
-                      />
-                    </motion.div>
-                  )
-                }
-              </AnimatePresence>
-            </AutoHeight>
-          </motion.div>
+              <div className="h-12 mt-4 flex items-center justify-center">
+                <AnimatePresence mode="wait">
+                  {
+                    step === 4 && (
+                      <motion.div
+                        key="state2-processing"
+                        initial={{ opacity: 0, filter: "blur(10px)", y: 12 }}
+                        animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+                        exit={{ opacity: 0, filter: "blur(10px)", y: -12 }}
+                        transition={{ duration: 0.35, ease: [0.25, 1, 0.5, 1] }}
+                      >
+                        <ShimmeringText
+                          wave={false}
+                          color="var(--muted)"
+                          shimmeringColor="var(--foreground)"
+                          className="text-base font-sans tracking-wide"
+                          text="We're still working on"
+                        />
+                      </motion.div>
+                    )
+                  }
+                  {
+                    step === 5 && (
+                      <motion.div
+                        key="state2-redirect"
+                        initial={{ opacity: 0, filter: "blur(10px)", y: 12 }}
+                        animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+                        exit={{ opacity: 0, filter: "blur(10px)", y: -12 }}
+                        transition={{ duration: 0.35, ease: [0.25, 1, 0.5, 1] }}
+                      >
+                        <ShimmeringText
+                          wave={false}
+                          color="var(--muted)"
+                          shimmeringColor="var(--foreground)"
+                          className="text-base font-sans tracking-wide"
+                          text="Now let's bring you to the stage..."
+                        />
+                      </motion.div>
+                    )
+                  }
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )
         }
       </div>
 
       <div className={cn(
-        "absolute inset-0 flex items-center justify-center pointer-events-none transition-all ease-out duration-500",
-        step > 0 ? "scale-110 opacity-40 blur-md pointer-events-none" : step > 4 && "scale-150 opacity-0 blur-md pointer-events-none"
+        "absolute inset-0 flex items-center justify-center pointer-events-none transition-[opacity,transform,scale,filter] ease-out duration-700",
+        step > 4
+          ? "scale-150 opacity-0 blur-md"
+          : step > 0 || isSubmitting
+            ? "scale-110 opacity-40 blur-md"
+            : "scale-100 opacity-100 blur-none"
       )}>
         {MOCK_PROFILES.map((p, i) => (
           <div

@@ -113,6 +113,7 @@ function FooterContent({ pathname }: { pathname: string }) {
                     <Link
                       href={l.herf}
                       target={l.isExternal ? "_blank" : undefined}
+                      rel={l.isExternal ? "noopener noreferrer" : undefined}
                     >
                       {l.name}
                     </Link>

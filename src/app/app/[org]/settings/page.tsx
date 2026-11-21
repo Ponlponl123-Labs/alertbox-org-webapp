@@ -35,7 +35,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { hasPermission } from "@/lib/rbac";
+import { hasPermission, isOrgOwner, isOrgOwnerOrAdmin } from "@/lib/rbac";
 import { OrgPerm } from "@/consts/permission";
 import type { CropType, TransferStep, OrgMemberOption } from "@/types";
 import { TRANSFER_CONFIRM_PHRASE } from "@/consts/org";
@@ -79,8 +79,10 @@ export default function OrgSettingsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLeaveOpen, setIsLeaveOpen] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isMediaBusy, setIsMediaBusy] = useState(false);
+  const cropObjectUrlRef = useRef<string | null>(null);
+  const membersAbortRef = useRef<AbortController | null>(null);
 
-  // Keep state synchronized when active organization switches
   const prevOrgIdRef = useRef(activeOrg?.id);
   useEffect(() => {
     if (activeOrg && activeOrg.id !== prevOrgIdRef.current) {
@@ -91,31 +93,57 @@ export default function OrgSettingsPage() {
     }
   }, [activeOrg]);
 
-  const isOwner = activeOrg?.role === "OWNER";
-  const isOwnerOrAdmin = isOwner || activeOrg?.role === "ADMIN";
-  const canManageSettings = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MANAGE);
+  useEffect(() => {
+    return () => {
+      if (cropObjectUrlRef.current) {
+        URL.revokeObjectURL(cropObjectUrlRef.current);
+        cropObjectUrlRef.current = null;
+      }
+      membersAbortRef.current?.abort();
+    };
+  }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "banner") => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImageToCrop(reader.result as string);
-        setCropType(type);
-        setCropperOpen(true);
-        e.target.value = "";
-      };
-      reader.readAsDataURL(file);
+  const isOwner = isOrgOwner(activeOrg);
+  const isOwnerOrAdmin = isOrgOwnerOrAdmin(activeOrg);
+  const canManageSettings = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MANAGE);
+  const encodedOrgTarget = orgTarget ? encodeURIComponent(orgTarget) : "";
+  const deleteConfirmExpected = activeOrg?.slug || activeOrg?.name || activeOrg?.id || "";
+
+  const closeCropper = () => {
+    setCropperOpen(false);
+    setImageToCrop(null);
+    if (cropObjectUrlRef.current) {
+      URL.revokeObjectURL(cropObjectUrlRef.current);
+      cropObjectUrlRef.current = null;
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "avatar" | "banner") => {
+    const file = e.target.files?.[0];
+    e.currentTarget.value = "";
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be 5 MB or smaller");
+      return;
+    }
+    if (cropObjectUrlRef.current) {
+      URL.revokeObjectURL(cropObjectUrlRef.current);
+    }
+    const objectUrl = URL.createObjectURL(file);
+    cropObjectUrlRef.current = objectUrl;
+    setImageToCrop(objectUrl);
+    setCropType(type);
+    setCropperOpen(true);
+  };
+
   const onCropComplete = async (croppedBlob: Blob) => {
-    if (!orgTarget) return;
+    if (!canManageSettings || !encodedOrgTarget || isMediaBusy) return;
+    setIsMediaBusy(true);
     try {
       const formData = new FormData();
       formData.append(cropType, croppedBlob, `${cropType}.webp`);
 
-      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}`), {
+      const res = await authFetch(getApiUrl(`/api/v1/org/${encodedOrgTarget}`), {
         method: "PATCH",
         body: formData,
       });
@@ -139,13 +167,16 @@ export default function OrgSettingsPage() {
       }
     } catch {
       toast.error(`Network error uploading ${cropType}`);
+    } finally {
+      setIsMediaBusy(false);
     }
   };
 
   const handleRemoveMedia = async (type: "avatar" | "banner") => {
-    if (!orgTarget) return;
+    if (!canManageSettings || !encodedOrgTarget || isMediaBusy) return;
+    setIsMediaBusy(true);
     try {
-      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}`), {
+      const res = await authFetch(getApiUrl(`/api/v1/org/${encodedOrgTarget}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [type]: null }),
@@ -165,16 +196,18 @@ export default function OrgSettingsPage() {
       }
     } catch {
       toast.error(`Network error removing ${type}`);
+    } finally {
+      setIsMediaBusy(false);
     }
   };
 
   const handleSaveGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orgTarget || !name.trim()) return;
+    if (!canManageSettings || !encodedOrgTarget || !name.trim() || isSaving) return;
     setIsSaving(true);
 
     try {
-      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}`), {
+      const res = await authFetch(getApiUrl(`/api/v1/org/${encodedOrgTarget}`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -198,11 +231,11 @@ export default function OrgSettingsPage() {
   };
 
   const handleDeleteOrg = async () => {
-    if (!orgTarget || confirmSlug !== activeOrg?.slug) return;
+    if (!isOwner || !encodedOrgTarget || isDeleting || !deleteConfirmExpected || confirmSlug !== deleteConfirmExpected) return;
     setIsDeleting(true);
 
     try {
-      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}`), {
+      const res = await authFetch(getApiUrl(`/api/v1/org/${encodedOrgTarget}`), {
         method: "DELETE",
       });
 
@@ -223,10 +256,10 @@ export default function OrgSettingsPage() {
   };
 
   const handleLeaveOrg = async () => {
-    if (!orgTarget || isLeaving) return;
+    if (isOwner || !encodedOrgTarget || isLeaving) return;
     setIsLeaving(true);
     try {
-      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}/leave`), {
+      const res = await authFetch(getApiUrl(`/api/v1/org/${encodedOrgTarget}/leave`), {
         method: "POST",
       });
 
@@ -248,6 +281,11 @@ export default function OrgSettingsPage() {
   };
 
   const openTransferDialog = async () => {
+    if (!isOwner || !encodedOrgTarget) return;
+    membersAbortRef.current?.abort();
+    const controller = new AbortController();
+    membersAbortRef.current = controller;
+
     setIsTransferOpen(true);
     setTransferStep(1);
     setTransferAck(false);
@@ -257,29 +295,33 @@ export default function OrgSettingsPage() {
     setMemberSearchQuery("");
     setLoadingMembers(true);
     try {
-      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}/members`));
+      const res = await authFetch(getApiUrl(`/api/v1/org/${encodedOrgTarget}/members`), {
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
       if (res.ok) {
         const data = await res.json();
         const nonOwners = (Array.isArray(data) ? data : []).filter(
-          (m: { role: string }) => m.role !== "OWNER",
+          (m: { role: string }) => !isOrgOwner(m),
         );
         setMembers(nonOwners);
         if (nonOwners.length > 0) {
           setSelectedMemberId(nonOwners[0].id);
         }
       }
-    } catch {
+    } catch (err) {
+      if ((err as Error)?.name === "AbortError") return;
       toast.error("Failed to load organization members");
     } finally {
-      setLoadingMembers(false);
+      if (!controller.signal.aborted) setLoadingMembers(false);
     }
   };
 
   const handleTransferOwnership = async () => {
-    if (!selectedMemberId || isTransferring || confirmPhrase !== TRANSFER_CONFIRM_PHRASE || !transferAck) return;
+    if (!isOwner || !encodedOrgTarget || !selectedMemberId || isTransferring || confirmPhrase !== TRANSFER_CONFIRM_PHRASE || !transferAck) return;
     setIsTransferring(true);
     try {
-      const res = await authFetch(getApiUrl(`/api/v1/org/${orgTarget}/transfer`), {
+      const res = await authFetch(getApiUrl(`/api/v1/org/${encodedOrgTarget}/transfer`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ targetMemberId: selectedMemberId }),
@@ -604,7 +646,7 @@ export default function OrgSettingsPage() {
 
       <ImageCropperModal
         open={cropperOpen}
-        onClose={() => setCropperOpen(false)}
+        onClose={closeCropper}
         image={imageToCrop}
         cropShape={cropType === "avatar" ? "round" : "rect"}
         aspect={cropType === "avatar" ? 1 : 3}
@@ -631,13 +673,13 @@ export default function OrgSettingsPage() {
 
           <Field className="mt-2">
             <FieldLabel className="text-xs font-semibold text-foreground">
-              Type your organization slug <code className="text-primary font-mono">{activeOrg?.slug}</code> to confirm:
+              Type <code className="text-primary font-mono">{deleteConfirmExpected}</code> to confirm:
             </FieldLabel>
             <Input
               type="text"
               value={confirmSlug}
               onChange={(e) => setConfirmSlug(e.target.value)}
-              placeholder={activeOrg?.slug || "org-slug"}
+              placeholder={deleteConfirmExpected || "org-slug"}
               fontStyle={{
                 fontFamily: "var(--font-sans)",
                 fontWeight: "500",
@@ -646,7 +688,7 @@ export default function OrgSettingsPage() {
               className="w-full"
               classNames={{ base: "h-10 rounded-xl" }}
             />
-            <span className="text-xs text-destructive select-none font-sans">This action cannot be undo.</span>
+            <span className="text-xs text-destructive select-none font-sans">This action cannot be undone.</span>
           </Field>
 
           <DialogFooter className="mt-5 gap-2">
@@ -676,7 +718,7 @@ export default function OrgSettingsPage() {
               waveAmplitude={6}
               glow={false}
               resetAfter={1200}
-              disabled={isDeleting || confirmSlug !== activeOrg?.slug}
+              disabled={isDeleting || !deleteConfirmExpected || confirmSlug !== deleteConfirmExpected}
               onHold={handleDeleteOrg}
             >
               {isDeleting && <Spinner className="size-3.5" />}
@@ -710,7 +752,7 @@ export default function OrgSettingsPage() {
               Cancel
             </Button>
             <HoldButton
-              doneLabel="Deleted"
+              doneLabel="Left"
               backgroundColor="var(--muted)"
               fillColor="#f43f5e"
               textColor="var(--muted-foreground)"
@@ -736,7 +778,13 @@ export default function OrgSettingsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
+      <Dialog
+        open={isTransferOpen}
+        onOpenChange={(open) => {
+          if (!open) membersAbortRef.current?.abort();
+          setIsTransferOpen(open);
+        }}
+      >
         <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
           <DialogHeader>
             <div className="size-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-2">
@@ -985,7 +1033,7 @@ export default function OrgSettingsPage() {
                       <span>Back</span>
                     </Button>
                     <HoldButton
-                      doneLabel="Deleted"
+                      doneLabel="Transferred"
                       backgroundColor="var(--muted)"
                       fillColor="#f43f5e"
                       textColor="var(--muted-foreground)"
@@ -1004,7 +1052,7 @@ export default function OrgSettingsPage() {
                       disabled={isTransferring || confirmPhrase !== TRANSFER_CONFIRM_PHRASE}
                       onHold={handleTransferOwnership}
                     >
-                      {isLeaving && <Spinner className="size-3.5" />}
+                      {isTransferring && <Spinner className="size-3.5" />}
                       Hold to transfer
                     </HoldButton>
                   </DialogFooter>

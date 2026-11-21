@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { motion } from "motion/react";
+import { useViewportActive } from "@/hooks/use-viewport-active";
 
 interface TestimonialItem {
   name: string;
@@ -14,20 +15,11 @@ interface TestimonialItem {
   avatar?: string;
 }
 
-function TestimonialCard({
-  item,
-  itemKey,
-}: {
-  item: TestimonialItem;
-  itemKey: string | number;
-}) {
+function TestimonialCard({ item }: { item: TestimonialItem }) {
   const [imageError, setImageError] = useState(false);
 
   return (
-    <div
-      key={itemKey}
-      className="w-87.5 shrink-0 p-6 rounded-3xl bg-card/60 backdrop-blur-xl border border-border/50 shadow-xl flex flex-col gap-4 relative group"
-    >
+    <div className="w-87.5 shrink-0 p-6 rounded-3xl bg-card/95 border border-border/50 shadow-xl flex flex-col gap-4 relative group">
       <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none" />
       <p className="text-sm text-foreground/80 leading-relaxed font-read font-medium">
         &ldquo;{item.quote}&rdquo;
@@ -71,36 +63,21 @@ export default function Testimonials() {
     coreStore,
     (state) => state.lang.data.pages.index.sections.testimonials,
   );
+  const { ref: sectionRef, isActive } = useViewportActive<HTMLElement>();
 
   const items: TestimonialItem[] = t.items;
   const halfLength = Math.ceil(items.length / 2);
   const row1Items = items.slice(0, halfLength);
   const row2Items = items.slice(halfLength);
 
-  const duplicatedRow1 = [
-    ...row1Items,
-    ...row1Items,
-    ...row1Items,
-    ...row1Items,
-    ...row1Items,
-    ...row1Items,
-    ...row1Items,
-    ...row1Items,
-  ];
-  const duplicatedRow2 = [
-    ...row2Items,
-    ...row2Items,
-    ...row2Items,
-    ...row2Items,
-    ...row2Items,
-    ...row2Items,
-    ...row2Items,
-    ...row2Items,
-  ];
+  const duplicatedRow1 = [...row1Items, ...row1Items];
+  const duplicatedRow2 = [...row2Items, ...row2Items];
 
   return (
-    <section className="w-full py-24 md:py-32 relative flex flex-col items-center border-t border-foreground/10 overflow-hidden">
-
+    <section
+      ref={sectionRef}
+      className="w-full py-24 md:py-32 relative flex flex-col items-center border-t border-foreground/10 overflow-hidden"
+    >
       <div className="text-center mb-16 z-10">
         <motion.p
           initial={{ opacity: 0, y: 10 }}
@@ -125,40 +102,32 @@ export default function Testimonials() {
         <div className="absolute right-0 top-0 bottom-0 w-32 bg-linear-to-l from-background to-transparent z-20 pointer-events-none" />
 
         <motion.div
-          className="flex gap-6 items-center w-max"
+          className="flex gap-6 items-center w-max will-change-transform"
           data-default-transition="false"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{
-            repeat: Infinity,
-            ease: "linear",
-            duration: 40,
-          }}
+          animate={isActive ? { x: ["0%", "-50%"] } : { x: "0%" }}
+          transition={
+            isActive
+              ? { repeat: Infinity, ease: "linear", duration: 30 }
+              : { duration: 0 }
+          }
         >
           {duplicatedRow1.map((item: TestimonialItem, idx: number) => (
-            <TestimonialCard
-              key={`r1-${idx}`}
-              itemKey={`r1-${idx}`}
-              item={item}
-            />
+            <TestimonialCard key={`r1-${idx}`} item={item} />
           ))}
         </motion.div>
 
         <motion.div
-          className="flex gap-6 items-center w-max"
+          className="flex gap-6 items-center w-max will-change-transform"
           data-default-transition="false"
-          animate={{ x: ["-50%", "0%"] }}
-          transition={{
-            repeat: Infinity,
-            ease: "linear",
-            duration: 45,
-          }}
+          animate={isActive ? { x: ["-50%", "0%"] } : { x: "0%" }}
+          transition={
+            isActive
+              ? { repeat: Infinity, ease: "linear", duration: 35 }
+              : { duration: 0 }
+          }
         >
           {duplicatedRow2.map((item: TestimonialItem, idx: number) => (
-            <TestimonialCard
-              key={`r2-${idx}`}
-              itemKey={`r2-${idx}`}
-              item={item}
-            />
+            <TestimonialCard key={`r2-${idx}`} item={item} />
           ))}
         </motion.div>
       </div>

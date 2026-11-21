@@ -1,15 +1,17 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useStore } from "zustand";
-import { getCookie } from "cookies-next/client";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/custom-ui/toast";
 import { getApiUrl } from "@/lib/api";
+import { formatMoneyMinorUnits, getCachedDateFormat } from "@/lib/formatters";
+import { isSafePathSegment } from "@/lib/security";
+import { useAuthenticatedWebSocket } from "@/hooks/use-authenticated-ws";
 import {
   ArrowLeftIcon,
   LinkBreakIcon,
@@ -47,16 +49,18 @@ interface RelayLog {
   createdAt: string;
 }
 
+const MAX_RELAY_LOGS = 200;
+
 const StreamlabsOption = {
-  STRIPE_PAYMENT_SUCCESS: 1, // 0b00000001
-  BMAC_MEMBERSHIP_SUCCESS: 2, // 0b00000010
-  KOFI_DONATION_SUCCESS: 4, // 0b00000100
-  KOFI_PURCHASE_SUCCESS: 8, // 0b00001000
-  BMAC_DONATION_SUCCESS: 16, // 0b00010000
-  CONFIGURED_FLAG: 128, // 0b10000000 (indicates configured status to avoid 0-fallback in backend)
+  STRIPE_PAYMENT_SUCCESS: 1,
+  BMAC_MEMBERSHIP_SUCCESS: 2,
+  KOFI_DONATION_SUCCESS: 4,
+  KOFI_PURCHASE_SUCCESS: 8,
+  BMAC_DONATION_SUCCESS: 16,
+  CONFIGURED_FLAG: 128,
 };
 
-function StreamlabsPage() {
+function StreamlabsPageContent() {
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo, logout, authFetch, activeOrg, activeStreamer } = useUserContext();
   const router = useRouter();
@@ -68,231 +72,208 @@ function StreamlabsPage() {
     activeOrg,
     activeStreamer,
     StreamerPerm.STREAMER_INTEGRATION_MANAGE,
-    OrgPerm.INTEGRATION_MANAGE
+    OrgPerm.INTEGRATION_MANAGE,
   );
 
   const routeParams = useParams();
   const routeOrg = routeParams?.org as string | undefined;
   const routeStreamer = routeParams?.streamer as string | undefined;
-  const targetOrg = activeOrg?.id || activeOrg?.slug || routeOrg;
-  const targetStreamer = activeStreamer?.id || activeStreamer?.name || routeStreamer;
-  const orgKey = targetOrg;
-  const streamerKey = targetStreamer;
-  const backHref = orgKey && streamerKey ? `/app/${orgKey}/${streamerKey}/connections?t=trigger` : "/app/connections?t=trigger";
-  const streamlabsEndpoint = targetOrg && targetStreamer
-    ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/streamlabs`)
-    : "";
-  const streamlabsLogsEndpoint = targetOrg && targetStreamer
-    ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/streamlabs/logs`)
-    : "";
+  const rawOrg = String(routeOrg || activeOrg?.id || activeOrg?.slug || "");
+  const rawStreamer = String(routeStreamer || activeStreamer?.id || activeStreamer?.name || "");
+  const targetOrg = isSafePathSegment(rawOrg) ? rawOrg : null;
+  const targetStreamer = isSafePathSegment(rawStreamer) ? rawStreamer : null;
+
+  const backHref =
+    targetOrg && targetStreamer
+      ? `/app/${encodeURIComponent(targetOrg)}/${encodeURIComponent(targetStreamer)}/connections?t=trigger`
+      : "/app/connections?t=trigger";
+  const streamlabsEndpoint =
+    targetOrg && targetStreamer
+      ? getApiUrl(
+          `/api/v1/org/${encodeURIComponent(targetOrg)}/streamers/${encodeURIComponent(targetStreamer)}/integration/streamlabs`,
+        )
+      : "";
+  const streamlabsLogsEndpoint =
+    targetOrg && targetStreamer
+      ? getApiUrl(
+          `/api/v1/org/${encodeURIComponent(targetOrg)}/streamers/${encodeURIComponent(targetStreamer)}/integration/streamlabs/logs`,
+        )
+      : "";
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [oauthStatus, setOauthStatus] = useState<
-    "connecting" | "success" | "failed"
-  >("connecting");
+  const [oauthStatus, setOauthStatus] = useState<"connecting" | "success" | "failed">(
+    "connecting",
+  );
 
-  // Toggle state
   const [stripeEnabled, setStripeEnabled] = useState(true);
   const [bmacMembershipEnabled, setBmacMembershipEnabled] = useState(true);
   const [kofiDonationEnabled, setKofiDonationEnabled] = useState(true);
   const [kofiPurchaseEnabled, setKofiPurchaseEnabled] = useState(true);
   const [bmacEnabled, setBmacEnabled] = useState(true);
-
-  // Logs state
   const [logs, setLogs] = useState<RelayLog[]>([]);
 
-  const isFetched = useRef(false);
+  const oauthExchangedRef = useRef(false);
 
   const t = lang.data.app.connections.providers.streamlabs;
   const setupLang = lang.data.app.connections.streamlabs_setup;
 
-  const loadSettingsAndLogs = useCallback(async () => {
-    setIsLoading(true);
-
-    try {
-      const settingsRes = await authFetch(streamlabsEndpoint);
-      if (settingsRes.status === 401) {
-        logout();
-        return;
-      }
-      if (settingsRes.ok) {
-        const settings = await settingsRes.json();
-        setIsConnected(settings.isConnected);
-        const optionsVal = settings.options;
-
-        if (optionsVal !== null) {
-          if (optionsVal === 0) {
-            setStripeEnabled(true);
-            setBmacMembershipEnabled(true);
-            setKofiDonationEnabled(true);
-            setKofiPurchaseEnabled(true);
-            setBmacEnabled(true);
-          } else {
-            setStripeEnabled(
-              (optionsVal & StreamlabsOption.STRIPE_PAYMENT_SUCCESS) !== 0,
-            );
-            setBmacMembershipEnabled(
-              (optionsVal & StreamlabsOption.BMAC_MEMBERSHIP_SUCCESS) !== 0,
-            );
-            setKofiDonationEnabled(
-              (optionsVal & StreamlabsOption.KOFI_DONATION_SUCCESS) !== 0,
-            );
-            setKofiPurchaseEnabled(
-              (optionsVal & StreamlabsOption.KOFI_PURCHASE_SUCCESS) !== 0,
-            );
-            setBmacEnabled(
-              (optionsVal & StreamlabsOption.BMAC_DONATION_SUCCESS) !== 0,
-            );
-          }
-        }
-      }
-
-      const logsRes = await authFetch(streamlabsLogsEndpoint);
-      if (logsRes.ok) {
-        const logsData = await logsRes.json();
-        setLogs(logsData);
-      }
-    } catch {
-      toast.error(setupLang.error_load);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [authFetch, logout, setupLang.error_load, streamlabsEndpoint, streamlabsLogsEndpoint]);
-
-  // Handle OAuth code exchange flow if code & state exist in URL
   useEffect(() => {
-    if (code && state) {
-      const parts = state.split(".");
-      const orgId = parts.length >= 2 ? parts[1] : activeOrg?.id;
-      const streamerId = parts.length >= 2 ? parts[0] : activeStreamer?.id;
-      const targetEndpoint =
-        orgId && streamerId
-          ? `/api/v1/org/${orgId}/streamers/${streamerId}/integration/streamlabs`
-          : targetOrg && targetStreamer
-          ? `/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/streamlabs`
-          : "";
+    if (!code || !state || !userInfo || oauthExchangedRef.current) return;
+    oauthExchangedRef.current = true;
 
-      if (!targetEndpoint) {
-        setOauthStatus("failed");
-        return;
-      }
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const parts = state.split(".");
+    const parsedOrg = parts.length >= 2 ? parts[1] : activeOrg?.id || targetOrg;
+    const parsedStreamer = parts.length >= 2 ? parts[0] : activeStreamer?.id || targetStreamer;
 
-      authFetch(getApiUrl(targetEndpoint), {
-        method: "POST",
-        body: code,
+    if (!isSafePathSegment(parsedOrg) || !isSafePathSegment(parsedStreamer)) {
+      queueMicrotask(() => setOauthStatus("failed"));
+      timer = setTimeout(() => router.push(backHref), 2400);
+      return () => {
+        if (timer) clearTimeout(timer);
+      };
+    }
+
+    const targetEndpoint = `/api/v1/org/${encodeURIComponent(parsedOrg)}/streamers/${encodeURIComponent(parsedStreamer)}/integration/streamlabs`;
+
+    authFetch(getApiUrl(targetEndpoint), {
+      method: "POST",
+      body: code,
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to connect");
+        setOauthStatus("success");
+        timer = setTimeout(() => router.push(backHref), 2400);
       })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error("Failed to connect");
-          }
-          setOauthStatus("success");
-          setTimeout(() => {
-            router.push(backHref);
-          }, 2400);
-        })
-        .catch(() => {
-          setOauthStatus("failed");
-          setTimeout(() => {
-            router.push(backHref);
-          }, 2400);
-        });
-    } else {
-      if (isFetched.current || !userInfo) return;
-      isFetched.current = true;
-      loadSettingsAndLogs();
-    }
-  }, [code, state, router, userInfo, loadSettingsAndLogs, authFetch, backHref, activeOrg?.id, activeStreamer?.id]);
-
-  // Handle realtime logs WebSocket connection
-  useEffect(() => {
-    if (code && state) return;
-
-    const token = getCookie("USRSS");
-    if (!isConnected || !token) return;
-
-    let ws: WebSocket | null = null;
-    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    const connectWS = () => {
-      try {
-        const decodedToken = atob(token);
-        const apiEndpoint = getApiUrl("/");
-        let wsHost = window.location.host;
-        let wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-
-        try {
-          if (apiEndpoint.includes("://")) {
-            const url = new URL(apiEndpoint);
-            wsHost = url.host;
-            wsProtocol = url.protocol === "https:" ? "wss:" : "ws:";
-          } else {
-            if (
-              window.location.hostname === "localhost" ||
-              window.location.hostname === "127.0.0.1"
-            ) {
-              wsHost = `${window.location.hostname}:3001`;
-            }
-          }
-        } catch {
-          // ignore
-        }
-
-        const wsPath = targetOrg && targetStreamer
-          ? `/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/streamlabs/ws`
-          : "";
-        if (!wsPath) return;
-        const wsUrl = `${wsProtocol}//${wsHost}${wsPath}?token=${encodeURIComponent(decodedToken)}`;
-
-        ws = new WebSocket(wsUrl);
-
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.event === "created") {
-              setLogs((prev) => [data.log, ...prev]);
-            } else if (data.event === "updated") {
-              setLogs((prev) =>
-                prev.map((log) => (log.id === data.log.id ? data.log : log)),
-              );
-            }
-          } catch {
-            // ignore
-          }
-        };
-
-        ws.onclose = () => {
-          reconnectTimeout = setTimeout(connectWS, 3000);
-        };
-
-        ws.onerror = () => {
-          ws?.close();
-        };
-      } catch {
-        // ignore
-      }
-    };
-
-    connectWS();
+      .catch(() => {
+        setOauthStatus("failed");
+        timer = setTimeout(() => router.push(backHref), 2400);
+      });
 
     return () => {
-      if (ws) {
-        ws.onclose = null;
-        ws.close();
-      }
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
+      if (timer) clearTimeout(timer);
     };
-  }, [isConnected, code, state]);
+  }, [
+    code,
+    state,
+    router,
+    userInfo,
+    authFetch,
+    backHref,
+    activeOrg?.id,
+    activeStreamer?.id,
+    targetOrg,
+    targetStreamer,
+  ]);
+
+  useEffect(() => {
+    if ((code && state) || !userInfo || !streamlabsEndpoint || !streamlabsLogsEndpoint) return;
+
+    const controller = new AbortController();
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) {
+        setIsLoading(true);
+        setLogs([]);
+      }
+    });
+
+    (async () => {
+      try {
+        const [settingsRes, logsRes] = await Promise.all([
+          authFetch(streamlabsEndpoint, { signal: controller.signal }),
+          authFetch(streamlabsLogsEndpoint, { signal: controller.signal }),
+        ]);
+
+        if (controller.signal.aborted) return;
+
+        if (settingsRes.status === 401 || logsRes.status === 401) {
+          logout();
+          return;
+        }
+
+        if (settingsRes.ok) {
+          const settings = await settingsRes.json();
+          if (controller.signal.aborted) return;
+          setIsConnected(Boolean(settings.isConnected));
+          const optionsVal = settings.options;
+
+          if (optionsVal !== null && optionsVal !== undefined) {
+            if (optionsVal === 0) {
+              setStripeEnabled(true);
+              setBmacMembershipEnabled(true);
+              setKofiDonationEnabled(true);
+              setKofiPurchaseEnabled(true);
+              setBmacEnabled(true);
+            } else {
+              setStripeEnabled((optionsVal & StreamlabsOption.STRIPE_PAYMENT_SUCCESS) !== 0);
+              setBmacMembershipEnabled(
+                (optionsVal & StreamlabsOption.BMAC_MEMBERSHIP_SUCCESS) !== 0,
+              );
+              setKofiDonationEnabled((optionsVal & StreamlabsOption.KOFI_DONATION_SUCCESS) !== 0);
+              setKofiPurchaseEnabled((optionsVal & StreamlabsOption.KOFI_PURCHASE_SUCCESS) !== 0);
+              setBmacEnabled((optionsVal & StreamlabsOption.BMAC_DONATION_SUCCESS) !== 0);
+            }
+          }
+        }
+
+        if (logsRes.ok) {
+          const logsData = (await logsRes.json()) as RelayLog[];
+          if (!controller.signal.aborted && Array.isArray(logsData)) {
+            setLogs(logsData.slice(0, MAX_RELAY_LOGS));
+          }
+        }
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          toast.error(setupLang.error_load);
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    })();
+
+    return () => controller.abort();
+  }, [
+    code,
+    state,
+    userInfo,
+    streamlabsEndpoint,
+    streamlabsLogsEndpoint,
+    authFetch,
+    logout,
+    setupLang.error_load,
+  ]);
+
+  const wsPath =
+    !(code && state) && isConnected && targetOrg && targetStreamer
+      ? `/v1/org/${encodeURIComponent(targetOrg)}/streamers/${encodeURIComponent(targetStreamer)}/integration/streamlabs/ws`
+      : null;
+
+  const handleWsMessage = useCallback((raw: unknown) => {
+    if (!raw || typeof raw !== "object") return;
+    const data = raw as { event?: string; log?: RelayLog };
+    if (!data.log) return;
+    const incoming = data.log;
+    if (data.event === "created") {
+      setLogs((prev) => [incoming, ...prev].slice(0, MAX_RELAY_LOGS));
+    } else if (data.event === "updated") {
+      setLogs((prev) => prev.map((log) => (log.id === incoming.id ? incoming : log)));
+    }
+  }, []);
+
+  useAuthenticatedWebSocket({
+    wsPath,
+    enabled: Boolean(wsPath),
+    onMessage: handleWsMessage,
+  });
 
   const handleSaveSettings = async () => {
+    if (!canManageIntegrations || !streamlabsEndpoint || isSaving) return;
     setIsSaving(true);
 
-    // Calculate options value
-    let val = StreamlabsOption.CONFIGURED_FLAG; // Always include configured flag to avoid 0-fallback
+    let val = StreamlabsOption.CONFIGURED_FLAG;
     if (stripeEnabled) val |= StreamlabsOption.STRIPE_PAYMENT_SUCCESS;
     if (bmacMembershipEnabled) val |= StreamlabsOption.BMAC_MEMBERSHIP_SUCCESS;
     if (kofiDonationEnabled) val |= StreamlabsOption.KOFI_DONATION_SUCCESS;
@@ -300,16 +281,11 @@ function StreamlabsPage() {
     if (bmacEnabled) val |= StreamlabsOption.BMAC_DONATION_SUCCESS;
 
     try {
-      const res = await authFetch(
-        streamlabsEndpoint,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ options: val }),
-        },
-      );
+      const res = await authFetch(streamlabsEndpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ options: val }),
+      });
 
       if (res.ok) {
         toast.success(setupLang.success_save);
@@ -324,16 +300,11 @@ function StreamlabsPage() {
   };
 
   const handleDisconnect = async () => {
+    if (!canManageIntegrations || !streamlabsEndpoint || isSaving) return;
     setIsSaving(true);
 
     try {
-      const res = await authFetch(
-        streamlabsEndpoint,
-        {
-          method: "DELETE",
-        },
-      );
-
+      const res = await authFetch(streamlabsEndpoint, { method: "DELETE" });
       if (res.ok) {
         toast.success(setupLang.success_disconnect);
         router.push(backHref);
@@ -347,14 +318,21 @@ function StreamlabsPage() {
     }
   };
 
-  // Render OAuth callback loader screen
+  const logDateFormatter = getCachedDateFormat(lang.key === "th-TH" ? "th-TH" : "en-US", {
+    hour12: false,
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   if (code && state) {
     return (
       <div className="w-full flex flex-col min-h-0 mt-6 flex-1 gap-1.5 font-sans">
         <div className="w-full flex flex-col items-center justify-center min-h-0 py-6 flex-1">
           <div className="flex items-center justify-center gap-4">
             <Image
-              src={"/favicon.ico"}
+              src="/favicon.ico"
               width={64}
               height={64}
               alt="Alertbox.org"
@@ -415,9 +393,7 @@ function StreamlabsPage() {
           <Streamlabs className="size-10" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight font-sans">
-            {t.name}
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight font-sans">{t.name}</h1>
           <p className="text-sm text-foreground/50 mt-1">{t.description}</p>
         </div>
       </div>
@@ -436,34 +412,31 @@ function StreamlabsPage() {
                   label: setupLang.relay_bmac_donation,
                   desc: setupLang.relay_bmac_donation_desc,
                   checked: bmacEnabled,
-                  onChange: (checked: boolean) => setBmacEnabled(checked),
+                  onChange: setBmacEnabled,
                 },
                 {
                   label: setupLang.relay_bmac_membership,
                   desc: setupLang.relay_bmac_membership_desc,
                   checked: bmacMembershipEnabled,
-                  onChange: (checked: boolean) =>
-                    setBmacMembershipEnabled(checked),
+                  onChange: setBmacMembershipEnabled,
                 },
                 {
                   label: setupLang.relay_kofi_donation,
                   desc: setupLang.relay_kofi_donation_desc,
                   checked: kofiDonationEnabled,
-                  onChange: (checked: boolean) =>
-                    setKofiDonationEnabled(checked),
+                  onChange: setKofiDonationEnabled,
                 },
                 {
                   label: setupLang.relay_kofi_purchase,
                   desc: setupLang.relay_kofi_purchase_desc,
                   checked: kofiPurchaseEnabled,
-                  onChange: (checked: boolean) =>
-                    setKofiPurchaseEnabled(checked),
+                  onChange: setKofiPurchaseEnabled,
                 },
                 {
                   label: setupLang.relay_stripe,
                   desc: setupLang.relay_stripe_desc,
                   checked: stripeEnabled,
-                  onChange: (checked: boolean) => setStripeEnabled(checked),
+                  onChange: setStripeEnabled,
                 },
               ].map((item, idx) => (
                 <label
@@ -497,13 +470,9 @@ function StreamlabsPage() {
                     variant="secondary"
                     onClick={handleSaveSettings}
                     disabled={isSaving}
-                    className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                    className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
                   >
-                    {isSaving ? (
-                      <Spinner className="size-4 text-current" />
-                    ) : (
-                      setupLang.btn_save
-                    )}
+                    {isSaving ? <Spinner className="size-4 text-current" /> : setupLang.btn_save}
                   </Button>
                 ) : (
                   <Button
@@ -521,7 +490,7 @@ function StreamlabsPage() {
                     variant="destructive"
                     disabled={isSaving}
                     onClick={() => setIsConfirmOpen(true)}
-                    className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                    className="w-full h-12 rounded-xl text-xs font-bold tracking-wider cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
                   >
                     <LinkBreakIcon size={16} />
                     {setupLang.btn_disconnect}
@@ -542,12 +511,8 @@ function StreamlabsPage() {
             {logs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-foreground/30 text-center">
                 <ClockIcon size={48} className="mb-2 opacity-55" />
-                <p className="text-sm font-semibold text-foreground/70">
-                  {setupLang.no_logs}
-                </p>
-                <p className="text-xs mt-1 text-foreground/45">
-                  {setupLang.no_logs_desc}
-                </p>
+                <p className="text-sm font-semibold text-foreground/70">{setupLang.no_logs}</p>
+                <p className="text-xs mt-1 text-foreground/45">{setupLang.no_logs_desc}</p>
               </div>
             ) : (
               <div className="space-y-2.5 max-h-125 overflow-y-auto pr-1">
@@ -559,12 +524,13 @@ function StreamlabsPage() {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span
-                          className={`w-1.5 h-1.5 rounded-full shrink-0 ${log.status === "COMPLETED"
-                            ? "bg-emerald-500"
-                            : log.status === "FAILED"
-                              ? "bg-rose-500"
-                              : "bg-amber-500"
-                            }`}
+                          className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                            log.status === "COMPLETED"
+                              ? "bg-emerald-500"
+                              : log.status === "FAILED"
+                                ? "bg-rose-500"
+                                : "bg-amber-500"
+                          }`}
                         />
                         <span className="font-semibold text-foreground/80 truncate">
                           {log.senderName}
@@ -580,11 +546,8 @@ function StreamlabsPage() {
                       </div>
 
                       <div className="flex items-baseline gap-0.5 shrink-0 font-sans">
-                        <span className="font-bold text-foreground/90">
-                          {(log.amount / 100).toFixed(2)}
-                        </span>
-                        <span className="text-[9px] font-bold text-foreground/45 uppercase">
-                          {log.currency}
+                        <span className="font-bold text-foreground/90 tabular-nums">
+                          {formatMoneyMinorUnits(log.amount, log.currency, lang.key)}
                         </span>
                       </div>
                     </div>
@@ -601,16 +564,7 @@ function StreamlabsPage() {
                           )}
                         </div>
                         <span className="text-[10px] text-foreground/35 select-none shrink-0 font-sans">
-                          {new Date(log.createdAt).toLocaleString(
-                            lang.key === "th-TH" ? "th-TH" : "en-US",
-                            {
-                              hour12: false,
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
-                          )}
+                          {logDateFormatter.format(new Date(log.createdAt))}
                         </span>
                       </div>
                     )}
@@ -631,9 +585,7 @@ function StreamlabsPage() {
             <AlertDialogTitle className="text-lg">
               {setupLang.confirm_disconnect_title}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {setupLang.confirm_disconnect_desc}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{setupLang.confirm_disconnect_desc}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
@@ -652,11 +604,7 @@ function StreamlabsPage() {
                 setIsConfirmOpen(false);
               }}
             >
-              {isSaving ? (
-                <Spinner className="size-4" />
-              ) : (
-                setupLang.btn_confirm
-              )}
+              {isSaving ? <Spinner className="size-4" /> : setupLang.btn_confirm}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -665,4 +613,16 @@ function StreamlabsPage() {
   );
 }
 
-export default StreamlabsPage;
+export default function StreamlabsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full flex items-center justify-center min-h-100">
+          <Spinner className="size-8 text-foreground/40" />
+        </div>
+      }
+    >
+      <StreamlabsPageContent />
+    </Suspense>
+  );
+}

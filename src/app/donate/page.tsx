@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
@@ -11,16 +12,22 @@ import {
 } from "@phosphor-icons/react";
 import { BuyMeACoffee } from "@thesvg/react";
 import type { DonatePageData } from "@/types/landing.types";
-import PixelSnow from "@/components/effects/pixel-snow";
+import { WidgetErrorBoundary } from "@/components/shared/widget-error-boundary";
 import { Button } from "@/components/ui/button";
+
+const PixelSnow = dynamic(() => import("@/components/effects/pixel-snow"), {
+  ssr: false,
+});
 
 const MotionButton = motion.create(Button);
 const MotionLink = motion.create(Link);
 
 const emptySubscribe = () => () => {};
+const getClientTrue = () => true;
+const getServerFalse = () => false;
 
 export default function DonatePage() {
-  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const mounted = useSyncExternalStore(emptySubscribe, getClientTrue, getServerFalse);
   const isDark = useStore(coreStore, (state) => state.isDark);
   const currentDark = mounted ? isDark : true;
   const lang = useStore(coreStore, (state) => state.lang);
@@ -29,29 +36,31 @@ export default function DonatePage() {
   const [selectedTier, setSelectedTier] = useState(1);
 
   const tiers = t.tiers;
-  const activeTier = tiers[selectedTier];
+  const activeTier = tiers[selectedTier] ?? tiers[0];
 
-  const bmacLabel = activeTier.amount
+  const bmacLabel = activeTier?.amount
     ? t.button_bmac_tier.replace("{amount}", `$${activeTier.amount}`)
     : t.button_bmac;
 
   return (
     <div className="w-full min-h-dvh flex flex-col justify-center items-center px-6 py-32 relative overflow-hidden text-foreground select-none">
       <div className="absolute inset-0 opacity-40 not-dark:opacity-10">
-        <PixelSnow
-          color={currentDark ? "#ffffff" : "#a0a0a0"}
-          flakeSize={0.01}
-          minFlakeSize={1.25}
-          pixelResolution={200}
-          speed={1}
-          density={0.3}
-          direction={125}
-          brightness={1}
-          depthFade={8}
-          farPlane={20}
-          gamma={0.4545}
-          variant="square"
-        />
+        <WidgetErrorBoundary fallback={null}>
+          <PixelSnow
+            color={currentDark ? "#ffffff" : "#a0a0a0"}
+            flakeSize={0.01}
+            minFlakeSize={1.25}
+            pixelResolution={200}
+            speed={1}
+            density={0.3}
+            direction={125}
+            brightness={1}
+            depthFade={8}
+            farPlane={20}
+            gamma={0.4545}
+            variant="square"
+          />
+        </WidgetErrorBoundary>
       </div>
 
       <div

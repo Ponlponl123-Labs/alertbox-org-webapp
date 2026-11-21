@@ -10,7 +10,7 @@ import {
   PencilSimpleIcon,
   UserIcon,
 } from "@phosphor-icons/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "react-smooth-input";
 import { toast } from "@/components/custom-ui/toast";
 import { useStore } from "zustand";
@@ -38,18 +38,36 @@ function Page() {
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
+
+  const revokeObjectUrl = () => {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => revokeObjectUrl();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImageToCrop(reader.result as string);
-        setCropperOpen(true);
-        e.target.value = "";
-      };
-      reader.readAsDataURL(file);
+    e.currentTarget.value = "";
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      toast.error("Only PNG, JPEG, and WebP images are supported");
+      return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be 5 MB or smaller");
+      return;
+    }
+    revokeObjectUrl();
+    const url = URL.createObjectURL(file);
+    objectUrlRef.current = url;
+    setImageToCrop(url);
+    setCropperOpen(true);
   };
 
   const onCropComplete = async (croppedImage: Blob) => {
@@ -165,7 +183,7 @@ function Page() {
               type="file"
               ref={avatarInputRef}
               className="hidden"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp"
               onChange={handleFileChange}
             />
           </div>
@@ -205,7 +223,11 @@ function Page() {
 
       <ImageCropperModal
         open={cropperOpen}
-        onClose={() => setCropperOpen(false)}
+        onClose={() => {
+          setCropperOpen(false);
+          setImageToCrop(null);
+          revokeObjectUrl();
+        }}
         image={imageToCrop}
         onCropComplete={onCropComplete}
         cropShape="round"

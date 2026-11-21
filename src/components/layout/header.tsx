@@ -19,6 +19,25 @@ import CurrentUserChip from '@/components/shared/current-user-chip';
 import { useUserContext } from "@/contexts/user";
 import Image from "next/image";
 
+function subscribeWindowResize(cb: () => void) {
+  let raf: number | null = null;
+  const onResize = () => {
+    if (raf !== null) return;
+    raf = requestAnimationFrame(() => {
+      raf = null;
+      cb();
+    });
+  };
+  window.addEventListener("resize", onResize, { passive: true });
+  return () => {
+    window.removeEventListener("resize", onResize);
+    if (raf !== null) cancelAnimationFrame(raf);
+  };
+}
+
+const getWindowWidth = () => window.innerWidth;
+const getServerWindowWidth = () => 1448;
+
 function Nav({
   classNames,
 }: {
@@ -89,6 +108,7 @@ function NavActions({
       <Link
         href={"https://github.com/Ponlponl123-Labs/alertbox-org"}
         target="_blank"
+        rel="noopener noreferrer"
       >
         <Button
           variant="secondary"
@@ -114,8 +134,9 @@ function NavActions({
 
 function HeaderContent({ pathname }: { pathname: string }) {
   const lang = useStore(coreStore, (state) => state.lang);
-  const [isNavActive, setIsNavActive] = useState(false);
+  const [navOpenedPath, setNavOpenedPath] = useState<string | null>(null);
   const [instantTop, setInstantTop] = useState(false);
+  const isNavActive = navOpenedPath === pathname;
 
   useEffect(() => {
     if (instantTop) {
@@ -126,7 +147,7 @@ function HeaderContent({ pathname }: { pathname: string }) {
 
   const toggleNav = () => {
     setInstantTop(true);
-    setIsNavActive((prev) => !prev);
+    setNavOpenedPath((prev) => (prev === pathname ? null : pathname));
   };
   const { scrollY } = useScroll();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -166,19 +187,10 @@ function HeaderContent({ pathname }: { pathname: string }) {
         : 0;
 
   const windowWidth = useSyncExternalStore(
-    (cb) => {
-      window.addEventListener("resize", cb);
-      return () => window.removeEventListener("resize", cb);
-    },
-    () => window.innerWidth,
-    () => 1448,
+    subscribeWindowResize,
+    getWindowWidth,
+    getServerWindowWidth,
   );
-  const [prevPath, setPrevPath] = useState(pathname);
-  if (prevPath !== pathname) {
-    setPrevPath(pathname);
-    setIsNavActive(false);
-    setInstantTop(true);
-  }
 
   const rootMaxWidth =
     isIndex && isScrolled && windowWidth >= 768 ? 760 : windowWidth;
@@ -272,7 +284,7 @@ function HeaderContent({ pathname }: { pathname: string }) {
                         variant="ghost"
                         size="icon"
                         className="rounded-xl text-foreground/40"
-                        aria-hidden="true"
+                        aria-label="Back to home"
                       >
                         <CaretLeftIcon
                           size={16}
@@ -285,7 +297,7 @@ function HeaderContent({ pathname }: { pathname: string }) {
                       variant="ghost"
                       size="icon"
                       className="rounded-xl md:hidden text-foreground/40"
-                      aria-hidden="true"
+                      aria-label="Toggle sidebar"
                       onClick={() =>
                         setSidebarHiddenOnMobile(!isSidebarHiddenOnMobile)
                       }
@@ -379,7 +391,8 @@ function HeaderContent({ pathname }: { pathname: string }) {
                   "rounded-xl md:hidden",
                   pathname.startsWith("/app") && "hidden",
                 )}
-                aria-hidden="true"
+                aria-label="Toggle navigation menu"
+                aria-expanded={isNavActive}
                 onClick={toggleNav}
               >
                 <ListIcon size={20} weight="bold" />

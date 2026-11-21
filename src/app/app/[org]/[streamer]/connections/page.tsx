@@ -6,8 +6,9 @@ import { useUserContext } from "@/contexts/user";
 import { getApiUrl } from "@/lib/api";
 import { coreStore } from "@/hooks/store/core";
 import { Connections } from "@/types/user.types";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useStore } from "zustand";
+import { Button } from "@/components/ui/button";
 import {
   Stripe,
   BuyMeACoffee,
@@ -109,15 +110,19 @@ function SectionGrid({
   );
 }
 
-function Page() {
-  const [connections, setConnections] = useState<Connections | null>(null);
+function ConnectionsContent() {
+  const [fetchState, setFetchState] = useState<{
+    key: string;
+    data: Connections | null;
+    error: boolean;
+  }>({ key: "", data: null, error: false });
+  const [retryTick, setRetryTick] = useState(0);
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo, logout, authFetch, activeOrg, activeStreamer } =
     useUserContext();
   const searchParams = useSearchParams();
   const routeParams = useParams();
   const selectedTab = searchParams.get("t");
-  const lastFetchedKey = useRef("");
 
   const targetOrg =
     activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
@@ -133,41 +138,68 @@ function Page() {
     OrgPerm.INTEGRATION_MANAGE
   );
 
-  const getProviderEndpoint = (key: string) => {
+  const encodedOrg = targetOrg ? encodeURIComponent(targetOrg) : "";
+  const encodedStreamer = targetStreamer ? encodeURIComponent(targetStreamer) : "";
+  const requestKey = encodedOrg && encodedStreamer ? `${encodedOrg}:${encodedStreamer}:${retryTick}` : "";
+
+  const connections = fetchState.key === requestKey ? fetchState.data : null;
+  const fetchError = fetchState.key === requestKey ? fetchState.error : false;
+
+  const setConnections: React.Dispatch<React.SetStateAction<Connections | null>> = useCallback(
+    (updater) => {
+      setFetchState((prev) => {
+        const current = prev.key === requestKey ? prev.data : null;
+        const next = typeof updater === "function" ? updater(current) : updater;
+        return { key: requestKey, data: next, error: false };
+      });
+    },
+    [requestKey],
+  );
+
+  const getProviderEndpoint = useCallback((key: string) => {
     const providerMap: Record<string, string> = {
       bmac: "buymeacoffee",
       ffp: "feelfreepay",
     };
     const provider = providerMap[key] || key;
-    return `/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/${provider}`;
-  };
+    return `/api/v1/org/${encodedOrg}/streamers/${encodedStreamer}/integration/${provider}`;
+  }, [encodedOrg, encodedStreamer]);
 
   useEffect(() => {
-    if (!userInfo || !targetOrg || !targetStreamer) return;
-    const fetchKey = `${targetOrg}:${targetStreamer}`;
-    if (lastFetchedKey.current === fetchKey) return;
-    lastFetchedKey.current = fetchKey;
+    if (!userInfo || !requestKey) return;
+    const controller = new AbortController();
 
     const endpoint = getApiUrl(
-      `/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration`
+      `/api/v1/org/${encodedOrg}/streamers/${encodedStreamer}/integration`
     );
 
-    authFetch(endpoint)
+    authFetch(endpoint, { signal: controller.signal })
       .then((res) => {
         if (res.status === 401) {
           logout();
           return null;
         }
         if (!res.ok) {
+          if (!controller.signal.aborted) {
+            setFetchState({ key: requestKey, data: null, error: true });
+          }
           return null;
         }
         return res.json();
       })
       .then((data) => {
-        if (data) setConnections(data);
+        if (data && !controller.signal.aborted) {
+          setFetchState({ key: requestKey, data, error: false });
+        }
       })
-      .catch(() => { });
-  }, [logout, userInfo, authFetch, targetOrg, targetStreamer]);
+      .catch((err) => {
+        if ((err as Error)?.name !== "AbortError" && !controller.signal.aborted) {
+          setFetchState({ key: requestKey, data: null, error: true });
+        }
+      });
+
+    return () => controller.abort();
+  }, [logout, userInfo, authFetch, encodedOrg, encodedStreamer, requestKey]);
 
   const paymentProviders: ProviderItem[] = [
     {
@@ -189,7 +221,7 @@ function Page() {
       description: lang.data.app.connections.providers.stripe.description,
       privacy: lang.data.app.connections.providers.stripe.privacy,
       payout: lang.data.app.connections.providers.stripe.payout,
-      isConnected: connections?.stripe ? true : false,
+      isConnected: false,
       key: "stripe-connect",
       soon: true,
     },
@@ -394,9 +426,18 @@ function Page() {
       </div>
 
       <div className="flex min-h-0 w-full flex-1 flex-col gap-2">
-        {!connections && (
+        {!connections && !fetchError && (
           <div className="flex min-h-64 flex-1 items-center justify-center rounded-4xl border-2 border-dashed border-foreground/10 bg-foreground/5 py-12">
             <Spinner className="mx-auto size-6 text-foreground/40" />
+          </div>
+        )}
+
+        {!connections && fetchError && (
+          <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-3 rounded-4xl border-2 border-dashed border-foreground/10 bg-foreground/5 py-12 text-center">
+            <p className="text-xs text-muted-foreground font-sans">Failed to load integrations.</p>
+            <Button variant="secondary" size="sm" onClick={() => setRetryTick((n) => n + 1)}>
+              Retry
+            </Button>
           </div>
         )}
 
@@ -505,4 +546,16 @@ function Page() {
   );
 }
 
-export default Page;
+export default function Page() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-64 flex-1 items-center justify-center py-12">
+          <Spinner className="mx-auto size-6 text-foreground/40" />
+        </div>
+      }
+    >
+      <ConnectionsContent />
+    </Suspense>
+  );
+}

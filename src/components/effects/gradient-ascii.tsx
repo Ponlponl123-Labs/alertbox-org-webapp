@@ -562,7 +562,7 @@ const GradientASCII = ({
       antialias: false,
       depth: false,
       stencil: false,
-      powerPreference: 'high-performance',
+      powerPreference: 'low-power',
     });
     if (!container || !canvas || !gl) return undefined;
 
@@ -760,7 +760,7 @@ const GradientASCII = ({
       const s = settingsRef.current;
       view.width = w;
       view.height = h;
-      view.ratio = Math.min(s.dpr || window.devicePixelRatio || 1, 2);
+      view.ratio = Math.min(s.dpr || window.devicePixelRatio || 1, 1.5);
       canvas.width = Math.max(1, Math.round(view.width * view.ratio));
       canvas.height = Math.max(1, Math.round(view.height * view.ratio));
       sizeTarget(
@@ -778,32 +778,40 @@ const GradientASCII = ({
     };
 
     const updateInput = (dt: number) => {
-      trail.forEach(point => {
-        point.age += dt;
-      });
+      for (let i = 0; i < trail.length; i++) {
+        trail[i].age += dt;
+      }
       while (trail.length && trail[trail.length - 1].age > TRAIL_LIFE) trail.pop();
       for (let i = 0; i < MAX_TRAIL; i++) {
+        const o = i * 4;
         const point = trail[i];
         if (!point) {
-          trailData[i * 4 + 2] = 0;
+          trailData[o + 2] = 0;
           continue;
         }
         const k = 1 - point.age / TRAIL_LIFE;
-        trailData.set([point.x, point.y, k * k, 0], i * 4);
+        trailData[o] = point.x;
+        trailData[o + 1] = point.y;
+        trailData[o + 2] = k * k;
+        trailData[o + 3] = 0;
       }
-      clicks.forEach(click => {
-        click.age += dt;
-      });
+      for (let i = 0; i < clicks.length; i++) {
+        clicks[i].age += dt;
+      }
       while (clicks.length && clicks[clicks.length - 1].age > CLICK_LIFE) clicks.pop();
       for (let i = 0; i < MAX_CLICKS; i++) {
+        const o = i * 4;
         const click = clicks[i];
         if (!click) {
-          clickData[i * 4 + 3] = 0;
+          clickData[o + 3] = 0;
           continue;
         }
         const k = click.age / CLICK_LIFE;
         const envelope = Math.min(1, click.age / 0.08) * (1 - k) * (1 - k);
-        clickData.set([click.x, click.y, click.age, envelope], i * 4);
+        clickData[o] = click.x;
+        clickData[o + 1] = click.y;
+        clickData[o + 2] = click.age;
+        clickData[o + 3] = envelope;
       }
     };
 
@@ -845,9 +853,10 @@ const GradientASCII = ({
     };
 
     const onPointerMove = (event: PointerEvent) => {
-      locate(event);
       const s = settingsRef.current;
-      if (!pointer.inside || !s.mouseInteraction || reduce) return;
+      if (!visible || !s.mouseInteraction || reduce) return;
+      locate(event);
+      if (!pointer.inside) return;
       const head = trail[0];
       const gap = head ? Math.hypot(pointer.x - head.x, pointer.y - head.y) : Infinity;
       if (gap < TRAIL_STEP) return;
@@ -864,9 +873,10 @@ const GradientASCII = ({
     };
 
     const onPointerDown = (event: PointerEvent) => {
-      locate(event);
       const s = settingsRef.current;
-      if (!pointer.inside || !s.clickEffect || reduce) return;
+      if (!visible || !s.clickEffect || reduce) return;
+      locate(event);
+      if (!pointer.inside) return;
       clicks.unshift({ x: pointer.x, y: pointer.y, age: 0 });
       if (clicks.length > MAX_CLICKS) clicks.pop();
       wake();
@@ -893,13 +903,15 @@ const GradientASCII = ({
     window.addEventListener('pointerdown', onPointerDown, { passive: true });
     document.addEventListener('visibilitychange', onVisibility);
     resize();
-    const timers = [50, 150, 300, 600, 1000].map(d => setTimeout(resize, d));
+    const rafInit = requestAnimationFrame(resize);
+    const settleTimer = window.setTimeout(resize, 150);
     wakeRef.current = wake;
 
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
-      timers.forEach(clearTimeout);
+      cancelAnimationFrame(rafInit);
+      window.clearTimeout(settleTimer);
       wakeRef.current = null;
       resizeObserver.disconnect();
       intersection.disconnect();

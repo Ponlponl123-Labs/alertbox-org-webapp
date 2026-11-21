@@ -13,6 +13,7 @@ import ShinyText from "@/components/effects/shiny-text";
 import type { AboutPageData } from "@/types/landing.types";
 import CTABanner from "../index/cta-banner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { WidgetErrorBoundary } from "@/components/shared/widget-error-boundary";
 
 const ShapeWaves = dynamic(() => import("@/components/effects/shape-waves"), {
   ssr: false,
@@ -28,9 +29,11 @@ const fadeInUp = {
 };
 
 const emptySubscribe = () => () => {};
+const getClientTrue = () => true;
+const getServerFalse = () => false;
 
 export default function AboutPage() {
-  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const mounted = useSyncExternalStore(emptySubscribe, getClientTrue, getServerFalse);
   const isDark = useStore(coreStore, (state) => state.isDark);
   const currentDark = mounted ? isDark : true;
   const lang = useStore(coreStore, (state) => state.lang);
@@ -75,39 +78,41 @@ export default function AboutPage() {
           <span className="text-xs sm:text-sm text-foreground/40 mt-3 font-mono">{t.motto}</span>
         </div>
         <div className="w-full flex flex-col items-center justify-center gap-4 min-h-96 lg:min-h-[calc(100dvh-5rem)] rounded-2xl bg-rose-500/10 relative overflow-hidden">
-          <div className="w-full flex justify-center items-center select-none pb-20 md:pb-16 lg:pb-42 -z-10 pointer-events-none">
-            <h1 className="text-[13dvw] md:text-[12dvw] font-medium tracking-tight leading-none text-foreground text-center uppercase font-sans">
+          <div className="w-full flex justify-center items-center select-none pb-20 md:pb-16 lg:pb-42 -z-10 pointer-events-none" aria-hidden="true">
+            <span className="text-[13dvw] md:text-[12dvw] font-medium tracking-tight leading-none text-foreground text-center uppercase font-sans">
               ALERTBOX<span className="text-[6dvw] font-light text-foreground/60">.org</span>
-            </h1>
+            </span>
           </div>
           <div className="absolute inset-0 pointer-events-none">
-            <ShapeWaves
-              className="*:mask-b-from-0 dark:bg-[#101010] bg-[#ededed]"
-              text="❤️ Alertbox.org"
-              fontFamily='Geist, "Geist Sans", system-ui, sans-serif'
-              fontWeight={500}
-              textSize={0.1}
-              shapes="mixed"
-              cellSize={4}
-              dotSize={0.64}
-              color={currentDark ? "#ff1855" : "#300310"}
-              hoverColor="#ffffff"
-              backgroundColor={currentDark ? "#101010" : "#ededed"}
-              speed={1}
-              scale={1}
-              contrast={1}
-              brightness={0.4}
-              flow={0}
-              direction={0}
-              fade={16}
-              interactive
-              splashRadius={40}
-              splashStrength={0.4}
-              glow={0.35}
-              intro
-              introDuration={1.6}
-              paused={false}
-            />
+            <WidgetErrorBoundary fallback={null}>
+              <ShapeWaves
+                className="*:mask-b-from-0 dark:bg-[#101010] bg-[#ededed]"
+                text="❤️ Alertbox.org"
+                fontFamily='Geist, "Geist Sans", system-ui, sans-serif'
+                fontWeight={500}
+                textSize={0.1}
+                shapes="mixed"
+                cellSize={6}
+                dotSize={0.64}
+                color={currentDark ? "#ff1855" : "#300310"}
+                hoverColor="#ffffff"
+                backgroundColor={currentDark ? "#101010" : "#ededed"}
+                speed={1}
+                scale={1}
+                contrast={1}
+                brightness={0.4}
+                flow={0}
+                direction={0}
+                fade={16}
+                interactive={false}
+                splashRadius={40}
+                splashStrength={0.4}
+                glow={0.35}
+                intro
+                introDuration={1.6}
+                paused={false}
+              />
+            </WidgetErrorBoundary>
           </div>
         </div>
       </section>

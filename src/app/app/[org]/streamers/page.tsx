@@ -5,7 +5,7 @@ import { BroadcastIcon, PlusIcon, ArrowSquareOutIcon } from "@phosphor-icons/rea
 import { cn, getFallbackInitial } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
-import { hasPermission } from "@/lib/rbac";
+import { hasPermission, isOrgOwnerOrAdmin } from "@/lib/rbac";
 import { OrgPerm } from "@/consts/permission";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
@@ -17,9 +17,7 @@ export default function OrgStreamersPage() {
   const [isCreatingChannel, setIsCreatingChannel] = useState(false);
   const router = useRouter();
   const orgKey = activeOrg?.slug || activeOrg?.id || "org";
-  const role = (typeof activeOrg?.role === "string" ? activeOrg.role : "").toLowerCase();
-  const isOwner = role === "owner";
-  const isOwnerOrAdmin = isOwner || role === "admin";
+  const isOwnerOrAdmin = isOrgOwnerOrAdmin(activeOrg);
   const streamers = activeOrg?.streamers || [];
   const isEnterprise = activeOrg?.type === "ENTERPRISE";
   const isChannelLimitReached = !isSelfHosted && !isEnterprise && streamers.length >= 1;
@@ -68,11 +66,18 @@ export default function OrgStreamersPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
             {streamers.map((s) => (
-              <Button
+              <div
                 key={s.id}
-                variant={"secondary"}
+                role="button"
+                tabIndex={0}
                 onClick={() => router.push(`/app/${orgKey}/${s.name}`)}
-                className="p-4 rounded-2xl flex flex-col justify-between gap-4 h-max"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    router.push(`/app/${orgKey}/${s.name}`);
+                  }
+                }}
+                className="p-4 rounded-2xl flex flex-col justify-between gap-4 bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3 w-full">
                   <div className="size-12 rounded-lg bg-foreground text-background font-bold text-sm flex items-center justify-center shrink-0">
@@ -108,6 +113,8 @@ export default function OrgStreamersPage() {
                       <Link
                         href={`/@${s.uri}`}
                         target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="text-muted-foreground hover:text-foreground flex items-center gap-1"
                       >
                         <ArrowSquareOutIcon size={14} />
@@ -116,7 +123,7 @@ export default function OrgStreamersPage() {
                     )}
                   </div>
                 </div>
-              </Button>
+              </div>
             ))}
           </div>
         </motion.div>

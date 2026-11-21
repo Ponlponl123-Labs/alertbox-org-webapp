@@ -620,17 +620,28 @@ const TearTicket: React.FC<TearTicketProps> = ({
 
   useEffect(() => {
     if (!tilt || reduce || disabled) return undefined;
+    let cachedRect: DOMRect | null = null;
+    const invalidate = () => {
+      cachedRect = null;
+    };
     const move = (e: globalThis.PointerEvent) => {
       const el = rootRef.current;
-      if (!el || e.pointerType === 'touch' || sim.current.id !== null) return;
-      const r = el.getBoundingClientRect();
+      if (!el || document.hidden || e.pointerType === 'touch' || sim.current.id !== null) return;
+      const r = cachedRect ?? el.getBoundingClientRect();
+      cachedRect = r;
       const nx = clamp((e.clientX - (r.left + r.width / 2)) / (r.width / 2 + tiltReach), -1, 1);
       const ny = clamp((e.clientY - (r.top + r.height / 2)) / (r.height / 2 + tiltReach), -1, 1);
       tiltY.set(nx * tiltMax);
       tiltX.set(-ny * tiltMax);
     };
-    window.addEventListener('pointermove', move);
-    return () => window.removeEventListener('pointermove', move);
+    window.addEventListener('pointermove', move, { passive: true });
+    window.addEventListener('resize', invalidate, { passive: true });
+    window.addEventListener('scroll', invalidate, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('resize', invalidate);
+      window.removeEventListener('scroll', invalidate, { capture: true });
+    };
   }, [tilt, reduce, disabled, tiltMax, tiltReach, tiltX, tiltY]);
 
   return (

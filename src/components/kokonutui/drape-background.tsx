@@ -96,10 +96,17 @@ function createLinks(cols: number, rows: number, rest: number) {
 }
 
 function createCloth(width: number, height: number, pleat: number): Cloth {
-  const rest = Math.max(MIN_CELL, (width * 1.16) / COLUMNS / GATHER);
-  const spacing = rest * GATHER;
-  const cols = Math.ceil((width * 1.16) / spacing) + 1;
-  const rows = Math.ceil((height * 1.12) / rest) + 1;
+  let rest = Math.max(MIN_CELL, (width * 1.16) / COLUMNS / GATHER);
+  let spacing = rest * GATHER;
+  let cols = Math.ceil((width * 1.16) / spacing) + 1;
+  let rows = Math.ceil((height * 1.12) / rest) + 1;
+  if (cols * rows > 65000) {
+    const scale = Math.sqrt((cols * rows) / 65000);
+    rest *= scale;
+    spacing = rest * GATHER;
+    cols = Math.max(2, Math.ceil((width * 1.16) / spacing) + 1);
+    rows = Math.max(2, Math.min(Math.floor(65000 / cols), Math.ceil((height * 1.12) / rest) + 1));
+  }
   const left = (width - (cols - 1) * spacing) / 2;
   const top = -rest * 0.5;
   const count = cols * rows;
@@ -246,9 +253,7 @@ function relax(cloth: Cloth, grab: Forces["grab"]) {
       pos[k] = grab.x;
       pos[k + 1] = grab.y;
     }
-    for (let i = 0; i < cloth.cols; i++) {
-      pos.set(pins.subarray(i * 3, i * 3 + 3), i * 3);
-    }
+    pos.set(pins, 0);
   }
 }
 
@@ -407,7 +412,10 @@ export default function DrapeBackground({
   useEffect(() => {
     const root = rootRef.current;
     const canvas = canvasRef.current;
-    const gl = canvas?.getContext("webgl", { antialias: true });
+    const gl = canvas?.getContext("webgl", {
+      antialias: true,
+      powerPreference: "low-power",
+    });
     const probe = document
       .createElement("canvas")
       .getContext("2d", { willReadFrequently: true });
@@ -440,10 +448,12 @@ export default function DrapeBackground({
     let quiet = 0;
     let visible = true;
     let colorKey = "";
+    let resizeTimer: number | null = null;
 
     const readColors = () => {
-      const lit = getComputedStyle(litRef.current as Element).color;
-      const shade = getComputedStyle(shadeRef.current as Element).color;
+      if (!litRef.current || !shadeRef.current) return false;
+      const lit = getComputedStyle(litRef.current).color;
+      const shade = getComputedStyle(shadeRef.current).color;
       if (`${lit}|${shade}` === colorKey) {
         return false;
       }
@@ -458,7 +468,7 @@ export default function DrapeBackground({
         return;
       }
       writeVertices(cloth, vertices);
-      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, vertices);
       // biome-ignore lint/suspicious/noBitwiseOperators: WebGL clear flags.
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_SHORT, 0);
@@ -466,7 +476,7 @@ export default function DrapeBackground({
 
     const build = () => {
       const rect = canvas.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       width = rect.width;
       height = rect.height;
       if (width < 2 || height < 2) {
@@ -479,8 +489,8 @@ export default function DrapeBackground({
       gl.uniform1f(renderer.uFocal, FOCAL);
       cloth = createCloth(width, height, pleat);
       vertices = new Float32Array(cloth.cols * cloth.rows * 6);
+      gl.bufferData(gl.ARRAY_BUFFER, vertices.byteLength, gl.DYNAMIC_DRAW);
       indexCount = renderer.setMesh(cloth.cols, cloth.rows);
-      // Let it fall and settle before the first frame, so it opens hanging.
       const settleForces = { ...forces, hand: { ...forces.hand, on: false } };
       for (let i = 0; i < 180; i++) {
         settleForces.time = forces.time + i * STEP;
@@ -533,12 +543,15 @@ export default function DrapeBackground({
     start();
 
     const resizeObserver = new ResizeObserver(() => {
-      build();
-      start();
+      if (resizeTimer !== null) window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        resizeTimer = null;
+        build();
+        start();
+      }, 150);
     });
     resizeObserver.observe(canvas);
 
-    // A tab coming back must not wake a background that's scrolled away.
     let onScreen = true;
     const intersection = new IntersectionObserver(([entry]) => {
       onScreen = entry.isIntersecting;
@@ -552,16 +565,16 @@ export default function DrapeBackground({
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    // Follow light and dark mode without asking the app for a theme. Only
-    // checked while the background is on screen.
-    const colorTimer = window.setInterval(() => {
-      if (!visible) {
-        return;
-      }
+    const themeObserver = new MutationObserver(() => {
+      if (!visible) return;
       if (readColors() && !raf) {
         draw();
       }
-    }, 500);
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "style", "data-theme"],
+    });
 
     const local = (event: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
@@ -631,19 +644,20 @@ export default function DrapeBackground({
       delete root.dataset.grabbing;
     };
     if (interactive && !reduceMotion) {
-      root.addEventListener("pointermove", onMove);
-      root.addEventListener("pointerleave", onLeave);
+      root.addEventListener("pointermove", onMove, { passive: true });
+      root.addEventListener("pointerleave", onLeave, { passive: true });
       root.addEventListener("pointerdown", onDown);
-      root.addEventListener("pointerup", onUp);
-      root.addEventListener("pointercancel", onUp);
+      root.addEventListener("pointerup", onUp, { passive: true });
+      root.addEventListener("pointercancel", onUp, { passive: true });
     }
 
     return () => {
       cancelAnimationFrame(raf);
+      if (resizeTimer !== null) window.clearTimeout(resizeTimer);
       resizeObserver.disconnect();
       intersection.disconnect();
+      themeObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
-      window.clearInterval(colorTimer);
       root.removeEventListener("pointermove", onMove);
       root.removeEventListener("pointerleave", onLeave);
       root.removeEventListener("pointerdown", onDown);

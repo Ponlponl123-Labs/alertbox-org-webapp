@@ -1,11 +1,12 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useStore } from "zustand";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { getApiUrl } from "@/lib/api";
+import { isSafeIframeHandle } from "@/lib/security";
 import { Input } from "react-smooth-input";
 import { toast } from "@/components/custom-ui/toast";
 import {
@@ -45,8 +46,8 @@ function BmacPage() {
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo, logout, authFetch, activeOrg, activeStreamer } = useUserContext();
   const routeParams = useParams();
-  const targetOrg = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
-  const targetStreamer = activeStreamer?.id || activeStreamer?.name || (routeParams?.streamer as string);
+  const targetOrg = String((routeParams?.org as string) || activeOrg?.id || activeOrg?.slug || "");
+  const targetStreamer = String((routeParams?.streamer as string) || activeStreamer?.id || activeStreamer?.name || "");
 
   const canManageIntegrations = canAccessStreamer(
     activeOrg,
@@ -72,49 +73,65 @@ function BmacPage() {
     return () => clearTimeout(timer);
   }, [username]);
 
-  const isFetched = useRef(false);
-  const webhookUrl = "https://api.alertbox.org/v1/webhook/buymeacoffee";
+  const webhookUrl = getApiUrl("/v1/webhook/buymeacoffee");
 
   const t = lang.data.app.connections.bmac_setup;
 
-  const connectionsEndpoint = targetOrg && targetStreamer
-    ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration`)
+  const encodedOrg = targetOrg ? encodeURIComponent(targetOrg) : "";
+  const encodedStreamer = targetStreamer ? encodeURIComponent(targetStreamer) : "";
+
+  const connectionsEndpoint = encodedOrg && encodedStreamer
+    ? getApiUrl(`/api/v1/org/${encodedOrg}/streamers/${encodedStreamer}/integration`)
     : "";
-  const bmacEndpoint = targetOrg && targetStreamer
-    ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/buymeacoffee`)
+  const bmacEndpoint = encodedOrg && encodedStreamer
+    ? getApiUrl(`/api/v1/org/${encodedOrg}/streamers/${encodedStreamer}/integration/buymeacoffee`)
     : "";
 
   useEffect(() => {
-    if (isFetched.current || !userInfo || !connectionsEndpoint) return;
-    isFetched.current = true;
-    authFetch(connectionsEndpoint)
+    if (!userInfo || !connectionsEndpoint) return;
+    const controller = new AbortController();
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) {
+        setIsLoading(true);
+        setConnections(null);
+        setUsername("");
+        setDebouncedUsername("");
+        setSecret("");
+        setStep(0);
+      }
+    });
+
+    authFetch(connectionsEndpoint, { signal: controller.signal })
       .then((res) => {
         if (res.status === 401) {
           logout();
-          return;
+          return null;
         }
         if (res.ok) return res.json();
         throw new Error("Failed to fetch connections");
       })
-      .then((data: Connections) => {
+      .then((data: Connections | null) => {
+        if (!data || controller.signal.aborted) return;
         setConnections(data);
         if (data.bmac) {
           setUsername(data.bmac.username || "");
+          setDebouncedUsername((data.bmac.username || "").trim());
           setSecret(data.bmac.secret || "");
           if (data.bmac.username) setStep(4);
           if (data.bmac.secret) setStep(5);
         }
       })
-      .catch(() => {
-        // ignore
-      })
+      .catch(() => { })
       .finally(() => {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       });
+
+    return () => controller.abort();
   }, [logout, userInfo, authFetch, connectionsEndpoint]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canManageIntegrations || isSaving || !bmacEndpoint) return;
     if (!username.trim() || !secret.trim()) {
       toast.error(t.error_fields);
       return;
@@ -155,6 +172,7 @@ function BmacPage() {
   };
 
   const handleDisconnect = async () => {
+    if (!canManageIntegrations || isSaving || !bmacEndpoint) return;
     setIsSaving(true);
 
     try {
@@ -233,6 +251,7 @@ function BmacPage() {
                         <Link
                           href="https://studio.buymeacoffee.com/webhooks"
                           target="_blank"
+                          rel="noopener noreferrer"
                           className="text-indigo-400 hover:underline"
                         >
                           {t.step1_desc_link}
@@ -240,7 +259,7 @@ function BmacPage() {
                         {t.step1_desc_suffix}
                       </span>
                       <div className="flex items-center mt-3 gap-1">
-                        <Link href="https://studio.buymeacoffee.com/webhooks" target="_blank">
+                        <Link href="https://studio.buymeacoffee.com/webhooks" target="_blank" rel="noopener noreferrer">
                           <AnimateIcon animateOnHover>
                             <Button variant="default" className="rounded-xl h-max p-3 font-semibold">
                               <SquareArrowOutUpRight />
@@ -508,18 +527,24 @@ function BmacPage() {
           <span className="px-3 py-1 font-semibold text-muted-foreground select-none text-sm">Live Preview</span>
           <div className="flex items-center justify-center border-2 border-muted rounded-2xl bg-card overflow-hidden">
             {
-              debouncedUsername.length >= 3 ? (
+              debouncedUsername.length >= 3 && isSafeIframeHandle(debouncedUsername) ? (
                 <iframe
                   className="w-96 h-172 border-0 rounded-sm bg-white scale-75 pointer-events-none"
                   tabIndex={-1}
-                  src={`https://www.buymeacoffee.com/widget/page/${debouncedUsername}`}
+                  src={`https://buymeacoffee.com/widget/page/${encodeURIComponent(debouncedUsername)}`}
                   title="Buy Me a Coffee"
+                  sandbox="allow-scripts allow-forms allow-same-origin"
+                  referrerPolicy="strict-origin-when-cross-origin"
                   style={{ colorScheme: "light", scrollbarWidth: "thin" }}
                   loading="lazy"
                 />
               ) : (
                 <div className="w-96 h-172 bg-foreground/10 rounded-sm scale-75 flex items-center justify-center text-xs text-muted-foreground select-none">
-                  {username.trim().length > 0 ? "Loading preview..." : "Enter username to preview"}
+                  {username.trim().length > 0 && !isSafeIframeHandle(username.trim())
+                    ? "Invalid username format"
+                    : username.trim().length > 0
+                      ? "Loading preview..."
+                      : "Enter username to preview"}
                 </div>
               )
             }

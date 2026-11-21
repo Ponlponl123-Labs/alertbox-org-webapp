@@ -11,10 +11,10 @@ export default function OrgLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!orgParam || !organizations.length) return;
-    const targetOrg = organizations.find((o) => o.id === orgParam || o.slug === orgParam);
+    const targetOrg = organizations.find((o) => String(o.id) === orgParam || o.slug === orgParam);
     if (targetOrg) {
-      if (targetOrg.id !== orgStore.getState().activeOrgId) {
-        orgStore.getState().setActiveOrgId(targetOrg.id);
+      if (String(targetOrg.id) !== String(orgStore.getState().activeOrgId)) {
+        orgStore.getState().setActiveOrgId(String(targetOrg.id));
       }
       if (!streamerParam) {
         orgStore.getState().setOrgMode(true);

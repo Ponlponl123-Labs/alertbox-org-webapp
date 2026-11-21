@@ -29,16 +29,19 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
   const orgSlug = demo ? "" : activeOrg?.slug || activeOrg?.id || "org";
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const [hasScrollContainer, setHasScrollContainer] = useState(false);
 
   useIsomorphicLayoutEffect(() => {
     if (rootRef.current) {
-      setScrollContainer(rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]'));
+      const container = rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]');
+      scrollContainerRef.current = container;
+      setHasScrollContainer(Boolean(container));
     }
   }, []);
 
   const { scrollY } = useScroll({
-    container: scrollContainer ? { current: scrollContainer } : undefined,
+    container: hasScrollContainer ? scrollContainerRef : undefined,
   });
 
   const bannerY = useTransform(scrollY, [0, 300], [0, 95]);
@@ -46,13 +49,8 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
   const bannerOpacity = useTransform(scrollY, [0, 260], [1, 0.35]);
 
   const bannerUrl = demo ? "" : activeOrg?.banner;
-  const [isBannerLoaded, setIsBannerLoaded] = useState(false);
-  const [prevBannerUrl, setPrevBannerUrl] = useState(bannerUrl);
-
-  if (prevBannerUrl !== bannerUrl) {
-    setPrevBannerUrl(bannerUrl);
-    setIsBannerLoaded(false);
-  }
+  const [loadedBannerUrl, setLoadedBannerUrl] = useState<string | null>(null);
+  const isBannerLoaded = Boolean(bannerUrl && loadedBannerUrl === bannerUrl);
 
   return (
     <div
@@ -81,7 +79,7 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
                 className="w-full min-h-80 object-cover select-none"
                 width={720}
                 height={288}
-                onLoad={() => setIsBannerLoaded(true)}
+                onLoad={() => setLoadedBannerUrl(bannerUrl)}
                 unoptimized
               />
             </motion.div>
@@ -156,11 +154,13 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
         <div className="flex flex-col gap-3 w-full mx-auto max-w-384 px-12 pb-12 mt-6">
           <div className="flex items-center justify-between bg-card rounded-xl p-5">
             <div className="flex flex-col gap-1">
-              <h2 className="text-xl font-medium">Members</h2>
+              <h2 className="text-xl font-medium">Channels</h2>
               <div className="flex font-medium items-center gap-2">
-                <p className="text-sm text-muted-foreground font-baijamjuree">Team Avengers</p>
+                <p className="text-sm text-muted-foreground font-baijamjuree">{activeOrg?.name || "Organization"}</p>
                 <p className="text-sm text-muted-foreground font-baijamjuree">•</p>
-                <p className="text-sm text-muted-foreground font-baijamjuree">{streamers.length} Members</p>
+                <p className="text-sm text-muted-foreground font-baijamjuree">
+                  {streamers.length} {streamers.length === 1 ? "Channel" : "Channels"}
+                </p>
               </div>
             </div>
             <Link

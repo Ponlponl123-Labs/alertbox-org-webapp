@@ -31,7 +31,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { hasPermission } from "@/lib/rbac";
+import {
+  canDelegateRolePreset,
+  canManageTargetMember,
+  getCallerPermMask,
+  hasPermission,
+  isOrgOwner,
+  isOrgOwnerOrAdmin,
+} from "@/lib/rbac";
+import { isSafePathSegment, safeParseBigInt } from "@/lib/security";
 import { OrgPerm, RolePresets } from "@/consts/permission";
 import {
   Dialog,
@@ -72,14 +80,14 @@ export default function OrgMembersPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const isOwner = activeOrg?.role === "OWNER";
-  const isOwnerOrAdmin = isOwner || activeOrg?.role === "ADMIN";
+  const isOwner = isOrgOwner(activeOrg);
+  const isOwnerOrAdmin = isOrgOwnerOrAdmin(activeOrg);
   const canAddMembers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBER_ADD);
   const canModifyMembers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBER_MODIFY);
   const canRemoveMembers = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_MEMBER_REMOVE);
   const canManageRoles = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.ORG_ROLES_MANAGE);
   const canEditStaff = canManageRoles || canModifyMembers;
-  const callerPerms = isOwner ? OrgPerm.ALL : BigInt(activeOrg?.permissions || "0");
+  const callerPerms = getCallerPermMask(activeOrg);
 
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteStep, setInviteStep] = useState<1 | 2>(1);
@@ -106,27 +114,40 @@ export default function OrgMembersPage() {
   const [deletingMember, setDeletingMember] = useState<OrgMemberData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const orgTarget = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
+  const rawOrgTarget = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
+  const orgTarget = isSafePathSegment(rawOrgTarget) ? rawOrgTarget : "";
   const streamers = activeOrg?.streamers || [];
+  const membersAbortRef = React.useRef<AbortController | null>(null);
 
   const fetchMembers = useCallback(() => {
     if (!orgTarget) return;
-    authFetch(getApiUrl(`/api/v1/org/${orgTarget}/members`))
+    membersAbortRef.current?.abort();
+    const controller = new AbortController();
+    membersAbortRef.current = controller;
+
+    authFetch(getApiUrl(`/api/v1/org/${encodeURIComponent(orgTarget)}/members`), {
+      signal: controller.signal,
+    })
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
-        setMembers(data);
+        if (!controller.signal.aborted && Array.isArray(data)) {
+          setMembers(data);
+        }
       })
       .catch((err) => {
-        if (err?.name === "AbortError") return;
+        if ((err as Error)?.name === "AbortError") return;
         toast.error("Failed to load organization members");
       })
       .finally(() => {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       });
   }, [orgTarget, authFetch]);
 
   useEffect(() => {
     fetchMembers();
+    return () => {
+      membersAbortRef.current?.abort();
+    };
   }, [fetchMembers]);
 
   const openManageDialog = (m: OrgMemberData) => {
@@ -142,21 +163,14 @@ export default function OrgMembersPage() {
       toast.error("Organization Owner cannot be modified here. Ownership must be transferred from Organization Settings.");
       return;
     }
-    if (!isOwner) {
-      if (m.role === "ADMIN" && activeOrg?.role !== "ADMIN") {
-        toast.error("You cannot modify an Administrator member.");
-        return;
-      }
-      const targetPerms = BigInt(m.permissions || "0");
-      if ((targetPerms & ~callerPerms) !== BigInt(0)) {
-        toast.error("You cannot manage this member because their permissions exceed your own.");
-        return;
-      }
+    if (!canManageTargetMember(activeOrg, m)) {
+      toast.error("You cannot manage this member because their permissions exceed your own.");
+      return;
     }
     setManagingMember(m);
     setDialogTab("org");
     setDialogRole(m.role);
-    setDialogPerms(BigInt(m.permissions || "0"));
+    setDialogPerms(safeParseBigInt(m.permissions, BigInt(0)));
     if (m.role === "ADMIN") {
       setDialogAssignments(
         streamers.map((s) => ({
@@ -252,13 +266,17 @@ export default function OrgMembersPage() {
   };
 
   const handleSavePermissions = async () => {
-    if (!managingMember || !orgTarget) return;
+    if (!managingMember || !orgTarget || isSavingPermissions || !canEditStaff) return;
     const isSelf = Boolean(
       (userInfo?.id && managingMember.userId === userInfo.id) ||
       (userInfo?.email && managingMember.email.toLowerCase() === userInfo.email.toLowerCase())
     );
     if (isSelf) {
       toast.error("You cannot modify your own role or permissions.");
+      return;
+    }
+    if (!canManageTargetMember(activeOrg, managingMember)) {
+      toast.error("Cannot modify a member with equal or higher privileges.");
       return;
     }
     if (!isOwner && (dialogPerms & ~callerPerms) !== BigInt(0)) {
@@ -329,7 +347,7 @@ export default function OrgMembersPage() {
   const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = inviteEmail.trim().toLowerCase();
-    if (!cleanEmail || !orgTarget) return;
+    if (!cleanEmail || !orgTarget || isCheckingEmail || !canAddMembers) return;
 
     setIsCheckingEmail(true);
     try {
@@ -356,7 +374,11 @@ export default function OrgMembersPage() {
 
   const handleInvite = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!inviteEmail.trim() || !orgTarget) return;
+    if (!inviteEmail.trim() || !orgTarget || isInviting || !canAddMembers) return;
+    if (!canDelegateRolePreset(activeOrg, inviteRole)) {
+      toast.error("You cannot invite a member with a role exceeding your permissions.");
+      return;
+    }
     setIsInviting(true);
 
     try {
@@ -399,13 +421,17 @@ export default function OrgMembersPage() {
   };
 
   const handleRemoveMember = async () => {
-    if (!deletingMember || !orgTarget) return;
+    if (!deletingMember || !orgTarget || isDeleting || !canRemoveMembers) return;
     const isSelf = Boolean(
       (userInfo?.id && deletingMember.userId === userInfo.id) ||
       (userInfo?.email && deletingMember.email.toLowerCase() === userInfo.email.toLowerCase())
     );
     if (isSelf) {
       toast.error("You cannot remove yourself here. Use organization settings to leave.");
+      return;
+    }
+    if (!canManageTargetMember(activeOrg, deletingMember)) {
+      toast.error("You cannot remove a member whose permissions exceed your own.");
       return;
     }
     setIsDeleting(true);
@@ -579,7 +605,7 @@ export default function OrgMembersPage() {
                 );
                 const isTargetAboveCaller = !isOwner && (
                   (m.role === "ADMIN" && activeOrg?.role !== "ADMIN") ||
-                  ((BigInt(m.permissions || "0") & ~callerPerms) !== BigInt(0))
+                  ((safeParseBigInt(m.permissions) & ~callerPerms) !== BigInt(0))
                 );
 
                 return (
@@ -748,7 +774,7 @@ export default function OrgMembersPage() {
                               <CopySimpleIcon size={14} weight="bold" className="text-muted-foreground" />
                               <span>Copy Email</span>
                             </button>
-                            {canRemoveMembers && m.role !== "OWNER" && !isSelf && (
+                            {canRemoveMembers && m.role !== "OWNER" && !isSelf && canManageTargetMember(activeOrg, m) && (
                               <>
                                 <div className="h-px bg-border my-1 -mx-0.5" />
                                 <button
@@ -929,11 +955,13 @@ export default function OrgMembersPage() {
                                   </div>
                                   <span className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{p.desc}</span>
                                 </div>
-                                <Switch
-                                  checked={isGranted}
-                                  onCheckedChange={() => !isLocked && toggleOrgPermBit(p.bit)}
-                                  disabled={dialogRole === "OWNER" || isLocked}
-                                />
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <Switch
+                                    checked={isGranted}
+                                    onCheckedChange={() => !isLocked && toggleOrgPermBit(p.bit)}
+                                    disabled={dialogRole === "OWNER" || isLocked}
+                                  />
+                                </div>
                               </div>
                             );
                           })}
@@ -1306,17 +1334,24 @@ export default function OrgMembersPage() {
                         <div className="flex flex-col gap-1">
                           {INVITE_ROLES.map((r) => {
                             const isSelected = r.value === inviteRole;
+                            const isLocked = !canDelegateRolePreset(activeOrg, r.value);
                             return (
                               <button
                                 key={r.value}
                                 type="button"
+                                disabled={isLocked}
                                 onClick={() => {
+                                  if (isLocked) return;
                                   setInviteRole(r.value);
                                   setIsRolePopoverOpen(false);
                                 }}
                                 className={cn(
-                                  "flex items-start justify-between gap-3 p-2.5 rounded-xl text-left transition-all cursor-pointer",
-                                  isSelected ? "bg-primary/10 text-primary" : "hover:bg-muted/60 text-foreground",
+                                  "flex items-start justify-between gap-3 p-2.5 rounded-xl text-left transition-all",
+                                  isLocked
+                                    ? "opacity-45 cursor-not-allowed text-muted-foreground"
+                                    : isSelected
+                                      ? "bg-primary/10 text-primary cursor-pointer"
+                                      : "hover:bg-muted/60 text-foreground cursor-pointer",
                                 )}
                               >
                                 <div className="flex flex-col min-w-0">
@@ -1325,14 +1360,14 @@ export default function OrgMembersPage() {
                                       {r.label}
                                     </span>
                                     <span className={cn("px-1.5 py-0.2 rounded text-[10px] font-medium border capitalize", r.badgeStyle)}>
-                                      {r.label}
+                                      {isLocked ? "Locked" : r.label}
                                     </span>
                                   </div>
                                   <span className="text-[11px] text-muted-foreground leading-tight mt-0.5">
                                     {r.desc}
                                   </span>
                                 </div>
-                                {isSelected && (
+                                {isSelected && !isLocked && (
                                   <CheckIcon size={16} weight="bold" className="text-primary shrink-0 mt-0.5" />
                                 )}
                               </button>
@@ -1392,11 +1427,15 @@ export default function OrgMembersPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(createdInviteCode.code);
-                    setIsCopied(true);
-                    toast.success("Code copied to clipboard!");
-                    setTimeout(() => setIsCopied(false), 2000);
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(createdInviteCode.code);
+                      setIsCopied(true);
+                      toast.success("Code copied to clipboard!");
+                      setTimeout(() => setIsCopied(false), 2000);
+                    } catch {
+                      toast.error("Failed to copy code");
+                    }
                   }}
                   className="rounded-xl p-2 h-max text-xs font-semibold gap-2"
                 >

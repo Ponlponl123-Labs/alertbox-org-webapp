@@ -6,8 +6,7 @@ import { motion } from "motion/react"
 import * as RechartsPrimitive from "recharts"
 import type { TooltipValueType } from "recharts"
 
-// Format: { THEME_NAME: CSS_SELECTOR }
-const THEMES = { light: "", dark: ".dark" } as const
+type ChartThemeName = "light" | "dark"
 
 const INITIAL_DIMENSION = { width: 320, height: 200 } as const
 type TooltipNameType = number | string
@@ -19,7 +18,7 @@ export type ChartConfig = Record<
     icon?: React.ComponentType
   } & (
     | { color?: string; theme?: never }
-    | { color?: never; theme: Record<keyof typeof THEMES, string> }
+    | { color?: never; theme: Record<ChartThemeName, string> }
   )
 >
 
@@ -39,12 +38,17 @@ function useChart() {
   return context
 }
 
+const SAFE_CSS_KEY_RE = /^[a-zA-Z0-9_-]{1,64}$/
+const SAFE_CSS_COLOR_RE =
+  /^(#[0-9a-fA-F]{3,8}|(rgb|rgba|hsl|hsla|oklch|oklab)\([0-9a-zA-Z.,%\s/-]+\)|var\(--[a-zA-Z0-9_-]+\)|[a-zA-Z]{3,20})$/
+
 function ChartContainer({
   id,
   className,
   children,
   config,
   initialDimension = INITIAL_DIMENSION,
+  style,
   ...props
 }: React.ComponentProps<"div"> & {
   config: ChartConfig
@@ -57,20 +61,35 @@ function ChartContainer({
   }
 }) {
   const uniqueId = React.useId()
-  const chartId = `chart-${id ?? uniqueId.replace(/:/g, "")}`
+  const rawId = `chart-${id ?? uniqueId.replace(/:/g, "")}`
+  const chartId = SAFE_CSS_KEY_RE.test(rawId) ? rawId : `chart-${uniqueId.replace(/[^a-zA-Z0-9_-]/g, "")}`
+
+  const cssVars = React.useMemo(() => {
+    const vars: Record<string, string> = {}
+    for (const [key, itemConfig] of Object.entries(config)) {
+      if (!SAFE_CSS_KEY_RE.test(key)) continue
+      const color = itemConfig.color ?? itemConfig.theme?.light ?? itemConfig.theme?.dark
+      if (color && SAFE_CSS_COLOR_RE.test(color.trim())) {
+        vars[`--color-${key}`] = color.trim()
+      }
+    }
+    return vars
+  }, [config])
+
+  const contextValue = React.useMemo(() => ({ config }), [config])
 
   return (
-    <ChartContext.Provider value={{ config }}>
+    <ChartContext.Provider value={contextValue}>
       <div
         data-slot="chart"
         data-chart={chartId}
+        style={{ ...cssVars, ...style } as React.CSSProperties}
         className={cn(
           "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
           className
         )}
         {...props}
       >
-        <ChartStyle id={chartId} config={config} />
         <RechartsPrimitive.ResponsiveContainer
           initialDimension={initialDimension ?? { width: 320, height: 200 }}
           minWidth={0}
@@ -83,37 +102,10 @@ function ChartContainer({
   )
 }
 
-const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme ?? config.color
-  )
-
-  if (!colorConfig.length) {
-    return null
-  }
-
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ??
-      itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
-  })
-  .join("\n")}
-}
-`
-          )
-          .join("\n"),
-      }}
-    />
-  )
+const ChartStyle = ({ id: _id, config: _config }: { id: string; config: ChartConfig }) => {
+  void _id
+  void _config
+  return null
 }
 
 const ChartTooltip = RechartsPrimitive.Tooltip
@@ -366,7 +358,7 @@ function getPayloadConfigFromPayload(
     ] as string
   }
 
-  return configLabelKey in config ? config[configLabelKey] : config[key]
+  return Object.hasOwn(config, configLabelKey) ? config[configLabelKey] : config[key]
 }
 
 export {

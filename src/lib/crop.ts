@@ -1,3 +1,6 @@
+const MAX_DECODE_DIMENSION = 2048;
+const MAX_OUTPUT_DIMENSION = 1600;
+
 export const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -25,48 +28,67 @@ export default async function getCroppedImg(
   imageSrc: string,
   pixelCrop: { x: number; y: number; width: number; height: number },
   rotation = 0,
-  flip = { horizontal: false, vertical: false }
+  flip = { horizontal: false, vertical: false },
 ): Promise<Blob | null> {
-  const image = await createImage(imageSrc);
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  if (pixelCrop.width <= 0 || pixelCrop.height <= 0) return null;
 
-  if (!ctx) {
-    return null;
-  }
+  const image = await createImage(imageSrc);
+  const srcWidth = image.naturalWidth || image.width;
+  const srcHeight = image.naturalHeight || image.height;
+  if (srcWidth <= 0 || srcHeight <= 0) return null;
 
   const rotRad = getRadianAngle(rotation);
-  const { width: bBoxWidth, height: bBoxHeight } = rotateSize(
-    image.width,
-    image.height,
-    rotation
+  const { width: rawBBoxW, height: rawBBoxH } = rotateSize(srcWidth, srcHeight, rotation);
+
+  const decodeScale = Math.min(
+    1,
+    MAX_DECODE_DIMENSION / Math.max(1, rawBBoxW, rawBBoxH),
   );
+  const scaledBBoxW = Math.max(1, Math.round(rawBBoxW * decodeScale));
+  const scaledBBoxH = Math.max(1, Math.round(rawBBoxH * decodeScale));
+  const scaledImgW = srcWidth * decodeScale;
+  const scaledImgH = srcHeight * decodeScale;
 
-  canvas.width = bBoxWidth;
-  canvas.height = bBoxHeight;
+  const workCanvas = document.createElement("canvas");
+  const outCanvas = document.createElement("canvas");
 
-  ctx.translate(bBoxWidth / 2, bBoxHeight / 2);
-  ctx.rotate(rotRad);
-  ctx.scale(flip.horizontal ? -1 : 1, flip.vertical ? -1 : 1);
-  ctx.translate(-image.width / 2, -image.height / 2);
+  try {
+    workCanvas.width = scaledBBoxW;
+    workCanvas.height = scaledBBoxH;
+    const workCtx = workCanvas.getContext("2d");
+    if (!workCtx) return null;
 
-  ctx.drawImage(image, 0, 0);
+    workCtx.translate(scaledBBoxW / 2, scaledBBoxH / 2);
+    workCtx.rotate(rotRad);
+    workCtx.scale(flip.horizontal ? -1 : 1, flip.vertical ? -1 : 1);
+    workCtx.translate(-scaledImgW / 2, -scaledImgH / 2);
+    workCtx.drawImage(image, 0, 0, scaledImgW, scaledImgH);
 
-  const data = ctx.getImageData(
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height
-  );
+    const sx = Math.max(0, Math.round(pixelCrop.x * decodeScale));
+    const sy = Math.max(0, Math.round(pixelCrop.y * decodeScale));
+    const sw = Math.max(1, Math.min(scaledBBoxW - sx, Math.round(pixelCrop.width * decodeScale)));
+    const sh = Math.max(1, Math.min(scaledBBoxH - sy, Math.round(pixelCrop.height * decodeScale)));
 
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+    const outScale = Math.min(1, MAX_OUTPUT_DIMENSION / Math.max(1, sw, sh));
+    const outW = Math.max(1, Math.round(sw * outScale));
+    const outH = Math.max(1, Math.round(sh * outScale));
 
-  ctx.putImageData(data, 0, 0);
+    outCanvas.width = outW;
+    outCanvas.height = outH;
+    const outCtx = outCanvas.getContext("2d");
+    if (!outCtx) return null;
 
-  return new Promise((resolve) => {
-    canvas.toBlob((file) => {
-      resolve(file);
-    }, "image/webp");
-  });
+    outCtx.imageSmoothingEnabled = true;
+    outCtx.imageSmoothingQuality = "high";
+    outCtx.drawImage(workCanvas, sx, sy, sw, sh, 0, 0, outW, outH);
+
+    return await new Promise<Blob | null>((resolve) => {
+      outCanvas.toBlob((file) => resolve(file), "image/webp", 0.9);
+    });
+  } finally {
+    workCanvas.width = 0;
+    workCanvas.height = 0;
+    outCanvas.width = 0;
+    outCanvas.height = 0;
+  }
 }

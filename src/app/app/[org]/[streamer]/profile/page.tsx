@@ -44,7 +44,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { hasPermission, canAccessStreamer } from "@/lib/rbac";
+import { hasPermission, canAccessStreamer, isOrgOwnerOrAdmin } from "@/lib/rbac";
 import { OrgPerm, StreamerPerm } from "@/consts/permission";
 import { AnimatePresence, motion } from "motion/react";
 import { PencilEdit02 } from "@/components/animate-ui/icons/hugeicons/pencil-edit-02";
@@ -56,11 +56,14 @@ import HoldButton from "@/components/HoldButton";
 import { Shrink } from "@/components/animate-ui/icons/hugeicons/shrink";
 import { Expand } from "@/components/animate-ui/icons/hugeicons/expand";
 
+const noopSubscribe = () => () => {};
+const getServerCooldown = () => false;
+
 function useUriCooldown(cooldownDateStr?: string | null): boolean {
   return React.useSyncExternalStore(
-    () => () => { },
+    noopSubscribe,
     () => Boolean(cooldownDateStr && new Date(cooldownDateStr).getTime() > Date.now()),
-    () => false,
+    getServerCooldown,
   );
 }
 
@@ -113,14 +116,21 @@ function Page() {
     }
   }, [currentStreamer]);
 
+  const isOwnerOrAdmin = isOrgOwnerOrAdmin(activeOrg);
+  const canEditProfile = canAccessStreamer(activeOrg, currentStreamer, StreamerPerm.STREAMER_MANAGE, OrgPerm.STREAMER_MANAGE);
+  const canDeleteStreamer = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.STREAMER_DELETE);
+
+  const encodedOrg = targetOrg ? encodeURIComponent(targetOrg) : "";
+  const encodedStreamerName = currentStreamer?.name ? encodeURIComponent(currentStreamer.name) : "";
+
   const streamerPatchEndpoint =
-    targetOrg && currentStreamer?.name
-      ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${currentStreamer.name}`)
+    encodedOrg && encodedStreamerName
+      ? getApiUrl(`/api/v1/org/${encodedOrg}/streamers/${encodedStreamerName}`)
       : "";
 
   const streamerPublishEndpoint =
-    targetOrg && currentStreamer?.name
-      ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${currentStreamer.name}/publish`)
+    encodedOrg && encodedStreamerName
+      ? getApiUrl(`/api/v1/org/${encodedOrg}/streamers/${encodedStreamerName}/publish`)
       : "";
 
   const handleSocialChange = (
@@ -133,7 +143,7 @@ function Page() {
   };
 
   const handleSaveSocials = async () => {
-    if (!streamerPatchEndpoint || !currentStreamer) return;
+    if (!canEditProfile || !streamerPatchEndpoint || !currentStreamer || isSavingSocials) return;
     setIsSavingSocials(true);
     try {
       const res = await authFetch(streamerPatchEndpoint, {
@@ -163,7 +173,7 @@ function Page() {
   };
 
   const handleSaveAccentColor = async () => {
-    if (!streamerPatchEndpoint || !currentStreamer) return;
+    if (!canEditProfile || !streamerPatchEndpoint || !currentStreamer || isSavingColor) return;
     setIsSavingColor(true);
     try {
       const numericColor = hexColorToNumber(accentColor);
@@ -186,11 +196,10 @@ function Page() {
     }
   };
 
-
   const isUriCooldown = useUriCooldown(currentStreamer?.uriCooldownEnd);
 
   const handlePublish = async () => {
-    if (!streamerPublishEndpoint || !currentStreamer) return;
+    if (!canEditProfile || !streamerPublishEndpoint || !currentStreamer || isSubmitting) return;
     setIsSubmitting(true);
     try {
       const res = await authFetch(streamerPublishEndpoint, { method: "POST" });
@@ -206,7 +215,7 @@ function Page() {
   };
 
   const handleUnpublish = async () => {
-    if (!streamerPublishEndpoint || !currentStreamer) return;
+    if (!canEditProfile || !streamerPublishEndpoint || !currentStreamer || isSubmitting) return;
     setIsSubmitting(true);
     try {
       const res = await authFetch(streamerPublishEndpoint, { method: "DELETE" });
@@ -222,11 +231,11 @@ function Page() {
   };
 
   const handleDeleteStreamer = async () => {
-    if (!targetOrg || !currentStreamer || confirmHandle !== currentStreamer.name) return;
+    if (!canDeleteStreamer || !encodedOrg || !currentStreamer || isDeleting || confirmHandle !== currentStreamer.name) return;
     setIsDeleting(true);
     try {
       const res = await authFetch(
-        getApiUrl(`/api/v1/org/${targetOrg}/streamers/${currentStreamer.name}`),
+        getApiUrl(`/api/v1/org/${encodedOrg}/streamers/${encodedStreamerName}`),
         { method: "DELETE" },
       );
       if (res.ok) {
@@ -244,12 +253,6 @@ function Page() {
       setIsDeleting(false);
     }
   };
-
-  const role = (typeof activeOrg?.role === "string" ? activeOrg.role : "").toLowerCase();
-  const isOwner = role === "owner";
-  const isOwnerOrAdmin = isOwner || role === "admin";
-  const canEditProfile = canAccessStreamer(activeOrg, currentStreamer, StreamerPerm.STREAMER_MANAGE, OrgPerm.STREAMER_MANAGE);
-  const canDeleteStreamer = isOwnerOrAdmin || hasPermission(activeOrg?.permissions, OrgPerm.STREAMER_DELETE);
 
   return (
     <>
@@ -272,6 +275,7 @@ function Page() {
                       href={`/@${currentStreamer.uri}`}
                       className="text-blue-500 hover:underline"
                       target="_blank"
+                      rel="noopener noreferrer"
                     >
                       tip-to.me/@{currentStreamer.uri}
                       <ArrowUpRightIcon className="inline ml-px" weight="bold" size={12} />
@@ -477,8 +481,9 @@ function Page() {
             </Accordion>
           </div>
 
-          <AnimatePresence key={isExpanded ? "expanded" : "collapsed"} mode="wait">
+          <AnimatePresence mode="wait">
             <motion.div
+              key={isExpanded ? "expanded" : "collapsed"}
               layoutId="live-preview"
               initial={{
                 position: 'relative',
@@ -575,7 +580,7 @@ function Page() {
               className="w-full"
               classNames={{ base: "h-10 rounded-xl mt-2" }}
             />
-            <span className="text-xs text-destructive select-none font-sans">This action cannot be undo.</span>
+            <span className="text-xs text-destructive select-none font-sans">This action cannot be undone.</span>
           </div>
 
           <DialogFooter className="mt-5 gap-2">

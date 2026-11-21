@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
 import { cn, getFallbackInitial } from "@/lib/utils";
+import { isOrgOwnerOrAdmin } from "@/lib/rbac";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { GalleryVerticalEnd, Plus, Check, KeyRound } from "lucide-react";
 import { ChevronUpDown } from "@/components/animate-ui/icons/chevron-up-down";
@@ -40,26 +41,34 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
-        const num = parseInt(e.key, 10);
-        const { organizations: orgs, activeOrg: currentOrg } = stateRef.current;
-        if (!isNaN(num) && num >= 1 && num <= orgs.length) {
-          e.preventDefault();
-          const targetOrg = orgs[num - 1];
-          if (targetOrg && targetOrg.id !== currentOrg?.id) {
-            setActiveOrgId(targetOrg.id);
-            const orgKey = targetOrg.slug || targetOrg.id;
-            const isOwnerOrAdmin = targetOrg.role === "OWNER" || targetOrg.role === "ADMIN";
-            if (isOwnerOrAdmin) {
-              setActiveStreamerId("org");
-              router.push(`/app/${orgKey}`);
-            } else if (targetOrg.streamers?.[0]) {
-              setActiveStreamerId(targetOrg.streamers[0].id);
-              const streamerKey = targetOrg.streamers[0].name || targetOrg.streamers[0].id;
-              router.push(`/app/${orgKey}/${streamerKey}`);
-            } else {
-              router.push(`/app/${orgKey}`);
-            }
+      if (!e.altKey || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const num = parseInt(e.key, 10);
+      const { organizations: orgs, activeOrg: currentOrg } = stateRef.current;
+      if (!Number.isNaN(num) && num >= 1 && num <= orgs.length) {
+        e.preventDefault();
+        const targetOrg = orgs[num - 1];
+        if (targetOrg && targetOrg.id !== currentOrg?.id) {
+          setActiveOrgId(targetOrg.id);
+          const orgKey = targetOrg.slug || targetOrg.id;
+          if (isOrgOwnerOrAdmin(targetOrg)) {
+            setActiveStreamerId("org");
+            router.push(`/app/${orgKey}`);
+          } else if (targetOrg.streamers?.[0]) {
+            setActiveStreamerId(targetOrg.streamers[0].id);
+            const streamerKey = targetOrg.streamers[0].name || targetOrg.streamers[0].id;
+            router.push(`/app/${orgKey}/${streamerKey}`);
+          } else {
+            router.push(`/app/${orgKey}`);
           }
         }
       }
@@ -145,8 +154,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                       onClick={() => {
                         setActiveOrgId(org.id);
                         const orgKey = org.slug || org.id;
-                        const isOwnerOrAdmin = org.role === "OWNER" || org.role === "ADMIN";
-                        if (isOwnerOrAdmin) {
+                        if (isOrgOwnerOrAdmin(org)) {
                           setActiveStreamerId("org");
                           router.push(`/app/${orgKey}`);
                         } else if (org.streamers?.[0]) {
@@ -186,7 +194,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                         </span>
                       </div>
                       <KbdGroup>
-                        <Kbd className="rounded-sm bg-background">Ctrl + {index + 1}</Kbd>
+                        <Kbd className="rounded-sm bg-background">Alt + {index + 1}</Kbd>
                       </KbdGroup>
                       {isSelected && <Check className="size-3.5 text-primary shrink-0" />}
                     </button>

@@ -3,6 +3,7 @@
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner";
+import { isSafePathSegment } from "@/lib/security";
 
 function StreamlabsRedirectHandler() {
   const router = useRouter();
@@ -16,10 +17,12 @@ function StreamlabsRedirectHandler() {
       const parts = state.split(".");
       if (parts.length >= 2) {
         const [streamerId, orgId] = parts;
-        router.replace(
-          `/app/${orgId}/${streamerId}/connections/streamlabs?${searchParams.toString()}`
-        );
-        return;
+        if (isSafePathSegment(orgId) && isSafePathSegment(streamerId)) {
+          router.replace(
+            `/app/${encodeURIComponent(orgId)}/${encodeURIComponent(streamerId)}/connections/streamlabs?${searchParams.toString()}`,
+          );
+          return;
+        }
       }
     }
     router.replace("/app");

@@ -12,6 +12,7 @@ import {
 import { type Language } from "@/lib/i18n";
 import { useStore } from "zustand";
 import { AnimatePresence, motion } from "motion/react";
+import { useViewportActive } from "@/hooks/use-viewport-active";
 
 const STEP_DURATION = 5000;
 
@@ -171,7 +172,7 @@ function Step3VisualViewer({ lang }: { lang: Language }) {
 
       <div className="flex-1 flex items-center justify-center z-10 px-6">
         <div className="p-2.5 rounded-xl bg-card border border-border shadow-[0_0_20px_var(--primary-glow)] flex flex-col gap-0.5 text-center scale-90 animate-bounce">
-          <h1 className="whitespace-nowrap text-[9px] text-foreground/95 leading-none">
+          <p className="whitespace-nowrap text-[9px] text-foreground/95 leading-none">
             <strong className="text-primary font-extrabold">
               {m.anonymous_fan}
             </strong>{" "}
@@ -179,7 +180,7 @@ function Step3VisualViewer({ lang }: { lang: Language }) {
             <strong className="text-primary font-extrabold font-baijamjuree">
               $10.00
             </strong>
-          </h1>
+          </p>
           <p className="text-[7.5px] text-muted-foreground font-normal leading-none italic mt-0.5 select-none">
             {m.test_fan_msg}
           </p>
@@ -206,6 +207,8 @@ function Step3VisualViewer({ lang }: { lang: Language }) {
 export default function HowItWorkViewer() {
   const lang = useStore(coreStore, (state) => state.lang);
   const [activeStep, setActiveStep] = useState(0);
+  const [resetTick, setResetTick] = useState(0);
+  const { ref: containerRef, isActive: isVisible } = useViewportActive<HTMLDivElement>();
 
   const steps = [
     {
@@ -237,16 +240,19 @@ export default function HowItWorkViewer() {
     },
   ];
 
+  const stepCount = steps.length;
+
   useEffect(() => {
+    if (!isVisible) return;
     const timer = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % steps.length);
+      setActiveStep((prev) => (prev + 1) % stepCount);
     }, STEP_DURATION);
 
     return () => clearInterval(timer);
-  }, [steps.length, activeStep]);
+  }, [stepCount, isVisible, resetTick]);
 
   return (
-    <div className="w-full mx-auto flex flex-col md:flex-row gap-8">
+    <div ref={containerRef} className="w-full mx-auto flex flex-col md:flex-row gap-8">
       <div className="flex-1 min-w-0 flex flex-col justify-between h-auto">
         <div className="mt-16 mb-12 min-h-[140px] flex flex-col justify-between shrink-0">
           <AnimatePresence mode="wait">
@@ -274,7 +280,11 @@ export default function HowItWorkViewer() {
               return (
                 <button
                   key={idx}
-                  onClick={() => setActiveStep(idx)}
+                  type="button"
+                  onClick={() => {
+                    setActiveStep(idx);
+                    setResetTick((n) => n + 1);
+                  }}
                   className={clsx(
                     "text-left relative transition-all cursor-pointer flex items-center gap-3",
                     isActive
@@ -294,17 +304,17 @@ export default function HowItWorkViewer() {
                         transition={{
                           duration: 0.15,
                         }}
-                        className="flex-1 bg-muted relative h-0.5 rounded-2xl ml-auto"
+                        className="flex-1 bg-muted relative h-0.5 rounded-2xl ml-auto overflow-hidden"
                       >
                         <motion.div
-                          key={`progress-${activeStep}`}
-                          initial={{ width: "0%" }}
-                          animate={{ width: "100%" }}
+                          key={`progress-${activeStep}-${resetTick}`}
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: isVisible ? 1 : 0 }}
                           transition={{
                             duration: STEP_DURATION / 1000,
                             ease: "linear",
                           }}
-                          className="absolute bottom-0 left-0 h-full bg-primary"
+                          className="absolute inset-0 origin-left bg-primary"
                         />
                       </motion.div>
                     )}

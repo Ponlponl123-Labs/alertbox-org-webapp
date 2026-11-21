@@ -35,12 +35,17 @@ import JellyRadio from "@/components/JellyRadio";
 import { Input } from "react-smooth-input";
 import { useTinyUser, useTinyStreamer } from "@/lib/tiny-user-cache";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
+import { BoundedLruCache } from "@/lib/lru-cache";
+import { isSafePathSegment } from "@/lib/security";
 import type { AuditLogItem } from "@/types";
 
 const CATEGORY_TABS = AUDIT_CATEGORY_TABS;
 const PAGE_SIZE = DEFAULT_AUDIT_PAGE_SIZE;
 const CLIENT_CACHE_TTL = 3 * 60 * 1000;
-const auditPageCache = new Map<string, { logs: AuditLogItem[]; total: number; timestamp: number }>();
+const auditPageCache = new BoundedLruCache<{ logs: AuditLogItem[]; total: number }>({
+  maxEntries: 60,
+  defaultTtlMs: CLIENT_CACHE_TTL,
+});
 
 function AuditRow({
   log,
@@ -57,7 +62,7 @@ function AuditRow({
 }) {
   const { authFetch } = useUserContext();
   const info = humanizeAuditAction(log.action, log.payload);
-  const userName = log.user.name || log.user.email.split("@")[0];
+  const userName = log.user?.name || (log.user?.email ? log.user.email.split("@")[0] : "User");
   const p = (log.payload && typeof log.payload === "object" ? log.payload : {}) as Record<string, unknown>;
 
   const isUserTarget = log.targetType === "MEMBER" || log.targetType === "USER";
@@ -161,10 +166,14 @@ function AuditRow({
 
         <TableCell className="py-3 pr-6 pl-4 text-right whitespace-nowrap">
           <span
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
-              navigator.clipboard.writeText(log.ipAddress);
-              toast.success("IP copied");
+              try {
+                await navigator.clipboard.writeText(log.ipAddress || "");
+                toast.success("IP copied");
+              } catch {
+                toast.error("Failed to copy IP");
+              }
             }}
             title="Click to copy IP"
             className="font-sans tabular-nums text-[11px] text-muted-foreground/70 hover:text-foreground cursor-pointer select-text transition-colors"
@@ -200,8 +209,10 @@ function AuditRow({
 
 export default function OrgAuditPage() {
   const routeParams = useParams();
-  const { activeOrg, authFetch } = useUserContext();
-  const orgTarget = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
+  const { activeOrg, authFetch, userInfo } = useUserContext();
+  const rawOrgTarget = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
+  const orgTarget = isSafePathSegment(rawOrgTarget) ? rawOrgTarget : "";
+  const abortRef = React.useRef<AbortController | null>(null);
 
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -230,17 +241,21 @@ export default function OrgAuditPage() {
     ) => {
       if (!orgTarget) return;
       const cleanSearch = search.trim();
-      const cacheKey = `${orgTarget}:p${page}:sz${PAGE_SIZE}:cat${category}:q${encodeURIComponent(cleanSearch)}`;
+      const cacheKey = `${userInfo?.id || "anon"}:${orgTarget}:p${page}:sz${PAGE_SIZE}:cat${category}:q${encodeURIComponent(cleanSearch)}`;
 
       if (!force) {
         const cached = auditPageCache.get(cacheKey);
-        if (cached && Date.now() - cached.timestamp < CLIENT_CACHE_TTL) {
+        if (cached) {
           setLogs(cached.logs);
           setTotalCount(cached.total);
           setLoading(false);
           return;
         }
       }
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
       setLoading(true);
       const offset = (page - 1) * PAGE_SIZE;
@@ -255,31 +270,29 @@ export default function OrgAuditPage() {
         params.set("search", cleanSearch);
       }
 
-      const startTime = Date.now();
-      const MIN_SKELETON_MS = 280;
-
-      authFetch(getApiUrl(`/api/v1/org/${orgTarget}/audit?${params.toString()}`))
+      authFetch(
+        getApiUrl(`/api/v1/org/${encodeURIComponent(orgTarget)}/audit?${params.toString()}`),
+        { signal: controller.signal },
+      )
         .then((r) => (r.ok ? r.json() : null))
-        .then(async (data) => {
+        .then((data) => {
+          if (controller.signal.aborted) return;
           if (data && Array.isArray(data.logs)) {
-            const elapsed = Date.now() - startTime;
-            if (elapsed < MIN_SKELETON_MS) {
-              await new Promise((resolve) => setTimeout(resolve, MIN_SKELETON_MS - elapsed));
-            }
             const total = typeof data.total === "number" ? data.total : data.logs.length;
             setLogs(data.logs);
             setTotalCount(total);
-            auditPageCache.set(cacheKey, {
-              logs: data.logs,
-              total,
-              timestamp: Date.now(),
-            });
+            auditPageCache.set(cacheKey, { logs: data.logs, total });
           }
         })
-        .catch(() => toast.error("Failed to load audit logs"))
-        .finally(() => setLoading(false));
+        .catch((err) => {
+          if ((err as Error)?.name === "AbortError") return;
+          toast.error("Failed to load audit logs");
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
     },
-    [orgTarget, authFetch, currentPage, categoryFilter, debouncedSearch],
+    [orgTarget, authFetch, userInfo?.id, currentPage, categoryFilter, debouncedSearch],
   );
 
   useEffect(() => {
@@ -291,6 +304,7 @@ export default function OrgAuditPage() {
     });
     return () => {
       ignore = true;
+      abortRef.current?.abort();
     };
   }, [fetchLogs, currentPage, categoryFilter, debouncedSearch]);
 

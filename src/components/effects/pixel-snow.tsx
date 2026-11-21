@@ -188,6 +188,8 @@ export default function PixelSnow({
     const containerRef = useRef<HTMLDivElement>(null);
     const animationRef = useRef<number>(0);
     const isVisibleRef = useRef(true);
+    const wakeRef = useRef<(() => void) | null>(null);
+    const renderOnceRef = useRef<(() => void) | null>(null);
     const rendererRef = useRef<WebGLRenderer | null>(null);
     const materialRef = useRef<ShaderMaterial | null>(null);
     const resizeTimeoutRef = useRef<number | null>(null);
@@ -241,10 +243,7 @@ export default function PixelSnow({
     }, [color]);
 
     const handleResize = useCallback(() => {
-        if (resizeTimeoutRef.current) {
-            clearTimeout(resizeTimeoutRef.current);
-        }
-        resizeTimeoutRef.current = window.setTimeout(() => {
+        const applyResize = () => {
             const container = containerRef.current;
             const renderer = rendererRef.current;
             const material = materialRef.current;
@@ -259,6 +258,25 @@ export default function PixelSnow({
 
             renderer.setSize(w, h, false);
             material.uniforms.uResolution.value.set(w, h);
+            renderOnceRef.current?.();
+            wakeRef.current?.();
+        };
+
+        if (resizeTimeoutRef.current) {
+            clearTimeout(resizeTimeoutRef.current);
+            resizeTimeoutRef.current = null;
+        }
+
+        const container = containerRef.current;
+        const renderer = rendererRef.current;
+        if (container && renderer && container.offsetWidth > 0 && renderer.domElement.width <= 80) {
+            applyResize();
+            return;
+        }
+
+        resizeTimeoutRef.current = window.setTimeout(() => {
+            resizeTimeoutRef.current = null;
+            applyResize();
         }, 100);
     }, []);
 
@@ -266,35 +284,42 @@ export default function PixelSnow({
         const container = containerRef.current;
         if (!container) return;
 
+        let inView = true;
+
+        const syncVisibility = () => {
+            const active = inView && !document.hidden;
+            isVisibleRef.current = active;
+            if (active) {
+                wakeRef.current?.();
+            } else if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current);
+                animationRef.current = 0;
+            }
+        };
+
         const observer = new IntersectionObserver(
             ([entry]) => {
-                isVisibleRef.current = entry.isIntersecting;
+                inView = entry.isIntersecting;
+                syncVisibility();
             },
             { threshold: 0 }
         );
 
         observer.observe(container);
-
-        const handleVisibilityChange = () => {
-            if (document.hidden) {
-                isVisibleRef.current = false;
-            } else if (container) {
-                const rect = container.getBoundingClientRect();
-                isVisibleRef.current = rect.bottom > 0 && rect.top < window.innerHeight;
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
+        document.addEventListener('visibilitychange', syncVisibility);
 
         return () => {
             observer.disconnect();
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            document.removeEventListener('visibilitychange', syncVisibility);
         };
     }, []);
 
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
+
+        const reduceMotion =
+            window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
         const scene = new Scene();
         const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -352,40 +377,66 @@ export default function PixelSnow({
         const geometry = new PlaneGeometry(2, 2);
         scene.add(new Mesh(geometry, material));
 
-        window.addEventListener('resize', handleResize);
+        const ro = new ResizeObserver(handleResize);
+        ro.observe(container);
 
         const frameInterval = 1000 / Math.max(15, Math.min(60, fps));
         let lastFrameTime = performance.now();
         const startTime = performance.now();
+        let disposed = false;
 
         const animate = (currentTime: number) => {
-            animationRef.current = requestAnimationFrame(animate);
-
-            if (!isVisibleRef.current) return;
+            animationRef.current = 0;
+            if (disposed || !isVisibleRef.current || document.hidden) return;
 
             const elapsed = currentTime - lastFrameTime;
-            if (elapsed < frameInterval) return;
+            if (elapsed >= frameInterval) {
+                lastFrameTime = currentTime - (elapsed % frameInterval);
+                material.uniforms.uTime.value = (currentTime - startTime) * 0.001;
+                renderer.render(scene, camera);
+            }
 
-            lastFrameTime = currentTime - (elapsed % frameInterval);
-            material.uniforms.uTime.value = (currentTime - startTime) * 0.001;
-            renderer.render(scene, camera);
+            if (!reduceMotion && isVisibleRef.current && !document.hidden) {
+                animationRef.current = requestAnimationFrame(animate);
+            }
         };
 
-        animationRef.current = requestAnimationFrame(animate);
+        const wake = () => {
+            if (disposed || animationRef.current || !isVisibleRef.current || document.hidden) return;
+            lastFrameTime = performance.now() - frameInterval;
+            animationRef.current = requestAnimationFrame(animate);
+        };
+        wakeRef.current = wake;
+        renderOnceRef.current = () => {
+            if (!disposed) renderer.render(scene, camera);
+        };
+
+        renderer.render(scene, camera);
+        if (!reduceMotion) {
+            wake();
+        }
 
         return () => {
-            cancelAnimationFrame(animationRef.current);
-            window.removeEventListener('resize', handleResize);
+            disposed = true;
+            wakeRef.current = null;
+            renderOnceRef.current = null;
+            if (animationRef.current) {
+                cancelAnimationFrame(animationRef.current);
+                animationRef.current = 0;
+            }
+            ro.disconnect();
             if (resizeTimeoutRef.current) {
                 clearTimeout(resizeTimeoutRef.current);
+                resizeTimeoutRef.current = null;
             }
             if (container.contains(renderer.domElement)) {
                 container.removeChild(renderer.domElement);
             }
-            renderer.dispose();
-            renderer.forceContextLoss();
+            renderer.domElement.width = 0;
+            renderer.domElement.height = 0;
             geometry.dispose();
             material.dispose();
+            renderer.dispose();
             rendererRef.current = null;
             materialRef.current = null;
         };

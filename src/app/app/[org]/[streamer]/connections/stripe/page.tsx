@@ -1,24 +1,23 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 import { getApiUrl } from "@/lib/api";
 import { toast } from "@/components/custom-ui/toast";
-import {
-  XIcon,
-  CheckIcon,
-} from "@phosphor-icons/react";
+import { XIcon, CheckIcon, LinkBreakIcon } from "@phosphor-icons/react";
 import { Stripe } from "@thesvg/react";
 import { Connections } from "@/types/user.types";
 import { canAccessStreamer } from "@/lib/rbac";
 import { StreamerPerm, OrgPerm } from "@/consts/permission";
+import { isSafePathSegment } from "@/lib/security";
 import { motion } from "motion/react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
-function StripePage() {
+function StripePageContent() {
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo, logout, authFetch, activeOrg, activeStreamer } = useUserContext();
   const router = useRouter();
@@ -31,108 +30,124 @@ function StripePage() {
     activeOrg,
     activeStreamer,
     StreamerPerm.STREAMER_INTEGRATION_MANAGE,
-    OrgPerm.INTEGRATION_MANAGE
+    OrgPerm.INTEGRATION_MANAGE,
   );
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const [oauthStatus, setOauthStatus] = useState<
-    "connecting" | "success" | "failed"
-  >("connecting");
+  const [oauthStatus, setOauthStatus] = useState<"connecting" | "success" | "failed">(
+    "connecting",
+  );
   const [connections, setConnections] = useState<Connections | null>(null);
   const t = lang.data.app.connections.kofi_setup;
   const t2 = lang.data.app.connections.providers.streamlabs;
 
-  const isFetched = useRef(false);
+  const oauthExchangedRef = useRef(false);
   const routeOrg = routeParams?.org as string | undefined;
   const routeStreamer = routeParams?.streamer as string | undefined;
-  const orgKey = activeOrg?.slug || activeOrg?.id || routeOrg;
-  const streamerKey = activeStreamer?.name || activeStreamer?.id || routeStreamer;
-  const connectionsEndpoint = activeOrg && activeStreamer
-    ? getApiUrl(`/api/v1/org/${activeOrg.id}/streamers/${activeStreamer.id}/connections`)
-    : getApiUrl("/api/v1/me/connection");
-  const stripeEndpoint = activeOrg && activeStreamer
-    ? getApiUrl(`/api/v1/org/${activeOrg.id}/streamers/${activeStreamer.id}/connections/stripe`)
-    : getApiUrl("/api/v1/me/connection/stripe");
-  const backHref = orgKey && streamerKey ? `/app/${orgKey}/${streamerKey}/connections` : "/app/connections";
+  const targetOrg = String(routeOrg || activeOrg?.id || activeOrg?.slug || "");
+  const targetStreamer = String(routeStreamer || activeStreamer?.id || activeStreamer?.name || "");
+  const safeOrg = isSafePathSegment(targetOrg) ? targetOrg : null;
+  const safeStreamer = isSafePathSegment(targetStreamer) ? targetStreamer : null;
 
-  // Handle OAuth code exchange flow if code & state exist in URL
+  const connectionsEndpoint =
+    safeOrg && safeStreamer
+      ? getApiUrl(
+          `/api/v1/org/${encodeURIComponent(safeOrg)}/streamers/${encodeURIComponent(safeStreamer)}/integration`,
+        )
+      : "";
+  const stripeEndpoint =
+    safeOrg && safeStreamer
+      ? getApiUrl(
+          `/api/v1/org/${encodeURIComponent(safeOrg)}/streamers/${encodeURIComponent(safeStreamer)}/integration/stripe`,
+        )
+      : "";
+  const backHref =
+    safeOrg && safeStreamer
+      ? `/app/${encodeURIComponent(safeOrg)}/${encodeURIComponent(safeStreamer)}/connections`
+      : "/app/connections";
+
   useEffect(() => {
-    if (code && state) {
-      const parts = state.split(".");
-      const orgId = parts.length >= 2 ? parts[1] : activeOrg?.id;
-      const streamerId = parts.length >= 2 ? parts[0] : activeStreamer?.id;
-      const targetEndpoint =
-        orgId && streamerId
-          ? `/api/v1/org/${orgId}/streamers/${streamerId}/connections/stripe`
-          : "/api/v1/me/connection/stripe";
+    if (!code || !state || !userInfo || oauthExchangedRef.current) return;
+    oauthExchangedRef.current = true;
 
-      authFetch(getApiUrl(targetEndpoint), {
-        method: "POST",
-        body: code,
-      })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error("Failed to connect");
-          }
-          setOauthStatus("success");
-          setTimeout(() => {
-            router.push(backHref);
-          }, 2400);
-        })
-        .catch(() => {
-          setOauthStatus("failed");
-          setTimeout(() => {
-            router.push(backHref);
-          }, 2400);
-        });
-    } else {
-      if (isFetched.current || !userInfo) return;
-      isFetched.current = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const parts = state.split(".");
+    const rawOrgId = parts.length >= 2 ? parts[1] : activeOrg?.id;
+    const rawStreamerId = parts.length >= 2 ? parts[0] : activeStreamer?.id;
+
+    if (!isSafePathSegment(rawOrgId) || !isSafePathSegment(rawStreamerId)) {
+      queueMicrotask(() => setOauthStatus("failed"));
+      timer = setTimeout(() => router.push(backHref), 2400);
+      return () => {
+        if (timer) clearTimeout(timer);
+      };
     }
+
+    const targetEndpoint = `/api/v1/org/${encodeURIComponent(rawOrgId)}/streamers/${encodeURIComponent(rawStreamerId)}/connections/stripe`;
+
+    authFetch(getApiUrl(targetEndpoint), {
+      method: "POST",
+      body: code,
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to connect");
+        setOauthStatus("success");
+        timer = setTimeout(() => router.push(backHref), 2400);
+      })
+      .catch(() => {
+        setOauthStatus("failed");
+        timer = setTimeout(() => router.push(backHref), 2400);
+      });
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [code, state, router, userInfo, authFetch, backHref, activeOrg?.id, activeStreamer?.id]);
 
   useEffect(() => {
-    if (isFetched.current || !userInfo) return;
-    isFetched.current = true;
-    authFetch(connectionsEndpoint)
+    if ((code && state) || !userInfo || !connectionsEndpoint) {
+      if (!code && !state && !connectionsEndpoint) {
+        queueMicrotask(() => setIsLoading(false));
+      }
+      return;
+    }
+
+    const controller = new AbortController();
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) setIsLoading(true);
+    });
+
+    authFetch(connectionsEndpoint, { signal: controller.signal })
       .then((res) => {
         if (res.status === 401) {
           logout();
-          return;
+          return null;
         }
-        if (res.ok) return res.json();
+        if (res.ok) return res.json() as Promise<Connections>;
         throw new Error("Failed to fetch connections");
       })
-      .then((data: Connections) => {
-        setConnections(data);
+      .then((data) => {
+        if (!controller.signal.aborted && data) {
+          setConnections(data);
+        }
       })
-      .catch(() => {
-        // ignore
-      })
+      .catch(() => {})
       .finally(() => {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       });
-  }, [logout, userInfo, authFetch, connectionsEndpoint]);
+
+    return () => controller.abort();
+  }, [code, state, logout, userInfo, authFetch, connectionsEndpoint]);
 
   const handleDisconnect = async () => {
+    if (!canManageIntegrations || !stripeEndpoint || isSaving) return;
     setIsSaving(true);
-
     try {
-      const res = await authFetch(stripeEndpoint, {
-        method: "DELETE",
-      });
-
+      const res = await authFetch(stripeEndpoint, { method: "DELETE" });
       if (res.ok) {
         toast.success(t.success_disconnect);
-        setConnections((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            stripe: null,
-          };
-        });
+        setConnections((prev) => (prev ? { ...prev, stripe: null } : null));
       } else {
         toast.error(t.error_disconnect);
       }
@@ -143,14 +158,13 @@ function StripePage() {
     }
   };
 
-  // Render OAuth callback loader screen
   if (code && state) {
     return (
       <div className="w-full flex flex-col min-h-0 mt-6 flex-1 gap-1.5 font-sans">
         <div className="w-full flex flex-col items-center justify-center min-h-0 py-6 flex-1">
           <div className="flex items-center justify-center gap-4">
             <Image
-              src={"/favicon.ico"}
+              src="/favicon.ico"
               width={64}
               height={64}
               alt="Alertbox.org"
@@ -178,7 +192,7 @@ function StripePage() {
           </h1>
           <p className="text-xs text-foreground/40 mt-3 text-center font-sans leading-relaxed">
             {oauthStatus === "connecting"
-              ? "We're now connecting your Stripe account to Alertbox.org Please wait for a moment..."
+              ? "We're now connecting your Stripe account to Alertbox.org. Please wait..."
               : oauthStatus === "success"
                 ? t2.oauth.connected_description
                 : t2.oauth.failed_description}
@@ -195,6 +209,8 @@ function StripePage() {
       </div>
     );
   }
+
+  const isConnected = Boolean(connections?.stripe);
 
   return (
     <motion.div
@@ -215,8 +231,34 @@ function StripePage() {
           <Stripe className="size-12" />
         </div>
       </div>
+      {isConnected && canManageIntegrations && (
+        <div>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={isSaving}
+            onClick={handleDisconnect}
+            className="rounded-xl gap-2"
+          >
+            {isSaving ? <Spinner className="size-4" /> : <LinkBreakIcon size={16} />}
+            {t.btn_disconnect}
+          </Button>
+        </div>
+      )}
     </motion.div>
   );
 }
 
-export default StripePage;
+export default function StripePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full flex items-center justify-center min-h-100">
+          <Spinner className="size-8 text-foreground/40" />
+        </div>
+      }
+    >
+      <StripePageContent />
+    </Suspense>
+  );
+}

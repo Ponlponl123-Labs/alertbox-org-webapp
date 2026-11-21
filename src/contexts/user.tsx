@@ -11,12 +11,16 @@ import {
   useState,
 } from "react";
 import { setCookie, getCookie, deleteCookie } from "cookies-next";
-import { getApiUrl } from "@/lib/api";
-import { allowedLocalhostWhen } from "@/consts/statement";
+import { getApiOrigin, getApiUrl, getDiscordRedirectUri } from "@/lib/api";
 import { checkIsAlertboxProduction, isSelfHosted } from "@/lib/instance";
+import { clearAllClientCaches } from "@/lib/lru-cache";
+import { isHttpsRuntime, isTrustedApiUrl, safeDecodeBase64 } from "@/lib/security";
 
 import { useStore } from "zustand";
 import { orgStore, selectActiveOrg, selectActiveStreamer } from "@/hooks/store/org";
+
+const FETCH_CREDENTIALS: RequestCredentials | undefined =
+  process.env.NEXT_PUBLIC_USE_COOKIE_AUTH === "true" ? "include" : undefined;
 
 export interface UserContext {
   userInfo: User | null;
@@ -43,34 +47,70 @@ export interface UserContext {
 const userContext = createContext<UserContext>({
   userInfo: null,
   login: async () => false,
-  logout: () => { },
-  patchUserInfo: () => { },
-  patchStreamer: () => { },
-  patchOrg: () => { },
-  removeStreamer: () => { },
-  removeOrganization: () => { },
-  addStreamer: () => { },
-  refreshUserInfo: async () => { },
+  logout: () => {},
+  patchUserInfo: () => {},
+  patchStreamer: () => {},
+  patchOrg: () => {},
+  removeStreamer: () => {},
+  removeOrganization: () => {},
+  addStreamer: () => {},
+  refreshUserInfo: async () => {},
   organizations: [],
   activeOrg: null,
   activeStreamer: null,
   isOrgMode: false,
-  setOrgMode: () => { },
-  setActiveOrgId: () => { },
-  setActiveStreamerId: () => { },
+  setOrgMode: () => {},
+  setActiveOrgId: () => {},
+  setActiveStreamerId: () => {},
   authFetch: async () => new Response(),
   isSelfHosted: true,
 });
 
+interface BufferedResponse {
+  body: ArrayBuffer;
+  status: number;
+  statusText: string;
+  headers: Array<[string, string]>;
+}
+
+interface DedupEntry {
+  controller: AbortController;
+  refCount: number;
+  promise: Promise<BufferedResponse>;
+}
+
+function toResponse(buf: BufferedResponse): Response {
+  const isNullBodyStatus =
+    buf.status === 204 || buf.status === 205 || buf.status === 304;
+  return new Response(isNullBodyStatus ? null : buf.body.slice(0), {
+    status: buf.status,
+    statusText: buf.statusText,
+    headers: buf.headers,
+  });
+}
+
+function getAuthHeaderFromCookie(rawCookie: unknown): string | null {
+  if (!rawCookie) return null;
+  const decoded = safeDecodeBase64(String(rawCookie));
+  if (!decoded) {
+    deleteCookie("USRSS", { path: "/" });
+    return null;
+  }
+  return `Bearer ${decoded}`;
+}
+
 export const UserContextProvider = ({ children }: { children: ReactNode }) => {
   const [userInfo, setUserInfo] = useState<UserContext["userInfo"]>(null);
   const [selfHosted, setSelfHosted] = useState<boolean>(isSelfHosted());
-  const fetched = useRef(false);
 
   useEffect(() => {
+    let active = true;
     void checkIsAlertboxProduction().then((isProd) => {
-      setSelfHosted(!isProd);
+      if (active) setSelfHosted(!isProd);
     });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const organizations = useStore(orgStore, (s) => s.organizations);
@@ -106,67 +146,87 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
 
       setUserInfo((prev) => {
         if (!prev) return null;
-
-        const updated: User = {
+        return {
           ...prev,
           ...(typeof p.name === "string" ? { name: p.name } : {}),
           ...(typeof p.displayName === "string" ? { displayName: p.displayName } : {}),
           ...(typeof p.avatar === "string" ? { avatar: p.avatar } : {}),
           ...(typeof p.email === "string" ? { email: p.email } : {}),
-          ...(Array.isArray(p.memberships) ? { memberships: p.memberships as OrganizationMember[] } : {}),
+          ...(Array.isArray(p.memberships)
+            ? { memberships: p.memberships as OrganizationMember[] }
+            : {}),
         };
-
-        return updated;
       });
     },
     [],
   );
 
-  const combineSignals = (a?: AbortSignal | null, b?: AbortSignal | null): AbortSignal | undefined => {
-    if (!a) return b || undefined;
-    if (!b) return a || undefined;
-    if (typeof AbortSignal !== "undefined" && typeof AbortSignal.any === "function") {
-      return AbortSignal.any([a, b]);
-    }
-    const c = new AbortController();
-    const onAbort = () => c.abort();
-    if (a.aborted || b.aborted) {
-      c.abort();
-      return c.signal;
-    }
-    a.addEventListener("abort", onAbort, { once: true });
-    b.addEventListener("abort", onAbort, { once: true });
-    return c.signal;
-  };
-
-  const inFlightGetRequests = useRef(new Map<string, Promise<Response>>());
+  const inFlightGetRequests = useRef(new Map<string, DedupEntry>());
   const orgAbortControllerRef = useRef(new AbortController());
-  const lastOrgSwitchRef = useRef(0);
   const activeOrgIdRef = useRef<string | null>(orgStore.getState().activeOrgId);
 
   useEffect(() => {
     const unsub = orgStore.subscribe((state) => {
       if (state.activeOrgId !== activeOrgIdRef.current) {
         activeOrgIdRef.current = state.activeOrgId;
-        lastOrgSwitchRef.current = Date.now();
         orgAbortControllerRef.current.abort();
         orgAbortControllerRef.current = new AbortController();
+        for (const entry of inFlightGetRequests.current.values()) {
+          entry.controller.abort();
+        }
         inFlightGetRequests.current.clear();
       }
     });
     return unsub;
   }, []);
 
+  const fetchMe = useCallback(
+    async (authHeader: string, signal?: AbortSignal): Promise<boolean> => {
+      try {
+        const r = await fetch(getApiUrl("/api/v1/me"), {
+          method: "GET",
+          headers: { authorization: authHeader },
+          ...(FETCH_CREDENTIALS ? { credentials: FETCH_CREDENTIALS } : {}),
+          ...(signal ? { signal } : {}),
+        });
+        if (r.status === 401) {
+          deleteCookie("USRSS", { path: "/" });
+          return false;
+        }
+        if (r.ok) {
+          const d = (await r.json()) as User;
+          if (!signal?.aborted) {
+            setUserInfo(d);
+            orgStore.getState().syncFromMemberships(d.memberships);
+          }
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
   const authFetch = useCallback(
     async (url: string, init?: RequestInit): Promise<Response> => {
+      const trustedOrigin = getApiOrigin();
+      if (!isTrustedApiUrl(url, trustedOrigin)) {
+        throw new Error("Refused credentialed request to untrusted origin");
+      }
+
       const method = (init?.method || "GET").toUpperCase();
       const authCookie = await getCookie("USRSS");
       const headers = new Headers(init?.headers);
-      if (authCookie) {
-        headers.set("authorization", "Bearer " + atob(authCookie));
+      const authHeader = getAuthHeaderFromCookie(authCookie);
+      if (authHeader) {
+        headers.set("authorization", authHeader);
       }
-      const activeOrgNow = selectActiveOrg(orgStore.getState());
-      const activeStreamerNow = selectActiveStreamer(orgStore.getState());
+
+      const storeState = orgStore.getState();
+      const activeOrgNow = selectActiveOrg(storeState);
+      const activeStreamerNow = selectActiveStreamer(storeState);
       if (activeOrgNow) {
         headers.set("x-org-id", activeOrgNow.id);
       }
@@ -175,136 +235,179 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (method === "GET") {
-        const isOrgScoped = url.includes("/api/v1/org/") || headers.has("x-org-id");
-        const currentController = orgAbortControllerRef.current;
-
-        if (isOrgScoped) {
-          const elapsed = Date.now() - lastOrgSwitchRef.current;
-          const waitMs = Math.max(0, 250 - elapsed);
-          if (waitMs > 0) {
-            await new Promise<void>((resolve, reject) => {
-              const timer = setTimeout(resolve, waitMs);
-              const cancel = () => {
-                clearTimeout(timer);
-                reject(new DOMException("Aborted", "AbortError"));
-              };
-              if (currentController.signal.aborted || init?.signal?.aborted) {
-                cancel();
-                return;
-              }
-              currentController.signal.addEventListener("abort", cancel, { once: true });
-              init?.signal?.addEventListener("abort", cancel, { once: true });
-            });
-          }
+        const callerSignal = init?.signal;
+        if (callerSignal?.aborted) {
+          throw new DOMException("Aborted", "AbortError");
         }
-
-        const signal = isOrgScoped
-          ? combineSignals(init?.signal, currentController.signal)
-          : init?.signal;
 
         const key = `${url}::${activeOrgNow?.id || ""}::${activeStreamerNow?.id || ""}`;
-        const existing = inFlightGetRequests.current.get(key);
-        if (existing) {
-          const res = await existing;
-          return res.clone();
+        let entry = inFlightGetRequests.current.get(key);
+        if (entry?.controller.signal.aborted) {
+          entry = undefined;
         }
-        const promise = fetch(url, { ...init, headers, signal }).finally(() => {
-          inFlightGetRequests.current.delete(key);
+
+        if (!entry) {
+          const controller = new AbortController();
+          const fetchPromise = fetch(url, {
+            ...init,
+            headers,
+            ...(FETCH_CREDENTIALS ? { credentials: FETCH_CREDENTIALS } : {}),
+            signal: controller.signal,
+          })
+            .then(async (res): Promise<BufferedResponse> => {
+              const body = await res.arrayBuffer();
+              return {
+                body,
+                status: res.status,
+                statusText: res.statusText,
+                headers: Array.from(res.headers.entries()),
+              };
+            })
+            .finally(() => {
+              if (inFlightGetRequests.current.get(key)?.controller === controller) {
+                inFlightGetRequests.current.delete(key);
+              }
+            });
+
+          entry = { controller, refCount: 0, promise: fetchPromise };
+          inFlightGetRequests.current.set(key, entry);
+        }
+
+        entry.refCount += 1;
+        const activeEntry = entry;
+
+        return await new Promise<Response>((resolve, reject) => {
+          let settled = false;
+
+          const cleanup = () => {
+            callerSignal?.removeEventListener("abort", onCallerAbort);
+          };
+
+          const onCallerAbort = () => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            activeEntry.refCount -= 1;
+            if (activeEntry.refCount <= 0) {
+              if (inFlightGetRequests.current.get(key) === activeEntry) {
+                inFlightGetRequests.current.delete(key);
+              }
+              activeEntry.controller.abort();
+            }
+            reject(new DOMException("Aborted", "AbortError"));
+          };
+
+          if (callerSignal) {
+            callerSignal.addEventListener("abort", onCallerAbort, { once: true });
+          }
+
+          activeEntry.promise.then(
+            (buffered) => {
+              if (settled) return;
+              settled = true;
+              cleanup();
+              resolve(toResponse(buffered));
+            },
+            (err) => {
+              if (settled) return;
+              settled = true;
+              cleanup();
+              reject(err);
+            },
+          );
         });
-        inFlightGetRequests.current.set(key, promise);
-        const res = await promise;
-        return res.clone();
       }
 
-      return fetch(url, { ...init, headers });
+      return fetch(url, {
+        ...init,
+        headers,
+        ...(FETCH_CREDENTIALS ? { credentials: FETCH_CREDENTIALS } : {}),
+      });
     },
     [],
   );
 
-  const login = useCallback(async (code: string): Promise<boolean> => {
-    try {
-      const params = new URLSearchParams({
-        code,
-        redirect_uri: allowedLocalhostWhen.includes(process.env.NODE_ENV || "")
-          ? "http://localhost:3000/app/login/discord"
-          : "https://alertbox.org/app/login/discord",
-      });
-
-      const r = await fetch(getApiUrl("/api/v1/auth/discord"), {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString(),
-      });
-
-      if (r.ok) {
-        const token = await r.text();
-        const encodedToken = btoa(token);
-        setCookie("USRSS", encodedToken, {
-          maxAge: 2 * 60 * 60 * 24,
-          path: "/",
-        });
-      }
-
-      return r.ok;
-    } catch {
-      return false;
-    }
-  }, []);
-
-  const logout = useCallback(async () => {
-    try {
-      const authCookie = await getCookie("USRSS");
-      if (!authCookie) return false;
-      const r = await fetch(getApiUrl("/api/v1/auth"), {
-        method: "DELETE",
-        headers: {
-          authorization: "Bearer " + atob(authCookie),
-        },
-      });
-
-      deleteCookie("USRSS");
-      deleteCookie("ab_org_id");
-      deleteCookie("ab_streamer_id");
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("ab_active_org_id");
-        localStorage.removeItem("ab_active_streamer_id");
-      }
-      window.location.reload();
-
-      return r.ok;
-    } catch {
-      return false;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (fetched.current) return;
-    fetched.current = true;
-
-    (async () => {
-      const authCookie = await getCookie("USRSS");
-      if (!authCookie) return;
-
+  const login = useCallback(
+    async (code: string): Promise<boolean> => {
       try {
-        const r = await fetch(getApiUrl("/api/v1/me"), {
-          method: "GET",
-          headers: {
-            authorization: "Bearer " + atob(authCookie),
-          },
+        const params = new URLSearchParams({
+          code,
+          redirect_uri: getDiscordRedirectUri(),
+        });
+
+        const r = await fetch(getApiUrl("/api/v1/auth/discord"), {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params.toString(),
+          ...(FETCH_CREDENTIALS ? { credentials: FETCH_CREDENTIALS } : {}),
         });
 
         if (r.ok) {
-          const d = (await r.json()) as User;
-          setUserInfo(d);
-          orgStore.getState().syncFromMemberships(d.memberships);
+          const token = (await r.text()).trim();
+          if (token) {
+            await setCookie("USRSS", btoa(token), {
+              maxAge: 2 * 60 * 60 * 24,
+              path: "/",
+              sameSite: "lax",
+              secure: isHttpsRuntime(),
+            });
+            await fetchMe(`Bearer ${token}`);
+          }
         }
+
+        return r.ok;
       } catch {
-        // Silently catch network errors during initial load
+        return false;
       }
-    })();
+    },
+    [fetchMe],
+  );
+
+  const logout = useCallback(async () => {
+    let ok = false;
+    try {
+      const authCookie = await getCookie("USRSS");
+      const authHeader = getAuthHeaderFromCookie(authCookie);
+      if (authHeader) {
+        const r = await fetch(getApiUrl("/api/v1/auth"), {
+          method: "DELETE",
+          headers: { authorization: authHeader },
+          ...(FETCH_CREDENTIALS ? { credentials: FETCH_CREDENTIALS } : {}),
+          signal: AbortSignal.timeout(5000),
+        });
+        ok = r.ok;
+      }
+    } catch {
+      ok = false;
+    } finally {
+      deleteCookie("USRSS", { path: "/" });
+      deleteCookie("ab_org_id", { path: "/" });
+      deleteCookie("ab_streamer_id", { path: "/" });
+      clearAllClientCaches();
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.removeItem("ab_active_org_id");
+          localStorage.removeItem("ab_active_streamer_id");
+          localStorage.removeItem("ab_view_mode");
+        } catch {}
+        window.location.reload();
+      }
+    }
+    return ok;
   }, []);
 
-  const effectiveUserInfo = userInfo;
+  useEffect(() => {
+    const controller = new AbortController();
+
+    (async () => {
+      const authCookie = await getCookie("USRSS");
+      const authHeader = getAuthHeaderFromCookie(authCookie);
+      if (!authHeader) return;
+      await fetchMe(authHeader, controller.signal);
+    })();
+
+    return () => controller.abort();
+  }, [fetchMe]);
 
   const patchOrg = useCallback((patch: Partial<Organization>) => {
     const active = selectActiveOrg(orgStore.getState());
@@ -315,21 +418,10 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshUserInfo = useCallback(async () => {
     const authCookie = await getCookie("USRSS");
-    if (!authCookie) return;
-    try {
-      const r = await fetch(getApiUrl("/api/v1/me"), {
-        method: "GET",
-        headers: {
-          authorization: "Bearer " + atob(authCookie),
-        },
-      });
-      if (r.ok) {
-        const d = (await r.json()) as User;
-        setUserInfo(d);
-        orgStore.getState().syncFromMemberships(d.memberships);
-      }
-    } catch { }
-  }, []);
+    const authHeader = getAuthHeaderFromCookie(authCookie);
+    if (!authHeader) return;
+    await fetchMe(authHeader);
+  }, [fetchMe]);
 
   const removeStreamer = useCallback((streamerId: string) => {
     orgStore.getState().removeStreamer(streamerId);
@@ -390,7 +482,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
 
   const contextValue = useMemo(
     () => ({
-      userInfo: effectiveUserInfo,
+      userInfo,
       login,
       logout,
       patchUserInfo,
@@ -411,7 +503,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
       isSelfHosted: selfHosted,
     }),
     [
-      effectiveUserInfo,
+      userInfo,
       login,
       logout,
       patchUserInfo,
@@ -433,11 +525,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     ],
   );
 
-  return (
-    <userContext.Provider value={contextValue}>
-      {children}
-    </userContext.Provider>
-  );
+  return <userContext.Provider value={contextValue}>{children}</userContext.Provider>;
 };
 
 export const useUserContext = () => {

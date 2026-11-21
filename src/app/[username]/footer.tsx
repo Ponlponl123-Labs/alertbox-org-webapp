@@ -17,15 +17,16 @@ export default function Footer({
     <footer className="px-6 pt-24 pb-12 text-foreground/40 text-xs w-full flex flex-col items-center gap-3 mt-auto select-none">
       <LanguageSwitcher showLabel={true} />
       <div className="flex gap-3 items-center">
-        <Link href={"https://law.ponlponl123.com/privacy"} target="_blank">
+        <Link href={"https://law.ponlponl123.com/privacy"} target="_blank" rel="noopener noreferrer">
           {lang.data.footer.links.legal.privacy}
         </Link>
-        <Link href={"https://law.ponlponl123.com/tos"} target="_blank">
+        <Link href={"https://law.ponlponl123.com/tos"} target="_blank" rel="noopener noreferrer">
           {lang.data.footer.links.legal.tos}
         </Link>
         <Link
           href={"https://law.ponlponl123.com/additional/alertbox.org"}
           target="_blank"
+          rel="noopener noreferrer"
         >
           {lang.data.footer.links.legal.additional}
         </Link>

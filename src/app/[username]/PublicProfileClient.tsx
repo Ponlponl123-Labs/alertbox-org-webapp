@@ -1,10 +1,12 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { notFound, useParams } from "next/navigation";
 import Image from "next/image";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { getApiUrl } from "@/lib/api";
+import { isSafeIframeHandle, safeDecodeURIComponent } from "@/lib/security";
 import { getActiveBadges } from "@/lib/badges";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { numberToHexColor, getAccentForeground, hexToOklch } from "@/lib/color";
@@ -39,11 +41,20 @@ import { useUserContext } from "@/contexts/user";
 import { canAccessStreamer } from "@/lib/rbac";
 import { OrgPerm, StreamerPerm } from "@/consts/permission";
 import { toast } from "@/components/custom-ui/toast";
-import { ImageCropperModal } from "@/components/features";
 import { CameraIcon, TrashIcon } from "@phosphor-icons/react/dist/ssr";
 import { PencilEdit02 } from "@/components/animate-ui/icons/hugeicons/pencil-edit-02";
 import { Input as ShadcnInput } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+
+const ImageCropperModal = dynamic(
+  () =>
+    import("@/components/features/modals/image-cropper-modal").then(
+      (mod) => mod.ImageCropperModal,
+    ),
+  { ssr: false },
+);
+
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 type PaymentMethodType =
   | "stripe"
@@ -114,21 +125,20 @@ export default function PublicProfileClient({
 }) {
   const routeParams = useParams();
   const lang = useStore(coreStore, (state) => state.lang);
-  const decodedUsername = decodeURIComponent(username);
+  const decodedUsername = safeDecodeURIComponent(username) ?? "";
   const { patchStreamer, authFetch, activeOrg, activeStreamer } = useUserContext();
 
   const uri = decodedUsername.startsWith("@")
     ? decodedUsername.slice(1)
     : decodedUsername;
-  const [profileData, setProfileData] = useState<PublicProfileData | null>(
-    initialData,
-  );
+  const [fetchedProfile, setFetchedProfile] = useState<PublicProfileData | null>(null);
+  const profileData = initialData ?? fetchedProfile;
   const bannerUrl = profileData?.banner;
-  const [loading, setLoading] = useState(!initialData);
+  const [loading, setLoading] = useState(!initialData && !isMock);
   const [error, setError] = useState<string | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType | null>(null);
-  const [isBannerLoaded, setIsBannerLoaded] = React.useState(false);
-  const [prevBannerUrl, setPrevBannerUrl] = React.useState(bannerUrl);
+  const [loadedBannerUrl, setLoadedBannerUrl] = React.useState<string | null>(null);
+  const isBannerLoaded = !bannerUrl || loadedBannerUrl === bannerUrl;
   const [isEditingName, setIsEditingName] = React.useState(false);
   const [isEditingBio, setIsEditingBio] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -139,23 +149,31 @@ export default function PublicProfileClient({
   const [displayName, setDisplayName] = useState(activeStreamer?.displayName || "");
   const [bio, setBio] = useState(activeStreamer?.bio || "");
   const prevStreamerIdRef = useRef(activeStreamer?.id);
-
-  if (prevBannerUrl !== bannerUrl) {
-    setPrevBannerUrl(bannerUrl);
-    setIsBannerLoaded(false);
-  }
+  const cropObjectUrlRef = useRef<string | null>(null);
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const targetOrg = activeOrg?.slug || activeOrg?.id || (routeParams?.org as string);
   const canEditProfile = canAccessStreamer(activeOrg, activeStreamer, StreamerPerm.STREAMER_MANAGE, OrgPerm.STREAMER_MANAGE);
   const rootRef = useRef<HTMLDivElement>(null);
-  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const [hasScrollContainer, setHasScrollContainer] = useState(false);
 
   useIsomorphicLayoutEffect(() => {
     if (rootRef.current) {
-      setScrollContainer(rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]'));
+      const container = rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]');
+      scrollContainerRef.current = container;
+      setHasScrollContainer(Boolean(container));
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (cropObjectUrlRef.current) {
+        URL.revokeObjectURL(cropObjectUrlRef.current);
+        cropObjectUrlRef.current = null;
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -167,28 +185,23 @@ export default function PublicProfileClient({
   }, [isMock, activeStreamer]);
 
   const { scrollY } = useScroll({
-    container: scrollContainer ? { current: scrollContainer } : undefined,
+    container: hasScrollContainer ? scrollContainerRef : undefined,
   });
   const bannerY = useTransform(scrollY, [0, 300], [0, 95]);
   const bannerScale = useTransform(scrollY, [-120, 0, 300], [1.12, 1, 1.05]);
   const bannerOpacity = useTransform(scrollY, [0, 260], [1, 0.35]);
 
-  const [prevInitialData, setPrevInitialData] = useState(initialData);
-  if (prevInitialData !== initialData) {
-    setPrevInitialData(initialData);
-    if (initialData) {
-      setProfileData(initialData);
-      setLoading(false);
-      setError(null);
-    }
-  }
-
   useEffect(() => {
     if (isMock || initialData) return;
+    const controller = new AbortController();
 
     async function fetchProfile() {
       try {
-        const res = await fetch(getApiUrl(`/api/v1/profile/${uri}/details`));
+        const res = await fetch(
+          getApiUrl(`/api/v1/profile/${encodeURIComponent(uri)}/details`),
+          { signal: controller.signal },
+        );
+        if (controller.signal.aborted) return;
         if (res.status === 404) {
           setError("not_found");
           return;
@@ -198,7 +211,8 @@ export default function PublicProfileClient({
           return;
         }
         const data: PublicProfileData = await res.json();
-        setProfileData(data);
+        if (controller.signal.aborted) return;
+        setFetchedProfile(data);
 
         if (data.integrations) {
           const methodsOrder: PaymentMethodType[] = [
@@ -215,14 +229,16 @@ export default function PublicProfileClient({
             setSelectedMethod(firstActive);
           }
         }
-      } catch {
+      } catch (err) {
+        if ((err as Error)?.name === "AbortError") return;
         setError("error");
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
     fetchProfile();
-  }, [isMock, uri, lang.key, initialData]);
+    return () => controller.abort();
+  }, [isMock, uri, initialData]);
 
   if (loading) {
     return (
@@ -287,28 +303,41 @@ export default function PublicProfileClient({
   const targetStreamer = activeStreamer?.name || (routeParams?.streamer as string);
   const streamerPatchEndpoint =
     targetOrg && targetStreamer
-      ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}`)
+      ? getApiUrl(`/api/v1/org/${encodeURIComponent(targetOrg)}/streamers/${encodeURIComponent(targetStreamer)}`)
       : "";
+
+  const closeCropper = () => {
+    setCropperOpen(false);
+    setImageToCrop(null);
+    if (cropObjectUrlRef.current) {
+      URL.revokeObjectURL(cropObjectUrlRef.current);
+      cropObjectUrlRef.current = null;
+    }
+  };
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     type: "avatar" | "banner",
   ) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImageToCrop(reader.result as string);
-        setCropType(type);
-        setCropperOpen(true);
-        e.target.value = "";
-      };
-      reader.readAsDataURL(file);
+    e.currentTarget.value = "";
+    if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error("Image must be 5 MB or smaller");
+      return;
     }
+    if (cropObjectUrlRef.current) {
+      URL.revokeObjectURL(cropObjectUrlRef.current);
+    }
+    const objectUrl = URL.createObjectURL(file);
+    cropObjectUrlRef.current = objectUrl;
+    setImageToCrop(objectUrl);
+    setCropType(type);
+    setCropperOpen(true);
   };
 
   const handleRemoveMedia = async (type: "avatar" | "banner") => {
-    if (!streamerPatchEndpoint || !activeStreamer) return;
+    if (!canEditProfile || !streamerPatchEndpoint || !activeStreamer) return;
     try {
       const res = await authFetch(streamerPatchEndpoint, {
         method: "PATCH",
@@ -317,8 +346,8 @@ export default function PublicProfileClient({
       });
 
       if (res.ok) {
-        patchStreamer(activeStreamer.id, { [cropType]: null });
-        toast.success(`Organization ${type} removed`);
+        patchStreamer(activeStreamer.id, { [type]: null });
+        toast.success(`Channel ${type} removed`);
       } else {
         toast.error(`Failed to remove ${type}`);
       }
@@ -328,7 +357,7 @@ export default function PublicProfileClient({
   };
 
   const onCropComplete = async (croppedImage: Blob): Promise<void> => {
-    if (!streamerPatchEndpoint || !activeStreamer) return;
+    if (!canEditProfile || !streamerPatchEndpoint || !activeStreamer) return;
     try {
       const formData = new FormData();
       formData.append(cropType, croppedImage, `${cropType}.webp`);
@@ -354,7 +383,7 @@ export default function PublicProfileClient({
   };
 
   const handleSaveBasic = async () => {
-    if (!streamerPatchEndpoint || !activeStreamer || isSaving) return;
+    if (!canEditProfile || !streamerPatchEndpoint || !activeStreamer || isSaving) return;
     setIsSaving(true);
     try {
       const trimmedName = displayName.trim();
@@ -373,7 +402,7 @@ export default function PublicProfileClient({
           displayName: trimmedName || activeStreamer.displayName,
           bio: trimmedBio,
         });
-        setProfileData((prev) =>
+        setFetchedProfile((prev) =>
           prev
             ? {
               ...prev,
@@ -452,7 +481,7 @@ export default function PublicProfileClient({
                 height={288}
                 priority
                 unoptimized
-                onLoad={() => setIsBannerLoaded(true)}
+                onLoad={() => setLoadedBannerUrl(bannerUrl)}
               />
             )}
           </motion.div>
@@ -746,19 +775,25 @@ export default function PublicProfileClient({
                           })
                         }
                       </div>
-                    </>) : selectedMethod === "kofi" ? <>
+                    </>) : selectedMethod === "kofi" && isSafeIframeHandle(profileData.kofiUsername) ? <>
                       <iframe
                         className="w-96 h-172 border-0 rounded-sm bg-white"
-                        src={`https://ko-fi.com/${profileData.kofiUsername}/?hidefeed=true&widget=true&embed=true&preview=true`}
-                        title="Ko-Fi"
+                        src={`https://ko-fi.com/${encodeURIComponent(profileData.kofiUsername!)}/?hidefeed=true&widget=true&embed=true&preview=true`}
+                        title="Ko-fi"
+                        allow="payment"
+                        sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals allow-top-navigation-by-user-activation"
+                        referrerPolicy="strict-origin-when-cross-origin"
                         style={{ colorScheme: "light", scrollbarWidth: "thin" }}
                         loading="lazy"
                       />
-                    </> : selectedMethod === "bmac" ? <>
+                    </> : selectedMethod === "bmac" && isSafeIframeHandle(profileData.bmacUsername) ? <>
                       <iframe
                         className="w-full h-172 border-0 rounded-sm bg-white"
-                        src={`https://www.buymeacoffee.com/widget/page/${profileData.bmacUsername}`}
-                        title="Ko-Fi"
+                        src={`https://buymeacoffee.com/widget/page/${encodeURIComponent(profileData.bmacUsername!)}`}
+                        title="Buy Me a Coffee"
+                        allow="payment"
+                        sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals allow-top-navigation-by-user-activation"
+                        referrerPolicy="strict-origin-when-cross-origin"
                         style={{ colorScheme: "light", scrollbarWidth: "thin" }}
                         loading="lazy"
                       />
@@ -767,15 +802,16 @@ export default function PublicProfileClient({
                   }
                 </PageTransition>
               </AutoHeight>
-              <span className="text-xs text-muted-foreground text-center mt-4 block">By processing to donation means you&apos;re agreeing to both our <Link className="text-blue-500" href="/terms-of-service">terms of service</Link> and the payment provider&apos;s terms</span>
+              <span className="text-xs text-muted-foreground text-center mt-4 block">By processing to donation means you&apos;re agreeing to both our <Link className="text-blue-500" href="https://law.ponlponl123.com/tos" target="_blank" rel="noopener noreferrer">terms of service</Link> and the payment provider&apos;s terms</span>
             </>
           )}
         </motion.div>
       </motion.main>
-      <AnimatePresence key={(isEditingName || isEditingBio || isAnythingChanged) ? "active" : "hide"} mode="wait">
+      <AnimatePresence mode="wait">
         {
           isMock && canEditProfile && (isEditingName || isEditingBio || isAnythingChanged) &&
           <motion.div
+            key="inline-edit-bar"
             initial={{
               opacity: 0,
               y: "100%",
@@ -820,7 +856,7 @@ export default function PublicProfileClient({
       {
         isMock && <ImageCropperModal
           open={cropperOpen}
-          onClose={() => setCropperOpen(false)}
+          onClose={closeCropper}
           image={imageToCrop}
           cropShape={cropType === "avatar" ? "round" : "rect"}
           aspect={cropType === "avatar" ? 1 : 3}

@@ -16,25 +16,23 @@ const useIsomorphicLayoutEffect = typeof window !== "undefined" ? React.useLayou
 export default function StreamerDashboardPage() {
   const { activeOrg, activeStreamer } = useUserContext();
   const bannerUrl = activeStreamer?.banner;
-  const [isBannerLoaded, setIsBannerLoaded] = React.useState(false);
-  const [prevBannerUrl, setPrevBannerUrl] = React.useState(bannerUrl);
-
-  if (prevBannerUrl !== bannerUrl) {
-    setPrevBannerUrl(bannerUrl);
-    setIsBannerLoaded(false);
-  }
+  const [loadedBannerUrl, setLoadedBannerUrl] = React.useState<string | null>(null);
+  const isBannerLoaded = !bannerUrl || loadedBannerUrl === bannerUrl;
 
   const rootRef = useRef<HTMLDivElement>(null);
-  const [scrollContainer, setScrollContainer] = useState<HTMLElement | null>(null);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const [hasScrollContainer, setHasScrollContainer] = useState(false);
 
   useIsomorphicLayoutEffect(() => {
     if (rootRef.current) {
-      setScrollContainer(rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]'));
+      const container = rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]');
+      scrollContainerRef.current = container;
+      setHasScrollContainer(Boolean(container));
     }
   }, []);
 
   const { scrollY } = useScroll({
-    container: scrollContainer ? { current: scrollContainer } : undefined,
+    container: hasScrollContainer ? scrollContainerRef : undefined,
   });
   const bannerY = useTransform(scrollY, [0, 300], [0, 95]);
   const bannerScale = useTransform(scrollY, [-120, 0, 300], [1.12, 1, 1.05]);
@@ -84,7 +82,7 @@ export default function StreamerDashboardPage() {
                 height={288}
                 priority
                 unoptimized
-                onLoad={() => setIsBannerLoaded(true)}
+                onLoad={() => setLoadedBannerUrl(bannerUrl)}
               />
             )}
           </motion.div>
@@ -140,6 +138,7 @@ export default function StreamerDashboardPage() {
                       <Link
                         href={`/@${activeStreamer.uri}`}
                         target="_blank"
+                        rel="noopener noreferrer"
                         className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-mono"
                       >
                         <span>@{activeStreamer.uri}</span>

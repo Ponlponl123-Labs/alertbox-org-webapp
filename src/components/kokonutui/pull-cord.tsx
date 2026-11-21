@@ -12,6 +12,7 @@ import {
   type PointerEvent,
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   useSyncExternalStore,
@@ -56,6 +57,8 @@ function haptic() {
   }
 }
 
+let sharedAudioCtx: AudioContext | null = null;
+
 function playClickSound() {
   if (typeof window === "undefined") return;
   try {
@@ -63,7 +66,13 @@ function playClickSound() {
       window.AudioContext ||
       (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
+    if (!sharedAudioCtx || sharedAudioCtx.state === "closed") {
+      sharedAudioCtx = new AudioContextClass();
+    }
+    const ctx = sharedAudioCtx;
+    if (ctx.state === "suspended") {
+      void ctx.resume().catch(() => {});
+    }
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "sine";
@@ -133,6 +142,8 @@ function restingChain() {
 const REST = restingChain();
 const REST_PATH = cordPath(REST.xs, REST.ys);
 const emptySubscribe = () => () => {};
+const getClientTrue = () => true;
+const getServerFalse = () => false;
 
 export interface PullCordProps {
   /** Controlled state. If omitted and bindTheme is true, syncs with coreStore. */
@@ -165,7 +176,8 @@ export default function PullCord({
   label = "Desk lamp theme toggle",
   className,
 }: PullCordProps) {
-  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const glowId = `lamp-bulb-glow-${useId().replace(/:/g, "")}`;
+  const mounted = useSyncExternalStore(emptySubscribe, getClientTrue, getServerFalse);
   const isDark = useStore(coreStore, (s) => s.isDark);
   const themeChecked = themeMode === "dark-on" ? isDark : !isDark;
   const isControlled = checkedProp !== undefined;
@@ -437,7 +449,6 @@ export default function PullCord({
       suppressHydrationWarning
     >
       <svg
-        aria-hidden="true"
         className={cn(
           "w-full h-full touch-none",
           grabbing ? "cursor-grabbing" : "cursor-default"
@@ -451,19 +462,19 @@ export default function PullCord({
         suppressHydrationWarning
       >
         <defs>
-          <radialGradient id="lamp-bulb-glow" cx="50%" cy="50%" r="50%">
+          <radialGradient id={glowId} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.35" />
             <stop offset="60%" stopColor="#fbbf24" stopOpacity="0.1" />
             <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        {/* Ambient warm lamp glow when bulb is on */}
         <circle
+          aria-hidden="true"
           cx={WIDTH / 2}
           cy={120}
           r={80}
-          fill="url(#lamp-bulb-glow)"
+          fill={`url(#${glowId})`}
           className={cn(
             "pointer-events-none transition-opacity duration-300",
             checked ? "opacity-100" : "opacity-0"

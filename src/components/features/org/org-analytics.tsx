@@ -1,11 +1,20 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "motion/react";
-import { useTheme } from "next-themes";
+import { useStore } from "zustand";
+import { coreStore } from "@/hooks/store/core";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GlobeBars, BarMarker } from "@/components/ui/cobe-globe-bars";
+import type { BarMarker } from "@/components/ui/cobe-globe-bars";
+import { WidgetErrorBoundary } from "@/components/shared/widget-error-boundary";
+import { getCachedNumberFormat } from "@/lib/formatters";
+
+const GlobeBars = dynamic(
+  () => import("@/components/ui/cobe-globe-bars").then((mod) => mod.GlobeBars),
+  { ssr: false },
+);
 import {
   AreaChart,
   Area,
@@ -95,18 +104,20 @@ const CURRENCY_DEFAULT_COORDS: Record<string, [number, number]> = {
 };
 
 export const formatCurrency = (amount: number, currency = "THB"): string => {
+  const code = currency.toUpperCase();
+  const minFrac = amount % 1 !== 0 ? 2 : 0;
   try {
-    return new Intl.NumberFormat(undefined, {
+    return getCachedNumberFormat(undefined, {
       style: "currency",
-      currency: currency.toUpperCase(),
-      minimumFractionDigits: amount % 1 !== 0 ? 2 : 0,
+      currency: code,
+      minimumFractionDigits: minFrac,
       maximumFractionDigits: 2,
     }).format(amount);
   } catch {
-    return `${currency} ${amount.toLocaleString(undefined, {
-      minimumFractionDigits: amount % 1 !== 0 ? 2 : 0,
+    return `${code} ${getCachedNumberFormat(undefined, {
+      minimumFractionDigits: minFrac,
       maximumFractionDigits: 2,
-    })}`;
+    }).format(amount)}`;
   }
 };
 
@@ -253,39 +264,46 @@ function OrgAnalyticsSkeleton() {
 
 const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: string }) {
   const { authFetch } = useUserContext();
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme !== "light";
+  const isDark = useStore(coreStore, (s) => s.isDark);
+  const gradientId = React.useId().replace(/:/g, "");
 
   const [timeframe, setTimeframe] = React.useState<Timeframe>("30d");
   const [metric, setMetric] = React.useState<"revenue" | "volume">("revenue");
   const [data, setData] = React.useState<OrgAnalyticsData | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [loadedKey, setLoadedKey] = React.useState<string | null>(null);
+
+  const validOrgId = Boolean(orgId && !/^\d{4}-\d{2}-\d{2}/.test(orgId) && !orgId.includes("GMT"));
+  const requestKey = validOrgId ? `${orgId}:${timeframe}` : null;
+  const isLoading = Boolean(requestKey && loadedKey !== requestKey);
 
   const isDev = process.env.NODE_ENV === "development";
   const [showSample, setShowSample] = React.useState(isDev);
 
   React.useEffect(() => {
-    if (!orgId || /^\d{4}-\d{2}-\d{2}/.test(orgId) || orgId.includes("GMT")) return;
-    let active = true;
+    if (!orgId || !requestKey) return;
+    const controller = new AbortController();
 
-    authFetch(getApiUrl(`/api/v1/org/${orgId}/transactions/analytics?timeframe=${timeframe}`))
+    authFetch(
+      getApiUrl(`/api/v1/org/${encodeURIComponent(orgId)}/transactions/analytics?timeframe=${encodeURIComponent(timeframe)}`),
+      { signal: controller.signal },
+    )
       .then((res) => (res.ok ? res.json() : null))
       .then((res: OrgAnalyticsData | null) => {
-        if (!active) return;
+        if (controller.signal.aborted) return;
         setData(res);
       })
       .catch((err) => {
-        if (err?.name === "AbortError") return;
-        if (active) setData(null);
+        if ((err as Error)?.name === "AbortError") return;
+        if (!controller.signal.aborted) setData(null);
       })
       .finally(() => {
-        if (active) setIsLoading(false);
+        if (!controller.signal.aborted) setLoadedKey(requestKey);
       });
 
     return () => {
-      active = false;
+      controller.abort();
     };
-  }, [orgId, timeframe, authFetch]);
+  }, [orgId, timeframe, requestKey, authFetch]);
 
   const displayData = React.useMemo(() => {
     if (!data || data.totals.transactions === 0) {
@@ -396,8 +414,8 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                   key={tf}
                   type="button"
                   onClick={() => {
+                    if (tf === timeframe) return;
                     setTimeframe(tf);
-                    setIsLoading(true);
                   }}
                   className={`relative z-10 px-2.5 h-7 py-1 text-xs font-medium uppercase rounded-md transition-colors cursor-pointer ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                     }`}
@@ -539,12 +557,12 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/80 bg-card/40 backdrop-blur-md p-6 flex flex-col gap-4 shadow-xs">
+            <div className="relative rounded-2xl border border-border/80 bg-card/40 backdrop-blur-md p-6 flex flex-col gap-4 shadow-xs">
               <div className="w-full h-96 mask-b-from-20% pb-8">
                 <ChartContainer config={timelineChartConfig} className="size-full">
                   <AreaChart data={timeline} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="fillTimelineTrend" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id={`fillTimelineTrend-${gradientId}`} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.4} />
                         <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.0} />
                       </linearGradient>
@@ -590,7 +608,7 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                       dataKey={metric === "revenue" ? "amount" : "count"}
                       stroke="var(--primary)"
                       strokeWidth={2}
-                      fill="url(#fillTimelineTrend)"
+                      fill={`url(#fillTimelineTrend-${gradientId})`}
                     />
                   </AreaChart>
                 </ChartContainer>
@@ -666,7 +684,7 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                   </div>
                 </div>
 
-                <div className="rounded-2xl min-h-115 not-hover:grayscale transition-all duration-250 ease-in-out border border-border/80 bg-card/40 backdrop-blur-md p-6 flex flex-col justify-between shadow-xs overflow-hidden">
+                <div className="relative rounded-2xl min-h-115 not-hover:grayscale transition-all duration-250 ease-in-out border border-border/80 bg-card/40 backdrop-blur-md p-6 flex flex-col justify-between shadow-xs overflow-hidden">
                   <div>
                     <div className="flex items-center justify-between absolute z-10">
                       <div>
@@ -676,12 +694,14 @@ const OrgAnalytics = React.memo(function OrgAnalytics({ orgId }: { orgId?: strin
                     </div>
 
                     <div className="w-full -mb-12">
-                      <GlobeBars
-                        markers={currencyMarkers}
-                        dark={isDark}
-                        focusLocation={activeLocation}
-                        focusedMarkerId={activeMarkerId}
-                      />
+                      <WidgetErrorBoundary>
+                        <GlobeBars
+                          markers={currencyMarkers}
+                          dark={isDark}
+                          focusLocation={activeLocation}
+                          focusedMarkerId={activeMarkerId}
+                        />
+                      </WidgetErrorBoundary>
                     </div>
 
                     <div className="flex flex-wrap z-20 justify-center gap-2 w-full mt-2 absolute left-0 bottom-3">

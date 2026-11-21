@@ -532,7 +532,7 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
 
     let req = inFlightActivity.get(orgId)
     if (!req) {
-      req = authFetch(getApiUrl(`/api/v1/org/${orgId}/transactions/activity`))
+      req = authFetch(getApiUrl(`/api/v1/org/${encodeURIComponent(orgId)}/transactions/activity`))
         .then((r) => (r.ok ? r.json() : null))
         .then((res: { days?: ContributionDay[] } | null) => {
           inFlightActivity.delete(orgId)
@@ -558,8 +558,14 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
 
   const endKey = endDate == null ? null : dayMs(endDate)
   const model = React.useMemo(() => {
-    const dates = (data ?? []).map((d) => dayMs(d.date)).filter(Number.isFinite)
-    const end = endKey ?? (dates.length ? Math.max(...dates) : dayMs(new Date()))
+    let maxDate = -Infinity
+    if (data) {
+      for (let i = 0; i < data.length; i++) {
+        const ms = dayMs(data[i].date)
+        if (Number.isFinite(ms) && ms > maxDate) maxDate = ms
+      }
+    }
+    const end = endKey ?? (maxDate > -Infinity ? maxDate : dayMs(new Date()))
     const days = data ?? (orgId ? generateEmptyContributions(end) : generateContributions(end, seed))
     const grid = buildGrid(days, end, weekStart)
     return { ...grid, stats: computeStats(grid.cells), months: monthLabels(grid.cells, grid.weeks, locale) }
@@ -687,7 +693,9 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
     let polys = new Float32Array(0)
     let faces = new Uint8Array(0)
     let order: number[] = []
+    let lastOrderKey = ""
     let months: { week: number; label: string }[] = []
+    const monthWidths = new Map<string, number>()
     let weekdayRows: { day: number; label: string }[] = []
 
     let hovered = -1
@@ -699,6 +707,7 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
     let lastTipY = -9999
     let raf = 0
     let last = 0
+    let inView = true
 
     const load = () => {
       const m = cfg.current.model
@@ -755,6 +764,10 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
         colReady = true
       }
       ctx.font = font
+      monthWidths.clear()
+      for (const m of months) {
+        monthWidths.set(m.label, ctx.measureText(m.label).width)
+      }
       labelW = Math.ceil(Math.max(20, ...weekdayRows.map((r) => ctx.measureText(r.label).width))) + 8
       const sw = all.map((c) => rgbString(c[0], c[1], c[2]))
       cfg.current.setTheme((prev) =>
@@ -766,21 +779,24 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
     const extent = (cam: Cam, e: number, full: boolean) => {
       const w = lerp(0.78, 0.9, e)
       const off = (1 - w) / 2
+      const { cs, sn, se, ce } = cam
+      const fullZ = 7.5 * cfg.current.heightScale * e
       let minx = Infinity
       let maxx = -Infinity
       let miny = Infinity
       let maxy = -Infinity
       const add = (x: number, y: number, z: number) => {
-        const p = project(cam, x, y, z)
-        if (p[0] < minx) minx = p[0]
-        if (p[0] > maxx) maxx = p[0]
-        if (p[1] < miny) miny = p[1]
-        if (p[1] > maxy) maxy = p[1]
+        const pxv = x * cs - y * sn
+        const pyv = (x * sn + y * cs) * se - z * ce
+        if (pxv < minx) minx = pxv
+        if (pxv > maxx) maxx = pxv
+        if (pyv < miny) miny = pyv
+        if (pyv > maxy) maxy = pyv
       }
       for (let i = 0; i < n; i++) {
         const x0 = wk[i] + off
         const y0 = dy[i] + off
-        const z = full ? 7.5 * cfg.current.heightScale * e : zs[i]
+        const z = full ? fullZ : zs[i]
         add(x0, y0, z)
         add(x0 + w, y0, z)
         add(x0, y0 + w, z)
@@ -848,7 +864,11 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, W, Hmax)
 
-      order.sort((a, c) => (wk[a] + 0.5) * sn + (dy[a] + 0.5) * cs - ((wk[c] + 0.5) * sn + (dy[c] + 0.5) * cs))
+      const orderKey = `${n}:${Math.round(sn * 500)}:${Math.round(cs * 500)}`
+      if (orderKey !== lastOrderKey) {
+        lastOrderKey = orderKey
+        order.sort((a, c) => (wk[a] + 0.5) * sn + (dy[a] + 0.5) * cs - ((wk[c] + 0.5) * sn + (dy[c] + 0.5) * cs))
+      }
 
       const w = lerp(0.78, 0.9, e)
       const off = (1 - w) / 2
@@ -1102,6 +1122,14 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
       ctx.font = font
       const a2 = 1 - smoothstep(0, 0.4, e)
       const a3 = smoothstep(0.62, 1, e)
+      const getMonthWidth = (label: string) => {
+        let tw = monthWidths.get(label)
+        if (tw === undefined) {
+          tw = ctx.measureText(label).width
+          monthWidths.set(label, tw)
+        }
+        return tw
+      }
       if (a2 > 0.004) {
         ctx.fillStyle = "rgba(" + Math.round(muted[0]) + "," + Math.round(muted[1]) + "," + Math.round(muted[2]) + "," + a2.toFixed(3) + ")"
         ctx.textAlign = "left"
@@ -1109,7 +1137,7 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
         let edge = -Infinity
         for (const m of months) {
           const x = px(m.week + off, -0.3)
-          const tw = ctx.measureText(m.label).width
+          const tw = getMonthWidth(m.label)
           if (x < edge || x + tw > W) continue
           ctx.fillText(m.label, x, py(m.week + off, -0.3, 0) - 3)
           edge = x + tw + 6
@@ -1125,9 +1153,10 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
         let edge = -Infinity
         for (const m of months) {
           const x = px(m.week + 0.5, 7.3)
-          if (x < edge || x + ctx.measureText(m.label).width > W) continue
+          const tw = getMonthWidth(m.label)
+          if (x < edge || x + tw > W) continue
           ctx.fillText(m.label, x, py(m.week + 0.5, 7.3, 0) + 2)
-          edge = x + ctx.measureText(m.label).width + 10
+          edge = x + tw + 10
         }
       }
 
@@ -1223,11 +1252,11 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
       }
 
       draw()
-      if (moving) raf = requestAnimationFrame(tick)
+      if (moving && inView && !document.hidden) raf = requestAnimationFrame(tick)
     }
 
     const kick = () => {
-      if (raf) return
+      if (raf || !inView || document.hidden) return
       last = performance.now()
       raf = requestAnimationFrame(tick)
     }
@@ -1395,6 +1424,32 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
     })
     ro.observe(stage)
 
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        inView = entry.isIntersecting
+        if (inView && !document.hidden) {
+          kick()
+        } else if (raf) {
+          cancelAnimationFrame(raf)
+          raf = 0
+        }
+      },
+      { threshold: 0 },
+    )
+    io.observe(root)
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        if (raf) {
+          cancelAnimationFrame(raf)
+          raf = 0
+        }
+      } else if (inView) {
+        kick()
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibility)
+
     const mo = new MutationObserver(retheme)
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "style", "data-theme"] })
     const onReduce = () => {
@@ -1433,6 +1488,8 @@ const ContributionSkyline = React.memo(function ContributionSkyline({
 
     return () => {
       if (raf) cancelAnimationFrame(raf)
+      io.disconnect()
+      document.removeEventListener("visibilitychange", onVisibility)
       ro.disconnect()
       mo.disconnect()
       reduceMq.removeEventListener("change", onReduce)

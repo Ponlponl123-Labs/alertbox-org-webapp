@@ -1,11 +1,12 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useStore } from "zustand";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { getApiUrl } from "@/lib/api";
+import { isSafeIframeHandle, isSafePathSegment } from "@/lib/security";
 import { Input } from "react-smooth-input";
 import { toast } from "@/components/custom-ui/toast";
 import {
@@ -44,8 +45,10 @@ function KofiPage() {
   const lang = useStore(coreStore, (state) => state.lang);
   const { userInfo, logout, authFetch, activeOrg, activeStreamer } = useUserContext();
   const routeParams = useParams();
-  const targetOrg = activeOrg?.id || activeOrg?.slug || (routeParams?.org as string);
-  const targetStreamer = activeStreamer?.id || activeStreamer?.name || (routeParams?.streamer as string);
+  const rawOrg = String((routeParams?.org as string) || activeOrg?.id || activeOrg?.slug || "");
+  const rawStreamer = String((routeParams?.streamer as string) || activeStreamer?.id || activeStreamer?.name || "");
+  const targetOrg = isSafePathSegment(rawOrg) ? rawOrg : "";
+  const targetStreamer = isSafePathSegment(rawStreamer) ? rawStreamer : "";
 
   const canManageIntegrations = canAccessStreamer(
     activeOrg,
@@ -71,31 +74,48 @@ function KofiPage() {
     return () => clearTimeout(timer);
   }, [username]);
 
-  const isFetched = useRef(false);
-  const webhookUrl = "https://api.alertbox.org/v1/webhook/kofi";
+  const webhookUrl = getApiUrl("/v1/webhook/kofi");
 
   const t = lang.data.app.connections.kofi_setup;
 
-  const connectionsEndpoint = targetOrg && targetStreamer
-    ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration`)
-    : "";
-  const kofiEndpoint = targetOrg && targetStreamer
-    ? getApiUrl(`/api/v1/org/${targetOrg}/streamers/${targetStreamer}/integration/kofi`)
-    : "";
+  const connectionsEndpoint =
+    targetOrg && targetStreamer
+      ? getApiUrl(
+          `/api/v1/org/${encodeURIComponent(targetOrg)}/streamers/${encodeURIComponent(targetStreamer)}/integration`,
+        )
+      : "";
+  const kofiEndpoint =
+    targetOrg && targetStreamer
+      ? getApiUrl(
+          `/api/v1/org/${encodeURIComponent(targetOrg)}/streamers/${encodeURIComponent(targetStreamer)}/integration/kofi`,
+        )
+      : "";
 
   useEffect(() => {
-    if (isFetched.current || !userInfo || !connectionsEndpoint) return;
-    isFetched.current = true;
-    authFetch(connectionsEndpoint)
+    if (!userInfo || !connectionsEndpoint) return;
+    const controller = new AbortController();
+
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) {
+        setIsLoading(true);
+        setConnections(null);
+        setUsername("");
+        setSecret("");
+        setStep(0);
+      }
+    });
+
+    authFetch(connectionsEndpoint, { signal: controller.signal })
       .then((res) => {
         if (res.status === 401) {
           logout();
-          return;
+          return null;
         }
-        if (res.ok) return res.json();
+        if (res.ok) return res.json() as Promise<Connections>;
         throw new Error("Failed to fetch connections");
       })
-      .then((data: Connections) => {
+      .then((data) => {
+        if (controller.signal.aborted || !data) return;
         setConnections(data);
         if (data.kofi) {
           setUsername(data.kofi.username || "");
@@ -104,18 +124,25 @@ function KofiPage() {
           if (data.kofi.secret) setStep(5);
         }
       })
-      .catch(() => {
-        // ignore
-      })
+      .catch(() => {})
       .finally(() => {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       });
+
+    return () => controller.abort();
   }, [logout, userInfo, authFetch, connectionsEndpoint]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !secret.trim()) {
+    if (!canManageIntegrations || !kofiEndpoint || isSaving) return;
+    const cleanUser = username.trim();
+    const cleanSecret = secret.trim();
+    if (!cleanUser || !cleanSecret) {
       toast.error(t.error_fields);
+      return;
+    }
+    if (!isSafeIframeHandle(cleanUser)) {
+      toast.error("Invalid Ko-fi username format");
       return;
     }
 
@@ -124,24 +151,15 @@ function KofiPage() {
     try {
       const res = await authFetch(kofiEndpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: username.trim(),
-          secret: secret.trim(),
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: cleanUser, secret: cleanSecret }),
       });
 
       if (res.ok) {
         toast.success(t.success_save);
-        setConnections((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            kofi: { username: username.trim(), secret: secret.trim() },
-          };
-        });
+        setConnections((prev) =>
+          prev ? { ...prev, kofi: { username: cleanUser, secret: cleanSecret } } : null,
+        );
       } else {
         const errorText = await res.text();
         toast.error(errorText || t.error_save);
@@ -154,6 +172,7 @@ function KofiPage() {
   };
 
   const handleDisconnect = async () => {
+    if (!canManageIntegrations || !kofiEndpoint || isSaving) return;
     setIsSaving(true);
 
     try {
@@ -229,7 +248,7 @@ function KofiPage() {
                   children: <>
                     <div className="flex flex-col">
                       <span className="text-xs text-muted-foreground">
-                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ipsa saepe deleniti esse sit soluta ipsum, accusantium non. Ea aliquid omnis tempora, similique porro possimus aperiam ullam officiis suscipit vitae sint!
+                        Make sure your Ko-fi creator page and payout account are fully configured before enabling webhook alerts.
                       </span>
                       <div className="flex items-center mt-3 gap-1">
                         <AnimateIcon animateOnHover>
@@ -251,6 +270,7 @@ function KofiPage() {
                         <Link
                           href="https://ko-fi.com/manage/webhooks"
                           target="_blank"
+                          rel="noopener noreferrer"
                           className="text-indigo-400 hover:underline"
                         >
                           {t.step1_desc_link}
@@ -258,7 +278,7 @@ function KofiPage() {
                         {t.step1_desc_suffix}
                       </span>
                       <div className="flex items-center mt-3 gap-1">
-                        <Link href="https://ko-fi.com/manage/webhooks" target="_blank">
+                        <Link href="https://ko-fi.com/manage/webhooks" target="_blank" rel="noopener noreferrer">
                           <AnimateIcon animateOnHover>
                             <Button variant="default" className="rounded-xl h-max p-3 font-semibold">
                               <SquareArrowOutUpRight />
@@ -494,11 +514,13 @@ function KofiPage() {
           <span className="px-3 py-1 font-semibold text-muted-foreground select-none text-sm">Live Preview</span>
           <div className="flex items-center justify-center border-2 border-muted rounded-2xl bg-card overflow-hidden">
             {
-              debouncedUsername.length >= 3 ? (
+              debouncedUsername.length >= 3 && isSafeIframeHandle(debouncedUsername) ? (
                 <iframe
                   className="w-96 h-172 border-0 rounded-sm bg-white scale-75 pointer-events-none"
                   tabIndex={-1}
-                  src={`https://ko-fi.com/${debouncedUsername}/?hidefeed=true&widget=true&embed=true&preview=true`}
+                  sandbox="allow-scripts allow-same-origin"
+                  referrerPolicy="no-referrer"
+                  src={`https://ko-fi.com/${encodeURIComponent(debouncedUsername)}/?hidefeed=true&widget=true&embed=true&preview=true`}
                   title="Ko-Fi"
                   style={{ colorScheme: "light", scrollbarWidth: "thin" }}
                   loading="lazy"

@@ -14,19 +14,28 @@ export function useAutoHeight<T extends HTMLElement = HTMLDivElement>(
     includeSelfBox: false,
   },
 ) {
-  const ref = React.useRef<T | null>(null);
-  const roRef = React.useRef<ResizeObserver | null>(null);
+  const elRef = React.useRef<T | null>(null);
+  const rafRef = React.useRef<number | null>(null);
+  const [mountCount, setMountCount] = React.useState(0);
   const [height, setHeight] = React.useState(0);
 
+  const includeParentBox = options.includeParentBox;
+  const includeSelfBox = options.includeSelfBox;
+
+  const ref = React.useCallback((node: T | null) => {
+    elRef.current = node;
+    if (node) setMountCount((c) => c + 1);
+  }, []);
+
   const measure = React.useCallback(() => {
-    const el = ref.current;
+    const el = elRef.current;
     if (!el) return 0;
 
     const base = el.getBoundingClientRect().height || 0;
 
     let extra = 0;
 
-    if (options.includeParentBox && el.parentElement) {
+    if (includeParentBox && el.parentElement) {
       const cs = getComputedStyle(el.parentElement);
       const paddingY =
         (parseFloat(cs.paddingTop || '0') || 0) +
@@ -34,13 +43,12 @@ export function useAutoHeight<T extends HTMLElement = HTMLDivElement>(
       const borderY =
         (parseFloat(cs.borderTopWidth || '0') || 0) +
         (parseFloat(cs.borderBottomWidth || '0') || 0);
-      const isBorderBox = cs.boxSizing === 'border-box';
-      if (isBorderBox) {
+      if (cs.boxSizing === 'border-box') {
         extra += paddingY + borderY;
       }
     }
 
-    if (options.includeSelfBox) {
+    if (includeSelfBox) {
       const cs = getComputedStyle(el);
       const paddingY =
         (parseFloat(cs.paddingTop || '0') || 0) +
@@ -48,56 +56,50 @@ export function useAutoHeight<T extends HTMLElement = HTMLDivElement>(
       const borderY =
         (parseFloat(cs.borderTopWidth || '0') || 0) +
         (parseFloat(cs.borderBottomWidth || '0') || 0);
-      const isBorderBox = cs.boxSizing === 'border-box';
-      if (isBorderBox) {
+      if (cs.boxSizing === 'border-box') {
         extra += paddingY + borderY;
       }
     }
 
     const dpr =
       typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-    const total = Math.ceil((base + extra) * dpr) / dpr;
+    return Math.ceil((base + extra) * dpr) / dpr;
+  }, [includeParentBox, includeSelfBox]);
 
-    return total;
-  }, [options.includeParentBox, options.includeSelfBox]);
+  React.useEffect(() => {
+    let ro: ResizeObserver | null = null;
 
-  React.useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+    const scheduleMeasure = () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        const next = measure();
+        setHeight((prev) => (prev === next ? prev : next));
+      });
+    };
 
-    setHeight(measure());
+    const timer = window.setTimeout(() => {
+      const el = elRef.current;
+      if (!el) return;
+      scheduleMeasure();
 
-    if (roRef.current) {
-      roRef.current.disconnect();
-      roRef.current = null;
-    }
-
-    const ro = new ResizeObserver(() => {
-      const next = measure();
-      requestAnimationFrame(() => setHeight(next));
-    });
-
-    ro.observe(el);
-    if (options.includeParentBox && el.parentElement) {
-      ro.observe(el.parentElement);
-    }
-
-    roRef.current = ro;
+      ro = new ResizeObserver(scheduleMeasure);
+      ro.observe(el);
+      if (includeParentBox && el.parentElement) {
+        ro.observe(el.parentElement);
+      }
+    }, 50);
 
     return () => {
-      ro.disconnect();
-      roRef.current = null;
+      window.clearTimeout(timer);
+      ro?.disconnect();
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-
-  React.useLayoutEffect(() => {
-    if (height === 0) {
-      const next = measure();
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (next !== 0) setHeight(next);
-    }
-  }, [height, measure]);
+  }, [mountCount, measure, includeParentBox, ...deps]);
 
   return { ref, height } as const;
 }

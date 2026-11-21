@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useStore } from "zustand";
 import { useUserContext } from "@/contexts/user";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -10,7 +10,7 @@ import { WelcomeStep, JoinOrgStep, CreateOrgStep } from "./(onboarding)";
 
 export type OnboardingStep = "welcome" | "join" | "create";
 
-export default function WorkspaceZonePage() {
+function WorkspaceZoneContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const forceZone = searchParams?.get("zone") === "true";
@@ -78,5 +78,19 @@ export default function WorkspaceZonePage() {
         </AnimatePresence>
       </motion.div>
     </>
+  );
+}
+
+export default function WorkspaceZonePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex-1 flex items-center justify-center min-h-[50vh]">
+          <Spinner />
+        </div>
+      }
+    >
+      <WorkspaceZoneContent />
+    </Suspense>
   );
 }

@@ -27,9 +27,10 @@ import {
   UserIcon,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "zustand";
 import { getApiUrl } from "@/lib/api";
+import { toast } from "@/components/custom-ui/toast";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -38,44 +39,64 @@ function Page() {
   const [isRevoking, setIsRevoking] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { userInfo, logout, authFetch } = useUserContext();
-  const isFetched = useRef(false);
 
   const revoke = async (device: Device) => {
-    if (isRevoking || device.isThisDevice) return;
+    if (isRevoking || device.isThisDevice || device.isRevoked) return;
     setIsRevoking(true);
-    const r = await authFetch(getApiUrl(`/api/v1/me/device/${device.id}`), {
-      method: "DELETE",
-    });
-    if (r.status === 401) return logout();
-    if (!r.ok) {
+    try {
+      const r = await authFetch(
+        getApiUrl(`/api/v1/me/device/${encodeURIComponent(device.id)}`),
+        { method: "DELETE" },
+      );
+      if (r.status === 401) {
+        logout();
+        return;
+      }
+      if (!r.ok) {
+        toast.error("Failed to revoke device session");
+        return;
+      }
+      const revokedDevice: Device = { ...device, isRevoked: true };
+      setDevices((prev) =>
+        (prev ?? []).map((d) => (d.id === device.id ? revokedDevice : d)),
+      );
+      setSelectedDevice((prev) => (prev?.id === device.id ? revokedDevice : prev));
+    } catch {
+      toast.error("Network error revoking device session");
+    } finally {
       setIsRevoking(false);
-      return;
     }
-    setDevices((prev) => [
-      ...(prev?.filter((d) => d.id !== device.id) as Device[]),
-      {
-        ...device,
-        isRevoked: true,
-      } as Device,
-    ]);
-    setIsRevoking(false);
   };
 
   useEffect(() => {
-    if (isFetched.current || !userInfo || !userInfo.id) return;
-    isFetched.current = true;
+    if (!userInfo?.id) return;
+    const controller = new AbortController();
     (async () => {
-      const r = await authFetch(getApiUrl("/api/v1/me/device"));
-      if (r.status === 401) return logout();
-      if (!r.ok) {
-        setIsLoading(false);
-        return;
+      try {
+        const r = await authFetch(getApiUrl("/api/v1/me/device"), {
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted) return;
+        if (r.status === 401) {
+          logout();
+          return;
+        }
+        if (r.ok) {
+          const data = (await r.json()) as Device[];
+          if (!controller.signal.aborted) {
+            setDevices(Array.isArray(data) ? data : []);
+          }
+        }
+      } catch (err) {
+        if ((err as Error)?.name !== "AbortError") {
+          toast.error("Failed to load active sessions");
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
       }
-      const data = await r.json();
-      setDevices(data as Device[]);
-      setIsLoading(false);
     })();
-  }, [isFetched, logout, userInfo, authFetch]);
+    return () => controller.abort();
+  }, [logout, userInfo?.id, authFetch]);
 
   return (
     <motion.div
@@ -136,7 +157,7 @@ function Page() {
                   <strong>Discord</strong>
                 </>
               ) : (
-                userInfo?.createWith?.toWellFormed() || "Not set"
+                userInfo?.createWith || "Not set"
               ),
           },
           {
@@ -236,13 +257,13 @@ function Page() {
                         {
                           title: lang.data.app.security.device.info.os,
                           value:
-                            `${d.os} ${d.osVersion}` ||
+                            [d.os, d.osVersion].filter(Boolean).join(" ") ||
                             lang.data.app.security.device.unknown,
                         },
                         {
                           title: lang.data.app.security.device.info.browser,
                           value:
-                            `${d.platform} ${d.platformVersion}` ||
+                            [d.platform, d.platformVersion].filter(Boolean).join(" ") ||
                             lang.data.app.security.device.unknown,
                         },
                         {
@@ -368,10 +389,12 @@ function Page() {
               >
                 {selectedDevice ? (
                   <iframe
-                    frameBorder="0"
-                    scrolling="no"
-                    className="absolute top-0 left-0 w-full h-full flex-1 min-w-0 min-h-0"
-                    src={`https://maps.google.com/maps?q=${String(selectedDevice?.latitude ?? "0.0")},${String(selectedDevice?.longitude ?? "0.0")}&hl=${lang.key}&z=14&output=embed`}
+                    title="Session Approximate Location Map"
+                    sandbox="allow-scripts allow-same-origin"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                    className="absolute top-0 left-0 w-full h-full flex-1 min-w-0 min-h-0 border-0"
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(String(Number.isFinite(selectedDevice.latitude) ? selectedDevice.latitude : 0))},${encodeURIComponent(String(Number.isFinite(selectedDevice.longitude) ? selectedDevice.longitude : 0))}&hl=${encodeURIComponent(lang.key)}&z=14&output=embed`}
                   />
                 ) : (
                   lang.data.app.security.device.unselected_map
@@ -400,13 +423,21 @@ function Page() {
                     render={
                       <Button
                         variant={
-                          selectedDevice?.isThisDevice ? "outline" : "secondary"
+                          selectedDevice?.isThisDevice || selectedDevice?.isRevoked
+                            ? "outline"
+                            : "secondary"
                         }
-                        size={"xs"}
+                        size="xs"
+                        disabled={
+                          isRevoking ||
+                          selectedDevice?.isThisDevice ||
+                          selectedDevice?.isRevoked
+                        }
                         className="rounded-xl p-2 text-[10px] tracking-wider m-0"
                         onClick={() =>
                           selectedDevice &&
                           !selectedDevice?.isThisDevice &&
+                          !selectedDevice?.isRevoked &&
                           void revoke(selectedDevice)
                         }
                       />

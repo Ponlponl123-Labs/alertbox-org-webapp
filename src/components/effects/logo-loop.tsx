@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { isSafeHref } from "@/lib/security";
 
 export type LogoItem =
   | {
@@ -126,6 +127,7 @@ const useImageLoader = (
 };
 
 const useAnimationLoop = (
+  containerRef: React.RefObject<HTMLDivElement | null>,
   trackRef: React.RefObject<HTMLDivElement | null>,
   targetVelocity: number,
   seqWidth: number,
@@ -140,8 +142,9 @@ const useAnimationLoop = (
   const velocityRef = useRef(0);
 
   useEffect(() => {
+    const container = containerRef.current;
     const track = trackRef.current;
-    if (!track) return;
+    if (!container || !track) return;
 
     const prefersReduced =
       typeof window !== "undefined" &&
@@ -159,21 +162,27 @@ const useAnimationLoop = (
     }
 
     if (prefersReduced) {
-      track.style.transform = isVertical
-        ? "translate3d(0, 0, 0)"
-        : "translate3d(0, 0, 0)";
+      track.style.transform = "translate3d(0, 0, 0)";
       return () => {
         lastTimestampRef.current = null;
       };
     }
 
+    let inView = true;
+    let disposed = false;
+
     const animate = (timestamp: number) => {
+      rafRef.current = null;
+      if (disposed || !inView || document.hidden) {
+        lastTimestampRef.current = null;
+        return;
+      }
       if (lastTimestampRef.current === null) {
         lastTimestampRef.current = timestamp;
       }
 
       const deltaTime =
-        Math.max(0, timestamp - lastTimestampRef.current) / 1000;
+        Math.min(0.1, Math.max(0, timestamp - lastTimestampRef.current) / 1000);
       lastTimestampRef.current = timestamp;
 
       const target =
@@ -197,16 +206,45 @@ const useAnimationLoop = (
       rafRef.current = requestAnimationFrame(animate);
     };
 
-    rafRef.current = requestAnimationFrame(animate);
+    const start = () => {
+      if (disposed || rafRef.current !== null || !inView || document.hidden) return;
+      lastTimestampRef.current = null;
+      rafRef.current = requestAnimationFrame(animate);
+    };
 
-    return () => {
+    const stop = () => {
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
       lastTimestampRef.current = null;
     };
-  }, [targetVelocity, seqWidth, seqHeight, isHovered, hoverSpeed, isVertical, trackRef]);
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        inView = entry.isIntersecting;
+        if (inView) start();
+        else stop();
+      },
+      { threshold: 0 },
+    );
+    io.observe(container);
+
+    const onVisibility = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    start();
+
+    return () => {
+      disposed = true;
+      stop();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [containerRef, targetVelocity, seqWidth, seqHeight, isHovered, hoverSpeed, isVertical, trackRef]);
 };
 
 export const LogoLoop = React.memo<LogoLoopProps>(
@@ -306,6 +344,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
     ]);
 
     useAnimationLoop(
+      containerRef,
       trackRef,
       targetVelocity,
       seqWidth,
@@ -417,7 +456,8 @@ export const LogoLoop = React.memo<LogoLoopProps>(
           );
         }
 
-        const inner = href ? (
+        const safeHref = isSafeHref(href) ? href : undefined;
+        const inner = safeHref ? (
           <a
             className={cx(
               "inline-flex items-center no-underline rounded",
@@ -425,7 +465,7 @@ export const LogoLoop = React.memo<LogoLoopProps>(
               "hover:opacity-80",
               "focus-visible:outline focus-visible:outline-current focus-visible:outline-offset-2",
             )}
-            href={href}
+            href={safeHref}
             aria-label={itemAriaLabel || "logo link"}
             target="_blank"
             rel="noreferrer noopener"

@@ -16,33 +16,35 @@ import { Spinner } from "@/components/ui/spinner";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
 import { TrashIcon, UserIcon, WarningOctagonIcon } from "@phosphor-icons/react";
-import { getCookie } from "cookies-next/client";
 import { useState } from "react";
 import { useStore } from "zustand";
 import { getApiUrl } from "@/lib/api";
+import { toast } from "@/components/custom-ui/toast";
 import { motion } from "motion/react";
 import HoldButton from "@/components/HoldButton";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
-  const { userInfo, logout } = useUserContext();
+  const { userInfo, logout, authFetch } = useUserContext();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
     if (!userInfo || !userInfo.id || isDeleting) return;
     setIsDeleting(true);
-    const accessToken = atob(getCookie("USRSS") || "");
-    const r = await fetch(getApiUrl("/api/v1/me"), {
-      method: "DELETE",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-      },
-    });
-    if (r.status === 401) return logout();
-    if (r.ok) {
-      window.location.href = "/";
+    try {
+      const r = await authFetch(getApiUrl("/api/v1/me"), {
+        method: "DELETE",
+      });
+      if (r.status === 401 || r.ok) {
+        logout();
+        return;
+      }
+      toast.error("Failed to delete account");
+    } catch {
+      toast.error("Network error while deleting account");
+    } finally {
+      setIsDeleting(false);
     }
-    setIsDeleting(false);
   };
 
   return (
@@ -85,13 +87,15 @@ function Page() {
                 <AlertDialogMedia className="bg-destructive/10 p-2 size-12 rounded-xl text-destructive dark:bg-destructive/20 dark:text-destructive">
                   <TrashIcon weight="fill" size={12} />
                 </AlertDialogMedia>
-                <AlertDialogTitle className={"text-lg"}>
+                <AlertDialogTitle className="text-lg">
                   {lang.data.app.danger.delete_account.title}?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   {lang.data.app.danger.delete_account.description}
                 </AlertDialogDescription>
-                <span className="text-xs text-destructive select-none font-sans">This action cannot be undo.</span>
+                <span className="text-xs text-destructive select-none font-sans">
+                  This action cannot be undone.
+                </span>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel
@@ -102,8 +106,8 @@ function Page() {
                   {lang.data.app.danger.delete_account.cancel}
                 </AlertDialogCancel>
                 <AlertDialogAction
-                  variant={"destructive"}
-                  className={"rounded-xl"}
+                  variant="destructive"
+                  className="rounded-xl"
                   render={
                     <HoldButton
                       doneLabel="Deleted"
@@ -124,7 +128,8 @@ function Page() {
                       resetAfter={1200}
                       disabled={isDeleting}
                       onHold={() => void handleDelete()}
-                    />}
+                    />
+                  }
                 >
                   {isDeleting ? (
                     <Spinner className="size-4" />

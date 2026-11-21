@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import createGlobe from "cobe";
 
 export interface BarMarker {
@@ -36,6 +36,7 @@ export function GlobeBars({
   focusedMarkerId = null,
   zoomScale = 1.18,
 }: GlobeBarsProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointerInteracting = useRef<{ x: number; y: number } | null>(null);
   const dragOffset = useRef({ phi: 0, theta: 0 });
@@ -46,15 +47,28 @@ export function GlobeBars({
 
   const focusLocationRef = useRef<[number, number] | null>(focusLocation);
   const zoomScaleRef = useRef(zoomScale);
+  const markersRef = useRef(markers);
+  const wakeRef = useRef<(() => void) | null>(null);
+
+  const markersKey = useMemo(
+    () => markers.map((m) => `${m.id}:${m.location[0]},${m.location[1]}`).join("|"),
+    [markers],
+  );
+
+  useEffect(() => {
+    markersRef.current = markers;
+  }, [markers]);
 
   useEffect(() => {
     focusLocationRef.current = focusLocation;
     zoomScaleRef.current = zoomScale;
+    wakeRef.current?.();
   }, [focusLocation, zoomScale]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     pointerInteracting.current = { x: e.clientX, y: e.clientY };
     if (canvasRef.current) canvasRef.current.style.cursor = "grabbing";
+    wakeRef.current?.();
   }, []);
 
   const handlePointerUp = useCallback(() => {
@@ -74,6 +88,7 @@ export function GlobeBars({
           phi: (e.clientX - pointerInteracting.current.x) / 300,
           theta: (e.clientY - pointerInteracting.current.y) / 1000,
         };
+        wakeRef.current?.();
       }
     };
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
@@ -85,18 +100,83 @@ export function GlobeBars({
   }, [handlePointerUp]);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
     const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    const reduceMotion =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+
     let globe: ReturnType<typeof createGlobe> | null = null;
-    let animationId: number;
+    let animationId = 0;
+    let fadeTimer: number | null = null;
+    let ro: ResizeObserver | null = null;
     let phi = 0;
+    let theta = 0.2;
+    let currentVelocity = reduceMotion ? 0 : speed;
+    let currentScale = 1;
+    let inView = true;
+    let disposed = false;
+
+    const isActive = () => inView && !document.hidden && !disposed;
+
+    function renderFrame() {
+      animationId = 0;
+      if (!globe || disposed) return;
+
+      const isInteracting = pointerInteracting.current !== null;
+      const focus = focusLocationRef.current;
+
+      if (isInteracting) {
+        currentVelocity = 0;
+      } else if (focus) {
+        const [lat, lon] = focus;
+        const targetPhi = -(lon * Math.PI) / 180 - Math.PI / 2;
+        const targetTheta = Math.max(-0.4, Math.min(0.5, (lat * Math.PI) / 180));
+
+        let diffPhi = (targetPhi - (phi + phiOffsetRef.current)) % (2 * Math.PI);
+        if (diffPhi > Math.PI) diffPhi -= 2 * Math.PI;
+        if (diffPhi < -Math.PI) diffPhi += 2 * Math.PI;
+
+        phi += diffPhi * 0.06;
+        theta += (targetTheta - theta) * 0.06;
+        currentVelocity = 0;
+      } else if (!reduceMotion) {
+        const targetVelocity = isHoveredRef.current ? 0 : speed;
+        currentVelocity += (targetVelocity - currentVelocity) * 0.05;
+        phi += currentVelocity;
+        theta += (0.2 - theta) * 0.05;
+      }
+
+      const targetScale = focus ? zoomScaleRef.current : 1;
+      currentScale += (targetScale - currentScale) * 0.06;
+
+      globe.update({
+        phi: phi + phiOffsetRef.current + dragOffset.current.phi,
+        theta: theta + thetaOffsetRef.current + dragOffset.current.theta,
+        scale: currentScale,
+      });
+
+      const needsMoreFrames =
+        isActive() && (!reduceMotion || isInteracting || Boolean(focus));
+      if (needsMoreFrames) {
+        animationId = requestAnimationFrame(renderFrame);
+      }
+    }
+
+    const wake = () => {
+      if (!globe || animationId || !isActive()) return;
+      animationId = requestAnimationFrame(renderFrame);
+    };
+    wakeRef.current = wake;
 
     function init() {
+      if (disposed || globe || !canvas) return;
       const width = canvas.offsetWidth;
-      if (width === 0 || globe) return;
+      if (width === 0) return;
 
       globe = createGlobe(canvas, {
-        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
         width,
         height: width,
         phi: 0,
@@ -104,13 +184,17 @@ export function GlobeBars({
         scale: 1,
         dark: isDarkMode ? 1 : 0,
         diffuse: 1.5,
-        mapSamples: 16000,
+        mapSamples: 14000,
         mapBrightness: isDarkMode ? 6 : 9,
         baseColor: isDarkMode ? [0.22, 0.22, 0.26] : [1, 1, 1],
         markerColor: [0.15, 0.55, 0.55],
         glowColor: isDarkMode ? [0.12, 0.16, 0.25] : [0.94, 0.93, 0.91],
         markerElevation: 0,
-        markers: markers.map((m) => ({ location: m.location, size: 0.02, id: m.id })),
+        markers: markersRef.current.map((m) => ({
+          location: m.location,
+          size: 0.02,
+          id: m.id,
+        })),
         arcs: [],
         arcColor: [0.2, 0.6, 0.6],
         arcWidth: 0.5,
@@ -118,57 +202,45 @@ export function GlobeBars({
         opacity: 0.7,
       });
 
-      let currentVelocity = speed;
-      let currentScale = 1;
-      let theta = 0.2;
-
-      function animate() {
-        const isInteracting = pointerInteracting.current !== null;
-        const focus = focusLocationRef.current;
-
-        if (isInteracting) {
-          currentVelocity = 0;
-        } else if (focus) {
-          const [lat, lon] = focus;
-          const targetPhi = -(lon * Math.PI / 180) - Math.PI / 2;
-          const targetTheta = Math.max(-0.4, Math.min(0.5, (lat * Math.PI) / 180));
-
-          let diffPhi = (targetPhi - (phi + phiOffsetRef.current)) % (2 * Math.PI);
-          if (diffPhi > Math.PI) diffPhi -= 2 * Math.PI;
-          if (diffPhi < -Math.PI) diffPhi += 2 * Math.PI;
-
-          phi += diffPhi * 0.06;
-          theta += (targetTheta - theta) * 0.06;
-          currentVelocity = 0;
-        } else {
-          const targetVelocity = isHoveredRef.current ? 0 : speed;
-          currentVelocity += (targetVelocity - currentVelocity) * 0.05;
-          phi += currentVelocity;
-          theta += (0.2 - theta) * 0.05;
-        }
-
-        const targetScale = focus ? zoomScaleRef.current : 1;
-        currentScale += (targetScale - currentScale) * 0.06;
-
-        globe!.update({
-          phi: phi + phiOffsetRef.current + dragOffset.current.phi,
-          theta: theta + thetaOffsetRef.current + dragOffset.current.theta,
-          scale: currentScale,
-        });
-        animationId = requestAnimationFrame(animate);
-      }
-      animate();
-      setTimeout(() => {
-        if (canvas) canvas.style.opacity = "1";
-      });
+      renderFrame();
+      fadeTimer = window.setTimeout(() => {
+        if (!disposed && canvas) canvas.style.opacity = "1";
+      }, 0);
     }
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        inView = entry.isIntersecting;
+        if (inView) {
+          wake();
+        } else if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = 0;
+        }
+      },
+      { threshold: 0 },
+    );
+    io.observe(container);
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = 0;
+        }
+      } else {
+        wake();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
     if (canvas.offsetWidth > 0) {
       init();
     } else {
-      const ro = new ResizeObserver((entries) => {
+      ro = new ResizeObserver((entries) => {
         if (entries[0]?.contentRect.width > 0) {
-          ro.disconnect();
+          ro?.disconnect();
+          ro = null;
           init();
         }
       });
@@ -176,13 +248,23 @@ export function GlobeBars({
     }
 
     return () => {
+      disposed = true;
+      wakeRef.current = null;
+      if (fadeTimer !== null) window.clearTimeout(fadeTimer);
       if (animationId) cancelAnimationFrame(animationId);
-      if (globe) globe.destroy();
+      ro?.disconnect();
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (globe) {
+        globe.destroy();
+        globe = null;
+      }
     };
-  }, [markers, speed, isDarkMode]);
+  }, [markersKey, speed, isDarkMode]);
 
   return (
     <div
+      ref={containerRef}
       className={`relative aspect-square select-none ${className}`}
       onMouseEnter={() => {
         isHoveredRef.current = true;

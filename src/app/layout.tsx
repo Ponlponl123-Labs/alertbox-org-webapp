@@ -2,13 +2,9 @@ import type { Metadata } from "next";
 import {
   Momo_Trust_Display,
   Noto_Serif_Thai,
-  Afacad,
-  Inter,
   Inter_Tight,
   DM_Sans,
   Rubik,
-  Fredoka,
-  Geist_Mono,
   JetBrains_Mono,
   Lexend_Exa,
   Sarabun,
@@ -41,22 +37,9 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const afacadSans = Afacad({
-  variable: "--font-afacad",
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-  display: "swap",
-});
-
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
   weight: ["400", "500", "600", "700", "800"],
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const fredokaSans = Fredoka({
-  variable: "--font-fredoka",
   subsets: ["latin"],
   display: "swap",
 });
@@ -87,18 +70,6 @@ const baiJamJuree = Bai_Jamjuree({
   display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const inter = Inter({
-  variable: "--font-inter-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   subsets: ["latin"],
@@ -106,7 +77,7 @@ const dmSans = DM_Sans({
 });
 
 const rubik = Rubik({
-  variable: "--font-rubik-sans",
+  variable: "--font-rubik",
   subsets: ["latin"],
   display: "swap",
 });
@@ -128,19 +99,15 @@ export default function RootLayout({
         "h-dvh overflow-hidden",
         "antialiased",
         momoTrustDisplay.variable,
-        inter.variable,
         dmSans.variable,
         rubik.variable,
         baiJamJuree.variable,
-        fredokaSans.variable,
-        geistMono.variable,
         notoSarifThai.variable,
         "font-sans",
         jetbrainsMono.variable,
         lexendExa.variable,
         sarabun.variable,
         interTight.variable,
-        afacadSans.variable,
       )}
       suppressHydrationWarning
       style={{

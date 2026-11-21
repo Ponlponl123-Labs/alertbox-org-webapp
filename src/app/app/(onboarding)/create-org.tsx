@@ -38,54 +38,49 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   const splitRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const content2Ref = useRef<HTMLDivElement>(null);
-  const isInteractiveRef = useRef(false);
+  const gsapCtxRef = useRef<gsap.Context | null>(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isInteractiveRef.current) return;
-
-      const normX = (e.clientX / window.innerWidth - 0.5) * 2;
-      const normY = (e.clientY / window.innerHeight - 0.5) * 2;
-
-      if (contentRef.current) {
-        gsap.to(contentRef.current, {
-          x: -normX * 6,
-          y: -normY * 6,
-          duration: 1.0,
-          ease: "power2.out",
-          overwrite: "auto",
-        });
-      }
+    isMountedRef.current = true;
+    const ctx = gsap.context(() => {}, containerRef);
+    gsapCtxRef.current = ctx;
+    return () => {
+      isMountedRef.current = false;
+      ctx.revert();
+      gsapCtxRef.current = null;
     };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   useEffect(() => {
     if (step === 1 && content2Ref.current) {
-      gsap.fromTo(
-        content2Ref.current,
-        { opacity: 0, y: 64, filter: "blur(20px)" },
-        { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power2.out" }
-      );
+      gsapCtxRef.current?.add(() => {
+        gsap.fromTo(
+          content2Ref.current,
+          { opacity: 0, y: 64, filter: "blur(20px)" },
+          { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power2.out" }
+        );
+      });
     }
   }, [step]);
 
   const handleFirstComplete = () => {
-    gsap.delayedCall(1.2, () => {
-      const chars = splitRef.current?.querySelectorAll(".split-char");
-      const targets = chars && chars.length > 0 ? chars : splitRef.current;
-      gsap.to(targets, {
-        opacity: 0,
-        y: -24,
-        filter: "blur(8px)",
-        duration: 0.5,
-        stagger: { each: 0.02, from: "start" },
-        ease: "power2.in",
-        onComplete: () => {
-          setStep(1);
-        },
+    gsapCtxRef.current?.add(() => {
+      gsap.delayedCall(1.2, () => {
+        const chars = splitRef.current?.querySelectorAll(".split-char");
+        const targets = chars && chars.length > 0 ? chars : splitRef.current;
+        if (!targets) return;
+        gsap.to(targets, {
+          opacity: 0,
+          y: -24,
+          filter: "blur(8px)",
+          duration: 0.5,
+          stagger: { each: 0.02, from: "start" },
+          ease: "power2.in",
+          onComplete: () => {
+            if (isMountedRef.current) setStep(1);
+          },
+        });
       });
     });
   };
@@ -96,22 +91,26 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
     setIsBuildingOrgState1(true);
 
     try {
-      const createReq = authFetch(getApiUrl("/api/v1/org"), {
+      const createPromise: Promise<Response | Error> = authFetch(getApiUrl("/api/v1/org"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: orgName.trim(),
           type: "COMMUNITY",
         }),
-      });
+      }).catch((err) => (err instanceof Error ? err : new Error("Network error")));
 
       await new Promise((r) => setTimeout(r, 1000));
+      if (!isMountedRef.current) return;
       setIsBuildingOrgState2(true);
 
-      const [res] = await Promise.all([
-        createReq,
+      const [resOrErr] = await Promise.all([
+        createPromise,
         new Promise((r) => setTimeout(r, 1200)),
       ]);
+      if (!isMountedRef.current) return;
+      if (resOrErr instanceof Error) throw resOrErr;
+      const res = resOrErr;
 
       if (!res.ok) {
         const msg = await res.text();
@@ -135,23 +134,26 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
       }
 
       const orgSlug = created.slug || created.id;
-      if (contentRef.current) {
-        gsap.to(contentRef.current, {
-          opacity: 0,
-          y: -24,
-          filter: "blur(12px)",
-          duration: 0.8,
-          ease: "power2.inOut",
-          onComplete: () => {
-            onComplete?.();
-            router.push(`/app/${orgSlug}`);
-          },
+      if (contentRef.current && isMountedRef.current) {
+        gsapCtxRef.current?.add(() => {
+          gsap.to(contentRef.current, {
+            opacity: 0,
+            y: -24,
+            filter: "blur(12px)",
+            duration: 0.8,
+            ease: "power2.inOut",
+            onComplete: () => {
+              onComplete?.();
+              router.push(`/app/${orgSlug}`);
+            },
+          });
         });
       } else {
         onComplete?.();
         router.push(`/app/${orgSlug}`);
       }
     } catch {
+      if (!isMountedRef.current) return;
       toast.error("Network error while creating organization");
       setIsBuildingOrg(false);
       setIsBuildingOrgState1(false);

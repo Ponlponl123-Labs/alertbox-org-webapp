@@ -1,5 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { formatMoneyMinorUnits, getCachedDateFormat } from "@/lib/formatters";
+import { safeParseBigInt } from "@/lib/security";
 import {
   UserMentionChip,
   RoleMentionChip,
@@ -52,27 +54,21 @@ export interface AuditActionInfo {
 export function formatTableDate(dateString: string): string {
   try {
     const d = new Date(dateString);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    if (Number.isNaN(d.getTime())) return dateString;
+    return getCachedDateFormat("en-US", { month: "short", day: "numeric" }).format(d);
   } catch {
     return dateString;
   }
 }
 
 export function formatDonationAmount(amount: unknown, currency?: unknown): string {
-  if (amount === undefined || amount === null) return "";
-  const num = typeof amount === "number" ? amount : Number(amount);
-  const cur = currency ? String(currency).toUpperCase() : "";
-  if (isNaN(num)) return `${String(amount)} ${cur}`.trim();
-  const formatted = (num / 100).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return cur ? `${formatted} ${cur}` : formatted;
+  return formatMoneyMinorUnits(amount, currency);
 }
 
 export function formatRelativeTime(dateString: string): string {
   try {
     const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return dateString;
     const now = Date.now();
     const diffMs = now - date.getTime();
     const diffSec = Math.floor(diffMs / 1000);
@@ -84,15 +80,16 @@ export function formatRelativeTime(dateString: string): string {
     if (diffMin < 60) return `${diffMin}m ago`;
     if (diffHour < 24) return `${diffHour}h ago`;
     if (diffDay === 1) {
-      return `Yesterday at ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+      return `Yesterday at ${getCachedDateFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date)}`;
     }
     if (diffDay < 7) return `${diffDay}d ago`;
 
-    return date.toLocaleDateString(undefined, {
+    const sameYear = date.getFullYear() === new Date().getFullYear();
+    return getCachedDateFormat("en-US", {
       month: "short",
       day: "numeric",
-      year: date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
-    });
+      ...(sameYear ? {} : { year: "numeric" }),
+    }).format(date);
   } catch {
     return dateString;
   }
@@ -862,19 +859,21 @@ export function AuditDetailBreakdown({
   const hasAssignments = assignments.length > 0;
 
   const hasRoleChange = Boolean(p.previousRole && p.role && p.previousRole !== p.role);
-  const prevBits = p.previousPermissions ? BigInt(String(p.previousPermissions)) : null;
-  const currBits = p.permissions ? BigInt(String(p.permissions)) : null;
+  const prevBits = p.previousPermissions ? safeParseBigInt(String(p.previousPermissions), BigInt(-1)) : null;
+  const currBits = p.permissions ? safeParseBigInt(String(p.permissions), BigInt(-1)) : null;
+  const validPrevBits = prevBits !== null && prevBits >= BigInt(0) ? prevBits : null;
+  const validCurrBits = currBits !== null && currBits >= BigInt(0) ? currBits : null;
 
   const addedPerms =
-    prevBits !== null && currBits !== null
-      ? ALL_ORG_PERMS.filter((perm) => (currBits & perm.bit) === perm.bit && (prevBits & perm.bit) === BigInt(0))
+    validPrevBits !== null && validCurrBits !== null
+      ? ALL_ORG_PERMS.filter((perm) => (validCurrBits & perm.bit) === perm.bit && (validPrevBits & perm.bit) === BigInt(0))
       : [];
   const removedPerms =
-    prevBits !== null && currBits !== null
-      ? ALL_ORG_PERMS.filter((perm) => (prevBits & perm.bit) === perm.bit && (currBits & perm.bit) === BigInt(0))
+    validPrevBits !== null && validCurrBits !== null
+      ? ALL_ORG_PERMS.filter((perm) => (validPrevBits & perm.bit) === perm.bit && (validCurrBits & perm.bit) === BigInt(0))
       : [];
   const hasPermDiff = addedPerms.length > 0 || removedPerms.length > 0;
-  const staticPerms = !hasPermDiff && currBits !== null ? decodeOrgPermissions(currBits) : [];
+  const staticPerms = !hasPermDiff && validCurrBits !== null ? decodeOrgPermissions(validCurrBits) : [];
 
   const changes =
     p.changes && typeof p.changes === "object"
@@ -1149,6 +1148,11 @@ export function AuditExpandedRowContent({
     payload !== null &&
     (typeof payload !== "object" || Object.keys(payload as object).length > 0);
 
+  const serializedPayload = useMemo(
+    () => (hasPayload ? JSON.stringify(payload, null, 2) : ""),
+    [hasPayload, payload],
+  );
+
   return (
     <div
       onClick={(e) => e.stopPropagation()}
@@ -1197,16 +1201,18 @@ export function AuditExpandedRowContent({
           <div className="relative mt-2 p-3 rounded-md bg-muted/20 border border-border/40 font-mono text-[11px] text-foreground/80 overflow-x-auto max-h-48 scrollbar-thin select-all">
             <button
               type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-                setCopiedRaw(true);
-                setTimeout(() => setCopiedRaw(false), 1500);
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(serializedPayload);
+                  setCopiedRaw(true);
+                  setTimeout(() => setCopiedRaw(false), 1500);
+                } catch {}
               }}
               className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[10px] text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted/80 border border-border/40 transition-colors cursor-pointer"
             >
               {copiedRaw ? "copied" : "copy"}
             </button>
-            <pre className="leading-relaxed">{JSON.stringify(payload, null, 2)}</pre>
+            <pre className="leading-relaxed">{serializedPayload}</pre>
           </div>
         </details>
       )}
