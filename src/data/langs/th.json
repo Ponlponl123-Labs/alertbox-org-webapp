@@ -94,6 +94,8 @@
     "or": "หรือ",
     "network_error": "เกิดข้อผิดพลาดของเครือข่าย",
     "action_irreversible": "การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+    "remove_media_title": "ลบ{type}?",
+    "remove_media_desc": "คุณแน่ใจหรือไม่ว่าต้องการลบ{type}นี้? คุณสามารถอัปโหลดใหม่ได้ทุกเมื่อ",
     "image_type_error": "รองรับเฉพาะไฟล์รูปภาพ PNG, JPEG และ WebP เท่านั้น",
     "image_size_error": "ขนาดรูปภาพต้องไม่เกิน 5 MB",
     "inappropriate_content": "รูปภาพมีเนื้อหาที่ไม่เหมาะสม",

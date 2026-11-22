@@ -94,6 +94,8 @@
     "or": "or",
     "network_error": "Network error occurred",
     "action_irreversible": "This action cannot be undone.",
+    "remove_media_title": "Remove {type}?",
+    "remove_media_desc": "Are you sure you want to remove this {type}? You can upload a new one anytime.",
     "image_type_error": "Only PNG, JPEG, and WebP images are supported",
     "image_size_error": "Image must be 5 MB or smaller",
     "inappropriate_content": "Image contains inappropriate content",

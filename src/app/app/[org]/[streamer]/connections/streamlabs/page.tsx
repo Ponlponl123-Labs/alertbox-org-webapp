@@ -533,11 +533,11 @@ function StreamlabsPageContent() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col items-center justify-center min-h-[70vh] flex-1 font-sans"
+        className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col items-center justify-center min-h-[70vh] flex-1 font-sans select-none"
       >
-        <div className="w-full max-w-md rounded-3xl border border-border/70 bg-card p-8 shadow-sm flex flex-col items-center text-center gap-5">
+        <div className="w-full max-w-md p-8 flex flex-col items-center text-center gap-5">
           <div className="flex items-center justify-center gap-4">
-            <div className="size-14 rounded-2xl bg-muted/60 flex items-center justify-center">
+            <div className="size-14 flex items-center justify-center">
               <Image src="/favicon.ico" width={36} height={36} alt="Alertbox.org" />
             </div>
 
@@ -548,7 +548,7 @@ function StreamlabsPageContent() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="size-8 rounded-full bg-muted flex items-center justify-center"
+                  className="size-8 flex items-center justify-center"
                 >
                   <Spinner className="size-4 text-foreground/60" />
                 </motion.div>
@@ -558,7 +558,7 @@ function StreamlabsPageContent() {
                   initial={{ opacity: 0, scale: 0.6 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="size-8 rounded-full bg-emerald-500/15 text-emerald-500 flex items-center justify-center"
+                  className="size-8 text-emerald-500 flex items-center justify-center"
                 >
                   <CheckIcon weight="bold" size={16} />
                 </motion.div>
@@ -568,14 +568,14 @@ function StreamlabsPageContent() {
                   initial={{ opacity: 0, scale: 0.6 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="size-8 rounded-full bg-rose-500/15 text-rose-500 flex items-center justify-center"
+                  className="size-8 text-rose-500 flex items-center justify-center"
                 >
                   <XIcon weight="bold" size={16} />
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <div className="size-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+            <div className="size-14 flex items-center justify-center">
               <Streamlabs className="size-8" />
             </div>
           </div>
@@ -596,7 +596,7 @@ function StreamlabsPageContent() {
                     ? t.oauth.connected
                     : t.oauth.failed}
               </h1>
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground font-sans leading-relaxed">
                 {oauthStatus === "connecting"
                   ? t.oauth.connecting_description
                   : oauthStatus === "success"

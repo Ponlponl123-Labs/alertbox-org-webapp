@@ -52,14 +52,14 @@ function StripePageContent() {
   const connectionsEndpoint =
     safeOrg && safeStreamer
       ? getApiUrl(
-          `/api/v1/org/${encodeURIComponent(safeOrg)}/streamers/${encodeURIComponent(safeStreamer)}/integration`,
-        )
+        `/api/v1/org/${encodeURIComponent(safeOrg)}/streamers/${encodeURIComponent(safeStreamer)}/integration`,
+      )
       : "";
   const stripeEndpoint =
     safeOrg && safeStreamer
       ? getApiUrl(
-          `/api/v1/org/${encodeURIComponent(safeOrg)}/streamers/${encodeURIComponent(safeStreamer)}/integration/stripe`,
-        )
+        `/api/v1/org/${encodeURIComponent(safeOrg)}/streamers/${encodeURIComponent(safeStreamer)}/integration/stripe`,
+      )
       : "";
   const backHref =
     safeOrg && safeStreamer
@@ -131,7 +131,7 @@ function StripePageContent() {
           setConnections(data);
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         if (!controller.signal.aborted) setIsLoading(false);
       });
@@ -159,7 +159,7 @@ function StripePageContent() {
 
   if (code && state) {
     return (
-      <div className="w-full flex flex-col min-h-0 mt-6 flex-1 gap-1.5 font-sans">
+      <div className="w-full flex flex-col min-h-0 mt-6 flex-1 gap-1.5 font-sans select-none">
         <div className="w-full flex flex-col items-center justify-center min-h-0 py-6 flex-1">
           <div className="flex items-center justify-center gap-4">
             <Image

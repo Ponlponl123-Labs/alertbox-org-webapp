@@ -46,6 +46,18 @@ import { CameraIcon, TrashIcon } from "@phosphor-icons/react/dist/ssr";
 import { PencilEdit02 } from "@/components/animate-ui/icons/hugeicons/pencil-edit-02";
 import { Input as ShadcnInput } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import HoldButton from "@/components/HoldButton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { MAX_UPLOAD_BYTES } from "@/consts/profile";
 import type { PaymentMethodType, PublicProfileData } from "@/types/profile.types";
@@ -110,6 +122,8 @@ export default function PublicProfileClient({
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [cropType, setCropType] = useState<"avatar" | "banner">("avatar");
+  const [pendingRemoveMedia, setPendingRemoveMedia] = useState<"avatar" | "banner" | null>(null);
+  const [isRemovingMedia, setIsRemovingMedia] = useState(false);
   const [displayName, setDisplayName] = useState(activeStreamer?.displayName || "");
   const [bio, setBio] = useState(activeStreamer?.bio || "");
   const prevStreamerIdRef = useRef(activeStreamer?.id);
@@ -301,7 +315,8 @@ export default function PublicProfileClient({
   };
 
   const handleRemoveMedia = async (type: "avatar" | "banner") => {
-    if (!canEditProfile || !streamerPatchEndpoint || !activeStreamer) return;
+    if (!canEditProfile || !streamerPatchEndpoint || !activeStreamer || isRemovingMedia) return;
+    setIsRemovingMedia(true);
     const mediaLabel = type === "avatar" ? lang.data.common.avatar : lang.data.common.banner;
     try {
       const res = await authFetch(streamerPatchEndpoint, {
@@ -318,6 +333,8 @@ export default function PublicProfileClient({
       }
     } catch {
       toast.error(formatI18n(pp.remove_network, { type: mediaLabel }));
+    } finally {
+      setIsRemovingMedia(false);
     }
   };
 
@@ -468,7 +485,7 @@ export default function PublicProfileClient({
                   type="button"
                   size="sm"
                   variant="destructive"
-                  onClick={() => handleRemoveMedia("banner")}
+                  onClick={() => setPendingRemoveMedia("banner")}
                   className="p-2 h-max rounded-xl absolute left-1/2 -translate-x-1/2 text-xs font-semibold z-10 backdrop-blur-lg"
                 >
                   <TrashIcon size={14} weight="bold" />
@@ -832,6 +849,68 @@ export default function PublicProfileClient({
           onCropComplete={onCropComplete}
         />
       }
+      <AlertDialog
+        open={Boolean(pendingRemoveMedia)}
+        onOpenChange={(open) => !open && !isRemovingMedia && setPendingRemoveMedia(null)}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="text-destructive">
+              <TrashIcon weight="regular" className="size-9" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>
+              {formatI18n(lang.data.common.remove_media_title, {
+                type: pendingRemoveMedia === "avatar" ? lang.data.common.avatar : lang.data.common.banner,
+              })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {formatI18n(lang.data.common.remove_media_desc, {
+                type: (pendingRemoveMedia === "avatar" ? lang.data.common.avatar : lang.data.common.banner).toLowerCase(),
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemovingMedia}>
+              {lang.data.common.cancel}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              className="rounded-xl p-3.25"
+              render={
+                <HoldButton
+                  doneLabel={lang.data.common.deleted}
+                  backgroundColor="var(--muted)"
+                  fillColor="#f43f5e"
+                  textColor="var(--muted-foreground)"
+                  fillTextColor="#ffffff"
+                  size="sm"
+                  radius={14}
+                  fillDirection="right"
+                  className="h-max p-3.25 text-xs"
+                  holdTime={2000}
+                  releaseTime={200}
+                  pressScale={1}
+                  wave
+                  waveAmplitude={6}
+                  glow={false}
+                  resetAfter={1200}
+                  disabled={isRemovingMedia}
+                  onHold={() => {
+                    if (!pendingRemoveMedia) return;
+                    const target = pendingRemoveMedia;
+                    void (async () => {
+                      await handleRemoveMedia(target);
+                      setPendingRemoveMedia(null);
+                    })();
+                  }}
+                />
+              }
+            >
+              {isRemovingMedia ? <Spinner className="size-4" /> : lang.data.common.delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

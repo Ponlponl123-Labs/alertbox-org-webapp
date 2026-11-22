@@ -34,6 +34,17 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { hasPermission, isOrgOwner, isOrgOwnerOrAdmin } from "@/lib/rbac";
 import { OrgPerm } from "@/consts/permission";
@@ -77,6 +88,7 @@ export default function OrgSettingsPage() {
   const [cropperOpen, setCropperOpen] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [cropType, setCropType] = useState<CropType>("avatar");
+  const [pendingRemoveMedia, setPendingRemoveMedia] = useState<CropType | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -444,7 +456,7 @@ export default function OrgSettingsPage() {
                     type="button"
                     size="sm"
                     variant="destructive"
-                    onClick={() => handleRemoveMedia("banner")}
+                    onClick={() => setPendingRemoveMedia("banner")}
                     className="p-3 h-max rounded-xl text-xs font-semibold"
                     title={os.remove_banner_title}
                   >
@@ -510,7 +522,7 @@ export default function OrgSettingsPage() {
                     type="button"
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleRemoveMedia("avatar")}
+                    onClick={() => setPendingRemoveMedia("avatar")}
                     className="p-2.5 h-max text-xs rounded-xl"
                     title={os.remove_logo_title}
                   >
@@ -1101,6 +1113,69 @@ export default function OrgSettingsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={Boolean(pendingRemoveMedia)}
+        onOpenChange={(open) => !open && !isMediaBusy && setPendingRemoveMedia(null)}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogMedia className="text-destructive">
+              <TrashIcon weight="regular" className="size-9" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>
+              {formatI18n(lang.data.common.remove_media_title, {
+                type: pendingRemoveMedia === "avatar" ? lang.data.common.logo : lang.data.common.banner,
+              })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {formatI18n(lang.data.common.remove_media_desc, {
+                type: (pendingRemoveMedia === "avatar" ? lang.data.common.logo : lang.data.common.banner).toLowerCase(),
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isMediaBusy}>
+              {lang.data.common.cancel}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              className="rounded-xl p-3.25"
+              render={
+                <HoldButton
+                  doneLabel={lang.data.common.deleted}
+                  backgroundColor="var(--muted)"
+                  fillColor="#f43f5e"
+                  textColor="var(--muted-foreground)"
+                  fillTextColor="#ffffff"
+                  size="sm"
+                  radius={14}
+                  fillDirection="right"
+                  className="h-max p-3.25 text-xs"
+                  holdTime={2000}
+                  releaseTime={200}
+                  pressScale={1}
+                  wave
+                  waveAmplitude={6}
+                  glow={false}
+                  resetAfter={1200}
+                  disabled={isMediaBusy}
+                  onHold={() => {
+                    if (!pendingRemoveMedia) return;
+                    const target = pendingRemoveMedia;
+                    void (async () => {
+                      await handleRemoveMedia(target);
+                      setPendingRemoveMedia(null);
+                    })();
+                  }}
+                />
+              }
+            >
+              {isMediaBusy ? <Spinner className="size-4" /> : lang.data.common.delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }
