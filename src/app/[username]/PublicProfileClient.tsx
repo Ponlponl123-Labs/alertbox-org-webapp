@@ -47,6 +47,11 @@ import { PencilEdit02 } from "@/components/animate-ui/icons/hugeicons/pencil-edi
 import { Input as ShadcnInput } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { MAX_UPLOAD_BYTES } from "@/consts/profile";
+import type { PaymentMethodType, PublicProfileData } from "@/types/profile.types";
+
+export type { PublicProfileData } from "@/types/profile.types";
+
 const ImageCropperModal = dynamic(
   () =>
     import("@/components/features/modals/image-cropper-modal").then(
@@ -54,17 +59,6 @@ const ImageCropperModal = dynamic(
     ),
   { ssr: false },
 );
-
-const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-
-type PaymentMethodType =
-  | "stripe"
-  | "xendit"
-  | "omise"
-  | "2c2p"
-  | "feelfreepay"
-  | "kofi"
-  | "bmac";
 
 const staggerContainer: Variants = {
   hidden: { opacity: 0 },
@@ -82,38 +76,6 @@ const fadeInUp: Variants = {
     transition: { type: "spring", stiffness: 300, damping: 24 },
   },
 };
-
-export interface PublicProfileData {
-  name: string;
-  displayName: string;
-  bio: string | null;
-  avatar: string | null;
-  banner: string | null;
-  accentColor: number;
-  badges: number;
-  twitch: string | null;
-  youtube: string | null;
-  twitter: string | null;
-  facebook: string | null;
-  reddit: string | null;
-  discord: string | null;
-  defaultDonorName?: string | null;
-  defaultDonorAmount?: number | null;
-  minTipAmount?: number | null;
-  maxTipAmount?: number | null;
-  currency?: number | null;
-  kofiUsername?: string | null;
-  bmacUsername?: string | null;
-  integrations?: {
-    stripe: boolean;
-    xendit: boolean;
-    omise: boolean;
-    "2c2p": boolean;
-    feelfreepay: boolean;
-    kofi: boolean;
-    bmac: boolean;
-  } | null;
-}
 
 export default function PublicProfileClient({
   username,

@@ -29,6 +29,7 @@ import { toast } from "@/components/custom-ui/toast";
 import { getFallbackInitial, cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
+import HoldButton from "@/components/HoldButton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -76,6 +77,8 @@ import { formatI18n } from "@/lib/i18n";
 import { motion } from "motion/react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
+import { PageTransition } from "@/components/animate-ui/components/page-transition";
 
 export default function OrgMembersPage() {
   const lang = useStore(coreStore, (s) => s.lang);
@@ -102,6 +105,7 @@ export default function OrgMembersPage() {
 
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteStep, setInviteStep] = useState<1 | 2>(1);
+  const [inviteDirection, setInviteDirection] = useState<1 | -1>(1);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("MEMBER");
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
@@ -371,6 +375,7 @@ export default function OrgMembersPage() {
       if (res.ok) {
         const data = await res.json();
         setVerifiedTargetUser(data);
+        setInviteDirection(1);
         setInviteStep(2);
       } else {
         const msg = await res.text();
@@ -400,6 +405,7 @@ export default function OrgMembersPage() {
       });
       if (res.ok) {
         const data = await res.json();
+        setInviteDirection(1);
         setCreatedInviteCode({
           code: data.code,
           email: data.email,
@@ -420,6 +426,7 @@ export default function OrgMembersPage() {
 
   const handleCloseInvite = () => {
     setIsInviteOpen(false);
+    setInviteDirection(1);
     setInviteStep(1);
     setInviteEmail("");
     setInviteRole("MEMBER");
@@ -824,10 +831,10 @@ export default function OrgMembersPage() {
         onOpenChange={(open) => !open && setManagingMember(null)}
       >
         <DialogContent
-          className="sm:max-w-4xl w-[95vw] h-[88vh] max-h-[88vh] p-0 flex flex-col gap-0 rounded-2xl overflow-hidden border border-border bg-card shadow-2xl"
+          className="sm:max-w-4xl w-[95vw] h-[88vh] max-h-[88vh] p-0 flex flex-col gap-0 rounded-3xl overflow-hidden bg-popover ring-1 ring-foreground/10"
           showCloseButton={false}
         >
-          <DialogHeader className="px-6 py-3 bg-secondary/30 shrink-0 absolute z-10 top-0 left-0 backdrop-blur-xl w-full rounded-2xl">
+          <DialogHeader className="px-6 py-3 bg-secondary/30 shrink-0 absolute z-10 top-0 left-0 backdrop-blur-xl w-full rounded-t-3xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar className="size-12 rounded-full border border-border shrink-0">
@@ -894,7 +901,13 @@ export default function OrgMembersPage() {
           </DialogHeader>
 
           <ScrollArea className="overflow-y-auto">
-            <div className="flex flex-col gap-6 p-2 pt-20">
+            <PageTransition
+              contained
+              effect="slide"
+              direction={dialogTab === "streamers" ? 1 : -1}
+              pageKey={dialogTab}
+              className="flex flex-col gap-6 p-2 pt-20"
+            >
               {dialogTab === "org" ? (
                 <div className="flex flex-col gap-2 max-w-5xl mx-auto w-full">
                   <div className="py-5 px-3 flex flex-col gap-3">
@@ -1185,7 +1198,7 @@ export default function OrgMembersPage() {
                   )}
                 </div>
               )}
-            </div>
+            </PageTransition>
           </ScrollArea>
 
           <DialogFooter className="px-6 py-3.5 mt-auto border-t border-border bg-secondary/20 flex flex-row items-center justify-between shrink-0 sm:justify-between">
@@ -1221,21 +1234,29 @@ export default function OrgMembersPage() {
       </Dialog>
 
       <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-        <DialogContent className="max-w-md! rounded-3xl p-6" showCloseButton={false}>
+        <DialogContent className="max-w-sm!" showCloseButton={false}>
+          <AutoHeight deps={[inviteStep, Boolean(createdInviteCode)]}>
+            <PageTransition
+              contained
+              effect="slide"
+              direction={inviteDirection}
+              pageKey={createdInviteCode ? "created" : `step-${inviteStep}`}
+              className="flex flex-col gap-4"
+            >
           {!createdInviteCode ? (
             inviteStep === 1 ? (
               <>
-                <DialogHeader>
-                  <div className="bg-primary/10 p-2.5 size-12 rounded-2xl text-primary flex items-center justify-center mb-2">
-                    <HandshakeIcon weight="bold" size={22} />
+                <DialogHeader className="items-center text-center gap-1.5">
+                  <div className="mb-1 inline-flex size-12 items-center justify-center text-primary">
+                    <HandshakeIcon weight="regular" className="size-9" />
                   </div>
-                  <DialogTitle className="text-2xl font-semibold">{om.invite_dialog.step1_title}</DialogTitle>
-                  <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
+                  <DialogTitle>{om.invite_dialog.step1_title}</DialogTitle>
+                  <DialogDescription className="text-balance">
                     {om.invite_dialog.step1_desc}
                   </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleCheckEmail} className="flex flex-col gap-4 mt-2">
+                <form onSubmit={handleCheckEmail} className="flex flex-col gap-4 mt-1">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-foreground/80">
                       {om.invite_dialog.email_label} <span className="text-destructive">*</span>
@@ -1259,19 +1280,19 @@ export default function OrgMembersPage() {
                     </span>
                   </div>
 
-                  <DialogFooter className="mt-4 gap-2">
+                  <DialogFooter className="mt-1 grid! grid-cols-2 gap-2">
                     <Button
                       type="button"
                       variant="secondary"
                       onClick={handleCloseInvite}
-                      className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
+                      className="rounded-xl p-3 h-max w-full text-xs font-semibold gap-2 cursor-pointer"
                     >
                       {lang.data.common.cancel}
                     </Button>
                     <Button
                       type="submit"
                       disabled={isCheckingEmail || !inviteEmail.trim()}
-                      className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
+                      className="rounded-xl p-3 h-max w-full text-xs font-semibold gap-2 cursor-pointer"
                     >
                       {isCheckingEmail ? <Spinner className="size-4" /> : <ArrowRightIcon size={16} weight="bold" />}
                       <span>{lang.data.common.continue}</span>
@@ -1285,7 +1306,10 @@ export default function OrgMembersPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <button
                       type="button"
-                      onClick={() => setInviteStep(1)}
+                      onClick={() => {
+                        setInviteDirection(-1);
+                        setInviteStep(1);
+                      }}
                       className="p-1 -ml-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                       title={om.invite_dialog.back_to_email}
                     >
@@ -1293,13 +1317,13 @@ export default function OrgMembersPage() {
                     </button>
                     <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">{om.invite_dialog.step2_badge}</span>
                   </div>
-                  <DialogTitle className="text-2xl font-semibold">{om.invite_dialog.step2_title}</DialogTitle>
-                  <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
+                  <DialogTitle>{om.invite_dialog.step2_title}</DialogTitle>
+                  <DialogDescription>
                     {om.invite_dialog.step2_desc}
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex flex-col gap-4 mt-2">
+                <div className="flex flex-col gap-4 mt-1">
                   <div className="p-3.5 rounded-2xl border border-border bg-accent/30 flex items-center gap-3.5">
                     <Avatar className="size-12 rounded-xl border border-border shrink-0">
                       <AvatarImage src={verifiedTargetUser?.avatar || undefined} className="rounded-xl" />
@@ -1397,12 +1421,15 @@ export default function OrgMembersPage() {
                     </Popover>
                   </div>
 
-                  <DialogFooter className="mt-4 gap-2">
+                  <DialogFooter className="mt-1 grid! grid-cols-2 gap-2">
                     <Button
                       type="button"
                       variant="secondary"
-                      onClick={() => setInviteStep(1)}
-                      className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
+                      onClick={() => {
+                        setInviteDirection(-1);
+                        setInviteStep(1);
+                      }}
+                      className="rounded-xl p-3 h-max w-full text-xs font-semibold gap-2 cursor-pointer"
                     >
                       {lang.data.common.back}
                     </Button>
@@ -1410,7 +1437,7 @@ export default function OrgMembersPage() {
                       type="button"
                       onClick={() => handleInvite()}
                       disabled={isInviting}
-                      className="rounded-xl p-2 h-max text-xs font-semibold gap-2 cursor-pointer"
+                      className="rounded-xl p-3 h-max w-full text-xs font-semibold gap-2 cursor-pointer"
                     >
                       {isInviting ? <Spinner className="size-4" /> : <UserPlusIcon size={16} weight="bold" />}
                       <span>{om.invite_dialog.generate_code}</span>
@@ -1421,14 +1448,14 @@ export default function OrgMembersPage() {
             )
           ) : (
             <div className="flex flex-col gap-4 select-none">
-              <DialogHeader>
-                <div className="bg-emerald-500/10 p-2.5 size-12 rounded-2xl text-emerald-500 flex items-center justify-center mb-1">
-                  <CheckCircleIcon weight="bold" size={24} />
+              <DialogHeader className="items-center text-center gap-1.5">
+                <div className="mb-1 inline-flex size-12 items-center justify-center text-emerald-500">
+                  <CheckCircleIcon weight="regular" className="size-9" />
                 </div>
-                <DialogTitle className="text-2xl font-semibold text-foreground">
+                <DialogTitle className="text-foreground">
                   {om.invite_dialog.created_title}
                 </DialogTitle>
-                <DialogDescription className="text-muted-foreground text-sm leading-relaxed">
+                <DialogDescription className="text-balance">
                   {om.invite_dialog.created_desc.split("{email}").map((part, idx, arr) => (
                     <React.Fragment key={idx}>
                       {part}
@@ -1497,28 +1524,30 @@ export default function OrgMembersPage() {
                 </div>
               </div>
 
-              <DialogFooter className="mt-3">
+              <DialogFooter className="mt-2">
                 <Button
                   type="button"
                   onClick={handleCloseInvite}
-                  className="rounded-xl p-2 w-full h-max text-xs font-semibold gap-2"
+                  className="rounded-xl p-3 w-full h-max text-xs font-semibold gap-2 cursor-pointer"
                 >
                   {lang.data.common.done}
                 </Button>
               </DialogFooter>
             </div>
           )}
+            </PageTransition>
+          </AutoHeight>
         </DialogContent>
       </Dialog>
 
       <Dialog open={Boolean(deletingMember)} onOpenChange={(open) => !open && setDeletingMember(null)}>
-        <DialogContent className="max-w-md rounded-3xl p-6" showCloseButton={false}>
-          <DialogHeader>
-            <div className="bg-destructive/10 p-2.5 size-12 rounded-2xl text-destructive flex items-center justify-center mb-2">
-              <HandWavingIcon weight="bold" size={22} />
+        <DialogContent className="max-w-xs sm:max-w-sm" showCloseButton={false}>
+          <DialogHeader className="items-center text-center gap-1.5">
+            <div className="mb-1 inline-flex size-12 items-center justify-center text-destructive">
+              <HandWavingIcon weight="regular" className="size-9" />
             </div>
-            <DialogTitle className="text-2xl font-semibold">{om.remove_dialog.title}</DialogTitle>
-            <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
+            <DialogTitle>{om.remove_dialog.title}</DialogTitle>
+            <DialogDescription className="text-balance">
               {om.remove_dialog.desc.split("{name}").map((part, idx, arr) => (
                 <React.Fragment key={idx}>
                   {formatI18n(part, { org: activeOrg?.name || "" })}
@@ -1530,25 +1559,38 @@ export default function OrgMembersPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <DialogFooter className="mt-4 gap-2">
+          <DialogFooter className="mt-1 grid! grid-cols-2 gap-2">
             <Button
               type="button"
               variant="secondary"
               onClick={() => setDeletingMember(null)}
-              className="rounded-xl p-3 h-max text-xs font-semibold gap-2"
+              className="rounded-xl p-3 h-max w-full text-xs font-semibold gap-2 cursor-pointer"
             >
               {lang.data.common.cancel}
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleRemoveMember}
+            <HoldButton
+              doneLabel={lang.data.common.deleted}
+              backgroundColor="var(--muted)"
+              fillColor="#f43f5e"
+              textColor="var(--muted-foreground)"
+              fillTextColor="#ffffff"
+              size="sm"
+              radius={14}
+              fillDirection="right"
+              className="h-max p-3.25 text-xs w-full"
+              holdTime={2000}
+              releaseTime={200}
+              pressScale={1}
+              wave
+              waveAmplitude={6}
+              glow={false}
+              resetAfter={1200}
               disabled={isDeleting}
-              className="rounded-xl p-3 h-max text-xs font-semibold gap-2"
+              onHold={handleRemoveMember}
             >
-              {isDeleting ? <Spinner /> : <TrashIcon size={16} weight="bold" />}
+              {isDeleting ? <Spinner className="size-4" /> : <TrashIcon size={16} weight="bold" />}
               <span>{om.remove_dialog.title}</span>
-            </Button>
+            </HoldButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -30,6 +30,15 @@ import { canAccessStreamer } from "@/lib/rbac";
 import { isSafePathSegment, validateOAuthRedirectUrl } from "@/lib/security";
 import { cn } from "@/lib/utils";
 import { OrgPerm, StreamerPerm } from "@/consts/permission";
+import {
+  ALL_RELAY_BITS,
+  MAX_RELAY_LOGS,
+  SAMPLE_RELAY_LOGS,
+  StreamlabsOption,
+  TOTAL_RULES,
+} from "@/consts/streamlabs";
+import { countEnabledBits, renderProviderIcon } from "@/lib/streamlabs";
+import type { LogStatusFilter, RelayLog } from "@/types/connections.types";
 import type { Connections } from "@/types/user.types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,69 +57,8 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface RelayLog {
-  id: string;
-  provider: string;
-  type: string;
-  status: "PENDING" | "COMPLETED" | "FAILED";
-  amount: number;
-  currency: string;
-  senderName: string;
-  message: string | null;
-  errorMessage: string | null;
-  createdAt: string;
-}
-
-type LogStatusFilter = "ALL" | "COMPLETED" | "FAILED" | "PENDING";
-
-const MAX_RELAY_LOGS = 200;
-
-const StreamlabsOption = {
-  STRIPE_PAYMENT_SUCCESS: 1,
-  BMAC_MEMBERSHIP_SUCCESS: 2,
-  KOFI_DONATION_SUCCESS: 4,
-  KOFI_PURCHASE_SUCCESS: 8,
-  BMAC_DONATION_SUCCESS: 16,
-  CONFIGURED_FLAG: 128,
-} as const;
-
-const ALL_RELAY_BITS =
-  StreamlabsOption.STRIPE_PAYMENT_SUCCESS |
-  StreamlabsOption.BMAC_MEMBERSHIP_SUCCESS |
-  StreamlabsOption.KOFI_DONATION_SUCCESS |
-  StreamlabsOption.KOFI_PURCHASE_SUCCESS |
-  StreamlabsOption.BMAC_DONATION_SUCCESS;
-
-const TOTAL_RULES = 5;
-
-function countEnabledBits(mask: number): number {
-  let count = 0;
-  for (const bit of [
-    StreamlabsOption.BMAC_DONATION_SUCCESS,
-    StreamlabsOption.BMAC_MEMBERSHIP_SUCCESS,
-    StreamlabsOption.KOFI_DONATION_SUCCESS,
-    StreamlabsOption.KOFI_PURCHASE_SUCCESS,
-    StreamlabsOption.STRIPE_PAYMENT_SUCCESS,
-  ]) {
-    if ((mask & bit) !== 0) count++;
-  }
-  return count;
-}
-
-function renderProviderIcon(provider: string, className = "size-4") {
-  const key = provider.toLowerCase();
-  if (key === "buymeacoffee" || key === "bmac") {
-    return <BuyMeACoffee className={cn(className, "*:fill-amber-400")} />;
-  }
-  if (key === "kofi") {
-    return <KoFi className={className} />;
-  }
-  if (key === "stripe") {
-    return <Stripe className={className} />;
-  }
-  return <Streamlabs className={className} />;
-}
+import { ScrollArea } from "@/components/ui/scroll-area";
+import HoldButton from "@/components/HoldButton";
 
 function StreamlabsPageContent() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -144,8 +92,8 @@ function StreamlabsPageContent() {
   const integrationBaseEndpoint =
     targetOrg && targetStreamer
       ? getApiUrl(
-          `/api/v1/org/${encodeURIComponent(targetOrg)}/streamers/${encodeURIComponent(targetStreamer)}/integration`,
-        )
+        `/api/v1/org/${encodeURIComponent(targetOrg)}/streamers/${encodeURIComponent(targetStreamer)}/integration`,
+      )
       : "";
   const streamlabsEndpoint = integrationBaseEndpoint
     ? `${integrationBaseEndpoint}/streamlabs`
@@ -167,6 +115,7 @@ function StreamlabsPageContent() {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [logs, setLogs] = useState<RelayLog[]>([]);
   const [statusFilter, setStatusFilter] = useState<LogStatusFilter>("ALL");
+  const [showSampleLogs, setShowSampleLogs] = useState(false);
   const [liveLogId, setLiveLogId] = useState<string | null>(null);
 
   const oauthExchangedRef = useRef(false);
@@ -478,20 +427,26 @@ function StreamlabsPageContent() {
   const activeCount = countEnabledBits(optionsMask);
   const allEnabled = activeCount === TOTAL_RULES;
 
+  const isUsingSample = process.env.NODE_ENV === "development" && logs.length === 0 && showSampleLogs;
+  const displayLogs = useMemo(
+    () => (logs.length > 0 ? logs : isUsingSample ? SAMPLE_RELAY_LOGS : []),
+    [logs, isUsingSample],
+  );
+
   const logStats = useMemo(() => {
     let delivered = 0;
     let failed = 0;
-    for (const log of logs) {
+    for (const log of displayLogs) {
       if (log.status === "COMPLETED") delivered++;
       else if (log.status === "FAILED") failed++;
     }
-    return { total: logs.length, delivered, failed };
-  }, [logs]);
+    return { total: displayLogs.length, delivered, failed };
+  }, [displayLogs]);
 
   const filteredLogs = useMemo(() => {
-    if (statusFilter === "ALL") return logs;
-    return logs.filter((l) => l.status === statusFilter);
-  }, [logs, statusFilter]);
+    if (statusFilter === "ALL") return displayLogs;
+    return displayLogs.filter((l) => l.status === statusFilter);
+  }, [displayLogs, statusFilter]);
 
   const filterTabs = useMemo(
     () => [
@@ -702,41 +657,33 @@ function StreamlabsPageContent() {
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground mt-1 max-w-2xl leading-relaxed">
+          <p className="text-sm text-muted-foreground mt-1 max-w-2xl leading-relaxed font-sans">
             {t.description}
           </p>
         </div>
 
         <div className="p-3 shrink-0">
-          <Streamlabs className="size-12" />
+          <Streamlabs className="size-12 not-dark:fill-black" />
         </div>
       </div>
 
       {!isConnected ? (
-        <div className="rounded-3xl border border-dashed border-border/80 bg-card/60 p-8 sm:p-12 flex flex-col items-center justify-center text-center gap-6 min-h-80">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center -space-x-2">
-              <div className="size-10 rounded-xl bg-background border border-border flex items-center justify-center shadow-xs">
-                <BuyMeACoffee className="size-5 *:fill-amber-400" />
-              </div>
-              <div className="size-10 rounded-xl bg-background border border-border flex items-center justify-center shadow-xs">
-                <KoFi className="size-5" />
-              </div>
-              <div className="size-10 rounded-xl bg-background border border-border flex items-center justify-center shadow-xs">
-                <Stripe className="size-5" />
-              </div>
+        <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center gap-6 flex-1 min-h-0 select-none">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <BuyMeACoffee className="size-5 *:fill-amber-400" />
+              <KoFi className="size-5" />
+              <Stripe className="size-6" />
             </div>
             <ArrowRightIcon size={18} weight="bold" className="text-muted-foreground/60" />
-            <div className="size-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <Streamlabs className="size-7" />
-            </div>
+            <Streamlabs className="size-8" />
           </div>
 
-          <div className="max-w-md space-y-2">
+          <div className="max-w-lg space-y-2">
             <h2 className="text-xl font-semibold text-foreground">
               {setupLang.disconnected_title}
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-sans">
               {setupLang.disconnected_desc}
             </p>
           </div>
@@ -746,12 +693,12 @@ function StreamlabsPageContent() {
               type="button"
               onClick={handleConnectOAuth}
               disabled={isConnectingOAuth}
-              className="rounded-xl h-max px-5 py-3 text-xs font-semibold gap-2 cursor-pointer"
+              className="rounded-xl h-max px-5 py-3 text-xs font-semibold gap-2"
             >
               {isConnectingOAuth ? (
                 <Spinner className="size-4" />
               ) : (
-                <Streamlabs className="size-4" />
+                <Streamlabs className="size-4 fill-black" />
               )}
               <span>{setupLang.connect_cta}</span>
             </Button>
@@ -769,14 +716,14 @@ function StreamlabsPageContent() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-5 flex flex-col gap-4">
-            <div className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm">
-              <div className="px-5 py-4 border-b border-border/60 bg-muted/20 flex flex-wrap items-center justify-between gap-2">
+            <div className="rounded-xl bg-card overflow-hidden">
+              <div className="p-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <SlidersIcon size={18} weight="bold" className="text-foreground/75 shrink-0" />
-                  <h2 className="text-sm font-semibold text-foreground truncate">
+                  <h2 className="text-base font-medium text-foreground truncate">
                     {setupLang.settings_title}
                   </h2>
-                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground tabular-nums">
+                  <span className="text-xs select-none font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground tabular-nums">
                     {formatI18n(setupLang.active_rules_count, {
                       active: activeCount,
                       total: TOTAL_RULES,
@@ -827,21 +774,21 @@ function StreamlabsPageContent() {
               </div>
 
               {!canManageIntegrations && (
-                <div className="px-5 py-3 bg-muted/40 border-b border-border/50 flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="p-3 bg-muted mx-1 rounded-md flex items-center gap-2 text-xs text-muted-foreground">
                   <EyeIcon size={15} weight="bold" className="shrink-0" />
                   <span>{lang.data.common.read_only_no_permission}</span>
                 </div>
               )}
 
-              <div className="p-4 flex flex-col gap-3">
+              <div className="p-2 flex flex-col gap-2">
                 {providerGroups.map((group) => (
                   <div
                     key={group.key}
-                    className="rounded-xl border border-border/60 bg-muted/20 overflow-hidden"
+                    className="rounded-lg"
                   >
-                    <div className="px-3.5 py-2.5 border-b border-border/40 flex items-center justify-between gap-2 bg-card/50">
+                    <div className="p-2.5 flex items-center justify-between gap-2 bg-card/50">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="size-7 rounded-lg bg-background border border-border/60 flex items-center justify-center shrink-0">
+                        <div className="size-6 flex items-center justify-center shrink-0">
                           {group.icon}
                         </div>
                         <span className="text-xs font-semibold text-foreground truncate">
@@ -865,7 +812,7 @@ function StreamlabsPageContent() {
                       )}
                     </div>
 
-                    <div className="divide-y divide-border/30">
+                    <div>
                       {group.rules.map((rule) => {
                         const checked = (optionsMask & rule.bit) !== 0;
                         return (
@@ -873,7 +820,7 @@ function StreamlabsPageContent() {
                             key={rule.bit}
                             onClick={() => canManageIntegrations && handleToggleBit(rule.bit)}
                             className={cn(
-                              "px-3.5 py-3 flex items-center justify-between gap-3 transition-colors select-none",
+                              "px-3.5 py-3 flex items-center justify-between gap-3 rounded-lg select-none transition-interactive",
                               canManageIntegrations
                                 ? "cursor-pointer hover:bg-foreground/3"
                                 : "opacity-70",
@@ -908,12 +855,12 @@ function StreamlabsPageContent() {
             </div>
 
             {canManageIntegrations && (
-              <div className="rounded-2xl border border-border/60 bg-card/60 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="rounded-xl bg-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <h3 className="text-xs font-semibold text-foreground">
+                  <h3 className="text-base font-medium text-foreground">
                     {setupLang.danger_zone_title}
                   </h3>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                  <p className="text-xs font-sans text-muted-foreground mt-0.5 leading-relaxed">
                     {setupLang.danger_zone_desc}
                   </p>
                 </div>
@@ -932,8 +879,8 @@ function StreamlabsPageContent() {
             )}
           </div>
 
-          <div className="lg:col-span-7 rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm flex flex-col">
-            <div className="px-5 py-4 border-b border-border/60 bg-muted/20 flex flex-wrap items-center justify-between gap-3">
+          <div className="lg:col-span-7 rounded-xl bg-card overflow-hidden flex flex-col">
+            <div className="p-3 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
                 <ClockIcon size={18} weight="bold" className="text-foreground/75 shrink-0" />
                 <h2 className="text-sm font-semibold text-foreground truncate">
@@ -979,8 +926,8 @@ function StreamlabsPageContent() {
               </AnimateIcon>
             </div>
 
-            <div className="grid grid-cols-3 divide-x divide-border/50 border-b border-border/60 bg-muted/10">
-              <div className="px-4 py-3 flex flex-col gap-0.5">
+            <div className="grid grid-cols-3 mx-1 space-x-0.5">
+              <div className="px-4 py-3 flex flex-col gap-0.5 select-none hover:bg-muted/60 duration-200 rounded-md">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {setupLang.stat_total}
                 </span>
@@ -988,7 +935,7 @@ function StreamlabsPageContent() {
                   {logStats.total}
                 </span>
               </div>
-              <div className="px-4 py-3 flex flex-col gap-0.5">
+              <div className="px-4 py-3 flex flex-col gap-0.5 select-none hover:bg-muted/60 duration-200 rounded-md">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500/80">
                   {setupLang.stat_delivered}
                 </span>
@@ -996,7 +943,7 @@ function StreamlabsPageContent() {
                   {logStats.delivered}
                 </span>
               </div>
-              <div className="px-4 py-3 flex flex-col gap-0.5">
+              <div className="px-4 py-3 flex flex-col gap-0.5 select-none hover:bg-muted/60 duration-200 rounded-md">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-rose-500/80">
                   {setupLang.stat_failed}
                 </span>
@@ -1006,7 +953,7 @@ function StreamlabsPageContent() {
               </div>
             </div>
 
-            <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none">
+            <div className="p-2 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none">
               <JellyRadio
                 items={filterTabs}
                 value={statusFilter}
@@ -1014,35 +961,48 @@ function StreamlabsPageContent() {
                 onChange={(val) => setStatusFilter(val as LogStatusFilter)}
                 size="sm"
               />
+              {process.env.NODE_ENV === "development" && logs.length === 0 && (
+                <Button
+                  type="button"
+                  size="xs"
+                  variant={showSampleLogs ? "default" : "secondary"}
+                  onClick={() => setShowSampleLogs((prev) => !prev)}
+                  className="gap-1.5 text-xs rounded-xl px-2.5 py-1.5 h-max shrink-0 cursor-pointer"
+                >
+                  <EyeIcon size={13} weight="bold" />
+                  <span>{showSampleLogs ? "Hide sample" : "Preview sample"}</span>
+                </Button>
+              )}
             </div>
 
             <AutoHeight
               deps={[filteredLogs.length, statusFilter]}
               transition={{ type: "spring", stiffness: 280, damping: 28 }}
+              className="mb-1"
             >
               {filteredLogs.length === 0 ? (
                 <div className="py-16 px-6 flex flex-col items-center justify-center text-center gap-2.5 text-muted-foreground">
                   <ClockIcon size={36} weight="duotone" className="text-foreground/50" />
-                  <p className="text-sm font-medium text-foreground">
-                    {logs.length === 0 ? setupLang.no_logs : setupLang.no_filtered_logs}
+                  <p className="text-sm font-medium text-foreground font-sans">
+                    {displayLogs.length === 0 ? setupLang.no_logs : setupLang.no_filtered_logs}
                   </p>
-                  <p className="text-xs text-muted-foreground max-w-xs">
-                    {logs.length === 0 ? setupLang.no_logs_desc : setupLang.no_filtered_logs_desc}
+                  <p className="text-xs text-muted-foreground max-w-xs font-sans">
+                    {displayLogs.length === 0 ? setupLang.no_logs_desc : setupLang.no_filtered_logs_desc}
                   </p>
-                  {statusFilter !== "ALL" && logs.length > 0 && (
+                  {statusFilter !== "ALL" && displayLogs.length > 0 && (
                     <Button
                       type="button"
                       variant="secondary"
                       size="xs"
                       onClick={() => setStatusFilter("ALL")}
-                      className="mt-2 text-xs rounded-xl px-3 py-2 h-max cursor-pointer"
+                      className="my-2 text-xs rounded-xl px-3 py-2 h-max cursor-pointer"
                     >
                       {lang.data.common.reset_filters}
                     </Button>
                   )}
                 </div>
               ) : (
-                <div className="max-h-135 overflow-y-auto divide-y divide-border/40">
+                <ScrollArea className="max-h-135 gap-1">
                   {filteredLogs.map((log) => {
                     const isCompleted = log.status === "COMPLETED";
                     const isFailed = log.status === "FAILED";
@@ -1062,13 +1022,13 @@ function StreamlabsPageContent() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                         className={cn(
-                          "px-5 py-3.5 hover:bg-muted/30 transition-colors flex flex-col gap-2",
+                          "p-2 mx-1 hover:bg-muted/30 apply-smooth-transition flex flex-col gap-2 rounded-lg",
                           liveLogId === log.id && "bg-primary/10 ring-1 ring-inset ring-primary/40",
                         )}
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="size-8 rounded-xl bg-muted/60 border border-border/50 flex items-center justify-center shrink-0">
+                            <div className="size-8 rounded-md flex items-center justify-center shrink-0">
                               {renderProviderIcon(log.provider, "size-4")}
                             </div>
                             <div className="flex flex-col min-w-0">
@@ -1103,7 +1063,7 @@ function StreamlabsPageContent() {
                                       : setupLang.status_pending}
                                 </span>
                               </div>
-                              <span className="text-[11px] text-muted-foreground truncate">
+                              <span className="text-xs text-muted-foreground truncate">
                                 {commonSetup.via}
                                 {providerDisplay}
                               </span>
@@ -1121,7 +1081,7 @@ function StreamlabsPageContent() {
                         </div>
 
                         {log.errorMessage ? (
-                          <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 px-3 py-2 flex items-start gap-2 text-[11px] text-rose-500">
+                          <div className="rounded-md bg-rose-500/10 p-2 mt-2 flex items-start gap-2 text-[10px] text-rose-500">
                             <WarningCircleIcon size={14} weight="bold" className="shrink-0 mt-0.5" />
                             <span className="font-mono break-all">
                               {commonSetup.error_prefix}
@@ -1129,14 +1089,14 @@ function StreamlabsPageContent() {
                             </span>
                           </div>
                         ) : log.message ? (
-                          <p className="text-xs text-muted-foreground pl-10.5 leading-relaxed line-clamp-2">
+                          <p className="text-xs text-muted-foreground pl-10.5 leading-relaxed line-clamp-2 font-baijamjuree">
                             &ldquo;{log.message}&rdquo;
                           </p>
                         ) : null}
                       </motion.div>
                     );
                   })}
-                </div>
+                </ScrollArea>
               )}
             </AutoHeight>
           </div>
@@ -1144,29 +1104,45 @@ function StreamlabsPageContent() {
       )}
 
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <AlertDialogContent size="sm" className="rounded-3xl">
+        <AlertDialogContent size="sm">
           <AlertDialogHeader>
-            <AlertDialogMedia className="bg-destructive/10 p-2 size-12 rounded-xl text-destructive dark:bg-destructive/20 dark:text-destructive">
-              <LinkBreakIcon weight="regular" size={12} />
+            <AlertDialogMedia className="text-destructive">
+              <LinkBreakIcon weight="regular" className="size-9" />
             </AlertDialogMedia>
-            <AlertDialogTitle className="text-lg">
+            <AlertDialogTitle>
               {setupLang.confirm_disconnect_title}
             </AlertDialogTitle>
             <AlertDialogDescription>{setupLang.confirm_disconnect_desc}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              variant="secondary"
-              className="rounded-xl cursor-pointer"
-              disabled={isDisconnecting}
-            >
+            <AlertDialogCancel disabled={isDisconnecting}>
               {setupLang.btn_cancel}
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              className="rounded-xl cursor-pointer"
-              disabled={isDisconnecting}
-              onClick={handleDisconnect}
+              className="rounded-xl p-3.25"
+              render={
+                <HoldButton
+                  doneLabel={lang.data.common.deleted}
+                  backgroundColor="var(--muted)"
+                  fillColor="#f43f5e"
+                  textColor="var(--muted-foreground)"
+                  fillTextColor="#ffffff"
+                  size="sm"
+                  radius={14}
+                  fillDirection="right"
+                  className="h-max p-3.25 text-xs"
+                  holdTime={2000}
+                  releaseTime={200}
+                  pressScale={1}
+                  wave
+                  waveAmplitude={6}
+                  glow={false}
+                  resetAfter={1200}
+                  disabled={isDisconnecting}
+                  onHold={handleDisconnect}
+                />
+              }
             >
               {isDisconnecting ? <Spinner className="size-4" /> : setupLang.btn_confirm}
             </AlertDialogAction>

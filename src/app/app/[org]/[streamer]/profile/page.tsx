@@ -56,17 +56,7 @@ import PublicProfileClient from "@/app/[username]/PublicProfileClient";
 import HoldButton from "@/components/HoldButton";
 import { Shrink } from "@/components/animate-ui/icons/hugeicons/shrink";
 import { Expand } from "@/components/animate-ui/icons/hugeicons/expand";
-
-const noopSubscribe = () => () => {};
-const getServerCooldown = () => false;
-
-function useUriCooldown(cooldownDateStr?: string | null): boolean {
-  return React.useSyncExternalStore(
-    noopSubscribe,
-    () => Boolean(cooldownDateStr && new Date(cooldownDateStr).getTime() > Date.now()),
-    getServerCooldown,
-  );
-}
+import { useUriCooldown } from "@/hooks/use-uri-cooldown";
 
 function Page() {
   const router = useRouter();
@@ -555,15 +545,15 @@ function Page() {
       </motion.div>
 
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
-          <DialogHeader>
-            <div className="h-12 mr-auto text-destructive flex items-center justify-center mb-2">
-              <WarningOctagonIcon size={32} weight="bold" />
+        <DialogContent className="max-w-sm" showCloseButton={false}>
+          <DialogHeader className="items-center text-center gap-1.5">
+            <div className="mb-1 inline-flex size-12 items-center justify-center text-destructive">
+              <WarningOctagonIcon className="size-9" weight="regular" />
             </div>
-            <DialogTitle className="text-xl font-semibold text-destructive">
+            <DialogTitle>
               {lang.data.app.profile.danger.dialog_title}
             </DialogTitle>
-            <DialogDescription className="text-xs font-sans text-muted-foreground mt-1 leading-relaxed">
+            <DialogDescription className="text-balance">
               {lang.data.app.profile.danger.dialog_desc.split("@{name}").map((part, idx, arr) => (
                 <React.Fragment key={idx}>
                   {part}
@@ -573,7 +563,7 @@ function Page() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-2 mt-2">
+          <div className="space-y-2 mt-1">
             <label className="text-xs font-semibold font-sans text-foreground">
               {lang.data.app.profile.danger.confirm_label.split("{name}").map((part, idx, arr) => (
                 <React.Fragment key={idx}>
@@ -598,13 +588,12 @@ function Page() {
             <span className="text-xs text-destructive select-none font-sans">{lang.data.common.action_irreversible}</span>
           </div>
 
-          <DialogFooter className="mt-5 gap-2">
+          <DialogFooter className="mt-2 grid! grid-cols-2 gap-2">
             <Button
-              variant="outline"
-              size="sm"
+              variant="secondary"
               onClick={() => setIsDeleteOpen(false)}
               disabled={isDeleting}
-              className="text-xs rounded-xl h-max p-3 border-0"
+              className="text-xs rounded-xl h-max p-3 w-full cursor-pointer"
             >
               {lang.data.common.cancel}
             </Button>

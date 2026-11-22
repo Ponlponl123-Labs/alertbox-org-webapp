@@ -241,25 +241,24 @@ function Page() {
 
       <Dialog open={isNameDialogOpen} onOpenChange={setIsNameDialogOpen}>
         <DialogContent
-          className="max-w-sm rounded-4xl p-6"
+          className="max-w-xs sm:max-w-sm"
           showCloseButton={false}
         >
-          <DialogHeader>
-            <div className="bg-blue-500/10 p-2 size-12 rounded-xl text-primary flex items-center justify-center mb-2">
+          <DialogHeader className="items-center text-center gap-1.5">
+            <div className="mb-1 inline-flex size-12 items-center justify-center text-primary">
               <PencilSimpleIcon
-                weight="fill"
-                className="text-blue-500"
-                size={20}
+                weight="regular"
+                className="size-9 text-blue-500"
               />
             </div>
-            <DialogTitle className="text-xl font-bold">
+            <DialogTitle>
               {lang.data.app.account.display_name_dialog_title}
             </DialogTitle>
-            <DialogDescription className="text-foreground/40 text-sm">
+            <DialogDescription className="text-balance">
               {lang.data.app.account.display_name_dialog_description}
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-2">
+          <div>
             <Input
               type="text"
               value={newName}
@@ -276,20 +275,20 @@ function Page() {
               }}
             />
           </div>
-          <DialogFooter className="mt-6 gap-2">
+          <DialogFooter className="mt-2 grid! grid-cols-2 gap-2">
             <Button
               variant="secondary"
               onClick={() => setIsNameDialogOpen(false)}
-              className="rounded-xl p-4"
+              className="rounded-xl p-3 h-max w-full cursor-pointer"
             >
               {lang.data.app.account.crop_cancel}
             </Button>
             <Button
               onClick={handleUpdateName}
               disabled={isSubmitting || !newName.trim()}
-              className="rounded-xl p-4"
+              className="rounded-xl p-3 h-max w-full cursor-pointer"
             >
-              {isSubmitting ? <Spinner /> : lang.data.app.account.save}
+              {isSubmitting ? <Spinner className="size-4" /> : lang.data.app.account.save}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -91,3 +91,21 @@ export function formatMoneyMinorUnits(
 
   return cur ? `${formatted} ${cur}` : formatted;
 }
+
+export function formatCurrency(amount: number, currency = "THB", locale?: string): string {
+  const code = currency.toUpperCase();
+  const minFrac = amount % 1 !== 0 ? 2 : 0;
+  try {
+    return getCachedNumberFormat(locale, {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: minFrac,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${code} ${getCachedNumberFormat(locale, {
+      minimumFractionDigits: minFrac,
+      maximumFractionDigits: 2,
+    }).format(amount)}`;
+  }
+}

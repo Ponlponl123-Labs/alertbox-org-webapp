@@ -70,3 +70,23 @@ export interface LogoLoopProps {
   pauseOnHover?: boolean;
   className?: string;
 }
+
+export interface SidebarLink {
+  text: string;
+  icon: ReactNode;
+  href: string;
+}
+
+export interface SidebarItem {
+  id: string;
+  text: string;
+  icon: ReactNode;
+  href?: string;
+  links?: SidebarLink[];
+}
+
+export interface SidebarSection {
+  id: string;
+  title?: string;
+  items: SidebarItem[];
+}

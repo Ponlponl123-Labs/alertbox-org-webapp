@@ -78,3 +78,20 @@ export interface StreamerPermDefinition {
   name: string;
   desc: string;
 }
+
+export interface VerifiedOrgInfo {
+  code: string;
+  role: string;
+  expiresAt: string;
+  organization: {
+    id: string;
+    name: string;
+    slug: string | null;
+    avatar: string | null;
+    banner?: string | null;
+  };
+  inviter: {
+    name: string | null;
+    avatar: string | null;
+  };
+}

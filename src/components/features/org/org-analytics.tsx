@@ -10,7 +10,17 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BarMarker } from "@/components/ui/cobe-globe-bars";
 import { WidgetErrorBoundary } from "@/components/shared/widget-error-boundary";
-import { getCachedNumberFormat } from "@/lib/formatters";
+import {
+  CURRENCY_DEFAULT_COORDS,
+  PROVIDER_COLORS,
+  PROVIDER_NAMES,
+} from "@/consts/analytics";
+import { generateMockAnalytics } from "@/lib/analytics";
+import { formatCurrency } from "@/lib/formatters";
+import type { OrgAnalyticsData, Timeframe } from "@/types/analytics.types";
+
+export type { OrgAnalyticsData, Timeframe } from "@/types/analytics.types";
+export { formatCurrency } from "@/lib/formatters";
 
 const GlobeBars = dynamic(
   () => import("@/components/ui/cobe-globe-bars").then((mod) => mod.GlobeBars),
@@ -39,146 +49,6 @@ import {
   TrendUpIcon,
   SparkleIcon,
 } from "@phosphor-icons/react";
-
-export type Timeframe = "7d" | "30d" | "90d" | "1y";
-
-export interface OrgAnalyticsData {
-  timeframe: string;
-  totals: {
-    revenue: number;
-    currency: string;
-    transactions: number;
-    realTransactions: number;
-    testTransactions: number;
-    activeGateways: number;
-    activeStreamers: number;
-  };
-  currencies: Array<{
-    currency: string;
-    amount: number;
-    count: number;
-    percentage: number;
-  }>;
-  gateways: Array<{
-    provider: string;
-    amount: number;
-    count: number;
-    currency: string;
-    percentage: number;
-  }>;
-  timeline: Array<{
-    date: string;
-    amount: number;
-    count: number;
-    realCount: number;
-    testCount: number;
-  }>;
-}
-
-const PROVIDER_COLORS: Record<string, string> = {
-  STRIPE: "#635BFF",
-  PROMPTPAY: "#0284C7",
-  KOFI: "#FF5E5B",
-  BMAC: "#F59E0B",
-  BUYMEACOFFEE: "#F59E0B",
-  STREAMLABS: "#10B981",
-  OTHER: "#8B5CF6",
-};
-
-const PROVIDER_NAMES: Record<string, string> = {
-  STRIPE: "Stripe",
-  PROMPTPAY: "PromptPay",
-  KOFI: "Ko-fi",
-  BMAC: "Buy Me a Coffee",
-  BUYMEACOFFEE: "Buy Me a Coffee",
-  STREAMLABS: "Streamlabs",
-};
-
-const CURRENCY_DEFAULT_COORDS: Record<string, [number, number]> = {
-  THB: [13.75, 100.5],
-  USD: [40.71, -74.01],
-  EUR: [50.11, 8.68],
-  JPY: [35.68, 139.65],
-  GBP: [51.51, -0.13],
-  SGD: [1.35, 103.82],
-  AUD: [-33.87, 151.21],
-};
-
-export const formatCurrency = (amount: number, currency = "THB", locale?: string): string => {
-  const code = currency.toUpperCase();
-  const minFrac = amount % 1 !== 0 ? 2 : 0;
-  try {
-    return getCachedNumberFormat(locale, {
-      style: "currency",
-      currency: code,
-      minimumFractionDigits: minFrac,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  } catch {
-    return `${code} ${getCachedNumberFormat(locale, {
-      minimumFractionDigits: minFrac,
-      maximumFractionDigits: 2,
-    }).format(amount)}`;
-  }
-};
-
-const generateMockAnalytics = (timeframe: Timeframe): OrgAnalyticsData => {
-  const days = timeframe === "7d" ? 7 : timeframe === "90d" ? 90 : timeframe === "1y" ? 365 : 30;
-  const now = new Date();
-  const timeline: OrgAnalyticsData["timeline"] = [];
-  let totalRevenue = 0;
-  let totalTx = 0;
-  let realTx = 0;
-  let testTx = 0;
-
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
-    const wave = Math.sin((i / days) * Math.PI * 4) * 0.4 + 1;
-    const count = Math.max(2, Math.round(wave * (12 + (i % 7) * 4)));
-    const testCount = Math.round(count * 0.15);
-    const realCount = count - testCount;
-    const amount = realCount * (150 + (i % 5) * 60) + testCount * 50;
-
-    totalRevenue += amount;
-    totalTx += count;
-    realTx += realCount;
-    testTx += testCount;
-
-    timeline.push({
-      date: dateStr,
-      amount,
-      count,
-      realCount,
-      testCount,
-    });
-  }
-
-  return {
-    timeframe,
-    totals: {
-      revenue: totalRevenue,
-      currency: "THB",
-      transactions: totalTx,
-      realTransactions: realTx,
-      testTransactions: testTx,
-      activeGateways: 3,
-      activeStreamers: 3,
-    },
-    currencies: [
-      { currency: "THB", amount: Math.round(totalRevenue * 0.76), count: Math.round(totalTx * 0.78), percentage: 76 },
-      { currency: "USD", amount: Math.round(totalRevenue * 0.18), count: Math.round(totalTx * 0.16), percentage: 18 },
-      { currency: "EUR", amount: Math.round(totalRevenue * 0.06), count: Math.round(totalTx * 0.06), percentage: 6 },
-    ],
-    gateways: [
-      { provider: "PROMPTPAY", amount: Math.round(totalRevenue * 0.68), count: Math.round(totalTx * 0.7), currency: "THB", percentage: 68 },
-      { provider: "STRIPE", amount: Math.round(totalRevenue * 0.22), count: Math.round(totalTx * 0.2), currency: "USD", percentage: 22 },
-      { provider: "KOFI", amount: Math.round(totalRevenue * 0.1), count: Math.round(totalTx * 0.1), currency: "USD", percentage: 10 },
-    ],
-    timeline,
-  };
-};
 
 function OrgAnalyticsSkeleton() {
   return (

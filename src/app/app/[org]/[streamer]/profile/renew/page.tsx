@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { coreStore } from "@/hooks/store/core";
 import { isValidUri } from "@/lib/utils";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "react-smooth-input";
 import { useStore } from "zustand";
 import { toast } from "@/components/custom-ui/toast";
@@ -18,14 +18,7 @@ import { CheckmarkCircle02 } from "@/components/animate-ui/icons/hugeicons/check
 import { Tag } from "@/components/animate-ui/icons/hugeicons/tag";
 import { AnimateIcon } from "@animate-ui/react/icons";
 import { Link01 } from "@/components/animate-ui/icons/hugeicons/link-01";
-
-function useUriCooldown(cooldownDateStr?: string | null): boolean {
-  return useSyncExternalStore(
-    () => () => { },
-    () => Boolean(cooldownDateStr && new Date(cooldownDateStr).getTime() > Date.now()),
-    () => false,
-  );
-}
+import { useUriCooldown } from "@/hooks/use-uri-cooldown";
 
 function RegisURIPage() {
   const lang = useStore(coreStore, (state) => state.lang);

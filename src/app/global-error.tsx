@@ -3,8 +3,9 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { readStoredLanguageKey } from "@/hooks/store/core";
 import lang, { formatI18n } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
 
-const noopSubscribe = () => () => {};
+const noopSubscribe = () => () => { };
 const getServerLanguageKey = () => "en-US" as const;
 
 export default function GlobalError({
@@ -29,9 +30,9 @@ export default function GlobalError({
   return (
     <html lang={activeLang.key} className="dark">
       <body className="min-h-dvh bg-background text-foreground flex items-center justify-center p-6 font-sans">
-        <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 text-center space-y-4">
-          <h2 className="text-xl font-semibold">{activeLang.data.errors.global_title}</h2>
-          <p className="text-sm text-muted-foreground">
+        <div className="max-w-md w-full rounded-xl bg-card p-6 text-center space-y-4">
+          <h2 className="text-xl font-medium font-sans text-foreground">{activeLang.data.errors.global_title}</h2>
+          <p className="text-sm text-muted-foreground font-sans">
             {activeLang.data.errors.global_desc}
           </p>
           {error.digest && (
@@ -39,13 +40,13 @@ export default function GlobalError({
               {formatI18n(activeLang.data.errors.ref_code, { digest: error.digest })}
             </p>
           )}
-          <button
+          <Button
             type="button"
             onClick={reset}
-            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium cursor-pointer"
+            className="rounded-xl p-3 h-max"
           >
             {activeLang.data.errors.try_again}
-          </button>
+          </Button>
         </div>
       </body>
     </html>

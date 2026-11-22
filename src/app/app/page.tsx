@@ -1,11 +1,12 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useStore } from "zustand";
 import { useUserContext } from "@/contexts/user";
 import { useRouter, useSearchParams } from "next/navigation";
 import { orgStore, selectActiveOrg, selectActiveStreamer } from "@/hooks/store/org";
 import { Spinner } from "@/components/ui/spinner";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
+import { PageTransition } from "@/components/animate-ui/components/page-transition";
 import { WelcomeStep, JoinOrgStep, CreateOrgStep } from "./(onboarding)";
 
 export type OnboardingStep = "welcome" | "join" | "create";
@@ -65,9 +66,21 @@ function WorkspaceZoneContent() {
         className="bg-background absolute inset-0 pointer-events-none" />
       <motion.div
         className="flex-1 flex flex-col items-center justify-center min-h-dvh w-full gap-8 z-10">
-        <AnimatePresence mode="wait">
+        <PageTransition
+          effect="slide"
+          pageKey={step}
+          className="flex-1 flex flex-col items-center justify-center w-full"
+        >
           {step === "welcome" && (
-            <WelcomeStep key="welcome" onComplete={() => setStep("join")} />
+            <WelcomeStep
+              key="welcome"
+              onComplete={() =>
+                React.startTransition(() => {
+                  React.addTransitionType("nav-forward");
+                  setStep("join");
+                })
+              }
+            />
           )}
           {step === "join" && (
             <JoinOrgStep key="join" />
@@ -75,7 +88,7 @@ function WorkspaceZoneContent() {
           {step === "create" && (
             <CreateOrgStep key="create" />
           )}
-        </AnimatePresence>
+        </PageTransition>
       </motion.div>
     </>
   );

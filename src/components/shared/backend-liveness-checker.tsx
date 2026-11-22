@@ -5,38 +5,14 @@ import { coreStore, SystemStatus } from "@/hooks/store/core";
 import { getApiUrl } from "@/lib/api";
 import { isSelfHosted } from "@/lib/instance";
 import { isSafeHostname } from "@/lib/security";
-
-const STATUS_URLS = [
-  "https://status.ponlponl123.com/index.json",
-  "https://status.alertbox.org/index.json",
-];
-
-const BASE_INTERVAL_MS = 60_000;
-const MAX_BACKOFF_MS = 300_000;
-const VISIBILITY_COOLDOWN_MS = 15_000;
-const REQUEST_TIMEOUT_MS = 8_000;
-
-interface BetterStackPayload {
-  data?: {
-    attributes?: {
-      company_name?: string;
-      aggregate_state?: string;
-      announcement?: string | null;
-      custom_domain?: string;
-    };
-  };
-  included?: Array<{
-    type?: string;
-    attributes?: {
-      title?: string;
-      report_type?: string;
-      aggregate_state?: string;
-      starts_at?: string;
-      ends_at?: string;
-      message?: string;
-    };
-  }>;
-}
+import {
+  BASE_INTERVAL_MS,
+  MAX_BACKOFF_MS,
+  REQUEST_TIMEOUT_MS,
+  STATUS_URLS,
+  VISIBILITY_COOLDOWN_MS,
+} from "@/consts/status";
+import type { BetterStackPayload } from "@/types/status.types";
 
 export default function BackendLivenessChecker() {
   const activeRef = useRef(true);

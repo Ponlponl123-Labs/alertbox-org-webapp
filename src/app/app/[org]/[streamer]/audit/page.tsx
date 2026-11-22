@@ -38,7 +38,11 @@ import {
   formatTableDate,
   AuditExpandedRowContent,
 } from "@/lib/audit-format";
-import { DEFAULT_AUDIT_PAGE_SIZE } from "@/consts/audit";
+import {
+  DEFAULT_AUDIT_PAGE_SIZE,
+  AUDIT_CLIENT_CACHE_TTL,
+  STREAMER_CATEGORY_ACTIONS,
+} from "@/consts/audit";
 import { useTinyUser, useTinyStreamer } from "@/lib/tiny-user-cache";
 import { BoundedLruCache } from "@/lib/lru-cache";
 import { isSafePathSegment } from "@/lib/security";
@@ -49,17 +53,10 @@ import { AnimateIcon } from "@animate-ui/react/icons";
 import { RefreshCcw } from "@/components/animate-ui/icons/hugeicons/refresh-ccw";
 
 const PAGE_SIZE = DEFAULT_AUDIT_PAGE_SIZE;
-const CLIENT_CACHE_TTL = 3 * 60 * 1000;
 const streamerAuditCache = new BoundedLruCache<AuditLogItem[]>({
   maxEntries: 60,
-  defaultTtlMs: CLIENT_CACHE_TTL,
+  defaultTtlMs: AUDIT_CLIENT_CACHE_TTL,
 });
-
-const STREAMER_CATEGORY_ACTIONS: Record<string, string[]> = {
-  CHANNELS: ["TOKEN_ROTATED", "WIDGET_UPDATED", "STREAMER_UPDATED", "STREAMER_CREATED"],
-  GATEWAYS: ["INTEGRATION_CONNECTED", "INTEGRATION_DISCONNECTED", "INTEGRATION_UPDATED"],
-  TRANSACTIONS: ["TRANSACTION_DELETED", "TRANSACTION_RESTORED", "TRANSACTION_RESENT"],
-};
 
 function StreamerAuditRow({
   log,

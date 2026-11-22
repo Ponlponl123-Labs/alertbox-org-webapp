@@ -190,10 +190,10 @@ export function ImageCropperModal({
       <AnimateIcon animateOnHover>
         <DialogContent
           showCloseButton={false}
-          className={cn("max-w-2xl bg-background/80 backdrop-blur-md rounded-4xl overflow-hidden", className)}
+          className={cn("max-w-2xl bg-background/80 backdrop-blur-md rounded-3xl overflow-hidden", className)}
         >
           {image && (
-            <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden rounded-4xl">
+            <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden rounded-3xl">
               <Image
                 src={image}
                 width={50}

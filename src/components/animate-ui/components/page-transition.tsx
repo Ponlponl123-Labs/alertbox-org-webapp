@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { usePathname } from 'next/navigation';
-import type { TargetAndTransition } from 'motion/react';
+import { AnimatePresence, motion, type TargetAndTransition, type Variants } from 'motion/react';
 import { AnimateView } from 'motion/react-animate-view';
 
 import {
@@ -365,15 +365,86 @@ function clipRadius(element: HTMLElement) {
 type PageTransitionProps = React.ComponentProps<'div'> & {
   effect?: PageTransitionEffect;
   pageKey?: React.Key;
+  contained?: boolean;
+  direction?: 1 | -1;
 };
 
-function PageTransition({
+const SLIDE_VARIANTS: Variants = {
+  enter: (dir: number) => ({
+    opacity: 0,
+    x: dir * 24,
+    filter: 'blur(4px)',
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 0.24, ease: ease.out },
+  },
+  exit: (dir: number) => ({
+    opacity: 0,
+    x: -dir * 24,
+    filter: 'blur(4px)',
+    transition: { duration: 0.14, ease: ease.leave },
+  }),
+};
+
+const FADE_VARIANTS: Variants = {
+  enter: { opacity: 0 },
+  center: {
+    opacity: 1,
+    transition: { duration: 0.2, ease: ease.out },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.12, ease: ease.leave },
+  },
+};
+
+function ContainedPageTransition({
+  effect = 'fade',
+  pageKey,
+  direction = 1,
+  className,
+  ref,
+  children,
+  ...props
+}: Omit<PageTransitionProps, 'contained'>) {
+  const pathname = usePathname();
+  const key = pageKey ?? pathname;
+  const reduce = useShouldReduceMotion();
+  const variants = effect === 'slide' && !reduce ? SLIDE_VARIANTS : FADE_VARIANTS;
+
+  return (
+    <div
+      ref={ref}
+      data-slot="page-transition"
+      className={['overflow-x-clip', className].filter(Boolean).join(' ')}
+      {...props}
+    >
+      <AnimatePresence mode="wait" initial={false} custom={direction}>
+        <motion.div
+          key={key}
+          custom={direction}
+          variants={variants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+        >
+          {children}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ViewPageTransition({
   effect = 'fade',
   pageKey,
   ref,
   children,
   ...props
-}: PageTransitionProps) {
+}: Omit<PageTransitionProps, 'contained' | 'direction'>) {
   const pathname = usePathname();
   const key = pageKey ?? pathname;
   const reduce = useShouldReduceMotion();
@@ -455,6 +526,17 @@ function PageTransition({
       </div>
     </AnimateView>
   );
+}
+
+function PageTransition({
+  contained = false,
+  direction = 1,
+  ...props
+}: PageTransitionProps) {
+  if (contained) {
+    return <ContainedPageTransition direction={direction} {...props} />;
+  }
+  return <ViewPageTransition {...props} />;
 }
 
 type PageTransitionSharedProps = React.ComponentProps<'div'> & {

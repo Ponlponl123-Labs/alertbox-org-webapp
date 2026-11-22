@@ -12,6 +12,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogMedia,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { coreStore } from "@/hooks/store/core";
@@ -20,6 +21,7 @@ import {
   BankIcon,
   CaretDownIcon,
   GearSixIcon,
+  LinkBreakIcon,
   LockKeyIcon,
   PlusIcon,
   TrashIcon,
@@ -35,6 +37,7 @@ import { toast } from "@/components/custom-ui/toast";
 import { useUserContext } from "@/contexts/user";
 import { cn } from "@/lib/utils";
 import { Collapsible } from "@animate-ui/react/primitives/base-ui/collapsible";
+import HoldButton from "@/components/HoldButton";
 
 export interface ConnectionProps {
   api_endpoint: string;
@@ -544,25 +547,51 @@ export default function Connection({
         open={showDisconnectDialog}
         onOpenChange={setShowDisconnectDialog}
       >
-        <AlertDialogContent className="rounded-3xl">
+        <AlertDialogContent size="sm">
           <AlertDialogHeader>
+            <AlertDialogMedia className="text-destructive">
+              <LinkBreakIcon weight="regular" className="size-9" />
+            </AlertDialogMedia>
             <AlertDialogTitle>
               {formatI18n(lang.data.app.connections.disconnect_dialog.title_provider, { name })}
             </AlertDialogTitle>
-            <AlertDialogDescription className="font-sans">
+            <AlertDialogDescription>
               {formatI18n(lang.data.app.connections.disconnect_dialog.desc_confirm_provider, { name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-0">
+            <AlertDialogCancel>
               {lang.data.common.cancel}
             </AlertDialogCancel>
             <AlertDialogAction
-              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={async () => {
-                await disconnect(api_endpoint, skey);
-                setShowDisconnectDialog(false);
-              }}
+              variant="destructive"
+              className="rounded-xl p-3.25"
+              render={
+                <HoldButton
+                  doneLabel={lang.data.common.deleted}
+                  backgroundColor="var(--muted)"
+                  fillColor="#f43f5e"
+                  textColor="var(--muted-foreground)"
+                  fillTextColor="#ffffff"
+                  size="sm"
+                  radius={14}
+                  fillDirection="right"
+                  className="h-max p-3.25 text-xs"
+                  holdTime={2000}
+                  releaseTime={200}
+                  pressScale={1}
+                  wave
+                  waveAmplitude={6}
+                  glow={false}
+                  resetAfter={1200}
+                  onHold={() => {
+                    void (async () => {
+                      await disconnect(api_endpoint, skey);
+                      setShowDisconnectDialog(false);
+                    })();
+                  }}
+                />
+              }
             >
               {lang.data.app.connections.status.disconnect}
             </AlertDialogAction>

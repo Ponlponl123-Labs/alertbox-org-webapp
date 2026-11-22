@@ -269,7 +269,7 @@ export default function BackendLivenessBanner() {
       >
         <DialogContent
           showCloseButton={false}
-          className="max-w-lg! rounded-2xl p-6 bg-popover/95 supports-backdrop-filter:backdrop-blur-xl border border-border shadow-2xl"
+          className="max-w-md! bg-popover/95 supports-backdrop-filter:backdrop-blur-xl"
         >
           <DialogHeader className="gap-2">
             <div className="flex items-center gap-2">
@@ -329,7 +329,7 @@ export default function BackendLivenessBanner() {
               variant="secondary"
               size="sm"
               onClick={() => setSelectedBanner(null)}
-              className="rounded-lg"
+              className="rounded-xl p-3 h-max cursor-pointer"
             >
               {lang.data.common.close}
             </Button>

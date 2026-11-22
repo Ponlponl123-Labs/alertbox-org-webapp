@@ -34,6 +34,7 @@ import {
 import {
   getAuditCategoryTabs,
   DEFAULT_AUDIT_PAGE_SIZE,
+  AUDIT_CLIENT_CACHE_TTL,
   type AuditCategory,
 } from "@/consts/audit";
 import { motion, AnimatePresence } from "motion/react";
@@ -46,10 +47,9 @@ import { isSafePathSegment } from "@/lib/security";
 import type { AuditLogItem } from "@/types";
 
 const PAGE_SIZE = DEFAULT_AUDIT_PAGE_SIZE;
-const CLIENT_CACHE_TTL = 3 * 60 * 1000;
 const auditPageCache = new BoundedLruCache<{ logs: AuditLogItem[]; total: number }>({
   maxEntries: 60,
-  defaultTtlMs: CLIENT_CACHE_TTL,
+  defaultTtlMs: AUDIT_CLIENT_CACHE_TTL,
 });
 
 function AuditRow({

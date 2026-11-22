@@ -34,6 +34,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { getCookie } from "cookies-next/client";
+import HoldButton from "@/components/HoldButton";
 
 const ApiReferenceReact = dynamic(
   () => import("@scalar/api-reference-react").then((m) => m.ApiReferenceReact),
@@ -97,7 +98,7 @@ const SCALAR_CUSTOM_CSS = `
   }
 `;
 
-const emptySubscribe = () => () => {};
+const emptySubscribe = () => () => { };
 
 export default function DocsPage() {
   const mounted = useSyncExternalStore(
@@ -216,12 +217,12 @@ export default function DocsPage() {
       </header>
       <ApiReferenceReact configuration={scalarConfig} />
       <AlertDialog open={isCredentialDialogOpen} onOpenChange={setIsCredentialDialogOpen}>
-        <AlertDialogContent size="default" className="rounded-3xl max-w-md!">
+        <AlertDialogContent size="sm" className="sm:max-w-sm!">
           <AlertDialogHeader>
-            <AlertDialogMedia className="bg-destructive/10 p-2 size-12 rounded-xl text-destructive dark:bg-destructive/20 dark:text-destructive">
-              <SmileyAngryIcon weight="fill" size={12} />
+            <AlertDialogMedia className="text-destructive">
+              <SmileyAngryIcon weight="regular" className="size-9" />
             </AlertDialogMedia>
-            <AlertDialogTitle className="text-lg">
+            <AlertDialogTitle>
               {lang.data.pages.docs.dialog.title}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -232,16 +233,36 @@ export default function DocsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel variant="secondary" className="rounded-xl">
+            <AlertDialogCancel>
               {lang.data.pages.docs.dialog.cancel}
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              className="rounded-xl"
-              onClick={() => {
-                setIsUseMyHeaderCredential(true);
-                setIsCredentialDialogOpen(false);
-              }}
+              className="rounded-xl p-3.25"
+              render={
+                <HoldButton
+                  doneLabel={lang.data.pages.docs.dialog.confirm}
+                  backgroundColor="var(--muted)"
+                  fillColor="#f43f5e"
+                  textColor="var(--muted-foreground)"
+                  fillTextColor="#ffffff"
+                  size="sm"
+                  radius={14}
+                  fillDirection="right"
+                  className="h-max p-3.25 text-xs"
+                  holdTime={2000}
+                  releaseTime={200}
+                  pressScale={1}
+                  wave
+                  waveAmplitude={6}
+                  glow={false}
+                  resetAfter={1200}
+                  onHold={() => {
+                    setIsUseMyHeaderCredential(true);
+                    setIsCredentialDialogOpen(false);
+                  }}
+                />
+              }
             >
               {lang.data.pages.docs.dialog.confirm}
             </AlertDialogAction>

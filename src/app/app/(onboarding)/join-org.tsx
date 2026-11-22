@@ -27,23 +27,7 @@ import { getApiUrl } from "@/lib/api";
 import { orgStore } from "@/hooks/store/org";
 import { toast } from "@/components/custom-ui/toast";
 import { Spinner } from "@/components/ui/spinner";
-
-interface VerifiedOrgInfo {
-  code: string;
-  role: string;
-  expiresAt: string;
-  organization: {
-    id: string;
-    name: string;
-    slug: string | null;
-    avatar: string | null;
-    banner?: string | null;
-  };
-  inviter: {
-    name: string | null;
-    avatar: string | null;
-  };
-}
+import type { VerifiedOrgInfo } from "@/types/org.types";
 
 interface CreateStepProps {
   onComplete?: () => void;
@@ -85,9 +69,12 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
   }, []);
 
   useEffect(() => {
-    if (!verifiedInfo) return;
+    if (!verifiedInfo?.expiresAt) return;
+    const expiresAtMs = new Date(verifiedInfo.expiresAt).getTime();
+    if (!Number.isFinite(expiresAtMs)) return;
+
     const calculateTime = () => {
-      const diff = new Date(verifiedInfo.expiresAt).getTime() - Date.now();
+      const diff = expiresAtMs - Date.now();
       if (diff <= 0) {
         setTimeLeft(jo.expired);
         return;
@@ -138,14 +125,6 @@ export default function CreateStep({ onComplete }: CreateStepProps) {
 
   const handleJoin = async () => {
     if (!verifiedInfo || isJoining) return;
-    if (new Date(verifiedInfo.expiresAt).getTime() <= Date.now()) {
-      toast.error(jo.toasts.code_expired);
-      setIsMarkAsUsed(false);
-      setStep(2);
-      setInvitationCode("");
-      setVerifiedInfo(null);
-      return;
-    }
     setIsJoining(true);
     try {
       const res = await authFetch(getApiUrl("/api/v1/org/invites/accept"), {

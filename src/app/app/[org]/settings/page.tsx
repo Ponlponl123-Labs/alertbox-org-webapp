@@ -47,6 +47,7 @@ import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
+import { PageTransition } from "@/components/animate-ui/components/page-transition";
 import HoldButton from "@/components/HoldButton";
 
 export default function OrgSettingsPage() {
@@ -665,15 +666,15 @@ export default function OrgSettingsPage() {
       />
 
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="max-w-md! p-6 rounded-3xl" showCloseButton={false}>
-          <DialogHeader>
-            <div className="size-11 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mb-2">
-              <WarningOctagonIcon size={22} weight="bold" />
+        <DialogContent className="max-w-sm!" showCloseButton={false}>
+          <DialogHeader className="items-center text-center gap-1.5">
+            <div className="mb-1 inline-flex size-12 items-center justify-center text-destructive">
+              <WarningOctagonIcon className="size-9" weight="regular" />
             </div>
-            <DialogTitle className="text-xl font-semibold text-destructive">
+            <DialogTitle>
               {os.delete_dialog.title}
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            <DialogDescription className="text-balance">
               {os.delete_dialog.desc.split("{org}").map((part, idx, arr) => (
                 <React.Fragment key={idx}>
                   {part}
@@ -683,7 +684,7 @@ export default function OrgSettingsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <Field className="mt-2">
+          <Field className="mt-1">
             <FieldLabel className="text-xs font-semibold text-foreground">
               {os.delete_dialog.confirm_label.split("{expected}").map((part, idx, arr) => (
                 <React.Fragment key={idx}>
@@ -708,13 +709,12 @@ export default function OrgSettingsPage() {
             <span className="text-xs text-destructive select-none font-sans">{lang.data.common.action_irreversible}</span>
           </Field>
 
-          <DialogFooter className="mt-5 gap-2">
+          <DialogFooter className="mt-2 grid! grid-cols-2 gap-2">
             <Button
-              variant="ghost"
-              size="sm"
+              variant="secondary"
               onClick={() => setIsDeleteOpen(false)}
               disabled={isDeleting}
-              className="text-xs rounded-xl p-3 h-max"
+              className="text-xs rounded-xl p-3 h-max w-full cursor-pointer"
             >
               {lang.data.common.cancel}
             </Button>
@@ -745,15 +745,15 @@ export default function OrgSettingsPage() {
         </DialogContent>
       </Dialog>
       <Dialog open={isLeaveOpen} onOpenChange={setIsLeaveOpen}>
-        <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
-          <DialogHeader>
-            <div className="size-12 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mb-2">
-              <SignOutIcon size={22} weight="bold" />
+        <DialogContent className="max-w-xs sm:max-w-sm" showCloseButton={false}>
+          <DialogHeader className="items-center text-center gap-1.5">
+            <div className="mb-1 inline-flex size-12 items-center justify-center text-destructive">
+              <SignOutIcon className="size-9" weight="regular" />
             </div>
-            <DialogTitle className="text-xl font-semibold text-destructive">
+            <DialogTitle>
               {os.leave_dialog.title}
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            <DialogDescription className="text-balance">
               {os.leave_dialog.desc.split("{org}").map((part, idx, arr) => (
                 <React.Fragment key={idx}>
                   {part}
@@ -763,13 +763,12 @@ export default function OrgSettingsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <DialogFooter className="mt-5 gap-2">
+          <DialogFooter className="mt-1 grid! grid-cols-2 gap-2">
             <Button
-              variant="ghost"
-              size="sm"
+              variant="secondary"
               onClick={() => setIsLeaveOpen(false)}
               disabled={isLeaving}
-              className="text-xs rounded-xl p-3 h-max"
+              className="text-xs rounded-xl p-3 h-max w-full cursor-pointer"
             >
               {lang.data.common.cancel}
             </Button>
@@ -807,15 +806,15 @@ export default function OrgSettingsPage() {
           setIsTransferOpen(open);
         }}
       >
-        <DialogContent className="max-w-md p-6 rounded-3xl" showCloseButton={false}>
-          <DialogHeader>
-            <div className="size-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-2">
-              <ArrowsLeftRightIcon size={22} weight="bold" />
+        <DialogContent className="max-w-sm!" showCloseButton={false}>
+          <DialogHeader className="items-center text-center gap-1.5">
+            <div className="mb-1 inline-flex size-12 items-center justify-center text-amber-500">
+              <ArrowsLeftRightIcon className="size-9" weight="regular" />
             </div>
-            <DialogTitle className="text-xl font-semibold text-foreground">
+            <DialogTitle>
               {os.transfer_dialog.title}
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            <DialogDescription className="text-balance">
               {os.transfer_dialog.desc.split("{org}").map((part, idx, arr) => (
                 <React.Fragment key={idx}>
                   {part}
@@ -832,8 +831,8 @@ export default function OrgSettingsPage() {
             </div>
           ) : members.length === 0 ? (
             <div className="p-4 rounded-2xl bg-muted/50 text-xs text-muted-foreground flex flex-col gap-2 mt-2">
-              <p className="font-semibold text-foreground">{os.transfer_dialog.no_eligible_title}</p>
-              <p>{os.transfer_dialog.no_eligible_desc}</p>
+              <p className="font-medium text-sm text-foreground font-sans">{os.transfer_dialog.no_eligible_title}</p>
+              <p className="font-sans">{os.transfer_dialog.no_eligible_desc}</p>
               <DialogFooter className="mt-4">
                 <Button variant="secondary" size="sm" onClick={() => setIsTransferOpen(false)} className="rounded-xl p-3 h-max w-full">
                   {lang.data.common.close}
@@ -841,259 +840,264 @@ export default function OrgSettingsPage() {
               </DialogFooter>
             </div>
           ) : (
-            <div className="flex flex-col gap-4 mt-2">
-              {transferStep === 1 ? (
-                <>
-                  <Field>
-                    <FieldLabel className="text-xs font-semibold text-foreground flex items-center justify-between w-full">
-                      <span>{os.transfer_dialog.select_owner_label}</span>
-                      <span className="text-[10px] text-muted-foreground font-normal">{os.transfer_dialog.active_members}</span>
-                    </FieldLabel>
+            <AutoHeight deps={[transferStep]}>
+              <PageTransition
+                contained
+                effect="slide"
+                direction={transferStep === 2 ? 1 : -1}
+                pageKey={`transfer-step-${transferStep}`}
+                className="flex flex-col gap-4 mt-2 pb-2"
+              >
+                {transferStep === 1 ? (
+                  <>
+                    <Field>
+                      <FieldLabel className="text-xs font-semibold text-foreground flex items-center justify-between w-full">
+                        <span>{os.transfer_dialog.select_owner_label}</span>
+                        <span className="text-[10px] text-muted-foreground font-normal">{os.transfer_dialog.active_members}</span>
+                      </FieldLabel>
 
-                    <Popover open={memberComboboxOpen} onOpenChange={setMemberComboboxOpen}>
-                      <PopoverTrigger
-                        type="button"
-                        className={cn(
-                          "w-full flex items-center justify-between gap-3 p-2.5 rounded-xl bg-background/50 hover:bg-accent/40 text-left outline-none shadow-xs",
-                        )}
-                      >
-                        {(() => {
-                          const selectedMember = members.find((m) => m.id === selectedMemberId);
-                          if (!selectedMember) {
-                            return <span className="text-xs text-muted-foreground pl-1">{os.transfer_dialog.select_placeholder}</span>;
-                          }
-                          return (
-                            <div className="flex items-center gap-3 min-w-0">
-                              <Avatar className="size-8 rounded-full border border-border shrink-0">
-                                {selectedMember.avatar && <AvatarImage src={selectedMember.avatar} />}
-                                <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
-                                  {getFallbackInitial(selectedMember.name || selectedMember.email)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex flex-col min-w-0 leading-tight">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-semibold text-foreground truncate">
-                                    {selectedMember.name || lang.data.common.member}
-                                  </span>
-                                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-secondary/80 text-foreground/80 leading-none">
-                                    {getRoleLabel(selectedMember.role, lang.data)}
-                                  </span>
-                                </div>
-                                <span className="text-[11px] text-muted-foreground truncate">
-                                  {selectedMember.email}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })()}
-                        <CaretUpDownIcon size={14} weight="bold" className="text-muted-foreground shrink-0 ml-1" />
-                      </PopoverTrigger>
-
-                      <PopoverContent
-                        align="start"
-                        sideOffset={6}
-                        className="w-[calc(100vw-2.5rem)] sm:w-100 p-2 rounded-2xl bg-popover border border-border shadow-xl z-50 flex flex-col gap-2"
-                      >
-                        <div className="flex items-center gap-2 px-2 py-1 rounded-xl bg-muted border-2 not-hover:border-transparent duration-150 transition-all">
-                          <MagnifyingGlassIcon size={14} weight="bold" className="text-muted-foreground shrink-0" />
-                          <Input
-                            type="text"
-                            placeholder={os.transfer_dialog.search_placeholder}
-                            value={memberSearchQuery}
-                            onChange={(e) => setMemberSearchQuery(e.target.value)}
-                            fontStyle={{
-                              fontFamily: "var(--font-sans)",
-                              fontWeight: "500",
-                              fontSize: "14px",
-                            }}
-                            className="w-full leading-normal bg-transparent outline-none text-foreground placeholder:text-muted-foreground border-0 shadow-none focus-visible:ring-0"
-                            classNames={{ base: "h-auto bg-transparent! dark:data-[focused=true]:bg-transparent! data-[focused=true]:bg-transparent! border-0 p-0 shadow-none" }}
-                            autoFocus
-                          />
-                        </div>
-
-                        <div className="flex flex-col gap-1 max-h-56 overflow-y-auto pr-0.5">
-                          {(() => {
-                            const query = memberSearchQuery.toLowerCase().trim();
-                            const filtered = members.filter((m) => {
-                              if (!query) return true;
-                              return (
-                                (m.name && m.name.toLowerCase().includes(query)) ||
-                                m.email.toLowerCase().includes(query) ||
-                                m.role.toLowerCase().includes(query) ||
-                                getRoleLabel(m.role, lang.data).toLowerCase().includes(query)
-                              );
-                            });
-
-                            if (filtered.length === 0) {
-                              return (
-                                <div className="py-6 text-center text-xs text-muted-foreground">
-                                  {formatI18n(os.transfer_dialog.empty_search, { query: memberSearchQuery })}
-                                </div>
-                              );
-                            }
-
-                            return filtered.map((m) => {
-                              const isSelected = m.id === selectedMemberId;
-                              return (
-                                <Button
-                                  key={m.id}
-                                  variant={"ghost"}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedMemberId(m.id);
-                                    setMemberComboboxOpen(false);
-                                  }}
-                                  className={cn(
-                                    "flex items-center justify-between gap-3 p-2 rounded-3xl text-left h-max",
-                                    isSelected
-                                      ? "bg-primary/10 text-primary font-medium"
-                                      : "hover:bg-accent/60 text-foreground",
-                                  )}
-                                >
-                                  <div className="flex items-center gap-2.5 min-w-0">
-                                    <Avatar className="size-10 rounded-full border border-border shrink-0">
-                                      {m.avatar && <AvatarImage src={m.avatar} />}
-                                      <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
-                                        {getFallbackInitial(m.name || m.email)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex flex-col min-w-0 leading-tight">
-                                      <span className="text-xs font-semibold truncate text-foreground">
-                                        {m.name || m.email}
-                                      </span>
-                                      <span className="text-[10px] text-muted-foreground truncate">
-                                        {m.email}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <span className="text-[10px] font-semibold px-2 py-1 rounded-md bg-secondary/80 text-foreground/70">
-                                      {getRoleLabel(m.role, lang.data)}
-                                    </span>
-                                    {isSelected && (
-                                      <CheckIcon size={14} weight="bold" className="text-primary" />
-                                    )}
-                                  </div>
-                                </Button>
-                              );
-                            });
-                          })()}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </Field>
-
-                  <Label className="flex items-start gap-2.5 p-3 rounded-2xl bg-amber-500/5 cursor-pointer select-none">
-                    <Checkbox
-                      checked={transferAck}
-                      onCheckedChange={(checked) => setTransferAck(!!checked)}
-                      className="mt-0.5"
-                    />
-                    <span className="text-[11px] text-amber-500/90 leading-snug font-normal">
-                      {os.transfer_dialog.confirm_ack}
-                    </span>
-                  </Label>
-
-                  <DialogFooter className="mt-3 gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsTransferOpen(false)}
-                      className="text-xs rounded-xl p-3 h-max"
-                    >
-                      {lang.data.common.cancel}
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      disabled={!selectedMemberId || !transferAck}
-                      onClick={() => setTransferStep(2)}
-                      className="gap-1.5 text-xs font-semibold rounded-xl p-3 h-max"
-                    >
-                      <span>{lang.data.common.continue}</span>
-                      <ArrowRightIcon size={14} weight="bold" />
-                    </Button>
-                  </DialogFooter>
-                </>
-              ) : (
-                <>
-                  <div className="p-3.5 rounded-2xl bg-destructive/10 text-destructive text-xs flex flex-col gap-1.5 leading-relaxed">
-                    <span className="font-semibold text-sm flex items-center gap-1.5">
-                      <WarningOctagonIcon size={16} weight="bold" />
-                      {os.transfer_dialog.final_warning_title}
-                    </span>
-                    <p className="text-[11px] text-destructive/90">
-                      {os.transfer_dialog.final_warning_desc}
-                    </p>
-                  </div>
-
-                  <Field>
-                    <FieldLabel className="text-xs font-semibold text-foreground">
-                      {os.transfer_dialog.phrase_prompt.split("{phrase}").map((part, idx, arr) => (
-                        <React.Fragment key={idx}>
-                          {part}
-                          {idx < arr.length - 1 && (
-                            <code className="text-destructive font-mono font-bold bg-background p-1 rounded-md">{TRANSFER_CONFIRM_PHRASE}</code>
+                      <Popover open={memberComboboxOpen} onOpenChange={setMemberComboboxOpen}>
+                        <PopoverTrigger
+                          type="button"
+                          className={cn(
+                            "w-full flex items-center justify-between gap-3 p-2.5 rounded-xl bg-background/50 hover:bg-accent/40 text-left outline-none shadow-xs",
                           )}
-                        </React.Fragment>
-                      ))}
-                    </FieldLabel>
-                    <Input
-                      type="text"
-                      value={confirmPhrase}
-                      onChange={(e) => setConfirmPhrase(e.target.value)}
-                      placeholder={TRANSFER_CONFIRM_PHRASE}
-                      fontStyle={{
-                        fontFamily: "var(--font-sans)",
-                        fontWeight: "500",
-                        fontSize: "14px",
-                      }}
-                      className="w-full font-mono"
-                      classNames={{ base: "h-10 rounded-xl" }}
-                      autoFocus
-                    />
-                  </Field>
+                        >
+                          {(() => {
+                            const selectedMember = members.find((m) => m.id === selectedMemberId);
+                            if (!selectedMember) {
+                              return <span className="text-xs text-muted-foreground pl-1">{os.transfer_dialog.select_placeholder}</span>;
+                            }
+                            return (
+                              <div className="flex items-center gap-3 min-w-0">
+                                <Avatar className="size-8 rounded-full border border-border shrink-0">
+                                  {selectedMember.avatar && <AvatarImage src={selectedMember.avatar} />}
+                                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
+                                    {getFallbackInitial(selectedMember.name || selectedMember.email)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col min-w-0 leading-tight">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-foreground truncate">
+                                      {selectedMember.name || lang.data.common.member}
+                                    </span>
+                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-secondary/80 text-foreground/80 leading-none">
+                                      {getRoleLabel(selectedMember.role, lang.data)}
+                                    </span>
+                                  </div>
+                                  <span className="text-[11px] text-muted-foreground truncate">
+                                    {selectedMember.email}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                          <CaretUpDownIcon size={14} weight="bold" className="text-muted-foreground shrink-0 ml-1" />
+                        </PopoverTrigger>
 
-                  <DialogFooter className="mt-3 gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setTransferStep(1)}
-                      disabled={isTransferring}
-                      className="text-xs rounded-xl p-3 h-max gap-2"
-                    >
-                      <ArrowLeftIcon size={14} weight="bold" />
-                      <span>{lang.data.common.back}</span>
-                    </Button>
-                    <HoldButton
-                      doneLabel={lang.data.common.transferred}
-                      backgroundColor="var(--muted)"
-                      fillColor="#f43f5e"
-                      textColor="var(--muted-foreground)"
-                      fillTextColor="#ffffff"
-                      size="sm"
-                      radius={14}
-                      fillDirection="right"
-                      className="h-max p-3.5 text-xs"
-                      holdTime={2000}
-                      releaseTime={200}
-                      pressScale={1}
-                      wave
-                      waveAmplitude={6}
-                      glow={false}
-                      resetAfter={1200}
-                      disabled={isTransferring || confirmPhrase !== TRANSFER_CONFIRM_PHRASE}
-                      onHold={handleTransferOwnership}
-                    >
-                      {isTransferring && <Spinner className="size-3.5" />}
-                      {lang.data.common.hold_to_transfer}
-                    </HoldButton>
-                  </DialogFooter>
-                </>
-              )}
-            </div>
+                        <PopoverContent
+                          align="start"
+                          sideOffset={6}
+                          className="w-[calc(100vw-2.5rem)] sm:w-100 p-2 rounded-2xl bg-popover border border-border shadow-xl z-50 flex flex-col gap-2"
+                        >
+                          <div className="flex items-center gap-2 px-2 py-1 rounded-xl bg-muted border-2 not-hover:border-transparent duration-150 transition-all">
+                            <MagnifyingGlassIcon size={14} weight="bold" className="text-muted-foreground shrink-0" />
+                            <Input
+                              type="text"
+                              placeholder={os.transfer_dialog.search_placeholder}
+                              value={memberSearchQuery}
+                              onChange={(e) => setMemberSearchQuery(e.target.value)}
+                              fontStyle={{
+                                fontFamily: "var(--font-sans)",
+                                fontWeight: "500",
+                                fontSize: "14px",
+                              }}
+                              className="w-full leading-normal bg-transparent outline-none text-foreground placeholder:text-muted-foreground border-0 shadow-none focus-visible:ring-0"
+                              classNames={{ base: "h-auto bg-transparent! dark:data-[focused=true]:bg-transparent! data-[focused=true]:bg-transparent! border-0 p-0 shadow-none" }}
+                              autoFocus
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1 max-h-56 overflow-y-auto pr-0.5">
+                            {(() => {
+                              const query = memberSearchQuery.toLowerCase().trim();
+                              const filtered = members.filter((m) => {
+                                if (!query) return true;
+                                return (
+                                  (m.name && m.name.toLowerCase().includes(query)) ||
+                                  m.email.toLowerCase().includes(query) ||
+                                  m.role.toLowerCase().includes(query) ||
+                                  getRoleLabel(m.role, lang.data).toLowerCase().includes(query)
+                                );
+                              });
+
+                              if (filtered.length === 0) {
+                                return (
+                                  <div className="py-6 text-center text-xs text-muted-foreground">
+                                    {formatI18n(os.transfer_dialog.empty_search, { query: memberSearchQuery })}
+                                  </div>
+                                );
+                              }
+
+                              return filtered.map((m) => {
+                                const isSelected = m.id === selectedMemberId;
+                                return (
+                                  <Button
+                                    key={m.id}
+                                    variant={"ghost"}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedMemberId(m.id);
+                                      setMemberComboboxOpen(false);
+                                    }}
+                                    className={cn(
+                                      "flex items-center justify-between gap-3 p-2 rounded-3xl text-left h-max",
+                                      isSelected
+                                        ? "bg-primary/10 text-primary font-medium"
+                                        : "hover:bg-accent/60 text-foreground",
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <Avatar className="size-10 rounded-full border border-border shrink-0">
+                                        {m.avatar && <AvatarImage src={m.avatar} />}
+                                        <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
+                                          {getFallbackInitial(m.name || m.email)}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="flex flex-col min-w-0 leading-tight">
+                                        <span className="text-xs font-semibold truncate text-foreground">
+                                          {m.name || m.email}
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground truncate">
+                                          {m.email}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className="text-[10px] font-semibold px-2 py-1 rounded-md bg-secondary/80 text-foreground/70">
+                                        {getRoleLabel(m.role, lang.data)}
+                                      </span>
+                                      {isSelected && (
+                                        <CheckIcon size={14} weight="bold" className="text-primary" />
+                                      )}
+                                    </div>
+                                  </Button>
+                                );
+                              });
+                            })()}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </Field>
+
+                    <Label className="flex items-start gap-2.5 p-3 rounded-2xl bg-amber-500/5 cursor-pointer select-none mt-2">
+                      <Checkbox
+                        checked={transferAck}
+                        onCheckedChange={(checked) => setTransferAck(!!checked)}
+                        className="mt-0.5"
+                      />
+                      <span className="text-[11px] text-amber-500/90 leading-snug font-normal">
+                        {os.transfer_dialog.confirm_ack}
+                      </span>
+                    </Label>
+
+                    <DialogFooter className="mt-2 grid! grid-cols-2 gap-2">
+                      <Button
+                        variant="secondary"
+                        onClick={() => setIsTransferOpen(false)}
+                        className="text-xs rounded-xl p-3 h-max w-full cursor-pointer"
+                      >
+                        {lang.data.common.cancel}
+                      </Button>
+                      <Button
+                        variant="default"
+                        disabled={!selectedMemberId || !transferAck}
+                        onClick={() => setTransferStep(2)}
+                        className="gap-1.5 text-xs font-semibold rounded-xl p-3 h-max w-full cursor-pointer"
+                      >
+                        <span>{lang.data.common.continue}</span>
+                        <ArrowRightIcon size={14} weight="bold" />
+                      </Button>
+                    </DialogFooter>
+                  </>
+                ) : (
+                  <>
+                    <div className="p-3.5 rounded-2xl bg-destructive/10 text-destructive text-xs flex flex-col mb-2 gap-1.5 leading-relaxed select-none">
+                      <span className="font-semibold text-sm flex items-center gap-1.5">
+                        <WarningOctagonIcon size={16} weight="bold" />
+                        {os.transfer_dialog.final_warning_title}
+                      </span>
+                      <p className="text-[11px] text-destructive/90">
+                        {os.transfer_dialog.final_warning_desc}
+                      </p>
+                    </div>
+
+                    <Field>
+                      <FieldLabel className="text-xs font-semibold text-foreground">
+                        {os.transfer_dialog.phrase_prompt.split("{phrase}").map((part, idx, arr) => (
+                          <React.Fragment key={idx}>
+                            {part}
+                            {idx < arr.length - 1 && (
+                              <code className="text-destructive font-mono font-bold bg-background p-1 rounded-md">{TRANSFER_CONFIRM_PHRASE}</code>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </FieldLabel>
+                      <Input
+                        type="text"
+                        value={confirmPhrase}
+                        onChange={(e) => setConfirmPhrase(e.target.value)}
+                        placeholder={TRANSFER_CONFIRM_PHRASE}
+                        fontStyle={{
+                          fontFamily: "var(--font-sans)",
+                          fontWeight: "500",
+                          fontSize: "14px",
+                        }}
+                        className="w-full font-mono"
+                        classNames={{ base: "h-10 rounded-xl" }}
+                        autoFocus
+                      />
+                    </Field>
+
+                    <DialogFooter className="mt-2 grid! grid-cols-2 gap-2">
+                      <Button
+                        variant="secondary"
+                        onClick={() => setTransferStep(1)}
+                        disabled={isTransferring}
+                        className="text-xs rounded-xl p-3 h-max w-full gap-2 cursor-pointer"
+                      >
+                        <ArrowLeftIcon size={14} weight="bold" />
+                        <span>{lang.data.common.back}</span>
+                      </Button>
+                      <HoldButton
+                        doneLabel={lang.data.common.transferred}
+                        backgroundColor="var(--muted)"
+                        fillColor="#f43f5e"
+                        textColor="var(--muted-foreground)"
+                        fillTextColor="#ffffff"
+                        size="sm"
+                        radius={14}
+                        fillDirection="right"
+                        className="h-max p-3.5 text-xs"
+                        holdTime={2000}
+                        releaseTime={200}
+                        pressScale={1}
+                        wave
+                        waveAmplitude={6}
+                        glow={false}
+                        resetAfter={1200}
+                        disabled={isTransferring || confirmPhrase !== TRANSFER_CONFIRM_PHRASE}
+                        onHold={handleTransferOwnership}
+                      >
+                        {isTransferring && <Spinner className="size-3.5" />}
+                        {lang.data.common.hold_to_transfer}
+                      </HoldButton>
+                    </DialogFooter>
+                  </>
+                )}
+              </PageTransition>
+            </AutoHeight>
           )}
         </DialogContent>
       </Dialog>

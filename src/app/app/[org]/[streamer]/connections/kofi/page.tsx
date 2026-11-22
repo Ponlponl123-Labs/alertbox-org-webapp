@@ -40,6 +40,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Clipboard } from "@/components/animate-ui/icons/hugeicons/clipboard";
 import { ClipboardCheck } from "@/components/animate-ui/icons/hugeicons/clipboard-check";
+import HoldButton from "@/components/HoldButton";
 
 function KofiPage() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -538,12 +539,12 @@ function KofiPage() {
       </div>
 
       <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <AlertDialogContent size="sm" className="rounded-3xl">
+        <AlertDialogContent size="sm">
           <AlertDialogHeader>
-            <AlertDialogMedia className="bg-destructive/10 p-2 size-12 rounded-xl text-destructive dark:bg-destructive/20 dark:text-destructive">
-              <LinkBreakIcon weight="regular" size={12} />
+            <AlertDialogMedia className="text-destructive">
+              <LinkBreakIcon weight="regular" className="size-9" />
             </AlertDialogMedia>
-            <AlertDialogTitle className="text-lg">
+            <AlertDialogTitle>
               {disconnectDialog.title}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -551,21 +552,39 @@ function KofiPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              variant="secondary"
-              className="rounded-xl cursor-pointer"
-              disabled={isSaving}
-            >
+            <AlertDialogCancel disabled={isSaving}>
               {lang.data.common.cancel}
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              className="rounded-xl cursor-pointer"
-              disabled={isSaving}
-              onClick={async () => {
-                await handleDisconnect();
-                setIsConfirmOpen(false);
-              }}
+              className="rounded-xl p-3.25"
+              render={
+                <HoldButton
+                  doneLabel={lang.data.common.deleted}
+                  backgroundColor="var(--muted)"
+                  fillColor="#f43f5e"
+                  textColor="var(--muted-foreground)"
+                  fillTextColor="#ffffff"
+                  size="sm"
+                  radius={14}
+                  fillDirection="right"
+                  className="h-max p-3.25 text-xs"
+                  holdTime={2000}
+                  releaseTime={200}
+                  pressScale={1}
+                  wave
+                  waveAmplitude={6}
+                  glow={false}
+                  resetAfter={1200}
+                  disabled={isSaving}
+                  onHold={() => {
+                    void (async () => {
+                      await handleDisconnect();
+                      setIsConfirmOpen(false);
+                    })();
+                  }}
+                />
+              }
             >
               {isSaving ? <Spinner className="size-4" /> : lang.data.common.confirm}
             </AlertDialogAction>

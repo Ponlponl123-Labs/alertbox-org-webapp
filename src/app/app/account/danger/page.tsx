@@ -82,12 +82,12 @@ function Page() {
                 </Button>
               }
             />
-            <AlertDialogContent size="sm" className="rounded-3xl">
+            <AlertDialogContent size="sm">
               <AlertDialogHeader>
-                <AlertDialogMedia className="bg-destructive/10 p-2 size-12 rounded-xl text-destructive dark:bg-destructive/20 dark:text-destructive">
-                  <TrashIcon weight="fill" size={12} />
+                <AlertDialogMedia className="text-destructive">
+                  <TrashIcon weight="regular" className="size-9" />
                 </AlertDialogMedia>
-                <AlertDialogTitle className="text-lg">
+                <AlertDialogTitle>
                   {lang.data.app.danger.delete_account.title}?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
@@ -98,16 +98,12 @@ function Page() {
                 </span>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel
-                  variant="secondary"
-                  className="rounded-xl p-3 h-max"
-                  disabled={isDeleting}
-                >
+                <AlertDialogCancel disabled={isDeleting}>
                   {lang.data.app.danger.delete_account.cancel}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   variant="destructive"
-                  className="rounded-xl"
+                  className="rounded-xl p-3.25"
                   render={
                     <HoldButton
                       doneLabel={lang.data.common.deleted}

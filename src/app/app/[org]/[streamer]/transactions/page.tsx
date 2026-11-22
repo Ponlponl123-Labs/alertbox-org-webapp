@@ -53,7 +53,8 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatTableDate } from "@/lib/audit-format";
-import { DEFAULT_TRANSACTION_PAGE_SIZE } from "@/consts/payment";
+import { DEFAULT_TRANSACTION_PAGE_SIZE, GATEWAY_NAMES } from "@/consts/payment";
+import type { StreamerConnections, TransactionItem } from "@/types/transaction.types";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/custom-ui/select";
 import { Route } from "@/components/animate-ui/icons/hugeicons/route";
 import { ArrowUpDown } from "@/components/animate-ui/icons/hugeicons/arrow-up-down";
@@ -64,39 +65,6 @@ import { Pagination, PaginationContent, PaginationItem, PaginationNext, Paginati
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { formatI18n } from "@/lib/i18n";
-
-const GATEWAY_NAMES: Record<string, string> = {
-  STRIPE: "Stripe",
-  BUYMEACOFFEE: "Buy Me a Coffee",
-  BMAC: "Buy Me a Coffee",
-  KOFI: "Ko-fi",
-  FEELFREEPAY: "FeelFreePay",
-  FFP: "PromptPay",
-  XENDIT: "Xendit",
-};
-
-interface TransactionItem {
-  id: string;
-  provider: string;
-  type: string;
-  status: "COMPLETED" | "PENDING" | "FAILED" | "REFUNDED";
-  isTest: boolean;
-  amount: number;
-  currency: string;
-  senderName: string;
-  message: string | null;
-  createdAt: string;
-  isDeleted: boolean;
-}
-
-interface StreamerConnections {
-  bmac: { username: string; secret: string } | null;
-  kofi: { username: string; secret: string } | null;
-  stripe: string | null;
-  xendit: string | null;
-  ffp: string | null;
-  streamlabs: boolean;
-}
 
 const PAGE_SIZE = DEFAULT_TRANSACTION_PAGE_SIZE;
 
@@ -1174,13 +1142,15 @@ export default function StreamerTransactionsPage() {
       </div>
 
       <Dialog open={isTestDialogOpen} onOpenChange={setIsTestDialogOpen}>
-        <DialogContent className="max-w-md! rounded-2xl bg-card border border-border p-6 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
-              <SparkleIcon size={24} weight="fill" className="text-primary" />
-              <span>{st.simulate_dialog.title}</span>
+        <DialogContent className="max-w-sm!" showCloseButton={false}>
+          <DialogHeader className="items-center text-center gap-1.5">
+            <div className="mb-1 inline-flex size-12 items-center justify-center text-primary">
+              <SparkleIcon className="size-9" weight="regular" />
+            </div>
+            <DialogTitle>
+              {st.simulate_dialog.title}
             </DialogTitle>
-            <DialogDescription className="text-xs font-sans text-muted-foreground">
+            <DialogDescription className="text-balance">
               {st.simulate_dialog.desc}
             </DialogDescription>
           </DialogHeader>
@@ -1271,19 +1241,18 @@ export default function StreamerTransactionsPage() {
             </div>
           </div>
 
-          <DialogFooter className="flex items-center justify-end gap-2 mt-2">
+          <DialogFooter className="mt-1 grid! grid-cols-2 gap-2">
             <DialogClose
               render={
-                <Button size="sm" variant="ghost" className="h-max p-3 rounded-xl" disabled={sendingTest}>
+                <Button variant="secondary" className="h-max p-3 rounded-xl w-full cursor-pointer" disabled={sendingTest}>
                   {lang.data.common.cancel}
                 </Button>
               }
             />
             <Button
-              size="sm"
               onClick={handleSendTest}
               disabled={sendingTest}
-              className="gap-2 font-sans h-max p-3 rounded-xl bg-primary text-primary-foreground"
+              className="gap-2 font-sans h-max p-3 rounded-xl w-full bg-primary text-primary-foreground cursor-pointer"
             >
               {sendingTest ? (
                 <Spinner className="size-4" />

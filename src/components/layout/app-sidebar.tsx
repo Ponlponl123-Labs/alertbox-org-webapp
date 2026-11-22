@@ -42,47 +42,12 @@ import { Gift } from "../animate-ui/icons/hugeicons/gift";
 import { Tag } from "../animate-ui/icons/hugeicons/tag";
 import { Home03 } from "../animate-ui/icons/hugeicons/home-03";
 import { ScrollArea } from "../ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-is-mobile";
+import type { SidebarItem, SidebarLink, SidebarSection } from "@/types/components.types";
 
-interface SidebarLink {
-  text: string;
-  icon: React.ReactNode;
-  href: string;
-}
-
-interface SidebarItem {
-  id: string;
-  text: string;
-  icon: React.ReactNode;
-  href?: string;
-  links?: SidebarLink[];
-}
-
-interface SidebarSection {
-  id: string;
-  title?: string;
-  items: SidebarItem[];
-}
-
-const MOBILE_MQL_QUERY = "(max-width: 767px)";
-
-function subscribeIsMobile(callback: () => void) {
-  const mql = window.matchMedia(MOBILE_MQL_QUERY);
-  mql.addEventListener("change", callback);
-  return () => mql.removeEventListener("change", callback);
-}
-
-const getIsMobile = () => window.matchMedia(MOBILE_MQL_QUERY).matches;
-const getServerFalse = () => false;
-const noopSubscribe = () => () => {};
+const noopSubscribe = () => () => { };
 const getClientTrue = () => true;
-
-function useIsMobile() {
-  return React.useSyncExternalStore(
-    subscribeIsMobile,
-    getIsMobile,
-    getServerFalse,
-  );
-}
+const getServerFalse = () => false;
 
 const AppSidebar = React.memo(function AppSidebar() {
   const lang = useStore(coreStore, (state) => state.lang);

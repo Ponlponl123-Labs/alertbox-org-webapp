@@ -37,3 +37,13 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
 ];
 
 export const DEFAULT_TRANSACTION_PAGE_SIZE = 15;
+
+export const GATEWAY_NAMES: Record<string, string> = {
+  STRIPE: "Stripe",
+  BUYMEACOFFEE: "Buy Me a Coffee",
+  BMAC: "Buy Me a Coffee",
+  KOFI: "Ko-fi",
+  FEELFREEPAY: "FeelFreePay",
+  FFP: "PromptPay",
+  XENDIT: "Xendit",
+};

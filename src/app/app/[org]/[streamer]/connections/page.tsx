@@ -41,19 +41,7 @@ import { canAccessStreamer } from "@/lib/rbac";
 import { OrgPerm, StreamerPerm } from "@/consts/permission";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-
-interface ProviderItem {
-  api_endpoint: string;
-  icon: React.ReactNode;
-  name: string;
-  description: string;
-  privacy?: string;
-  payout?: string;
-  isConnected: boolean;
-  isUseOauth?: boolean;
-  key: string;
-  soon: boolean;
-}
+import type { ProviderItem } from "@/types/connections.types";
 
 function SectionGrid({
   title,

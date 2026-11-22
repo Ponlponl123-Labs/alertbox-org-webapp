@@ -5,58 +5,10 @@ import { useUserContext } from "@/contexts/user";
 import { useEffect, useRef, useState, Suspense } from "react";
 import ErrorView from "../error";
 import Success from "../success";
-import { constantTimeEqual, generateOAuthState } from "@/lib/security";
+import { constantTimeEqual } from "@/lib/security";
 import { getDiscordRedirectUri } from "@/lib/api";
-
-const OAUTH_STATE_KEY = "ab_discord_oauth_state";
-const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
-const DISCORD_CLIENT_ID =
-  process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || "1510531382147944488";
-
-function getOrCreateOAuthState(): string {
-  try {
-    const raw = sessionStorage.getItem(OAUTH_STATE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as { v?: unknown; ts?: unknown };
-      if (
-        typeof parsed.v === "string" &&
-        parsed.v.length >= 16 &&
-        typeof parsed.ts === "number" &&
-        Date.now() - parsed.ts < 5 * 60 * 1000
-      ) {
-        return parsed.v;
-      }
-    }
-  } catch {}
-  const v = generateOAuthState();
-  try {
-    sessionStorage.setItem(OAUTH_STATE_KEY, JSON.stringify({ v, ts: Date.now() }));
-  } catch {}
-  return v;
-}
-
-function consumeOAuthState(): string | null {
-  try {
-    const raw = sessionStorage.getItem(OAUTH_STATE_KEY);
-    sessionStorage.removeItem(OAUTH_STATE_KEY);
-    if (!raw) return null;
-    try {
-      const parsed = JSON.parse(raw) as { v?: unknown; ts?: unknown };
-      if (
-        typeof parsed.v === "string" &&
-        typeof parsed.ts === "number" &&
-        Date.now() - parsed.ts < OAUTH_STATE_TTL_MS
-      ) {
-        return parsed.v;
-      }
-      return null;
-    } catch {
-      return raw;
-    }
-  } catch {
-    return null;
-  }
-}
+import { DISCORD_CLIENT_ID, OAUTH_STATE_KEY } from "@/consts/oauth";
+import { consumeOAuthState, getOrCreateOAuthState } from "@/lib/oauth";
 
 function DiscordLoginContent() {
   const { login } = useUserContext();
@@ -75,7 +27,7 @@ function DiscordLoginContent() {
     if (oauthError) {
       try {
         sessionStorage.removeItem(OAUTH_STATE_KEY);
-      } catch {}
+      } catch { }
       queueMicrotask(() => setIsLoginSuccess(false));
       return;
     }

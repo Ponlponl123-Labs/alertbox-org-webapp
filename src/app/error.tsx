@@ -21,9 +21,9 @@ export default function RouteError({
 
   return (
     <div className="min-h-[60dvh] w-full flex items-center justify-center p-6 font-sans">
-      <div className="max-w-md w-full rounded-2xl border border-border bg-card p-6 text-center space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">{lang.data.errors.page_title}</h2>
-        <p className="text-sm text-muted-foreground">
+      <div className="max-w-md w-full rounded-xl bg-card p-8 text-center space-y-4">
+        <h2 className="text-xl font-medium font-sans text-foreground">{lang.data.errors.page_title}</h2>
+        <p className="text-sm text-muted-foreground font-sans">
           {lang.data.errors.page_desc}
         </p>
         {error.digest && (
@@ -32,12 +32,12 @@ export default function RouteError({
           </p>
         )}
         <div className="flex items-center justify-center gap-2 pt-2">
-          <Button variant="default" className="rounded-xl" onClick={reset}>
+          <Button variant="default" className="rounded-xl p-3 h-max" onClick={reset}>
             {lang.data.common.retry}
           </Button>
           <Button
             variant="secondary"
-            className="rounded-xl"
+            className="rounded-xl p-3 h-max"
             onClick={() => window.location.reload()}
           >
             {lang.data.common.reload}
