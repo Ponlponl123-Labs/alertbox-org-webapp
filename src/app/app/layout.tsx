@@ -9,12 +9,16 @@ import { clamp, cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { GithubLogoIcon, HandHeartIcon } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { PageTransition } from "@/components/animate-ui/components/page-transition";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/custom-ui/dialog";
 import HelpfulRating from "@/components/kokonutui/helpful-rating";
+import { LanguageSwitcher } from "@/components/shared";
+import { getApiUrl } from "@/lib/api";
+import { toast } from "@/components/custom-ui/toast";
 
 export const AppFooter = React.memo(function AppFooter() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -34,17 +38,17 @@ export const AppFooter = React.memo(function AppFooter() {
       </div>
       <div className="flex flex-1 gap-2 justify-end">
         <Link href={"https://law.ponlponl123.com/tos"} target="_blank" rel="noopener noreferrer">
-          <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
+          <Button size={"xs"} variant="ghost" className={"rounded-lg h-full"}>
             {lang.data.footer.links.legal.tos}
           </Button>
         </Link>
         <Link href={"https://law.ponlponl123.com/privacy"} target="_blank" rel="noopener noreferrer">
-          <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
+          <Button size={"xs"} variant="ghost" className={"rounded-lg h-full"}>
             {lang.data.footer.links.legal.privacy}
           </Button>
         </Link>
         <Link href={"https://law.ponlponl123.com/additional/alertbox.org"} target="_blank" rel="noopener noreferrer">
-          <Button size={"xs"} variant="ghost" className={"rounded-lg"}>
+          <Button size={"xs"} variant="ghost" className={"rounded-lg h-full"}>
             {lang.data.footer.links.legal.additional}
           </Button>
         </Link>
@@ -53,6 +57,7 @@ export const AppFooter = React.memo(function AppFooter() {
             <GithubLogoIcon size={22} weight="fill" className="text-foreground" />
           </Button>
         </Link>
+        <LanguageSwitcher showLabel />
       </div>
     </footer>
   );
@@ -65,7 +70,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     scrollareaRef.current = node;
     setHasScrollarea(Boolean(node));
   }, []);
-  const { userInfo } = useUserContext();
+  const { userInfo, isAuthLoading, authFetch } = useUserContext();
   const lang = useStore(coreStore, (state) => state.lang);
   const pathname = usePathname();
   const scroll = useScroll({
@@ -74,6 +79,32 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   const headerOpacity = useTransform(scroll.scrollY, (v) =>
     clamp(v / 200, 0, 1),
+  );
+
+  const handleFeedbackSubmit = useCallback(
+    async (feedback: { rating: number; reasons: string[]; note: string }) => {
+      try {
+        const res = await authFetch(getApiUrl("/api/v1/me/feedback"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            rating: feedback.rating,
+            reasons: feedback.reasons,
+            message: feedback.note,
+            pathname: pathname || "/app",
+          }),
+        });
+        if (res.ok) {
+          toast.success(lang.data.app.feedback_sent);
+        } else {
+          const msg = await res.text();
+          toast.error(msg || lang.data.app.feedback_failed);
+        }
+      } catch {
+        toast.error(lang.data.app.feedback_failed);
+      }
+    },
+    [authFetch, pathname, lang.data.app.feedback_sent, lang.data.app.feedback_failed],
   );
 
   return (
@@ -88,24 +119,33 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             {lang.data.app.feedback_button}
           </DialogTrigger>
           <DialogContent className="sm:max-w-sm">
-            <HelpfulRating className="bg-transparent! border-0 **:font-sans **:overflow-visible" />
+            <HelpfulRating
+              onSubmit={handleFeedbackSubmit}
+              className="bg-transparent! border-0 **:font-sans **:overflow-visible"
+            />
           </DialogContent>
         </Dialog>
       </div>
       <motion.main
         id="webapp-main"
-        className="flex-1 flex flex-col min-w-0 bg-black/10 dark:bg-background relative overflow-hidden"
+        className="flex-1 flex flex-col min-w-0 relative overflow-hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.18 }}
       >
         {!userInfo && !pathname.startsWith("/app/login/") ? (
-          <Login />
+          isAuthLoading ? (
+            <div className="flex-1 flex items-center justify-center min-h-[60dvh]">
+              <Spinner className="size-7 text-muted-foreground" />
+            </div>
+          ) : (
+            <Login />
+          )
         ) : (
           <ScrollArea
             ref={setScrollarea}
-            className={"h-[calc(100dvh-var(--status-banner-height,0)-8px)] flex-1 flex flex-col relative m-1 rounded-sm border border-border"}
+            className={"h-[calc(100dvh-var(--status-banner-height,0)-8px)] flex-1 flex flex-col relative m-1 rounded-sm border border-border bg-black/10 dark:bg-background"}
           >
 
             <PageTransition effect="fade" className="relative min-w-0 h-[calc(100dvh-var(--status-banner-height,0)-8px)] flex-1">

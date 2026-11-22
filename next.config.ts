@@ -18,6 +18,7 @@ const allowedDevOrigins =
     ? []
     : [
         ...localIps,
+        "*.devtunnels.ms",
         ...(process.env.DEV_ALLOWED_HOST && process.env.DEV_ALLOWED_HOST !== "true"
           ? process.env.DEV_ALLOWED_HOST.split(",").map((h) => h.trim())
           : []),
@@ -120,6 +121,16 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_API_ENDPOINT:
       process.env["NEXT_PUBLIC_API_ENDPOINT"] || process.env["API_ENDPOINT"],
+  },
+  async rewrites() {
+    if (!isDev) return [];
+    const apiTarget = (process.env.API_ENDPOINT || "http://127.0.0.1:3001").replace(/\/+$/, "");
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiTarget}/:path*`,
+      },
+    ];
   },
   async headers() {
     return [

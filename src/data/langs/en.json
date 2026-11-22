@@ -783,6 +783,35 @@
         "removed": "Channel {type} removed",
         "remove_failed": "Failed to remove {type}",
         "remove_network": "Network error removing {type}"
+      },
+      "report": {
+        "trigger": "Report",
+        "title": "Report {name}",
+        "description": "Help us keep the community safe. Your report will be reviewed by our team.",
+        "topic_label": "Topic",
+        "topics": {
+          "INAPPROPRIATE_CONTENT": "Inappropriate content",
+          "IMPERSONATION": "Impersonation",
+          "FRAUD_SCAM": "Fraud or scam",
+          "HARASSMENT": "Harassment or hate speech",
+          "SPAM": "Spam or misleading",
+          "OTHER": "Other"
+        },
+        "message_label": "Details",
+        "message_placeholder": "Describe the issue (at least 10 characters)...",
+        "email_label": "Your Email Address",
+        "email_placeholder": "you@example.com",
+        "submit": "Submit Report",
+        "hold_to_submit": "Hold to Submit",
+        "submitted": "Report submitted. Thank you for helping keep Alertbox safe.",
+        "submit_failed": "Failed to submit report",
+        "rate_limited": "Too many reports submitted. Please wait before trying again.",
+        "network_error": "Network error submitting report",
+        "message_too_short": "Please enter at least 10 characters describing the issue",
+        "email_required": "Please enter a valid email address",
+        "email_checking": "Checking email domain...",
+        "email_mx_valid": "Email domain verified",
+        "email_mx_invalid": "Invalid or undeliverable email domain (no MX record)"
       }
     },
     "alertbox": {
@@ -1173,6 +1202,8 @@
       }
     },
     "feedback_button": "Tell us",
+    "feedback_sent": "Thank you for your feedback!",
+    "feedback_failed": "Failed to send feedback",
     "onboarding": {
       "welcome": {
         "title": "The best workspace for you",

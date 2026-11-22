@@ -13,6 +13,7 @@ import Image from "next/image";
 import { AnimateIcon } from "@animate-ui/react/icons";
 import { Check } from "@/components/animate-ui/icons/hugeicons/check";
 import { AnimatePresence, motion } from "motion/react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/custom-ui/dialog";
 
 interface ImageCropperModalProps {
@@ -63,12 +64,15 @@ function ImageCropperBody({
     setIsSubmitting(true);
     try {
       const croppedImage = await getCroppedImg(image, croppedAreaPixels, rotation);
-      if (croppedImage) {
-        await onCropComplete(croppedImage);
-        onClose();
+      if (!croppedImage) {
+        toast.error("Failed to crop image");
+        return;
       }
+      await onCropComplete(croppedImage);
+      onClose();
     } catch (e) {
       console.error(e);
+      toast.error("Failed to crop or upload image");
     } finally {
       setIsSubmitting(false);
     }
@@ -211,10 +215,8 @@ export function ImageCropperModal({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute inset-0 z-50 flex items-center justify-center bg-gradient-to-t from-indigo-500/40 via-emerald-500/20 to-transparent backdrop-blur-xs pointer-events-none"
-              >
-                <Spinner className="size-8 text-foreground" />
-              </motion.div>
+                className="absolute inset-0 z-50 flex items-center justify-center bg-linear-to-t from-indigo-500/40 via-emerald-500/20 to-transparent backdrop-blur-xs pointer-events-none"
+              />
             )}
           </AnimatePresence>
 

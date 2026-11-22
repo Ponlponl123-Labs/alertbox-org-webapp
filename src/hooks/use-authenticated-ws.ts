@@ -18,7 +18,7 @@ interface UseAuthenticatedWsOptions {
 const AUTH_CLOSE_CODES = new Set([1008, 4001, 4003, 4401, 4403]);
 
 function buildWsBaseUrl(): { protocol: string; host: string } {
-  const apiEndpoint = getApiUrl("/");
+  const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT?.trim() || getApiUrl("/");
   if (apiEndpoint.includes("://")) {
     try {
       const parsed = new URL(apiEndpoint);

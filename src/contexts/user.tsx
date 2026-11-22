@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { setCookie, getCookie, deleteCookie } from "cookies-next";
+import { setCookie, getCookie, deleteCookie } from "cookies-next/client";
 import { getApiOrigin, getApiUrl, getDiscordRedirectUri } from "@/lib/api";
 import { checkIsAlertboxProduction, isSelfHosted } from "@/lib/instance";
 import { clearAllClientCaches } from "@/lib/lru-cache";
@@ -24,6 +24,7 @@ const FETCH_CREDENTIALS: RequestCredentials | undefined =
 
 export interface UserContext {
   userInfo: User | null;
+  isAuthLoading: boolean;
   login: (code: string) => Promise<boolean>;
   logout: () => void;
   patchUserInfo: (patch: Partial<User>) => void;
@@ -46,6 +47,7 @@ export interface UserContext {
 
 const userContext = createContext<UserContext>({
   userInfo: null,
+  isAuthLoading: true,
   login: async () => false,
   logout: () => {},
   patchUserInfo: () => {},
@@ -101,6 +103,7 @@ function getAuthHeaderFromCookie(rawCookie: unknown): string | null {
 
 export const UserContextProvider = ({ children }: { children: ReactNode }) => {
   const [userInfo, setUserInfo] = useState<UserContext["userInfo"]>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [selfHosted, setSelfHosted] = useState<boolean>(isSelfHosted());
 
   useEffect(() => {
@@ -345,13 +348,14 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
         if (r.ok) {
           const token = (await r.text()).trim();
           if (token) {
-            await setCookie("USRSS", btoa(token), {
+            setCookie("USRSS", btoa(token), {
               maxAge: 2 * 60 * 60 * 24,
               path: "/",
               sameSite: "lax",
               secure: isHttpsRuntime(),
             });
             await fetchMe(`Bearer ${token}`);
+            setIsAuthLoading(false);
           }
         }
 
@@ -400,10 +404,16 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     const controller = new AbortController();
 
     (async () => {
-      const authCookie = await getCookie("USRSS");
-      const authHeader = getAuthHeaderFromCookie(authCookie);
-      if (!authHeader) return;
-      await fetchMe(authHeader, controller.signal);
+      try {
+        const authCookie = getCookie("USRSS");
+        const authHeader = getAuthHeaderFromCookie(authCookie);
+        if (!authHeader) return;
+        await fetchMe(authHeader, controller.signal);
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsAuthLoading(false);
+        }
+      }
     })();
 
     return () => controller.abort();
@@ -483,6 +493,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
   const contextValue = useMemo(
     () => ({
       userInfo,
+      isAuthLoading,
       login,
       logout,
       patchUserInfo,
@@ -504,6 +515,7 @@ export const UserContextProvider = ({ children }: { children: ReactNode }) => {
     }),
     [
       userInfo,
+      isAuthLoading,
       login,
       logout,
       patchUserInfo,

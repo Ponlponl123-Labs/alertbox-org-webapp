@@ -140,7 +140,8 @@ export default function OrgSettingsPage() {
     const file = e.target.files?.[0];
     e.currentTarget.value = "";
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
+    const maxBytes = type === "banner" ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxBytes) {
       toast.error(lang.data.common.image_size_error);
       return;
     }
@@ -165,6 +166,7 @@ export default function OrgSettingsPage() {
       const res = await authFetch(getApiUrl(`/api/v1/org/${encodedOrgTarget}`), {
         method: "PATCH",
         body: formData,
+        signal: AbortSignal.timeout(30_000),
       });
 
       if (res.ok) {
@@ -440,7 +442,7 @@ export default function OrgSettingsPage() {
             </AutoHeight>
 
             {canManageSettings && (
-              <div className="absolute top-3 right-3 flex items-center gap-2">
+              <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
                 <Button
                   type="button"
                   size="sm"

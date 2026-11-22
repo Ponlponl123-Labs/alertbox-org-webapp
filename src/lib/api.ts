@@ -1,6 +1,13 @@
 import { allowedLocalhostWhen } from "@/consts/statement";
 
 export const resolveApiEndpoint = (): string => {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    typeof window !== "undefined" &&
+    window.location.hostname.endsWith(".devtunnels.ms")
+  ) {
+    return `${window.location.origin}/api/`;
+  }
   const configured = process.env.NEXT_PUBLIC_API_ENDPOINT?.trim();
   if (configured) {
     return configured.endsWith("/") ? configured : `${configured}/`;

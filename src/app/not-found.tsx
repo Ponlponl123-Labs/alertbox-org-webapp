@@ -20,7 +20,7 @@ function NotFound() {
           {lang.data.pages.notfound.description}
         </p>
         <Link href={"/"}>
-          <Button className={"rounded-xl"}>
+          <Button className={"rounded-xl h-max p-3"}>
             {lang.data.pages.notfound.back}
           </Button>
         </Link>

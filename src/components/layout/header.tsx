@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useStore } from "zustand";
 import { Button } from "@/components/ui/button";
 import ThemeSwitcher from '@/components/shared/theme-switcher';
@@ -14,7 +14,7 @@ import {
   HandHeartIcon,
   ListIcon,
 } from "@phosphor-icons/react";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import CurrentUserChip from '@/components/shared/current-user-chip';
 import { useUserContext } from "@/contexts/user";
 import Image from "next/image";
@@ -149,11 +149,24 @@ function HeaderContent({ pathname }: { pathname: string }) {
     setInstantTop(true);
     setNavOpenedPath((prev) => (prev === pathname ? null : pathname));
   };
-  const { scrollY } = useScroll();
+  const headerRef = useRef<HTMLElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setIsScrolled(latest > 0);
-  });
+
+  useEffect(() => {
+    const viewport =
+      headerRef.current?.closest<HTMLElement>('[data-slot="scroll-area-viewport"]') ??
+      document.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]');
+    const target: EventTarget = viewport ?? window;
+
+    const updateScrolled = () => {
+      const top = viewport ? viewport.scrollTop : window.scrollY;
+      setIsScrolled(top > 0);
+    };
+
+    updateScrolled();
+    target.addEventListener("scroll", updateScrolled, { passive: true });
+    return () => target.removeEventListener("scroll", updateScrolled);
+  }, [pathname]);
   const isSidebarCollapsed = useStore(
     coreStore,
     (state) => state.isSidebarCollapsed,
@@ -205,6 +218,7 @@ function HeaderContent({ pathname }: { pathname: string }) {
   return (
     <>
       <motion.header
+        ref={headerRef}
         initial={{
           height: isFullHeaderWidth ? 48 : isIndex && isScrolled ? 48 : 64,
           padding: isFullHeaderWidth ? 8 : 16,
@@ -234,7 +248,7 @@ function HeaderContent({ pathname }: { pathname: string }) {
           isDocs
             ? "fixed h-12 bg-background/80 backdrop-blur-md border-b border-border"
             : isIndex
-              ? "md:fixed max-md:-mb-2 h-16"
+              ? "md:fixed max-md:sticky max-md:-mb-2 h-16"
               : "absolute h-16",
           isIndex
             ? "border-transparent"

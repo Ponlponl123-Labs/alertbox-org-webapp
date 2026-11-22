@@ -14,6 +14,7 @@ import { ChevronUpDown } from "@/components/animate-ui/icons/chevron-up-down";
 import { AnimateIcon } from "@animate-ui/react/icons";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { AnimatePresence, motion } from "motion/react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
   const router = useRouter();
@@ -148,7 +149,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
               {os.organizations}
             </div>
-            <div className="flex flex-col gap-0.5 max-h-52 overflow-y-auto">
+            <ScrollArea className="flex flex-col gap-0.5 max-h-52">
               {organizations.length > 0 ? (
                 organizations.map((org, index) => {
                   const isSelected = org.id === activeOrg?.id;
@@ -218,7 +219,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                   </div>
                 </div>
               )}
-            </div>
+            </ScrollArea>
             <button
               type="button"
               className="flex items-center gap-2.5 w-full p-2 rounded-lg hover:bg-accent/60 hover:text-accent-foreground text-xs font-medium text-foreground/80 text-left"

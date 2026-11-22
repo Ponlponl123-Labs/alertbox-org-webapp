@@ -16,6 +16,7 @@ import { type KeyboardEvent, useId, useMemo, useRef, useState } from "react";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
 import { cn } from "@/lib/utils";
+import { Button } from "../ui/button";
 
 export interface HelpfulRatingProps {
   question?: string;
@@ -191,11 +192,11 @@ export default function HelpfulRating({
                   const selected = rating === i;
                   return (
                     // biome-ignore lint/a11y/useSemanticElements: face buttons acting as a radio group, with arrow keys handled here
-                    <button
+                    <Button
                       aria-checked={selected}
                       aria-label={l.label}
                       className={cn(
-                        "relative flex h-10 items-center justify-center rounded-xl bg-zinc-100 outline-hidden transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:bg-zinc-900",
+                        "relative flex h-10 items-center justify-center rounded-xl bg-muted outline-hidden focus-visible:ring-2 focus-visible:ring-zinc-400/50",
                         selected
                           ? "text-white"
                           : "text-zinc-500 hover:bg-zinc-200 hover:text-zinc-800 active:bg-zinc-300 dark:text-zinc-400 dark:active:bg-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
@@ -231,7 +232,7 @@ export default function HelpfulRating({
                         />
                       )}
                       <MiniFace bend={l.mouth} />
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -264,7 +265,7 @@ export default function HelpfulRating({
                     </div>
                     <motion.div
                       animate="shown"
-                      className="mt-2 flex min-h-[72px] flex-wrap content-start gap-1.5"
+                      className="mt-2 flex min-h-18 flex-wrap content-start gap-1.5"
                       initial="hidden"
                       key={low ? "low" : "high"}
                       transition={{ staggerChildren: 0.035 }}
@@ -280,13 +281,13 @@ export default function HelpfulRating({
                     </motion.div>
                     <textarea
                       aria-label={hr.note_aria}
-                      className="mt-1 block h-20 w-full resize-none rounded-xl bg-zinc-100 px-3 py-2 text-[16px] outline-hidden placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50 sm:text-[14px] dark:bg-zinc-900 dark:placeholder:text-zinc-500"
+                      className="mt-1 block h-20 w-full resize-none rounded-md bg-muted px-3 py-2 text-xs outline-hidden placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-zinc-400/50 dark:placeholder:text-zinc-500"
                       onChange={(event) => setNote(event.target.value)}
                       placeholder={hr.note_placeholder}
                       value={note}
                     />
-                    <button
-                      className="mt-3 h-10 w-full rounded-xl bg-zinc-900 font-medium text-[14px] text-white outline-hidden transition-colors duration-150 hover:bg-zinc-800 focus-visible:ring-2 focus-visible:ring-zinc-400/50 active:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:active:bg-zinc-300 dark:hover:bg-zinc-200"
+                    <Button
+                      className="mt-3 h-10 w-full rounded-xl bg-zinc-900 font-medium text-xs text-white outline-hidden transition-interactive hover:bg-zinc-800 focus-visible:ring-2 focus-visible:ring-zinc-400/50 active:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:active:bg-zinc-300 dark:hover:bg-zinc-200"
                       onClick={() => {
                         setPreview(null);
                         setSent(true);
@@ -295,7 +296,7 @@ export default function HelpfulRating({
                       type="button"
                     >
                       {hr.send_feedback}
-                    </button>
+                    </Button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -346,10 +347,10 @@ function Chip({
     <motion.button
       aria-pressed={on}
       className={cn(
-        "flex h-8 items-center gap-1 rounded-full border px-3 text-[12.5px] outline-hidden transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-zinc-400/50",
+        "flex h-8 items-center gap-1 rounded-md! px-3 text-xs outline-hidden transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-zinc-400/50",
         on
           ? "border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-900"
-          : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+          : "border-zinc-200 hover:border-zinc-400 dark:bg-muted dark:hover:border-zinc-600"
       )}
       layout
       onClick={onClick}

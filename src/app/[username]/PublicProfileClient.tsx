@@ -300,7 +300,8 @@ export default function PublicProfileClient({
     const file = e.target.files?.[0];
     e.currentTarget.value = "";
     if (!file) return;
-    if (file.size > MAX_UPLOAD_BYTES) {
+    const maxBytes = type === "banner" ? 10 * 1024 * 1024 : MAX_UPLOAD_BYTES;
+    if (file.size > maxBytes) {
       toast.error(lang.data.common.image_size_error);
       return;
     }
@@ -347,6 +348,7 @@ export default function PublicProfileClient({
       const res = await authFetch(streamerPatchEndpoint, {
         method: "PATCH",
         body: formData,
+        signal: AbortSignal.timeout(30_000),
       });
 
       if (res.ok) {
