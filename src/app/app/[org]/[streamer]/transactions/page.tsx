@@ -339,9 +339,9 @@ export default function StreamerTransactionsPage() {
         prev.map((t) =>
           t.id === data.transactionId
             ? {
-                ...t,
-                ...(typeof data.isDeleted === "boolean" ? { isDeleted: data.isDeleted } : {}),
-              }
+              ...t,
+              ...(typeof data.isDeleted === "boolean" ? { isDeleted: data.isDeleted } : {}),
+            }
             : t,
         ),
       );
@@ -680,7 +680,7 @@ export default function StreamerTransactionsPage() {
                 size="xs"
                 variant="secondary"
                 onClick={() => setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))}
-                className="gap-1.5 text-xs rounded-xl p-3 w-20 h-max"
+                className="gap-1.5 text-xs rounded-xl p-3 w-max h-max"
               >
                 <ArrowUpDown className="text-muted-foreground size-3.5" />
                 <AnimatePresence mode="popLayout">

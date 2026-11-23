@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { startTransition, useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import { orgStore } from "@/hooks/store/org";
 import { hasPermission } from "@/lib/rbac";
 import { OrgPerm } from "@/consts/permission";
 import { AnimateIcon } from "@animate-ui/react/icons";
@@ -38,6 +39,15 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
     pathname === `/app/${orgKey}` ||
     orgPages.some((p) => pathname.startsWith(`/app/${orgKey}${p}`));
   const effectiveOrgMode = isOrgMode || isOrgRoute;
+
+  useEffect(() => {
+    if (!open || !activeOrg) return;
+    const key = activeOrg.slug || activeOrg.id;
+    router.prefetch(`/app/${key}`);
+    for (const s of activeOrg.streamers || []) {
+      router.prefetch(`/app/${key}/${s.name || s.id}`);
+    }
+  }, [open, activeOrg, router]);
 
   if (!activeOrg) return null;
 
@@ -133,8 +143,20 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
               <button
                 type="button"
                 onClick={() => {
+                  const targetPath = `/app/${activeOrg.slug || activeOrg.id}`;
                   setActiveStreamerId("org");
-                  router.push(`/app/${activeOrg.slug || activeOrg.id}`);
+                  if (targetPath !== pathname) {
+                    orgStore.getState().setSwitchingTo({
+                      type: "org",
+                      label: activeOrg.name,
+                      fromPath: pathname,
+                      targetPath,
+                      hasCache: true,
+                    });
+                  }
+                  startTransition(() => {
+                    router.push(targetPath);
+                  });
                   setOpen(false);
                 }}
                 className={cn(
@@ -167,10 +189,22 @@ export function StreamerSelector({ isCollapsed }: { isCollapsed?: boolean }) {
                     key={s.id}
                     type="button"
                     onClick={() => {
-                      setActiveStreamerId(s.id);
                       const orgKey = activeOrg.slug || activeOrg.id;
                       const streamerKey = s.name || s.id;
-                      router.push(`/app/${orgKey}/${streamerKey}`);
+                      const targetPath = `/app/${orgKey}/${streamerKey}`;
+                      setActiveStreamerId(s.id);
+                      if (targetPath !== pathname) {
+                        orgStore.getState().setSwitchingTo({
+                          type: "streamer",
+                          label: s.displayName || s.name,
+                          fromPath: pathname,
+                          targetPath,
+                          hasCache: true,
+                        });
+                      }
+                      startTransition(() => {
+                        router.push(targetPath);
+                      });
                       setOpen(false);
                     }}
                     className={cn(

@@ -117,6 +117,10 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react", "lucide-react"],
+    staleTimes: {
+      dynamic: 60,
+      static: 180,
+    },
   },
   env: {
     NEXT_PUBLIC_API_ENDPOINT:

@@ -10,16 +10,42 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
+import { useParams, usePathname } from "next/navigation";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import { orgStore } from "@/hooks/store/org";
 import { formatI18n } from "@/lib/i18n";
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? React.useLayoutEffect : useEffect;
 
 export default function StreamerDashboardPage() {
+  const params = useParams();
+  const pathname = usePathname();
+  const orgParam = params?.org as string | undefined;
+  const streamerParam = params?.streamer as string | undefined;
   const lang = useStore(coreStore, (s) => s.lang);
   const sd = lang.data.app.streamer.dashboard;
-  const { activeOrg, activeStreamer } = useUserContext();
+  const switchingTo = useStore(orgStore, (s) => s.switchingTo);
+  const settledCachedPath = useStore(orgStore, (s) => s.settledCachedPath);
+  const skipInitial = Boolean(
+    (settledCachedPath && settledCachedPath === pathname) ||
+      (switchingTo?.hasCache && pathname !== switchingTo.fromPath),
+  );
+  const { organizations, activeOrg: storeActiveOrg, activeStreamer: storeActiveStreamer } = useUserContext();
+  const activeOrg =
+    (switchingTo?.hasCache
+      ? storeActiveOrg
+      : orgParam
+        ? organizations.find((o) => String(o.id) === orgParam || o.slug === orgParam)
+        : undefined) || storeActiveOrg;
+  const activeStreamer =
+    (switchingTo?.hasCache
+      ? storeActiveStreamer
+      : streamerParam
+        ? activeOrg?.streamers?.find(
+            (s) => String(s.id) === streamerParam || s.name === streamerParam || s.uri === streamerParam,
+          )
+        : undefined) || storeActiveStreamer;
   const bannerUrl = activeStreamer?.banner;
   const [loadedBannerUrl, setLoadedBannerUrl] = React.useState<string | null>(null);
   const isBannerLoaded = !bannerUrl || loadedBannerUrl === bannerUrl;
@@ -62,10 +88,10 @@ export default function StreamerDashboardPage() {
 
   return (
     <div ref={rootRef} className={cn("flex flex-col gap-6 relative")}>
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence mode="popLayout" initial={!skipInitial}>
         <motion.div
           key={bannerUrl}
-          initial={{ opacity: 0, filter: "blur(6px)" }}
+          initial={skipInitial ? false : { opacity: 0, filter: "blur(6px)" }}
           animate={{
             opacity: !bannerUrl || isBannerLoaded ? 1 : 0,
             filter: !bannerUrl || isBannerLoaded ? "blur(0px)" : "blur(6px)",
@@ -76,13 +102,13 @@ export default function StreamerDashboardPage() {
         >
           <motion.div
             style={{ y: bannerY, scale: bannerScale, opacity: bannerOpacity }}
-            className="w-full origin-top min-h-96"
+            className="w-full origin-top h-80 sm:h-96"
           >
             {bannerUrl && (
               <Image
                 src={bannerUrl}
                 alt={lang.data.common.banner}
-                className="w-full min-h-80 object-cover select-none"
+                className="w-full h-full object-cover select-none"
                 width={720}
                 height={288}
                 priority
@@ -94,10 +120,10 @@ export default function StreamerDashboardPage() {
         </motion.div>
       </AnimatePresence>
 
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence mode="popLayout" initial={!skipInitial}>
         <motion.div
           key={activeStreamer.id}
-          initial={{ opacity: 0 }}
+          initial={skipInitial ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, pointerEvents: "none" }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -108,9 +134,9 @@ export default function StreamerDashboardPage() {
           )}>
             <div className="flex flex-col gap-4">
               <motion.div
-                initial={{ opacity: 0, y: 4, filter: "blur(6px)" }}
+                initial={skipInitial ? false : { opacity: 0, y: 4, filter: "blur(6px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ delay: 0.1, duration: 0.4 }}
+                transition={{ delay: skipInitial ? 0 : 0.1, duration: 0.4 }}
                 className="size-36 rounded-full bg-foreground text-background font-bold text-lg flex items-center justify-center shrink-0 shadow-sm">
                 {activeStreamer?.avatar ? (
                   <Image
@@ -128,17 +154,17 @@ export default function StreamerDashboardPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <motion.h1
-                    initial={{ opacity: 0, y: 4, filter: "blur(6px)" }}
+                    initial={skipInitial ? false : { opacity: 0, y: 4, filter: "blur(6px)" }}
                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    transition={{ delay: 0.2, duration: 0.4 }}
+                    transition={{ delay: skipInitial ? 0 : 0.2, duration: 0.4 }}
                     className="text-2xl lg:text-3xl xl:text-4xl font-semibold font-sans tracking-tight text-foreground">
                     {activeStreamer?.displayName || activeStreamer?.name || sd.channel_dashboard}
                   </motion.h1>
                   {activeStreamer?.uri && (
                     <motion.div
-                      initial={{ opacity: 0, y: 4, filter: "blur(6px)" }}
+                      initial={skipInitial ? false : { opacity: 0, y: 4, filter: "blur(6px)" }}
                       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                      transition={{ delay: 0.2, duration: 0.4 }}
+                      transition={{ delay: skipInitial ? 0 : 0.2, duration: 0.4 }}
                     >
                       <Link
                         href={`/@${activeStreamer.uri}`}
@@ -153,9 +179,9 @@ export default function StreamerDashboardPage() {
                   )}
                 </div>
                 <motion.p
-                  initial={{ opacity: 0, y: 4, filter: "blur(6px)" }}
+                  initial={skipInitial ? false : { opacity: 0, y: 4, filter: "blur(6px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  transition={{ delay: 0.3, duration: 0.4 }}
+                  transition={{ delay: skipInitial ? 0 : 0.3, duration: 0.4 }}
                   className="text-xs text-muted-foreground font-sans mt-0.5">
                   {sd.managed_under.split("{name}").map((part, idx, arr) => (
                     <React.Fragment key={idx}>
@@ -170,9 +196,9 @@ export default function StreamerDashboardPage() {
             </div>
 
             <motion.div
-              initial={{ opacity: 0, y: 4, filter: "blur(6px)" }}
+              initial={skipInitial ? false : { opacity: 0, y: 4, filter: "blur(6px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ delay: 0.4, duration: 0.4 }}
+              transition={{ delay: skipInitial ? 0 : 0.4, duration: 0.4 }}
               className="flex items-center gap-2"
             >
               <SocialLinks socials={activeStreamer} iconSize={22} colored />

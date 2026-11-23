@@ -1042,7 +1042,7 @@ export default function OrgSettingsPage() {
                         <WarningOctagonIcon size={16} weight="bold" />
                         {os.transfer_dialog.final_warning_title}
                       </span>
-                      <p className="text-[11px] text-destructive/90">
+                      <p className="text-[11px] text-destructive/90 font-sans">
                         {os.transfer_dialog.final_warning_desc}
                       </p>
                     </div>

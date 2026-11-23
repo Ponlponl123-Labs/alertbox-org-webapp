@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUserContext } from "@/contexts/user";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import { orgStore } from "@/hooks/store/org";
 import { formatI18n } from "@/lib/i18n";
 import { cn, getFallbackInitial } from "@/lib/utils";
 import { isOrgOwnerOrAdmin } from "@/lib/rbac";
@@ -18,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { userInfo, organizations, activeOrg, setActiveOrgId, setActiveStreamerId } = useUserContext();
   const lang = useStore(coreStore, (s) => s.lang);
   const os = lang.data.components.org_switcher;
@@ -27,6 +29,65 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
   useEffect(() => {
     stateRef.current = { organizations, activeOrg };
   }, [organizations, activeOrg]);
+
+  const getOrgTarget = useCallback((targetOrg: (typeof organizations)[number]) => {
+    const orgKey = targetOrg.slug || targetOrg.id;
+    if (isOrgOwnerOrAdmin(targetOrg)) {
+      return {
+        targetPath: `/app/${orgKey}`,
+        type: "org" as const,
+        label: targetOrg.name,
+        streamerId: "org",
+      };
+    }
+    if (targetOrg.streamers?.[0]) {
+      const firstStreamer = targetOrg.streamers[0];
+      return {
+        targetPath: `/app/${orgKey}/${firstStreamer.name || firstStreamer.id}`,
+        type: "streamer" as const,
+        label: firstStreamer.displayName || firstStreamer.name,
+        streamerId: firstStreamer.id,
+      };
+    }
+    return {
+      targetPath: `/app/${orgKey}`,
+      type: "org" as const,
+      label: targetOrg.name,
+      streamerId: null as string | null,
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    for (const org of organizations) {
+      if (org.id === activeOrg?.id) continue;
+      router.prefetch(getOrgTarget(org).targetPath);
+    }
+  }, [open, organizations, activeOrg?.id, getOrgTarget, router]);
+
+  const switchToOrg = useCallback(
+    (targetOrg: (typeof organizations)[number]) => {
+      setActiveOrgId(targetOrg.id);
+      const { targetPath, type, label, streamerId } = getOrgTarget(targetOrg);
+      if (streamerId) {
+        setActiveStreamerId(streamerId);
+      }
+
+      if (targetPath !== pathname) {
+        orgStore.getState().setSwitchingTo({
+          type,
+          label,
+          fromPath: pathname,
+          targetPath,
+          hasCache: true,
+        });
+      }
+      startTransition(() => {
+        router.push(targetPath);
+      });
+    },
+    [getOrgTarget, pathname, router, setActiveOrgId, setActiveStreamerId],
+  );
 
   const userFallbackName = userInfo?.displayName?.trim() || userInfo?.name?.trim();
   const displayName =
@@ -64,24 +125,13 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
         e.preventDefault();
         const targetOrg = orgs[num - 1];
         if (targetOrg && targetOrg.id !== currentOrg?.id) {
-          setActiveOrgId(targetOrg.id);
-          const orgKey = targetOrg.slug || targetOrg.id;
-          if (isOrgOwnerOrAdmin(targetOrg)) {
-            setActiveStreamerId("org");
-            router.push(`/app/${orgKey}`);
-          } else if (targetOrg.streamers?.[0]) {
-            setActiveStreamerId(targetOrg.streamers[0].id);
-            const streamerKey = targetOrg.streamers[0].name || targetOrg.streamers[0].id;
-            router.push(`/app/${orgKey}/${streamerKey}`);
-          } else {
-            router.push(`/app/${orgKey}`);
-          }
+          switchToOrg(targetOrg);
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setActiveOrgId, setActiveStreamerId, router]);
+  }, [switchToOrg]);
 
   return (
     <div className="w-full shrink-0 mb-1">
@@ -158,18 +208,7 @@ export function OrgSwitcher({ isCollapsed }: { isCollapsed?: boolean }) {
                       key={org.id}
                       type="button"
                       onClick={() => {
-                        setActiveOrgId(org.id);
-                        const orgKey = org.slug || org.id;
-                        if (isOrgOwnerOrAdmin(org)) {
-                          setActiveStreamerId("org");
-                          router.push(`/app/${orgKey}`);
-                        } else if (org.streamers?.[0]) {
-                          setActiveStreamerId(org.streamers[0].id);
-                          const streamerKey = org.streamers[0].name || org.streamers[0].id;
-                          router.push(`/app/${orgKey}/${streamerKey}`);
-                        } else {
-                          router.push(`/app/${orgKey}`);
-                        }
+                        switchToOrg(org);
                         setOpen(false);
                       }}
                       className={cn(

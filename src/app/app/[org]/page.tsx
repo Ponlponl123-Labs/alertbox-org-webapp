@@ -14,20 +14,32 @@ import { cn, getFallbackInitial } from "@/lib/utils";
 import ContributionSkyline from "@/components/ui/contribution-skyline";
 import OrgAnalytics from "@/components/features/org/org-analytics";
 import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Input } from "react-smooth-input";
+import { orgStore } from "@/hooks/store/org";
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, setName?: (name: string) => void }) {
   const params = useParams();
+  const pathname = usePathname();
   const orgParam = params?.org as string | undefined;
   const lang = useStore(coreStore, (s) => s.lang);
+  const switchingTo = useStore(orgStore, (s) => s.switchingTo);
+  const settledCachedPath = useStore(orgStore, (s) => s.settledCachedPath);
+  const skipInitial =
+    !demo &&
+    Boolean(
+      (settledCachedPath && settledCachedPath === pathname) ||
+        (switchingTo?.hasCache && pathname !== switchingTo.fromPath),
+    );
   const { organizations, activeOrg: storeActiveOrg } = useUserContext();
   const activeOrg = demo
     ? null
-    : organizations.find((o) => o.id === orgParam || o.slug === orgParam) || storeActiveOrg;
+    : switchingTo?.hasCache
+      ? storeActiveOrg
+      : organizations.find((o) => o.id === orgParam || o.slug === orgParam) || storeActiveOrg;
 
   const streamers = demo ? [] : activeOrg?.streamers || [];
   const orgSlug = demo ? "" : activeOrg?.slug || activeOrg?.id || "org";
@@ -61,11 +73,11 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
       ref={rootRef}
       className={cn("flex flex-col gap-6 relative", demo && "overflow-hidden")}
     >
-      <AnimatePresence>
+      <AnimatePresence initial={!skipInitial}>
         {bannerUrl && (
           <motion.div
             key={bannerUrl}
-            initial={{ opacity: 0, filter: "blur(6px)" }}
+            initial={skipInitial ? false : { opacity: 0, filter: "blur(6px)" }}
             animate={{
               opacity: isBannerLoaded ? 1 : 0,
               filter: isBannerLoaded ? "blur(0px)" : "blur(6px)",
@@ -97,7 +109,7 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
         animate={{ marginTop: bannerUrl ? 104 : 0 }}
       >
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={skipInitial ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-col gap-1 z-10"
         >
@@ -139,9 +151,18 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
                     }}
                   />
                 ) : (
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-foreground mt-3">
-                    {activeOrg?.name}
-                  </h1>
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.h1
+                      key={activeOrg?.id || "org-title"}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                      className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-foreground mt-3"
+                    >
+                      {activeOrg?.name}
+                    </motion.h1>
+                  </AnimatePresence>
                 )
               }
             </div>
@@ -158,22 +179,31 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
           <div className="flex items-center justify-between bg-card rounded-xl p-5">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-medium">{lang.data.common.channels}</h2>
-              <div className="flex font-medium items-center gap-2">
-                <p className="text-sm text-muted-foreground font-baijamjuree">
-                  {activeOrg?.name || lang.data.common.organization}
-                </p>
-                <p className="text-sm text-muted-foreground font-baijamjuree">•</p>
-                <p className="text-sm text-muted-foreground font-baijamjuree">
-                  {formatI18n(
-                    formatCount(
-                      lang.data.common.channel_count_one,
-                      lang.data.common.channel_count_other,
-                      streamers.length,
-                    ),
-                    { count: streamers.length },
-                  )}
-                </p>
-              </div>
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.div
+                  key={`${activeOrg?.id || "org"}-${streamers.length}`}
+                  initial={{ opacity: 0, y: 3 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -3 }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex font-medium items-center gap-2"
+                >
+                  <p className="text-sm text-muted-foreground font-baijamjuree">
+                    {activeOrg?.name || lang.data.common.organization}
+                  </p>
+                  <p className="text-sm text-muted-foreground font-baijamjuree">•</p>
+                  <p className="text-sm text-muted-foreground font-baijamjuree">
+                    {formatI18n(
+                      formatCount(
+                        lang.data.common.channel_count_one,
+                        lang.data.common.channel_count_other,
+                        streamers.length,
+                      ),
+                      { count: streamers.length },
+                    )}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
             </div>
             <Link
               href={`/app/${orgSlug}/streamers`}
@@ -185,47 +215,56 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
-            {streamers.map((s) => {
-              const streamerKey = s.name || s.id;
-              return (
-                <Link
-                  key={s.id}
-                  href={`/app/${orgSlug}/${streamerKey}`}
-                >
-                  <Button
-                    className="p-1 w-full h-max rounded-xl not-hover:grayscale transition-all duration-250 ease-in-out"
-                    variant="ghost"
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div
+              key={activeOrg?.id || "channels-grid"}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3"
+            >
+              {streamers.map((s) => {
+                const streamerKey = s.name || s.id;
+                return (
+                  <Link
+                    key={s.id}
+                    href={`/app/${orgSlug}/${streamerKey}`}
                   >
-                    <div className="flex flex-col gap-1 min-w-0 flex-1">
-                      <div className="w-full aspect-square rounded-lg bg-primary/10 text-primary font-bold text-sm flex items-center justify-center shrink-0">
-                        {s.avatar ? (
-                          <Image
-                            src={s.avatar}
-                            alt={s.name}
-                            width={128}
-                            height={128}
-                            className="w-full aspect-square rounded-lg object-cover pointer-events-none select-none"
-                            unoptimized
-                          />
-                        ) : (
-                          getFallbackInitial(s.displayName || s.name)
-                        )}
+                    <Button
+                      className="p-1 w-full h-max rounded-xl not-hover:grayscale transition-all duration-250 ease-in-out"
+                      variant="ghost"
+                    >
+                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <div className="w-full aspect-square rounded-lg bg-primary/10 text-primary font-bold text-sm flex items-center justify-center shrink-0">
+                          {s.avatar ? (
+                            <Image
+                              src={s.avatar}
+                              alt={s.name}
+                              width={128}
+                              height={128}
+                              className="w-full aspect-square rounded-lg object-cover pointer-events-none select-none"
+                              unoptimized
+                            />
+                          ) : (
+                            getFallbackInitial(s.displayName || s.name)
+                          )}
+                        </div>
+                        <div className="grid leading-tight min-w-0 text-start">
+                          <span className="truncate font-medium text-foreground mt-1 text-lg font-heading">
+                            {s.displayName || s.name}
+                          </span>
+                          <span className="truncate my-1 text-xs text-muted-foreground">
+                            @{s.name}
+                          </span>
+                        </div>
                       </div>
-                      <div className="grid leading-tight min-w-0 text-start">
-                        <span className="truncate font-medium text-foreground mt-1 text-lg font-heading">
-                          {s.displayName || s.name}
-                        </span>
-                        <span className="truncate my-1 text-xs text-muted-foreground">
-                          @{s.name}
-                        </span>
-                      </div>
-                    </div>
-                  </Button>
-                </Link>
-              );
-            })}
-          </div>
+                    </Button>
+                  </Link>
+                );
+              })}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </motion.div>
     </div>

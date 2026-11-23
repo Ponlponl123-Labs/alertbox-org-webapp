@@ -1,6 +1,6 @@
 "use client";
 import { useUserContext } from "@/contexts/user";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Login from "./login";
 import { usePathname } from "next/navigation";
 import AppSidebar from "@/components/layout/app-sidebar";
@@ -13,6 +13,23 @@ import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
 import { useStore } from "zustand";
 import { coreStore } from "@/hooks/store/core";
+import { orgStore } from "@/hooks/store/org";
+import { WorkspaceSwitchSkeleton } from "@/components/shared/workspace-switch-skeleton";
+import OrgOverviewPage from "@/app/app/[org]/page";
+import StreamerDashboardPage from "@/app/app/[org]/[streamer]/page";
+
+const NON_ORG_SEGMENTS = new Set(["account", "org", "login", "connections"]);
+const ORG_SUBPAGES = new Set(["members", "streamers", "audit", "settings", "billing", "transactions"]);
+
+function getWorkspaceHomeKey(pathname: string): string {
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts[0] !== "app" || !parts[1] || NON_ORG_SEGMENTS.has(parts[1])) {
+    return pathname;
+  }
+  if (parts.length === 2) return "org-home";
+  if (parts.length === 3 && !ORG_SUBPAGES.has(parts[2])) return "streamer-home";
+  return pathname;
+}
 import { PageTransition } from "@/components/animate-ui/components/page-transition";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/custom-ui/dialog";
 import HelpfulRating from "@/components/kokonutui/helpful-rating";
@@ -72,7 +89,57 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   }, []);
   const { userInfo, isAuthLoading, authFetch } = useUserContext();
   const lang = useStore(coreStore, (state) => state.lang);
+  const switchingTo = useStore(orgStore, (state) => state.switchingTo);
+  const organizations = useStore(orgStore, (state) => state.organizations);
   const pathname = usePathname();
+  const homeKey = getWorkspaceHomeKey(pathname);
+  const activeHomeView = switchingTo?.hasCache
+    ? switchingTo.type === "streamer"
+      ? "streamer-home"
+      : "org-home"
+    : homeKey === "org-home" || homeKey === "streamer-home"
+      ? homeKey
+      : null;
+
+  useEffect(() => {
+    if (pathname) {
+      orgStore.getState().markVisitedPath(pathname);
+    }
+    if (!switchingTo) return;
+    if (pathname !== switchingTo.fromPath) {
+      orgStore.getState().setSwitchingTo(null);
+      return;
+    }
+    const fallbackTimer = setTimeout(() => {
+      orgStore.getState().setSwitchingTo(null);
+    }, 15000);
+    return () => clearTimeout(fallbackTimer);
+  }, [pathname, switchingTo]);
+
+  useEffect(() => {
+    if (switchingTo || !organizations.length) return;
+    const parts = pathname.split("/").filter(Boolean);
+    if (parts[0] !== "app" || !parts[1] || NON_ORG_SEGMENTS.has(parts[1])) return;
+    const targetOrg = organizations.find((o) => String(o.id) === parts[1] || o.slug === parts[1]);
+    if (!targetOrg) return;
+    const state = orgStore.getState();
+    if (String(targetOrg.id) !== String(state.activeOrgId)) {
+      state.setActiveOrgId(String(targetOrg.id));
+    }
+    if (parts.length === 2) {
+      if (!state.isOrgMode) state.setOrgMode(true);
+    } else if (parts.length === 3 && !ORG_SUBPAGES.has(parts[2])) {
+      const targetStreamer = targetOrg.streamers?.find(
+        (s) => String(s.id) === parts[2] || s.name === parts[2] || s.uri === parts[2],
+      );
+      if (targetStreamer) {
+        if (String(targetStreamer.id) !== String(state.activeStreamerId)) {
+          state.setActiveStreamerId(String(targetStreamer.id));
+        }
+        if (state.isOrgMode) state.setOrgMode(false);
+      }
+    }
+  }, [pathname, organizations, switchingTo]);
   const scroll = useScroll({
     container: hasScrollarea ? scrollareaRef : undefined,
   });
@@ -148,14 +215,30 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             className={"h-[calc(100dvh-var(--status-banner-height,0)-8px)] flex-1 flex flex-col relative m-1 rounded-sm border border-border bg-black/10 dark:bg-background"}
           >
 
-            <PageTransition effect="fade" className="relative min-w-0 h-[calc(100dvh-var(--status-banner-height,0)-8px)] flex-1">
+            <PageTransition
+              effect="fade"
+              pageKey={activeHomeView ?? pathname}
+              className="relative min-w-0 h-[calc(100dvh-var(--status-banner-height,0)-8px)] flex-1"
+            >
               <motion.div
                 style={{ opacity: headerOpacity }}
                 className="w-full h-24 -mb-24 sticky top-0 bg-background mask-b-from-0% z-20 pointer-events-none"
               />
               <div className="flex-1 w-full min-h-[calc(100%-4rem-var(--status-banner-height,0))] flex flex-col z-10">
                 <div className="min-h-0 flex-1 w-full flex flex-col pb-8">
-                  {children}
+                  {switchingTo && !switchingTo.hasCache ? (
+                    <WorkspaceSwitchSkeleton
+                      key={`switch-${switchingTo.targetPath}`}
+                      type={switchingTo.type}
+                      label={switchingTo.label}
+                    />
+                  ) : activeHomeView === "streamer-home" ? (
+                    <StreamerDashboardPage key="persistent-streamer-home" />
+                  ) : activeHomeView === "org-home" ? (
+                    <OrgOverviewPage key="persistent-org-home" />
+                  ) : (
+                    children
+                  )}
                 </div>
               </div>
               <AppFooter />

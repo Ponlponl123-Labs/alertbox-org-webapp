@@ -4,11 +4,22 @@ import { createStore } from "zustand";
 import { Organization, Streamer, OrganizationMember } from "@/types/user.types";
 import { setCookie, deleteCookie } from "cookies-next";
 
+export type SwitchingTarget = {
+  type: "org" | "streamer";
+  label: string;
+  fromPath: string;
+  targetPath: string;
+  hasCache?: boolean;
+} | null;
+
 export type OrgStoreState = {
   organizations: Organization[];
   activeOrgId: string | null;
   activeStreamerId: string | null;
   isOrgMode: boolean;
+  switchingTo: SwitchingTarget;
+  visitedPaths: Record<string, true>;
+  settledCachedPath: string | null;
 };
 
 export type OrgStoreActions = {
@@ -16,6 +27,9 @@ export type OrgStoreActions = {
   setActiveOrgId: (id: string) => void;
   setActiveStreamerId: (id: string | null) => void;
   setOrgMode: (enabled: boolean) => void;
+  setSwitchingTo: (target: SwitchingTarget) => void;
+  setSettledCachedPath: (path: string | null) => void;
+  markVisitedPath: (path: string) => void;
   removeStreamer: (streamerId: string) => void;
   removeOrganization: (orgId: string) => void;
   addStreamer: (orgId: string, streamer: Streamer) => void;
@@ -43,6 +57,9 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
   activeOrgId: getInitialOrgId(),
   activeStreamerId: typeof window !== "undefined" ? localStorage.getItem("ab_active_streamer_id") : null,
   isOrgMode: typeof window !== "undefined" ? localStorage.getItem("ab_view_mode") === "org" : false,
+  switchingTo: null,
+  visitedPaths: {},
+  settledCachedPath: null,
 
   syncFromMemberships: (memberships) => {
     const orgs: Organization[] = (memberships || [])
@@ -178,6 +195,19 @@ export const orgStore = createStore<OrgStore>()((set, get) => ({
       }
     }
     set({ isOrgMode: enabled });
+  },
+
+  setSwitchingTo: (target: SwitchingTarget) => {
+    set({ switchingTo: target, ...(target ? { settledCachedPath: null } : {}) });
+  },
+
+  setSettledCachedPath: (path: string | null) => {
+    set({ settledCachedPath: path });
+  },
+
+  markVisitedPath: (path: string) => {
+    if (!path || get().visitedPaths[path]) return;
+    set((state) => ({ visitedPaths: { ...state.visitedPaths, [path]: true } }));
   },
 
   removeStreamer: (streamerId: string) => {
