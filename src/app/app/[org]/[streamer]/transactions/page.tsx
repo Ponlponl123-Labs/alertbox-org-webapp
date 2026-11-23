@@ -30,6 +30,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import JellyRadio from "@/components/JellyRadio";
 import { Input } from "react-smooth-input";
+import { Input as UiInput } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -949,30 +951,30 @@ export default function StreamerTransactionsPage() {
                           <Popover>
                             <PopoverTrigger
                               render={
-                                <button
+                                <Button
                                   aria-label={st.table.actions_aria}
-                                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground bg-transparent"
                                 >
                                   <DotsThreeVerticalIcon size={16} weight="bold" />
-                                </button>
+                                </Button>
                               }
                             />
                             <PopoverContent
                               align="end"
-                              className="w-48 p-1.5 flex flex-col gap-1 rounded-xl bg-card border border-border shadow-xl text-xs"
+                              className="w-48 p-1.5 flex flex-col gap-0 rounded-xl bg-card border border-border shadow-xl text-xs"
                             >
                               {canManageWidgets && (
-                                <button
+                                <Button
                                   disabled={Boolean(busyTxIds[tx.id])}
                                   onClick={() => handleResendAlert(tx)}
-                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left font-medium disabled:opacity-50"
+                                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-transparent justify-start hover:bg-muted text-foreground text-left font-medium disabled:opacity-50"
                                 >
                                   <PaperPlaneTiltIcon size={14} weight="bold" className="text-primary" />
                                   <span>{st.table.resend_alert}</span>
-                                </button>
+                                </Button>
                               )}
 
-                              <button
+                              <Button
                                 onClick={async () => {
                                   try {
                                     await navigator.clipboard.writeText(tx.id);
@@ -984,7 +986,7 @@ export default function StreamerTransactionsPage() {
                                     toast.error(st.toasts.id_copy_failed);
                                   }
                                 }}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted text-foreground transition-colors text-left"
+                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-transparent justify-start hover:bg-muted text-foreground text-left"
                               >
                                 {copiedId === tx.id ? (
                                   <CheckIcon size={14} weight="bold" className="text-emerald-500" />
@@ -992,17 +994,17 @@ export default function StreamerTransactionsPage() {
                                   <CopyIcon size={14} weight="bold" />
                                 )}
                                 <span>{st.table.copy_id}</span>
-                              </button>
+                              </Button>
 
                               {canManageTransactions && (
                                 <>
-                                  <div className="h-px bg-border my-0.5" />
+                                  <div className="h-px bg-border mx-3 my-0.5" />
 
-                                  <button
+                                  <Button
                                     disabled={Boolean(busyTxIds[tx.id])}
                                     onClick={() => handleToggleSoftDelete(tx.id)}
                                     className={cn(
-                                      "w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors text-left font-medium disabled:opacity-50",
+                                      "w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-transparent justify-start text-left font-medium disabled:opacity-50",
                                       tx.isDeleted
                                         ? "hover:bg-emerald-500/10 text-emerald-500"
                                         : "hover:bg-rose-500/10 text-rose-500",
@@ -1019,7 +1021,7 @@ export default function StreamerTransactionsPage() {
                                         <span>{st.table.soft_delete}</span>
                                       </>
                                     )}
-                                  </button>
+                                  </Button>
                                 </>
                               )}
                             </PopoverContent>
@@ -1141,7 +1143,12 @@ export default function StreamerTransactionsPage() {
         </div>
       </div>
 
-      <Dialog open={isTestDialogOpen} onOpenChange={setIsTestDialogOpen}>
+      <Dialog
+        open={isTestDialogOpen}
+        onOpenChange={(next) => {
+          if (!sendingTest) setIsTestDialogOpen(next);
+        }}
+      >
         <DialogContent className="max-w-sm!" showCloseButton={false}>
           <DialogHeader className="items-center text-center gap-1.5">
             <div className="mb-1 inline-flex size-12 items-center justify-center text-primary">
@@ -1155,19 +1162,22 @@ export default function StreamerTransactionsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4 py-2">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSendTest();
+            }}
+            className="flex flex-col gap-3.5 mt-1"
+          >
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">
+              <label className="text-xs font-semibold text-foreground/80">
                 {st.simulate_dialog.provider_label}
               </label>
-              <select
-                value={testProvider}
-                onChange={(e) => setTestProvider(e.target.value)}
-                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary font-medium"
-              >
-                {availableProviders.map((p) => (
-                  <option key={p} value={p}>
-                    {p === "BMAC"
+              <Select
+                items={availableProviders.map((p) => ({
+                  value: p,
+                  label:
+                    p === "BMAC"
                       ? st.simulate_dialog.provider_bmac
                       : p === "KOFI"
                         ? lang.data.app.connections.providers.kofi.name
@@ -1177,91 +1187,145 @@ export default function StreamerTransactionsPage() {
                             ? lang.data.app.connections.providers.xendit.name
                             : p === "FFP"
                               ? st.simulate_dialog.provider_promptpay
-                              : p}
-                  </option>
-                ))}
-              </select>
-              <span className="text-[10px] text-muted-foreground">
+                              : p,
+                }))}
+                value={testProvider}
+                onValueChange={(v) => {
+                  if (v) setTestProvider(v as string);
+                }}
+              >
+                <SelectTrigger className="w-full h-10! border-2 rounded-md text-xs font-medium">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="w-full -translate-x-5 -translate-y-2">
+                  <SelectGroup>
+                    {availableProviders.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p === "BMAC"
+                          ? st.simulate_dialog.provider_bmac
+                          : p === "KOFI"
+                            ? lang.data.app.connections.providers.kofi.name
+                            : p === "STRIPE"
+                              ? st.simulate_dialog.provider_stripe
+                              : p === "XENDIT"
+                                ? lang.data.app.connections.providers.xendit.name
+                                : p === "FFP"
+                                  ? st.simulate_dialog.provider_promptpay
+                                  : p}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <span className="text-[11px] text-muted-foreground">
                 {formatI18n(st.simulate_dialog.providers_hint, { streamer: streamerTarget })}
               </span>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-2 flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">{st.simulate_dialog.amount_label}</label>
-                <input
+                <label className="text-xs font-semibold text-foreground/80">
+                  {st.simulate_dialog.amount_label}
+                </label>
+                <UiInput
                   type="number"
                   min="1"
                   max="1000000"
                   value={testAmount}
                   onChange={(e) => setTestAmount(e.target.value)}
                   placeholder="100"
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs font-sans font-semibold tabular-nums text-foreground focus:outline-none focus:border-primary"
+                  className="h-10 rounded-md border-2 text-xs font-sans font-semibold tabular-nums"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">{st.simulate_dialog.currency_label}</label>
-                <select
+                <label className="text-xs font-semibold text-foreground/80">
+                  {st.simulate_dialog.currency_label}
+                </label>
+                <Select
+                  items={[
+                    { value: "THB", label: "THB (฿)" },
+                    { value: "USD", label: "USD ($)" },
+                    { value: "EUR", label: "EUR (€)" },
+                    { value: "GBP", label: "GBP (£)" },
+                    { value: "JPY", label: "JPY (¥)" },
+                  ]}
                   value={testCurrency}
-                  onChange={(e) => setTestCurrency(e.target.value)}
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary font-sans font-medium"
+                  onValueChange={(v) => {
+                    if (v) setTestCurrency(v as string);
+                  }}
                 >
-                  <option value="THB">THB (฿)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
-                  <option value="JPY">JPY (¥)</option>
-                </select>
+                  <SelectTrigger className="w-full h-10! border-2 rounded-md text-xs font-sans font-medium">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="w-full -translate-x-5 -translate-y-2">
+                    <SelectGroup>
+                      <SelectItem value="THB">THB (฿)</SelectItem>
+                      <SelectItem value="USD">USD ($)</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="GBP">GBP (£)</SelectItem>
+                      <SelectItem value="JPY">JPY (¥)</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">{st.simulate_dialog.donor_name_label}</label>
-              <input
+              <label className="text-xs font-semibold text-foreground/80">
+                {st.simulate_dialog.donor_name_label}
+              </label>
+              <UiInput
                 type="text"
                 maxLength={64}
                 value={testDonorName}
                 onChange={(e) => setTestDonorName(e.target.value)}
                 placeholder={st.simulate_dialog.donor_name_placeholder}
-                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
+                className="h-10 rounded-md border-2 text-xs"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">{st.simulate_dialog.message_label}</label>
-              <textarea
-                rows={2}
+              <label className="text-xs font-semibold text-foreground/80">
+                {st.simulate_dialog.message_label}
+              </label>
+              <Textarea
+                rows={3}
                 maxLength={280}
                 value={testMessage}
                 onChange={(e) => setTestMessage(e.target.value)}
                 placeholder={st.simulate_dialog.message_placeholder}
-                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary resize-none"
+                className="rounded-md border-2 text-xs resize-none"
               />
             </div>
-          </div>
 
-          <DialogFooter className="mt-1 grid! grid-cols-2 gap-2">
-            <DialogClose
-              render={
-                <Button variant="secondary" className="h-max p-3 rounded-xl w-full cursor-pointer" disabled={sendingTest}>
-                  {lang.data.common.cancel}
-                </Button>
-              }
-            />
-            <Button
-              onClick={handleSendTest}
-              disabled={sendingTest}
-              className="gap-2 font-sans h-max p-3 rounded-xl w-full bg-primary text-primary-foreground cursor-pointer"
-            >
-              {sendingTest ? (
-                <Spinner className="size-4" />
-              ) : (
-                <PaperPlaneTiltIcon size={14} weight="bold" />
-              )}
-              <span>{st.simulate_dialog.dispatch_btn}</span>
-            </Button>
-          </DialogFooter>
+            <DialogFooter className="mt-1 grid! grid-cols-2 gap-2">
+              <DialogClose
+                render={
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-max p-3 rounded-xl w-full cursor-pointer"
+                    disabled={sendingTest}
+                  >
+                    {lang.data.common.cancel}
+                  </Button>
+                }
+              />
+              <Button
+                type="submit"
+                disabled={sendingTest}
+                className="gap-2 font-sans h-max p-3 rounded-xl w-full bg-primary text-primary-foreground cursor-pointer"
+              >
+                {sendingTest ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <PaperPlaneTiltIcon size={14} weight="bold" />
+                )}
+                <span>{st.simulate_dialog.dispatch_btn}</span>
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </motion.div>

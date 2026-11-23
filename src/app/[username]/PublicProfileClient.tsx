@@ -532,7 +532,7 @@ export default function PublicProfileClient({
                   type="button"
                   variant={"ghost"}
                   onClick={() => avatarInputRef.current?.click()}
-                  className="absolute inset-0 size-32 md:size-42 rounded-full bg-black/50 group-hover/avatar:backdrop-blur-[2px] opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center text-white"
+                  className="absolute inset-0 size-32 md:size-42 lg:size-48 rounded-full bg-black/50 group-hover/avatar:backdrop-blur-[2px] opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center text-white"
                   title={pp.change_avatar}
                 >
                   <CameraIcon size={18} weight="bold" />

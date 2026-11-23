@@ -503,7 +503,7 @@ export default function OrgSettingsPage() {
               <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                 <span className="font-rubik text-primary font-semibold">/app/{activeOrg?.slug}</span>
                 <span>•</span>
-                <span>{formatCount(os.members_count_one, os.members_count_other, activeOrg?.memberCount ?? 1)}</span>
+                <span>{formatI18n(formatCount(os.members_count_one, os.members_count_other, activeOrg?.memberCount ?? 1), { count: activeOrg?.memberCount ?? 1 })}</span>
               </div>
             </div>
 
