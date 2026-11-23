@@ -449,25 +449,35 @@ export default function PublicProfileClient({
             filter: !bannerUrl || isBannerLoaded ? "blur(0px)" : "blur(6px)",
           }}
           exit={{ opacity: 0, filter: "blur(6px)" }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
           className="w-full bg-primary top-0 left-0 z-0 mask-b-from-0% overflow-hidden -mb-48 relative"
         >
           <motion.div
             style={{ y: bannerY, scale: bannerScale, opacity: bannerOpacity }}
             className="w-full origin-top min-h-96 pointer-events-none"
           >
-            {bannerUrl && (
-              <Image
-                src={bannerUrl}
-                alt={lang.data.common.banner}
-                className="w-full min-h-96 object-cover select-none"
-                width={720}
-                height={288}
-                priority
-                unoptimized
-                onLoad={() => setLoadedBannerUrl(bannerUrl)}
-              />
-            )}
+            <motion.div
+              initial={{ scale: 1.14 }}
+              animate={{
+                scale: !bannerUrl || isBannerLoaded ? 1 : 1.14,
+              }}
+              exit={{ scale: 1.08 }}
+              transition={{ type: "spring", stiffness: 95, damping: 22, mass: 1.15 }}
+              className="will-change-transform"
+            >
+              {bannerUrl && (
+                <Image
+                  src={bannerUrl}
+                  alt={lang.data.common.banner}
+                  className="w-full min-h-96 object-cover select-none"
+                  width={720}
+                  height={288}
+                  priority
+                  unoptimized
+                  onLoad={() => setLoadedBannerUrl(bannerUrl)}
+                />
+              )}
+            </motion.div>
           </motion.div>
           {isMock && canEditProfile && (
             <div className="absolute inset-0 p-1 z-50">
@@ -511,7 +521,7 @@ export default function PublicProfileClient({
               variants={fadeInUp}
               className="relative group/avatar bg-primary border border-foreground/10 rounded-full shadow-2xl"
             >
-              <Avatar className="size-32 md:size-42 shadow-inner">
+              <Avatar className="size-32 md:size-42 lg:size-48 shadow-inner">
                 {profileData.avatar && <AvatarImage src={profileData.avatar} />}
                 <AvatarFallback className="text-3xl md:text-5xl font-bold bg-muted text-foreground/50">
                   {getFallbackInitial(profileData.displayName || "?")}

@@ -15,30 +15,44 @@ import {
 } from "@/components/ui/tooltip";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
+import { violationStore } from "@/hooks/store/violation";
+import { VIOLATION_BLOCK_LEVEL } from "@/consts/violation";
 import { cn } from "@/lib/utils";
 import { Device } from "@/types/user.types";
 import {
-  ClockUserIcon,
   DevicesIcon,
   HandPeaceIcon,
-  PaperPlaneTiltIcon,
-  PenIcon,
   ShieldCheckIcon,
-  UserIcon,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useStore } from "zustand";
 import { getApiUrl } from "@/lib/api";
 import { toast } from "@/components/custom-ui/toast";
+import { ShieldCheck } from "@/components/animate-ui/icons/hugeicons/shield-check";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { CheckCircleIcon, QuestionIcon, ShieldWarningIcon, WarningIcon } from "@phosphor-icons/react/dist/ssr";
+import { TriangleAlert } from "@/components/animate-ui/icons/hugeicons/triangle-alert";
+import { OctagonAlert } from "@/components/animate-ui/icons/hugeicons/octagon-alert";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
+  const userViolation = useStore(violationStore, (state) => state.cache["user"]?.data);
   const [devices, setDevices] = useState<Device[] | null>(null);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { userInfo, logout, authFetch } = useUserContext();
+
+  useEffect(() => {
+    if (!userInfo) return;
+    void violationStore.getState().fetchUserViolations(authFetch);
+  }, [userInfo, authFetch]);
+
+  const hasViolations = Boolean(
+    userViolation && (userViolation.level > 0 || userViolation.violate.length > 0),
+  );
+  const isViolationBlocked = (userViolation?.level ?? 0) >= VIOLATION_BLOCK_LEVEL;
 
   const revoke = async (device: Device) => {
     if (isRevoking || device.isThisDevice || device.isRevoked) return;
@@ -102,363 +116,402 @@ function Page() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-1 flex-col gap-6 z-10"
+      className="mx-auto w-full px-12 pt-12 flex flex-1 flex-col items-center text-center gap-6 z-10"
     >
-      <div>
-        <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
-          <UserIcon size={16} weight="bold" />
-          <span>{lang.data.app.security.eyebrow}</span>
-        </div>
-        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
-          {lang.data.app.security.title}
+      <div className="flex flex-col items-center mt-auto">
+        {hasViolations ? (
+          isViolationBlocked ? (
+            <OctagonAlert
+              className="mb-3 size-24 text-rose-500 p-6 bg-rose-500/10 rounded-full"
+              animate
+            />
+          ) : (
+            <TriangleAlert
+              className="mb-3 size-24 text-amber-500 p-6 bg-amber-500/10 rounded-full"
+              animate
+            />
+          )
+        ) : (
+          <ShieldCheck
+            className="mb-3 size-24 text-emerald-500 p-6 bg-emerald-500/10 rounded-full"
+            animate
+          />
+        )}
+        <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-foreground my-3">
+          Security Checkup
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {lang.data.app.security.description}
+        <p className="text-sm text-muted-foreground max-w-lg font-sans mt-0.5">
+          {hasViolations ? (
+            <>
+              {isViolationBlocked ? "Actions restricted" : "Policy violation notice"} —{" "}
+              <span className={isViolationBlocked ? "text-rose-500" : "text-amber-500"}>
+                Level {userViolation?.level ?? 0}
+              </span>{" "}
+              ({userViolation?.violate.length ?? 0} violation(s) recorded)
+            </>
+          ) : (
+            "No recommended action found"
+          )}
         </p>
       </div>
-      <div className="w-full flex flex-col min-h-0 mt-6 flex-1 gap-4">
-        {[
-          {
-            icon: (
-              <ClockUserIcon
-                size={22}
-                className="text-foreground/60"
-                weight="fill"
-              />
-            ),
-            title: lang.data.app.security.registered,
-            value: userInfo?.createdAt
-              ? new Date(userInfo.createdAt).toLocaleDateString(lang.key, {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              })
-              : lang.data.app.security.device.unknown,
-          },
-          {
-            icon: (
-              <PenIcon size={22} className="text-foreground/60" weight="fill" />
-            ),
-            title: lang.data.app.security.registered_with,
-            value:
-              userInfo?.createWith === "discord" ? (
-                <>
-                  <svg
-                    role="img"
-                    viewBox="0 0 24 24"
-                    className="size-4 fill-foreground"
-                  >
-                    <title>Discord</title>
-                    <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z" />
-                  </svg>
-                  <strong>Discord</strong>
-                </>
+      <div className="w-full max-w-2xl flex flex-col gap-4 p-1 mb-auto bg-card rounded-2xl overflow-hidden">
+        <Accordion multiple className="divide-none w-full">
+          <AccordionItem value="device">
+            <AccordionTrigger className="hover:bg-muted/30 rounded-xl p-3 hover:no-underline flex items-center gap-3">
+              <CheckCircleIcon weight="fill" className="text-emerald-500 size-6" />
+              <div>
+                <h3 className="text-sm">Your devices</h3>
+                <p className="text-muted-foreground font-sans">Where you&apos;re signed in</p>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              {isLoading && !devices ? (
+                <Spinner className="size-6 text-foreground/40 mx-auto my-8" />
               ) : (
-                userInfo?.createWith || lang.data.common.not_set
-              ),
-          },
-          {
-            icon: (
-              <PaperPlaneTiltIcon
-                size={22}
-                className="text-foreground/60"
-                weight="fill"
-              />
-            ),
-            title: lang.data.app.security.email.title,
-            description: lang.data.app.security.email.description,
-            value: userInfo?.email || lang.data.common.not_set,
-          },
-        ].map((item, i) => (
-          <div className="w-full bg-card p-4 rounded-2xl group" key={i}>
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2.25">
-                {item.icon}
-                <h1 className="text-lg font-semibold">{item.title}</h1>
-              </div>
-              {item?.description && (
-                <p className="text-foreground/40 text-xs">{item.description}</p>
-              )}
-              <div className="flex items-center gap-1.5 w-full flex-1 min-w-0 mt-1.5 max-sm:flex-col px-2 py-1.5 rounded-lg bg-foreground/5 text-sm text-foreground/80 group-hover:bg-foreground/10 select-none pointer-events-none">
-                {item.value}
-              </div>
-            </div>
-          </div>
-        ))}
-        <div className="w-full bg-card p-4 rounded-2xl group">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-2.25">
-              <DevicesIcon
-                size={22}
-                className="text-foreground/60"
-                weight="fill"
-              />
-              <h1 className="text-lg font-semibold">
-                {lang.data.app.security.device.title}
-              </h1>
-            </div>
-            <p className="text-foreground/40 text-xs">
-              {lang.data.app.security.device.description}
-            </p>
-          </div>
-          {isLoading && !devices ? (
-            <Spinner className="size-6 text-foreground/40 mx-auto my-8" />
-          ) : (
-            <ResizablePanelGroup
-              orientation="horizontal"
-              className="min-w-0 flex-1 flex bg-muted mt-2 rounded-lg z-20 relative"
-            >
-              <ResizablePanel defaultSize="67%">
-                <ScrollArea className="flex h-full max-h-96 gap-3 p-1">
-                  {devices?.map((d, i) => (
-                    <Button
-                      variant={
-                        selectedDevice?.id === d.id ? "secondary" : "ghost"
-                      }
-                      onClick={() => setSelectedDevice(d)}
-                      className={cn(
-                        "w-full rounded-md p-3 h-max flex flex-wrap justify-between gap-2 bg-background/30 overflow-hidden",
-                        selectedDevice?.id === d.id &&
-                        "border-2 border-foreground/10 bg-foreground/5",
-                      )}
-                      key={i}
-                    >
-                      {(d.isThisDevice || d.isRevoked) && (
-                        <div className="flex w-full items-center gap-1.5 mb-0.5">
-                          {d.isThisDevice && (
-                            <Badge className="bg-sky-400 rounded-2xl rounded-tl-sm text-black text-[10px] font-semibold pr-2.5">
-                              <HandPeaceIcon className="size-6" weight="fill" />
-                              {lang.data.app.security.device.this}
-                            </Badge>
-                          )}
-                          {d.isRevoked && (
-                            <Badge className="bg-amber-400 rounded-2xl rounded-tl-sm text-black text-[10px] font-semibold pr-2.5">
-                              <ShieldCheckIcon
-                                className="size-6"
-                                weight="fill"
-                              />
-                              {lang.data.app.security.device.manage.disabled}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                      <div className="flex w-full items-center gap-3 mb-1.5">
-                        <DevicesIcon className="size-6" weight="fill" />
-                        <div className="flex flex-col gap-1.5">
-                          <h1 className="text-sm font-semibold">
-                            {`${d.os} ${d.osVersion}`}
-                          </h1>
-                        </div>
-                      </div>
-                      {[
-                        {
-                          title: lang.data.app.security.device.info.os,
-                          value:
-                            [d.os, d.osVersion].filter(Boolean).join(" ") ||
-                            lang.data.app.security.device.unknown,
-                        },
-                        {
-                          title: lang.data.app.security.device.info.browser,
-                          value:
-                            [d.platform, d.platformVersion].filter(Boolean).join(" ") ||
-                            lang.data.app.security.device.unknown,
-                        },
-                        {
-                          title:
-                            lang.data.app.security.device.info.cpu_architecture,
-                          value:
-                            d.cpuArchitecture ||
-                            lang.data.app.security.device.unknown,
-                        },
-                        {
-                          title: lang.data.app.security.device.info.ip,
-                          value: d.ipAddress,
-                        },
-                        {
-                          title: lang.data.app.security.device.info.isp,
-                          value:
-                            d.isp ||
-                            lang.data.app.security.device.unknown,
-                        },
-                        ...(selectedDevice?.id === d.id
-                          ? [
-                            {
-                              title: lang.data.app.security.device.info.lat,
-                              value:
-                                d.latitude ||
-                                lang.data.app.security.device
-                                  .unknown_location,
-                            },
-                            {
-                              title: lang.data.app.security.device.info.lon,
-                              value:
-                                d.longitude ||
-                                lang.data.app.security.device
-                                  .unknown_location,
-                            },
-                            {
-                              title:
-                                lang.data.app.security.device.info.country,
-                              value:
-                                d.country ||
-                                lang.data.app.security.device
-                                  .unknown_location,
-                            },
-                            {
-                              title: lang.data.app.security.device.info.city,
-                              value:
-                                d.city ||
-                                lang.data.app.security.device
-                                  .unknown_location,
-                            },
-                            {
-                              title:
-                                lang.data.app.security.device.info.region,
-                              value:
-                                d.region ||
-                                lang.data.app.security.device
-                                  .unknown_location,
-                            },
-                          ]
-                          : []),
-                        {
-                          title: lang.data.app.security.device.info.time,
-                          value:
-                            new Date(d.createdAt).toLocaleDateString(lang.key, {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              second: "2-digit",
-                            }) || lang.data.app.security.device.unknown,
-                          fullWidth: true,
-                        },
-                        {
-                          title: lang.data.app.security.device.info.last_used,
-                          value: d.lastUsed ?
-                            new Date(d.lastUsed).toLocaleDateString(lang.key, {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              second: "2-digit",
-                            }) : lang.data.app.security.device.unknown,
-                          halfWidth: true,
-                        },
-                        {
-                          title: lang.data.app.security.device.info.expires,
-                          value:
-                            new Date(d.expiresAt).toLocaleDateString(lang.key, {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              second: "2-digit",
-                            }) || lang.data.app.security.device.unknown,
-                          halfWidth: true,
-                        },
-                      ].map((info, ii) => (
-                        <div
-                          key={`${i}-${ii}`}
+                <ResizablePanelGroup
+                  orientation="horizontal"
+                  className="min-w-0 flex-1 flex z-20 relative gap-1"
+                >
+                  <ResizablePanel defaultSize="80%">
+                    <ScrollArea className="flex h-full max-h-96 gap-3">
+                      {devices?.map((d, i) => (
+                        <Button
+                          variant={
+                            selectedDevice?.id === d.id ? "secondary" : "ghost"
+                          }
+                          onClick={() => setSelectedDevice(d)}
                           className={cn(
-                            "flex flex-col gap-0.5 items-start text-start",
-                            info?.halfWidth && "min-w-[calc(50%-0.25rem)]",
-                            info?.fullWidth && "min-w-full",
+                            "w-full rounded-md p-3 h-max flex flex-wrap justify-between gap-2 bg-background/30 overflow-hidden",
+                            selectedDevice?.id === d.id &&
+                            "border-2 border-foreground/10 bg-foreground/5",
                           )}
+                          key={i}
                         >
-                          <h3 className="text-xs text-foreground/40 font-semibold font-sans">
-                            {info.title}
-                          </h3>
-                          <p className="text-sm">{info.value}</p>
-                        </div>
+                          {(d.isThisDevice || d.isRevoked) && (
+                            <div className="flex w-full items-center gap-1.5 mb-0.5">
+                              {d.isThisDevice && (
+                                <Badge className="bg-sky-400 rounded-2xl rounded-tl-sm text-black text-[10px] font-semibold pr-2.5">
+                                  <HandPeaceIcon className="size-6" weight="fill" />
+                                  {lang.data.app.security.device.this}
+                                </Badge>
+                              )}
+                              {d.isRevoked && (
+                                <Badge className="bg-amber-400 rounded-2xl rounded-tl-sm text-black text-[10px] font-semibold pr-2.5">
+                                  <ShieldCheckIcon
+                                    className="size-6"
+                                    weight="fill"
+                                  />
+                                  {lang.data.app.security.device.manage.disabled}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                          <div className="flex w-full items-center gap-3 mb-1.5">
+                            <DevicesIcon className="size-6" weight="fill" />
+                            <div className="flex flex-col gap-1.5">
+                              <h1 className="text-sm font-semibold">
+                                {`${d.os} ${d.osVersion}`}
+                              </h1>
+                            </div>
+                          </div>
+                          {[
+                            {
+                              title: lang.data.app.security.device.info.os,
+                              value:
+                                [d.os, d.osVersion].filter(Boolean).join(" ") ||
+                                lang.data.app.security.device.unknown,
+                            },
+                            {
+                              title: lang.data.app.security.device.info.browser,
+                              value:
+                                [d.platform, d.platformVersion].filter(Boolean).join(" ") ||
+                                lang.data.app.security.device.unknown,
+                            },
+                            {
+                              title:
+                                lang.data.app.security.device.info.cpu_architecture,
+                              value:
+                                d.cpuArchitecture ||
+                                lang.data.app.security.device.unknown,
+                            },
+                            {
+                              title: lang.data.app.security.device.info.ip,
+                              value: d.ipAddress,
+                            },
+                            {
+                              title: lang.data.app.security.device.info.isp,
+                              value:
+                                d.isp ||
+                                lang.data.app.security.device.unknown,
+                            },
+                            ...(selectedDevice?.id === d.id
+                              ? [
+                                {
+                                  title: lang.data.app.security.device.info.lat,
+                                  value:
+                                    d.latitude ||
+                                    lang.data.app.security.device
+                                      .unknown_location,
+                                },
+                                {
+                                  title: lang.data.app.security.device.info.lon,
+                                  value:
+                                    d.longitude ||
+                                    lang.data.app.security.device
+                                      .unknown_location,
+                                },
+                                {
+                                  title:
+                                    lang.data.app.security.device.info.country,
+                                  value:
+                                    d.country ||
+                                    lang.data.app.security.device
+                                      .unknown_location,
+                                },
+                                {
+                                  title: lang.data.app.security.device.info.city,
+                                  value:
+                                    d.city ||
+                                    lang.data.app.security.device
+                                      .unknown_location,
+                                },
+                                {
+                                  title:
+                                    lang.data.app.security.device.info.region,
+                                  value:
+                                    d.region ||
+                                    lang.data.app.security.device
+                                      .unknown_location,
+                                },
+                              ]
+                              : []),
+                            {
+                              title: lang.data.app.security.device.info.time,
+                              value:
+                                new Date(d.createdAt).toLocaleDateString(lang.key, {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  second: "2-digit",
+                                }) || lang.data.app.security.device.unknown,
+                              fullWidth: true,
+                            },
+                            {
+                              title: lang.data.app.security.device.info.last_used,
+                              value: d.lastUsed ?
+                                new Date(d.lastUsed).toLocaleDateString(lang.key, {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  second: "2-digit",
+                                }) : lang.data.app.security.device.unknown,
+                              halfWidth: true,
+                            },
+                            {
+                              title: lang.data.app.security.device.info.expires,
+                              value:
+                                new Date(d.expiresAt).toLocaleDateString(lang.key, {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  second: "2-digit",
+                                }) || lang.data.app.security.device.unknown,
+                              halfWidth: true,
+                            },
+                          ].map((info, ii) => (
+                            <div
+                              key={`${i}-${ii}`}
+                              className={cn(
+                                "flex flex-col gap-0.5 items-start text-start",
+                                info?.halfWidth && "min-w-[calc(50%-0.25rem)]",
+                                info?.fullWidth && "min-w-full",
+                              )}
+                            >
+                              <h3 className="text-[10px] text-foreground/40 font-semibold font-sans">
+                                {info.title}
+                              </h3>
+                              <p className="text-xs font-sans">{info.value}</p>
+                            </div>
+                          ))}
+                        </Button>
                       ))}
-                    </Button>
-                  ))}
-                </ScrollArea>
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-              <ResizablePanel
-                defaultSize="33%"
-                className="min-w-0 flex-1 min-h-64 h-auto bg-background/70 rounded-r-lg flex items-center justify-center text-center text-foreground/20 text-xs tracking-wider relative"
-              >
-                {selectedDevice ? (
-                  <iframe
-                    title={lang.data.app.security.map_title}
-                    sandbox="allow-scripts allow-same-origin"
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
-                    className="absolute top-0 left-0 w-full h-full flex-1 min-w-0 min-h-0 border-0"
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(String(Number.isFinite(selectedDevice.latitude) ? selectedDevice.latitude : 0))},${encodeURIComponent(String(Number.isFinite(selectedDevice.longitude) ? selectedDevice.longitude : 0))}&hl=${encodeURIComponent(lang.key)}&z=14&output=embed`}
-                  />
-                ) : (
-                  lang.data.app.security.device.unselected_map
-                )}
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          )}
-          <AnimatePresence>
-            {selectedDevice && (
-              <motion.div
-                initial={{ opacity: 0, y: "-100%" }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: "-100%" }}
-                id="session-manager"
-                className="w-full px-3 pt-3 pb-1 items-center flex gap-2 flex-wrap -mt-2 bg-background rounded-b-lg z-0 relative"
-              >
-                <span className="text-foreground/40 font-semibold m-0 text-xs">
-                  {lang.data.app.security.device.manage.title}
-                </span>
-                <strong className="text-foreground/40 font-semibold m-0 text-xs -ml-1">
-                  {`"${selectedDevice?.os} ${selectedDevice?.osVersion}" : `}
-                </strong>
-                <Tooltip disabled={!selectedDevice?.isThisDevice}>
-                  <TooltipTrigger
-                    delay={0}
-                    render={
-                      <Button
-                        variant={
-                          selectedDevice?.isThisDevice || selectedDevice?.isRevoked
-                            ? "outline"
-                            : "secondary"
-                        }
-                        size="xs"
-                        disabled={
-                          isRevoking ||
-                          selectedDevice?.isThisDevice ||
-                          selectedDevice?.isRevoked
-                        }
-                        className="rounded-xl p-2 text-[10px] tracking-wider m-0"
-                        onClick={() =>
-                          selectedDevice &&
-                          !selectedDevice?.isThisDevice &&
-                          !selectedDevice?.isRevoked &&
-                          void revoke(selectedDevice)
-                        }
-                      />
-                    }
+                    </ScrollArea>
+                  </ResizablePanel>
+                  <ResizableHandle withHandle />
+                  <ResizablePanel
+                    defaultSize="20%"
+                    className="min-w-0 flex-1 min-h-0 h-auto bg-background/70 rounded-lg flex items-center justify-center text-center text-foreground/20 text-xs tracking-wider relative"
                   >
-                    {isRevoking ? (
-                      <Spinner className="size-4 text-foreground/40" />
+                    {selectedDevice ? (
+                      <iframe
+                        title={lang.data.app.security.map_title}
+                        sandbox="allow-scripts allow-same-origin"
+                        referrerPolicy="no-referrer"
+                        loading="lazy"
+                        className="absolute top-0 left-0 w-full h-full flex-1 min-w-0 min-h-0 border-0"
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(String(Number.isFinite(selectedDevice.latitude) ? selectedDevice.latitude : 0))},${encodeURIComponent(String(Number.isFinite(selectedDevice.longitude) ? selectedDevice.longitude : 0))}&hl=${encodeURIComponent(lang.key)}&z=14&output=embed`}
+                      />
                     ) : (
-                      lang.data.app.security.device.manage.revoke
+                      lang.data.app.security.device.unselected_map
                     )}
-                  </TooltipTrigger>
-                  <TooltipContent className={"rounded-lg font-semibold"}>
-                    <p>
-                      {lang.data.app.security.device.manage.cant_selfrevoke}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              )}
+              <AnimatePresence>
+                {selectedDevice && (
+                  <motion.div
+                    initial={{ opacity: 0, y: "-100%" }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: "-100%" }}
+                    id="session-manager"
+                    className="w-full p-2 items-center flex gap-2 flex-wrap bg-muted/30 rounded-lg mt-1 z-0 relative"
+                  >
+                    <span className="text-foreground font-semibold m-0 text-xs select-none inline-flex gap-2">
+                      {lang.data.app.security.device.manage.title}{" "}
+                      <strong className="text-foreground font-semibold m-0 text-xs -ml-1">
+                        {`"${selectedDevice?.os} ${selectedDevice?.osVersion}"`}
+                      </strong>
+                      :
+                    </span>
+                    <Tooltip disabled={!selectedDevice?.isThisDevice}>
+                      <TooltipTrigger
+                        delay={0}
+                        render={
+                          <Button
+                            variant={
+                              selectedDevice?.isThisDevice || selectedDevice?.isRevoked
+                                ? "outline"
+                                : "secondary"
+                            }
+                            size="xs"
+                            disabled={
+                              isRevoking ||
+                              selectedDevice?.isThisDevice ||
+                              selectedDevice?.isRevoked
+                            }
+                            className="rounded-xl p-2 text-[10px] tracking-wider m-0"
+                            onClick={() =>
+                              selectedDevice &&
+                              !selectedDevice?.isThisDevice &&
+                              !selectedDevice?.isRevoked &&
+                              void revoke(selectedDevice)
+                            }
+                          />
+                        }
+                      >
+                        {isRevoking ? (
+                          <Spinner className="size-4 text-foreground/40" />
+                        ) : (
+                          lang.data.app.security.device.manage.revoke
+                        )}
+                      </TooltipTrigger>
+                      <TooltipContent className={"rounded-lg font-semibold"}>
+                        <p>
+                          {lang.data.app.security.device.manage.cant_selfrevoke}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="account-standing">
+            <AccordionTrigger className="hover:bg-muted/30 rounded-xl p-3 hover:no-underline flex items-center gap-3">
+              {hasViolations ? (
+                isViolationBlocked ? (
+                  <ShieldWarningIcon weight="fill" className="text-rose-500 size-6" />
+                ) : (
+                  <WarningIcon weight="fill" className="text-amber-500 size-6" />
+                )
+              ) : (
+                <CheckCircleIcon weight="fill" className="text-emerald-500 size-6" />
+              )}
+              <div>
+                <h3 className="text-sm">Account Standing</h3>
+                {hasViolations ? (
+                  <p className="text-muted-foreground font-sans">
+                    {userViolation?.violate.length ?? 0} violation(s) recorded —{" "}
+                    <span className={isViolationBlocked ? "text-rose-500" : "text-amber-500"}>
+                      Level {userViolation?.level ?? 0}
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground font-sans">
+                    You&apos;re account is <span className="text-emerald-500">all good</span>
+                  </p>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="my-1 px-2">
+              {hasViolations && userViolation ? (
+                <div className="flex flex-col gap-2">
+                  {userViolation.violate.map((v, idx) => (
+                    <div
+                      key={`${v.timestamp}-${idx}`}
+                      className="rounded-lg bg-muted/30 px-3 py-2 text-xs flex flex-col gap-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge
+                          variant={v.level >= VIOLATION_BLOCK_LEVEL ? "destructive" : "secondary"}
+                          className="text-[10px] px-1.5 py-0 h-4 rounded-sm"
+                        >
+                          Level {v.level}
+                        </Badge>
+                        <span className="text-[11px] text-muted-foreground">
+                          {new Date(v.timestamp).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="font-sans text-foreground whitespace-pre-wrap wrap-break-word text-start">
+                        {v.message}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="max-w-md font-sans my-6 mx-auto">
+                  Thank you for upholding Alertbox.org Terms of Service and Community Guidelines. If you have a violation, it will appear here.
+                </p>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="multi-step-verification">
+            <AccordionTrigger className="hover:bg-muted/30 rounded-xl p-3 hover:no-underline flex items-center gap-3">
+              <QuestionIcon weight="fill" className="text-muted-foreground size-6" />
+              <div>
+                <h3 className="text-sm">2-Step Verification</h3>
+                <p className="text-muted-foreground font-sans">
+                  Add an extra layer of security to your account
+                </p>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="my-6 px-2">
+              <p className="max-w-md font-sans mx-auto">
+                Comming soon.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="third-party-access">
+            <AccordionTrigger className="hover:bg-muted/30 rounded-xl p-3 hover:no-underline flex items-center gap-3">
+              <CheckCircleIcon weight="fill" className="text-emerald-500 size-6" />
+              <div>
+                <h3 className="text-sm">Third-party access</h3>
+                <p className="text-muted-foreground font-sans">no any apps have access to your data</p>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="my-6 px-2">
+              <p className="max-w-md font-sans mx-auto">
+                You&apos;re account is secure. No third-party apps have access to your data.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     </motion.div>
   );

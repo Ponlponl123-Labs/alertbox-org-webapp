@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
-import { getFallbackInitial } from "@/lib/utils";
+import { cn, getFallbackInitial } from "@/lib/utils";
 import {
   CameraIcon,
   PencilSimpleIcon,
-  UserIcon,
 } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "react-smooth-input";
@@ -24,7 +23,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { motion } from "motion/react";
+import { AnimatePresence, motion, useIsomorphicLayoutEffect, useScroll, useTransform } from "motion/react";
+import Image from "next/image";
+import { SmileyIcon } from "@phosphor-icons/react/dist/ssr";
+import { Discord, Github, Google, Streamlabs } from "@thesvg/react";
+import { Badge } from "@/components/ui/badge";
 
 function Page() {
   const lang = useStore(coreStore, (state) => state.lang);
@@ -39,6 +42,27 @@ function Page() {
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const bannerUrl = userInfo?.avatar;
+  const [loadedBannerUrl, setLoadedBannerUrl] = useState<string | null>(null);
+  const isBannerLoaded = !bannerUrl || loadedBannerUrl === bannerUrl;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const [hasScrollContainer, setHasScrollContainer] = useState(false);
+
+  useIsomorphicLayoutEffect(() => {
+    if (rootRef.current) {
+      const container = rootRef.current.closest<HTMLElement>('[data-slot="scroll-area-viewport"]');
+      scrollContainerRef.current = container;
+      setHasScrollContainer(Boolean(container));
+    }
+  }, []);
+
+  const { scrollY } = useScroll({
+    container: hasScrollContainer ? scrollContainerRef : undefined,
+  });
+  const bannerY = useTransform(scrollY, [0, 300], [0, 95]);
+  const bannerScale = useTransform(scrollY, [-120, 0, 300], [1.12, 1, 1.05]);
+  const bannerOpacity = useTransform(scrollY, [0, 260], [1, 0.35]);
 
   const revokeObjectUrl = () => {
     if (objectUrlRef.current) {
@@ -137,27 +161,67 @@ function Page() {
 
   return (
     <motion.div
+      ref={rootRef}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-1 flex-col gap-6 z-10"
+      className="w-full flex flex-1 flex-col gap-6 z-10"
     >
-      <div className="w-full flex flex-col gap-6">
+      {bannerUrl && (
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={bannerUrl}
+            initial={{ opacity: 0, filter: "blur(6px)" }}
+            animate={{
+              opacity: !bannerUrl || isBannerLoaded ? 1 : 0,
+              filter: !bannerUrl || isBannerLoaded ? "blur(0px)" : "blur(6px)",
+            }}
+            exit={{ opacity: 0, filter: "blur(6px)" }}
+            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full pointer-events-none top-0 left-0 z-0 mask-b-from-0% overflow-hidden -mb-96"
+          >
+            <motion.div
+              style={{ y: bannerY, scale: bannerScale, opacity: bannerOpacity }}
+              className="w-full origin-top h-80 sm:h-96 lg:h-120"
+            >
+              <motion.div
+                initial={{ scale: 1.14 }}
+                animate={{
+                  scale: !bannerUrl || isBannerLoaded ? 1 : 1.14,
+                }}
+                exit={{ scale: 1.08 }}
+                transition={{ type: "spring", stiffness: 95, damping: 22, mass: 1.15 }}
+                className="w-full h-full will-change-transform"
+              >
+                {bannerUrl && (
+                  <Image
+                    src={bannerUrl}
+                    alt={lang.data.common.banner}
+                    className="w-full h-full object-cover select-none blur-3xl scale-150"
+                    width={720}
+                    height={288}
+                    priority
+                    unoptimized
+                    onLoad={() => setLoadedBannerUrl(bannerUrl)}
+                  />
+                )}
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      )}
+      <div className="w-full max-w-384 mx-auto px-12 pt-12 flex flex-col gap-6 z-10 max-sm:mt-6">
         <div>
-          <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
-            <UserIcon size={16} weight="bold" />
-            <span>{lang.data.app.account.eyebrow}</span>
-          </div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
-            {lang.data.app.account.title}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground font-sans mt-0.5 max-sm:hidden">
             {lang.data.app.account.subtitle}
           </p>
+          <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-foreground my-3 max-sm:text-center">
+            {lang.data.app.account.title}
+          </h1>
         </div>
 
-        <div className="w-full bg-card p-3 rounded-4xl border border-border/5 shadow-xs flex flex-col sm:flex-row items-center gap-6">
+        <div className="w-full flex flex-col sm:flex-row items-center gap-6">
           <div
-            className="group relative size-32 rounded-full overflow-hidden border-4 border-background shadow-md active:scale-98 cursor-pointer select-none shrink-0"
+            className="group relative size-36 md:size-42 lg:size-48 rounded-full overflow-hidden active:scale-98 transition-interactive select-none shrink-0"
             onClick={() => avatarInputRef.current?.click()}
           >
             <Avatar className="size-full rounded-none group-hover:blur-xs transition-all">
@@ -190,7 +254,7 @@ function Page() {
 
           <div className="flex flex-col items-center sm:items-start gap-2 flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="font-bold text-2xl truncate">
+              <h2 className="font-medium text-4xl truncate">
                 {userInfo?.displayName || userInfo?.name || lang.data.common.user}
               </h2>
               <Button
@@ -200,7 +264,7 @@ function Page() {
                   setNewName(userInfo?.displayName || userInfo?.name || "");
                   setIsNameDialogOpen(true);
                 }}
-                className="size-8 rounded-lg bg-foreground/5 hover:bg-foreground/10 text-foreground/70 transition-colors"
+                className="size-8 rounded-lg transition-interactive"
                 title={lang.data.app.account.edit_display_name}
               >
                 <PencilSimpleIcon weight="fill" className="size-4" />
@@ -208,15 +272,103 @@ function Page() {
             </div>
             <div className="flex flex-wrap items-center gap-2 text-foreground/50 text-sm font-medium">
               {userInfo?.name && (
-                <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded-md text-foreground/70">
+                <span className="text-sm text-muted-foreground">
                   @{userInfo.name}
                 </span>
               )}
               {userInfo?.name && userInfo?.email && <span>•</span>}
               {userInfo?.email && (
-                <span>{userInfo.email}</span>
+                <span className="text-sm text-muted-foreground">{userInfo.email}</span>
               )}
             </div>
+            <div className="flex items-center gap-1 text-muted-foreground mt-2 select-none">
+              <SmileyIcon className="size-4" weight="bold" />
+              <span className="text-xs font-medium">
+                {lang.data.app.security.registered}{" "}
+                {
+                  userInfo?.createdAt
+                    ? new Date(userInfo.createdAt).toLocaleDateString(lang.key, {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })
+                    : lang.data.app.security.device.unknown
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="mt-16 sm:mt-26 p-3 bg-card rounded-2xl max-w-2xl w-full mx-auto flex flex-col gap-1">
+          <h2 className="text-lg font-medium p-2">Connected Account</h2>
+          <div className="flex flex-col gap-1">
+            {
+              [
+                {
+                  name: "Discord",
+                  icon: <Discord className="*:fill-foreground" />,
+                  isConnected: true,
+                  isOrigin: true,
+                  isSoon: false,
+                },
+                {
+                  name: "Google",
+                  icon: <Google className="*:fill-foreground" />,
+                  isConnected: false,
+                  isOrigin: false,
+                  isSoon: true,
+                },
+                {
+                  name: "Streamlabs",
+                  icon: <Streamlabs className="*:fill-foreground" />,
+                  isConnected: false,
+                  isOrigin: false,
+                  isSoon: true,
+                },
+                {
+                  name: "Github",
+                  icon: <Github className="*:fill-foreground" />,
+                  isConnected: false,
+                  isOrigin: false,
+                  isSoon: true,
+                }
+              ].map((provider, idx) => (
+                <div key={idx} className={cn(
+                  "flex items-center justify-between p-1.5 h-12 hover:bg-muted/30 apply-smooth-transition rounded-lg",
+                  provider.isSoon && "opacity-30"
+                )}>
+                  <div className="flex items-center gap-3">
+                    <div className="size-5 flex items-center justify-center ml-3">
+                      {provider.icon}
+                    </div>
+                    <span className="text-sm font-medium select-none">{provider.name}</span>
+                    <div className="flex items-center gap-1">
+                      {
+                        provider.isConnected && <Badge className="rounded-md bg-emerald-600 text-white select-none h-max">Connected</Badge>
+                      }
+                      {
+                        provider.isOrigin && <Badge className="rounded-md select-none border-2 h-max" variant={"outline"}>Registered with</Badge>
+                      }
+                    </div>
+                  </div>
+                  {
+                    provider.isSoon ? <Badge className="rounded-md p-4 select-none" variant={"secondary"}>Soon</Badge>
+                      : provider.isConnected ? <></>
+                        : <Button
+                          size={"sm"}
+                          variant="outline"
+                          onClick={() => { }}
+                          className="rounded-md h-max p-2 border-2 transition-interactive"
+                          disabled={provider.isConnected || provider.isSoon}
+                        >
+                          Connect account
+                        </Button>
+                  }
+                </div>
+              ))
+            }
           </div>
         </div>
       </div>
@@ -247,8 +399,8 @@ function Page() {
           <DialogHeader className="items-center text-center gap-1.5">
             <div className="mb-1 inline-flex size-12 items-center justify-center text-primary">
               <PencilSimpleIcon
-                weight="regular"
-                className="size-9 text-blue-500"
+                weight="bold"
+                className="size-9"
               />
             </div>
             <DialogTitle>
@@ -279,14 +431,14 @@ function Page() {
             <Button
               variant="secondary"
               onClick={() => setIsNameDialogOpen(false)}
-              className="rounded-xl p-3 h-max w-full cursor-pointer"
+              className="rounded-xl p-3 h-max w-full"
             >
               {lang.data.app.account.crop_cancel}
             </Button>
             <Button
               onClick={handleUpdateName}
               disabled={isSubmitting || !newName.trim()}
-              className="rounded-xl p-3 h-max w-full cursor-pointer"
+              className="rounded-xl p-3 h-max w-full"
             >
               {isSubmitting ? <Spinner className="size-4" /> : lang.data.app.account.save}
             </Button>

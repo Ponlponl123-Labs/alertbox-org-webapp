@@ -29,7 +29,7 @@ export default function StreamerDashboardPage() {
   const settledCachedPath = useStore(orgStore, (s) => s.settledCachedPath);
   const skipInitial = Boolean(
     (settledCachedPath && settledCachedPath === pathname) ||
-      (switchingTo?.hasCache && pathname !== switchingTo.fromPath),
+    (switchingTo?.hasCache && pathname !== switchingTo.fromPath),
   );
   const { organizations, activeOrg: storeActiveOrg, activeStreamer: storeActiveStreamer } = useUserContext();
   const activeOrg =
@@ -43,8 +43,8 @@ export default function StreamerDashboardPage() {
       ? storeActiveStreamer
       : streamerParam
         ? activeOrg?.streamers?.find(
-            (s) => String(s.id) === streamerParam || s.name === streamerParam || s.uri === streamerParam,
-          )
+          (s) => String(s.id) === streamerParam || s.name === streamerParam || s.uri === streamerParam,
+        )
         : undefined) || storeActiveStreamer;
   const bannerUrl = activeStreamer?.banner;
   const [loadedBannerUrl, setLoadedBannerUrl] = React.useState<string | null>(null);
@@ -97,25 +97,35 @@ export default function StreamerDashboardPage() {
             filter: !bannerUrl || isBannerLoaded ? "blur(0px)" : "blur(6px)",
           }}
           exit={{ opacity: 0, filter: "blur(6px)" }}
-          transition={{ duration: 1 }}
+          transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
           className="w-full pointer-events-none bg-primary top-0 left-0 z-0 mask-b-from-0% overflow-hidden -mb-48"
         >
           <motion.div
             style={{ y: bannerY, scale: bannerScale, opacity: bannerOpacity }}
             className="w-full origin-top h-80 sm:h-96"
           >
-            {bannerUrl && (
-              <Image
-                src={bannerUrl}
-                alt={lang.data.common.banner}
-                className="w-full h-full object-cover select-none"
-                width={720}
-                height={288}
-                priority
-                unoptimized
-                onLoad={() => setLoadedBannerUrl(bannerUrl)}
-              />
-            )}
+            <motion.div
+              initial={skipInitial ? false : { scale: 1.14 }}
+              animate={{
+                scale: !bannerUrl || isBannerLoaded ? 1 : 1.14,
+              }}
+              exit={{ scale: 1.08 }}
+              transition={{ type: "spring", stiffness: 95, damping: 22, mass: 1.15 }}
+              className="w-full h-full will-change-transform"
+            >
+              {bannerUrl && (
+                <Image
+                  src={bannerUrl}
+                  alt={lang.data.common.banner}
+                  className="w-full h-full object-cover select-none"
+                  width={720}
+                  height={288}
+                  priority
+                  unoptimized
+                  onLoad={() => setLoadedBannerUrl(bannerUrl)}
+                />
+              )}
+            </motion.div>
           </motion.div>
         </motion.div>
       </AnimatePresence>
@@ -137,7 +147,7 @@ export default function StreamerDashboardPage() {
                 initial={skipInitial ? false : { opacity: 0, y: 4, filter: "blur(6px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ delay: skipInitial ? 0 : 0.1, duration: 0.4 }}
-                className="size-36 rounded-full bg-foreground text-background font-bold text-lg flex items-center justify-center shrink-0 shadow-sm">
+                className="size-42 rounded-full bg-foreground text-background font-bold text-lg flex items-center justify-center shrink-0 shadow-sm">
                 {activeStreamer?.avatar ? (
                   <Image
                     src={activeStreamer.avatar}

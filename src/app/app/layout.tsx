@@ -33,7 +33,7 @@ function getWorkspaceHomeKey(pathname: string): string {
 import { PageTransition } from "@/components/animate-ui/components/page-transition";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/custom-ui/dialog";
 import HelpfulRating from "@/components/kokonutui/helpful-rating";
-import { LanguageSwitcher } from "@/components/shared";
+import { LanguageSwitcher, ViolationAlertBanner } from "@/components/shared";
 import { getApiUrl } from "@/lib/api";
 import { toast } from "@/components/custom-ui/toast";
 
@@ -201,6 +201,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.18 }}
       >
+        {userInfo && <ViolationAlertBanner />}
         {!userInfo && !pathname.startsWith("/app/login/") ? (
           isAuthLoading ? (
             <div className="flex-1 flex items-center justify-center min-h-[60dvh]">
@@ -212,13 +213,13 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         ) : (
           <ScrollArea
             ref={setScrollarea}
-            className={"h-[calc(100dvh-var(--status-banner-height,0)-8px)] flex-1 flex flex-col relative m-1 rounded-sm border border-border bg-black/10 dark:bg-background"}
+            className={"h-[calc(100dvh-var(--status-banner-height,0px)-var(--violation-banner-height,0px)-8px)] flex-1 flex flex-col relative m-1 rounded-sm border border-border bg-black/10 dark:bg-background"}
           >
 
             <PageTransition
               effect="fade"
               pageKey={activeHomeView ?? pathname}
-              className="relative min-w-0 h-[calc(100dvh-var(--status-banner-height,0)-8px)] flex-1"
+              className="relative min-w-0 h-[calc(100dvh-var(--status-banner-height,0px)-var(--violation-banner-height,0px)-8px)] flex-1"
             >
               <motion.div
                 style={{ opacity: headerOpacity }}

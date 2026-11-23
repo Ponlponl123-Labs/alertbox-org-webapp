@@ -7,3 +7,4 @@ export { default as LanguageSwitcher } from "./language-switcher";
 export { default as ThemeSwitcher } from "./theme-switcher";
 export { SocialLinks, getActiveSocials, SOCIAL_PLATFORMS } from "./social-links";
 export { WidgetErrorBoundary } from "./widget-error-boundary";
+export { ViolationAlertBanner } from "./violation-alert-banner";

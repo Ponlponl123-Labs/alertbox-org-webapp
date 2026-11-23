@@ -1,4 +1,5 @@
 export * from "./user.types";
+export * from "./violation.types";
 export * from "./landing.types";
 export * from "./components.types";
 export * from "./badges.types";

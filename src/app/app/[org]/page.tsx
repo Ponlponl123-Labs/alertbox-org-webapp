@@ -83,21 +83,32 @@ export default function OrgOverviewPage({ demo, setName }: { demo?: boolean, set
               filter: isBannerLoaded ? "blur(0px)" : "blur(6px)",
             }}
             exit={{ opacity: 0, filter: "blur(6px)" }}
+            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
             className="w-full pointer-events-none top-0 left-0 z-0 absolute mask-b-from-0% overflow-hidden"
           >
             <motion.div
               style={{ y: bannerY, scale: bannerScale, opacity: bannerOpacity }}
               className="w-full origin-top"
             >
-              <Image
-                src={bannerUrl}
-                alt={lang.data.common.aria.banner_alt}
-                className="w-full min-h-80 object-cover select-none"
-                width={720}
-                height={288}
-                onLoad={() => setLoadedBannerUrl(bannerUrl)}
-                unoptimized
-              />
+              <motion.div
+                initial={skipInitial ? false : { scale: 1.14 }}
+                animate={{
+                  scale: !bannerUrl || isBannerLoaded ? 1 : 1.14,
+                }}
+                exit={{ scale: 1.08 }}
+                transition={{ type: "spring", stiffness: 95, damping: 22, mass: 1.15 }}
+                className="will-change-transform"
+              >
+                <Image
+                  src={bannerUrl}
+                  alt={lang.data.common.aria.banner_alt}
+                  className="w-full min-h-80 object-cover select-none"
+                  width={720}
+                  height={288}
+                  onLoad={() => setLoadedBannerUrl(bannerUrl)}
+                  unoptimized
+                />
+              </motion.div>
             </motion.div>
           </motion.div>
         )}

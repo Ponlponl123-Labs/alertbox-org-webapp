@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useUserContext } from "@/contexts/user";
 import { coreStore } from "@/hooks/store/core";
-import { TrashIcon, UserIcon, WarningOctagonIcon } from "@phosphor-icons/react";
+import { TrashIcon, WarningOctagonIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useStore } from "zustand";
 import { getApiUrl } from "@/lib/api";
@@ -54,14 +54,10 @@ function Page() {
       className="w-full mx-auto max-w-384 px-12 pt-12 flex flex-1 flex-col gap-6 z-10"
     >
       <div>
-        <div className="flex items-center gap-2 text-primary font-semibold text-xs tracking-wider uppercase">
-          <UserIcon size={16} weight="bold" />
-          <span>{lang.data.app.danger.eyebrow}</span>
-        </div>
-        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-tight text-foreground my-3">
+        <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-foreground my-3">
           {lang.data.app.danger.title}
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p className="text-sm text-muted-foreground font-sans mt-0.5">
           {lang.data.app.danger.description}
         </p>
       </div>
@@ -77,12 +73,12 @@ function Page() {
           <AlertDialog>
             <AlertDialogTrigger
               render={
-                <Button variant="destructive" className="rounded-xl p-4">
+                <Button variant="destructive" className="rounded-xl p-4 h-max">
                   {lang.data.app.danger.delete_account.delete}
                 </Button>
               }
             />
-            <AlertDialogContent size="sm">
+            <AlertDialogContent size="sm" className="max-w-sm!">
               <AlertDialogHeader>
                 <AlertDialogMedia className="text-destructive">
                   <TrashIcon weight="regular" className="size-9" />
